@@ -1,13 +1,14 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
+use self::dxf::dxf_file::*;
 use self::dxf::dxf_file::enums::*;
 
 extern crate chrono;
 use self::chrono::*;
 
 mod test_helpers;
-use test_helpers::*;
+use test_helpers::helpers::*;
 
 #[test]
 fn specific_header_values() {
@@ -65,24 +66,56 @@ $LUPREC
 }
 
 #[test]
-fn date_conversion() {
-    let file = from_section("HEADER", "
-  9
-$TDCREATE
- 40
-2451544.91568287
-".trim_left());
+fn date_conversion_read() {
+    // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
+    let file = from_section("HEADER", vec!["  9", "$TDCREATE", " 40", "2451544.91568287"].join("\r\n").as_str());
     assert_eq!(Local.ymd(1999, 12, 31).and_hms(21, 58, 35), file.header.creation_date);
-    // TODO: test writing the date
+}
+
+#[test]
+fn date_conversion_write() {
+    // from AutoDesk spec: 2451544.91568287[0429] = 31 December 1999, 9:58:35PM
+    let mut file = DxfFile::new();
+    file.header.creation_date = Local.ymd(1999, 12, 31).and_hms(21, 58, 35);
+    assert!(to_test_string(&file).contains(vec!["  9", "$TDCREATE", " 40", "2451544.915682870429"].join("\r\n").as_str()));
 }
 
 #[test]
 fn read_alternate_version() {
-    let file = from_section("HEADER", "
-  9
-$ACADVER
-  1
-15.05
-".trim_left());
+    let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "15.05"].join("\r\n").as_str());
     assert_eq!(DxfAcadVersion::R2000, file.header.version);
 }
+
+#[test]
+fn read_multi_value_variable() {
+    let file = from_section("HEADER", vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"].join("\r\n").as_str());
+    assert_eq!(DxfPoint::new(1.1, 2.2, 3.3), file.header.minimum_drawing_extents)
+}
+
+#[test]
+fn write_multiple_value_variable() {
+    let mut file = DxfFile::new();
+    file.header.minimum_drawing_extents = DxfPoint::new(1.1, 2.2, 3.3);
+    assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.100000000000", " 20", "2.200000000000", " 30", "3.300000000000"].join("\r\n").as_str()));
+}
+
+#[test]
+fn write_header_with_invalid_values() {
+    let mut file = DxfFile::new();
+    file.header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
+    file.header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
+    file.header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
+    file.header.current_layer = String::new(); // $CLAYER; normalized to "0"
+    file.header.current_entity_linetype = String::new(); // $CELTYPE; normalized to "BYLAYER"
+    file.header.dimension_style_name = String::new(); // $DIMSTYLE; normalized to "STANDARD"
+    file.header.file_name = String::new(); // $MENU; normalized to "."
+    assert_contains(&file, vec!["  9", "$TEXTSIZE", " 40", "0.200000000000"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$TRACEWID", " 40", "0.050000000000"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$TEXTSTYLE", "  7", "STANDARD"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$CLAYER", "  8", "0"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$CELTYPE", "  6", "BYLAYER"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$DIMSTYLE", "  2", "STANDARD"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$MENU", "  1", "."].join("\r\n"));
+}
+
+// TODO: test flags

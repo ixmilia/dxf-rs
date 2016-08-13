@@ -15,6 +15,8 @@ pub fn generate_header() {
     fun.push_str("use dxf_file::*;\n");
     fun.push_str("use dxf_file::enums::*;\n");
     fun.push_str("use enum_primitive::FromPrimitive;\n");
+    fun.push_str("use std::io;\n");
+    fun.push_str("use std::io::Write;\n");
     fun.push_str("\n");
 
     fun.push_str("extern crate chrono;\n");
@@ -35,6 +37,7 @@ pub fn generate_header() {
     generate_new(&mut fun, &variables);
     generate_set_defaults(&mut fun, &variables);
     generate_set_header_value(&mut fun, &variables);
+    generate_add_code_pairs(&mut fun, &variables);
     fun.push_str("}\n");
 
     let mut file = File::create("src/dxf_file/header_generated.rs").ok().unwrap();
@@ -92,7 +95,7 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
             seen_fields.insert(&v.field);
             fun.push_str(format!("            \"${name}\" => {{ ", name=v.name).as_str());
             if v.code < 0 {
-                fun.push_str(format!("set_point(&mut self.{field}, &pair);", field=v.field).as_str());
+                fun.push_str(format!("self.{field}.set(&pair);", field=v.field).as_str());
             }
             else {
                 let expected_type = get_expected_type(v.code);
@@ -118,6 +121,87 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
     }
     fun.push_str("            _ => (),\n");
     fun.push_str("        }\n");
+    fun.push_str("    }\n");
+}
+
+fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
+    fun.push_str("    pub fn write_code_pairs<T>(&self, version: &DxfAcadVersion, writer: &mut DxfCodePairAsciiWriter<T>) -> io::Result<()> where T: Write {\n");
+    for v in variables {
+        // prepare writing predicate
+        let mut parts = vec![];
+        if v.min_version != "" {
+            parts.push(format!("version >= &DxfAcadVersion::{}", v.min_version));
+        }
+        if v.max_version != "" {
+            parts.push(format!("version <= &DxfAcadVersion::{}", v.max_version));
+        }
+        if v.dont_write_default {
+            parts.push(format!("self.{} != {}", v.field, v.default_value));
+        }
+        let indent = match parts.len() {
+            0 => "",
+            _ => "    ",
+        };
+
+        // write the value
+        fun.push_str(format!("        // ${}\n", v.name).as_str());
+        if parts.len() > 0 {
+            fun.push_str(format!("        if {} {{\n", parts.join(" && ")).as_str());
+        }
+        fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_str(9, \"${name}\")));\n", name=v.name, indent=indent).as_str());
+        if v.code > 0 {
+            // write value directly
+            let mut to_write = format!("self.{}", v.field);
+            let expected_type = get_code_pair_type(get_expected_type(v.code));
+            if expected_type == "string" {
+                to_write = format!("&{}", to_write);
+            }
+            // TODO: make `write_converter` a format string with the appropriate placeholder.  makes this simpler
+            if v.write_converter != "" {
+                if v.write_converter.starts_with("as ") {
+                    to_write = format!("{} {}", to_write, v.write_converter);
+                }
+                else if v.write_converter.starts_with(".") {
+                    to_write = format!("{}{}", to_write, v.write_converter);
+                }
+                else {
+                    to_write = format!("{}({})", v.write_converter, to_write);
+                }
+            }
+            fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_{typ}({code}, {value})));\n",
+                code=v.code,
+                value=to_write,
+                typ=expected_type,
+                indent=indent).as_str());
+        }
+        else {
+            // write a point or vector as it's components
+            for i in 0..v.code.abs() {
+                let (code, field) = match i {
+                    0 => (10, "x"),
+                    1 => (20, "y"),
+                    2 => (30, "z"),
+                    _ => panic!("unexpected number of values"),
+                };
+                let mut to_write = format!("self.{}.{}", v.field, field);
+                if v.write_converter != "" {
+                    to_write = format!("{}({})", v.write_converter, to_write);
+                }
+                fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_double({code}, {value})));\n",
+                    code=code,
+                    value=to_write,
+                    indent=indent).as_str());
+            }
+        }
+        if parts.len() > 0 {
+            fun.push_str("        }\n");
+        }
+
+        // newline between values
+        fun.push_str("\n");
+    }
+
+    fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
 }
 

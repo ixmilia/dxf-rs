@@ -12,9 +12,9 @@ use self::uuid::Uuid;
 use self::header_generated::*;
 use self::enums::*;
 use enum_primitive::FromPrimitive;
-use std::io::{BufRead, BufReader, Read};
+use std::io;
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::iter::Peekable;
-use std::io::Result as IoResult;
 
 include!("expected_type.rs");
 
@@ -69,11 +69,6 @@ pub fn verify_code(expected: i32, pair: &DxfCodePair) {
     }
 }
 
-pub fn set_point<T>(point: &mut T, pair: &DxfCodePair)
-    where T: SetPoint {
-    point.set(pair);
-}
-
 pub fn as_bool(v: i16) -> bool {
     v == 1
 }
@@ -108,26 +103,90 @@ pub fn as_datetime_utc(date: f64) -> DateTime<UTC> {
     }
 }
 
+pub fn as_double_local(date: DateTime<Local>) -> f64 {
+    let epoch = Local.ymd(1900, 1, 1).and_hms(0, 0, 0);
+    let duration = date - epoch;
+    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
+}
+
+pub fn as_double_utc(date: DateTime<UTC>) -> f64 {
+    let epoch = UTC.ymd(1900, 1, 1).and_hms(0, 0, 0);
+    let duration = date - epoch;
+    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
+}
+
+pub fn duration_as_double(duration: Duration) -> f64 {
+    duration.num_seconds() as f64
+}
+
 pub fn as_duration(_d: f64) -> Duration {
-    // TODO: preserve double value (i64)
-    Duration::days(0)
+    unimplemented!()
 }
 
 pub fn as_handle(_s: String) -> u32 {
-    0 // TODO
+    unimplemented!()
 }
 
 pub fn as_uuid(s: String) -> Uuid {
     Uuid::parse_str(s.as_str()).unwrap()
 }
 
+pub fn as_short(b: bool) -> i16 {
+    if b { 1 } else { 0 }
+}
+
+pub fn u32_handle(h: &u32) -> String {
+    format!("{:X}", h)
+}
+
+pub fn uuid_string(_u: &Uuid) -> String {
+    unimplemented!()
+}
+
+pub fn default_if_empty(default: &str) -> Box<Fn(&String) -> String> {
+    let default = String::from(default);
+    Box::new(move |val| if val == "" { default.clone() } else { val.clone() })
+}
+
+pub fn ensure_positive_or_default(default: f64) -> Box<Fn(f64) -> f64> {
+    Box::new(move |val| if val <= 0.0 { default } else { val })
+}
+
 pub fn clipping_from_bool(b: bool) -> DxfXrefClippingBoundaryVisibility {
     DxfXrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 }).unwrap()
+}
+
+pub fn bool_from_clipping(c: DxfXrefClippingBoundaryVisibility) -> bool {
+    c != DxfXrefClippingBoundaryVisibility::NotDisplayedNotPlotted
 }
 
 pub struct DxfCodePair {
     code: i32,
     value: DxfCodePairValue,
+}
+
+impl DxfCodePair {
+    pub fn new(code: i32, val: DxfCodePairValue) -> DxfCodePair {
+        DxfCodePair { code: code, value: val }
+    }
+    pub fn new_str(code: i32, val: &str) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Str(val.to_string()))
+    }
+    pub fn new_string(code: i32, val: &String) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Str(val.clone()))
+    }
+    pub fn new_short(code: i32, val: i16) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Short(val))
+    }
+    pub fn new_double(code: i32, val: f64) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Double(val))
+    }
+    pub fn new_long(code: i32, val: i64) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Long(val))
+    }
+    pub fn new_bool(code: i32, val: bool) -> DxfCodePair {
+        DxfCodePair::new(code, DxfCodePairValue::Boolean(val))
+    }
 }
 
 fn parse_bool(s: String) -> bool {
@@ -171,6 +230,12 @@ struct DxfCodePairAsciiIter<T>
     reader: T,
 }
 
+pub struct DxfCodePairAsciiWriter<T>
+    where T: Write
+{
+    writer: T,
+}
+
 macro_rules! tryr {
     ($expr : expr) => (match $expr { Ok(v) => v, Err(_) => return None })
 }
@@ -195,10 +260,6 @@ impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
         let code = tryr!(code_line.trim().parse::<i32>());
 
         // read value
-        /*
-        return typeof(string)
-        
-        */
         let mut value_line = String::new();
         tryr!(self.reader.read_line(&mut value_line));
         trim_trailing_newline(&mut value_line);
@@ -218,6 +279,22 @@ impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
     }
 }
 
+impl<T: Write> DxfCodePairAsciiWriter<T> {
+    pub fn write_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+        try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
+        let str_val = match &pair.value {
+            &DxfCodePairValue::Boolean(b) => String::from(if b { "1" } else { "0" }),
+            &DxfCodePairValue::Integer(i) => format!("{}", i),
+            &DxfCodePairValue::Long(l) => format!("{}", l),
+            &DxfCodePairValue::Short(s) => format!("{}", s),
+            &DxfCodePairValue::Double(d) => format!("{:.12}", d), // TODO: use proper precision
+            &DxfCodePairValue::Str(ref s) => s.clone(), // TODO: escape
+        };
+        try!(self.writer.write_fmt(format_args!("{}\r\n", str_val.as_str())));
+        Ok(())
+    }
+}
+
 pub fn read_sections<I>(file: &mut DxfFile, peekable: &mut Peekable<I>)
     where I: Iterator<Item = DxfCodePair>
 {
@@ -232,6 +309,7 @@ pub fn read_sections<I>(file: &mut DxfFile, peekable: &mut Peekable<I>)
                         let pair = peekable.next().unwrap(); // consume 2/<section-name>
                         match string_value(&pair.value).as_str() {
                             "HEADER" => file.header = header_generated::DxfHeader::read(peekable),
+                            // TODO: read other sections
                             _ => swallow_section(peekable),
                         }
 
@@ -317,6 +395,32 @@ pub fn version_from_string(v: String) -> DxfAcadVersion {
     }
 }
 
+pub fn string_from_version(v: &DxfAcadVersion) -> String {
+    String::from(
+        match v {
+            &DxfAcadVersion::Version_1_0 => "MC0.0",
+            &DxfAcadVersion::Version_1_2 => "AC1.2",
+            &DxfAcadVersion::Version_1_40 => "AC1.40",
+            &DxfAcadVersion::Version_2_05 => "AC1.50",
+            &DxfAcadVersion::Version_2_10 => "AC2.10",
+            &DxfAcadVersion::Version_2_21 => "AC2.21",
+            &DxfAcadVersion::Version_2_22 => "AC2.22",
+            &DxfAcadVersion::Version_2_5 => "AC1002",
+            &DxfAcadVersion::Version_2_6 => "AC1003",
+            &DxfAcadVersion::R9 => "AC1004",
+            &DxfAcadVersion::R10 => "AC1006",
+            &DxfAcadVersion::R11 => "AC1009",
+            &DxfAcadVersion::R12 => "AC1009",
+            &DxfAcadVersion::R13 => "AC1012",
+            &DxfAcadVersion::R14 => "AC1014",
+            &DxfAcadVersion::R2000 => "AC1015",
+            &DxfAcadVersion::R2004 => "AC1018",
+            &DxfAcadVersion::R2007 => "AC1021",
+            &DxfAcadVersion::R2010 => "AC1024",
+            &DxfAcadVersion::R2013 => "AC1027",
+    })
+}
+
 impl DxfHeader {
     pub fn read<I>(peekable: &mut Peekable<I>) -> DxfHeader
         where I: Iterator<Item = DxfCodePair>
@@ -344,6 +448,15 @@ impl DxfHeader {
 
         header
     }
+    pub fn write<T>(&self, writer: &mut DxfCodePairAsciiWriter<T>) -> io::Result<()>
+        where T: Write
+    {
+        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&DxfCodePair::new_str(2, "HEADER")));
+        try!(self.write_code_pairs(&self.version, writer));
+        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "ENDSEC")));
+        Ok(())
+    }
 }
 
 pub struct DxfFile {
@@ -356,15 +469,14 @@ impl DxfFile {
             header: DxfHeader::new(),
         }
     }
-    pub fn read<T>(reader: &mut T) -> IoResult<DxfFile>
+    pub fn read<T>(reader: &mut T) -> io::Result<DxfFile>
         where T: Read
     {
         let buf_reader = BufReader::new(reader);
         DxfFile::load(buf_reader)
     }
-    pub fn load<T: BufRead>(reader: T) -> IoResult<DxfFile>
-        where T: BufRead
-    {
+    pub fn load<T: BufRead>(reader: T) -> io::Result<DxfFile>
+        where T: BufRead {
         let reader = DxfCodePairAsciiIter { reader: reader };
         let mut peekable = reader.peekable();
         let mut file = DxfFile::new();
@@ -375,17 +487,30 @@ impl DxfFile {
             None => Ok(file), //panic!("expected 0/EOF pair but no more pairs found"), // n.b., this is probably fine
         }
     }
-    pub fn parse(s: &str) -> IoResult<DxfFile> {
+    pub fn parse(s: &str) -> io::Result<DxfFile> {
         let data = String::from(s);
         let bytes = data.as_bytes();
         DxfFile::load(bytes)
     }
+    pub fn write<T>(&self, writer: &mut T) -> io::Result<()>
+        where T: Write {
+        let mut writer = DxfCodePairAsciiWriter { writer: writer };
+        try!(self.header.write(&mut writer));
+        // TODO: write other sections
+        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "EOF")));
+        Ok(())
+    }
+    pub fn to_string(&self) -> io::Result<String> {
+        use std::io::Cursor;
+        let mut buf = Cursor::new(vec![]);
+        try!(self.write(&mut buf));
+        try!(buf.seek(SeekFrom::Start(0)));
+        let reader = BufReader::new(&mut buf);
+        Ok(reader.lines().map(|l| l.unwrap() + "\r\n").collect())
+    }
 }
 
-pub trait SetPoint {
-    fn set(&mut self, pair: &DxfCodePair) -> ();
-}
-
+#[derive(Debug, PartialEq)]
 pub struct DxfPoint {
     x: f64,
     y: f64,
@@ -403,10 +528,7 @@ impl DxfPoint {
     pub fn origin() -> DxfPoint {
         DxfPoint::new(0.0, 0.0, 0.0)
     }
-}
-
-impl SetPoint for DxfPoint {
-    fn set(&mut self, pair: &DxfCodePair) {
+    pub fn set(&mut self, pair: &DxfCodePair) {
         match pair.code {
             10 => self.x = double_value(&pair.value),
             20 => self.y = double_value(&pair.value),
@@ -442,10 +564,7 @@ impl DxfVector {
     pub fn z_axis() -> DxfVector {
         DxfVector::new(0.0, 0.0, 1.0)
     }
-}
-
-impl SetPoint for DxfVector {
-    fn set(&mut self, pair: &DxfCodePair) {
+    pub fn set(&mut self, pair: &DxfCodePair) {
         match pair.code {
             10 => self.x = double_value(&pair.value),
             20 => self.y = double_value(&pair.value),
@@ -495,6 +614,9 @@ impl DxfColor {
             panic!("color does not have an index")
         }
     }
+    pub fn get_raw_value(&self) -> i16 {
+        self.raw_value
+    }
     pub fn from_raw_value(val: i16) -> DxfColor {
         DxfColor { raw_value: val }
     }
@@ -513,17 +635,20 @@ impl DxfColor {
 }
 
 pub struct DxfLineWeight {
-    _value: i16,
+    raw_value: i16,
 }
 
 impl DxfLineWeight {
     pub fn from_raw_value(v: i16) -> DxfLineWeight {
-        DxfLineWeight { _value: v }
+        DxfLineWeight { raw_value: v }
     }
     pub fn by_block() -> DxfLineWeight {
         DxfLineWeight::from_raw_value(-1)
     }
     pub fn by_layer() -> DxfLineWeight {
         DxfLineWeight::from_raw_value(-2)
+    }
+    pub fn get_raw_value(&self) -> i16 {
+        self.raw_value
     }
 }

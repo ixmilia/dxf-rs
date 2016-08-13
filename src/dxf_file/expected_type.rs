@@ -64,3 +64,15 @@ fn get_reader_function(typ: &ExpectedType) -> &str {
         &ExpectedType::Str => "string_value",
     }
 }
+
+#[allow(dead_code)] // only used in build.rs
+fn get_code_pair_type(typ: ExpectedType) -> String {
+    match typ {
+        ExpectedType::Boolean => String::from("bool"),
+        ExpectedType::Integer => String::from("int"),
+        ExpectedType::Long => String::from("long"),
+        ExpectedType::Short => String::from("short"),
+        ExpectedType::Double => String::from("double"),
+        ExpectedType::Str => String::from("string"),
+    }
+}
