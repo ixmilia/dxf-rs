@@ -118,4 +118,39 @@ fn write_header_with_invalid_values() {
     assert_contains(&file, vec!["  9", "$MENU", "  1", "."].join("\r\n"));
 }
 
-// TODO: test flags
+#[test]
+fn read_header_flags() {
+    let file = from_section("HEADER", vec!["9", "$OSMODE", "70", "12"].join("\r\n").as_str());
+    assert!(!file.header.get_end_point_snap());
+    assert!(!file.header.get_mid_point_snap());
+    assert!(file.header.get_center_snap());
+    assert!(file.header.get_node_snap());
+    assert!(!file.header.get_quadrant_snap());
+    assert!(!file.header.get_intersection_snap());
+    assert!(!file.header.get_insertion_snap());
+    assert!(!file.header.get_perpendicular_snap());
+    assert!(!file.header.get_tangent_snap());
+    assert!(!file.header.get_nearest_snap());
+    assert!(!file.header.get_apparent_intersection_snap());
+    assert!(!file.header.get_extension_snap());
+    assert!(!file.header.get_parallel_snap());
+}
+
+#[test]
+fn write_header_flags() {
+    let mut file = DxfFile::new();
+    file.header.set_end_point_snap(false);
+    file.header.set_mid_point_snap(false);
+    file.header.set_center_snap(true);
+    file.header.set_node_snap(true);
+    file.header.set_quadrant_snap(false);
+    file.header.set_intersection_snap(false);
+    file.header.set_insertion_snap(false);
+    file.header.set_perpendicular_snap(false);
+    file.header.set_tangent_snap(false);
+    file.header.set_nearest_snap(false);
+    file.header.set_apparent_intersection_snap(false);
+    file.header.set_extension_snap(false);
+    file.header.set_parallel_snap(false);
+    assert_contains(&file, vec!["  9", "$OSMODE", " 70", "12"].join("\r\n"));
+}

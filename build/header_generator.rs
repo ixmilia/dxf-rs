@@ -35,6 +35,7 @@ pub fn generate_header() {
 
     fun.push_str("impl DxfHeader {\n");
     generate_new(&mut fun, &variables);
+    generate_flags(&mut fun, &variables);
     generate_set_defaults(&mut fun, &variables);
     generate_set_header_value(&mut fun, &variables);
     generate_add_code_pairs(&mut fun, &variables);
@@ -71,6 +72,31 @@ fn generate_new(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
     fun.push_str("        }\n");
     fun.push_str("    }\n");
+}
+
+fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
+    let mut seen_fields = HashSet::new();
+    for v in variables {
+        if !seen_fields.contains(&v.field) {
+            seen_fields.insert(&v.field);
+            if v.flags.len() > 0 {
+                fun.push_str(format!("    // {} flags\n", v.field).as_str());
+            }
+            for f in &v.flags {
+                fun.push_str(format!("    pub fn get_{flag}(&self) -> bool {{\n", flag=f.name).as_str());
+                fun.push_str(format!("        self.{field} & {mask} != 0\n", field=v.field, mask=f.mask).as_str());
+                fun.push_str("    }\n");
+                fun.push_str(format!("    pub fn set_{flag}(&mut self, val: bool) {{\n", flag=f.name).as_str());
+                fun.push_str(format!("        if val {{\n").as_str());
+                fun.push_str(format!("            self.{field} |= {mask};\n", field=v.field, mask=f.mask).as_str());
+                fun.push_str("        }\n");
+                fun.push_str("        else {\n");
+                fun.push_str(format!("            self.{field} &= !{mask};\n", field=v.field, mask=f.mask).as_str());
+                fun.push_str("        }\n");
+                fun.push_str("    }\n");
+            }
+        }
+    }
 }
 
 fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
@@ -230,14 +256,25 @@ fn gather_variables() -> Vec<HeaderVariable> {
                                 "MaxVersion" => var.max_version = attr.value,
                                 "SuppressWriting" => var.suppress_writing = attr.value == "true",
                                 "DontWriteDefault" => var.dont_write_default = attr.value == "true",
-                                _ => panic!("unexpected attribute: {}", attr.name),
+                                _ => panic!("unexpected attribute '{}' on Variable element", attr.name),
                             }
                         }
 
                         header_variables.push(var);
                     },
                     "Flag" => {
-                        // TODO: process flags
+                        let mut flag = HeaderVariableFlag::new();
+                        for attr in attributes {
+                            match attr.name.local_name.as_str() {
+                                "Name" => flag.name = attr.value,
+                                "Mask" => flag.mask = attr.value.parse::<i32>().unwrap(),
+                                "Comment" => flag.comment = attr.value,
+                                _ => panic!("unexpected attribute '{}' on Flag element", attr.name),
+                            }
+                        }
+
+                        let len = header_variables.len();
+                        header_variables[len - 1].flags.push(flag);
                     },
                     "Spec" => (),
                     _ => panic!("unexpected start element: {}", name)
@@ -269,6 +306,7 @@ struct HeaderVariable {
     max_version: String,
     suppress_writing: bool,
     dont_write_default: bool,
+    flags: Vec<HeaderVariableFlag>,
 }
 
 impl HeaderVariable {
@@ -286,6 +324,23 @@ impl HeaderVariable {
             max_version: String::new(),
             suppress_writing: false,
             dont_write_default: false,
+            flags: vec![],
+        }
+    }
+}
+
+struct HeaderVariableFlag {
+    name: String,
+    mask: i32,
+    comment: String,
+}
+
+impl HeaderVariableFlag {
+    pub fn new() -> HeaderVariableFlag {
+        HeaderVariableFlag {
+            name: String::new(),
+            mask: 0,
+            comment: String::new(),
         }
     }
 }
