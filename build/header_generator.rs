@@ -7,13 +7,19 @@ use std::fs::File;
 use std::io::{BufReader, Write};
 use self::xml::reader::{EventReader, XmlEvent};
 
-include!("../src/dxf_file/expected_type.rs");
+include!("../src/expected_type.rs");
 
 pub fn generate_header() {
     let variables = gather_variables();
     let mut fun = String::new();
-    fun.push_str("use dxf_file::*;\n");
-    fun.push_str("use dxf_file::enums::*;\n");
+    fun.push_str("// The contents of this file are automatically generated and should not be modified directly.  See the `src/build` directory.\n");
+    fun.push_str("\n");
+    fun.push_str("// types from `lib.rs`.\n");
+    fun.push_str("use ::{DxfCodePair, DxfCodePairAsciiWriter, DxfColor, DxfLineWeight, DxfPoint, DxfVector};\n");
+    fun.push_str("// helper functions `lib.rs`.\n");
+    fun.push_str("use ::helper_functions::*;\n");
+    fun.push_str("\n");
+    fun.push_str("use enums::*;\n");
     fun.push_str("use enum_primitive::FromPrimitive;\n");
     fun.push_str("use std::io;\n");
     fun.push_str("use std::io::Write;\n");
@@ -41,7 +47,7 @@ pub fn generate_header() {
     generate_add_code_pairs(&mut fun, &variables);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/dxf_file/header_generated.rs").ok().unwrap();
+    let mut file = File::create("src/header_generated.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

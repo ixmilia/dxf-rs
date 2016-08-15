@@ -1,8 +1,8 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
-use self::dxf::dxf_file::*;
-use self::dxf::dxf_file::enums::*;
+use self::dxf::*;
+use self::dxf::enums::*;
 
 extern crate chrono;
 use self::chrono::*;

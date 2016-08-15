@@ -5,7 +5,7 @@ extern crate dxf;
 #[cfg(test)]
 #[allow(dead_code)]
 pub mod helpers {
-    use dxf::dxf_file::*;
+    use dxf::*;
 
     pub fn from_section(section: &str, body: &str) -> DxfFile {
         let text = vec!["0", "SECTION", "2", section, body.trim(), "0", "ENDSEC", "0", "EOF"].join("\n");
