@@ -214,3 +214,47 @@ pub fn string_from_version(v: &DxfAcadVersion) -> String {
             &DxfAcadVersion::R2013 => "AC1027",
     })
 }
+
+pub fn parse_bool(s: String) -> bool {
+    match parse_short(s) {
+        0 => false,
+        _ => true,
+    }
+}
+
+pub fn parse_double(s: String) -> f64 {
+    match s.parse::<f64>() {
+        Ok(v) => v,
+        Err(_) => panic!("Unable to parse double value"),
+    }
+}
+
+pub fn parse_int(s: String) -> i32 {
+    match s.parse::<i32>() {
+        Ok(v) => v,
+        Err(_) => panic!("Unable to parse int value"),
+    }
+}
+
+pub fn parse_long(s: String) -> i64 {
+    match s.parse::<i64>() {
+        Ok(v) => v,
+        Err(_) => panic!("Unable to parse long value"),
+    }
+}
+
+pub fn parse_short(s: String) -> i16 {
+    match s.parse::<i16>() {
+        Ok(v) => v,
+        Err(_) => panic!("Unable to parse short value"),
+    }
+}
+
+pub fn trim_trailing_newline(s: &mut String) {
+    if s.ends_with('\n') {
+        s.pop();
+        if s.ends_with('\r') {
+            s.pop();
+        }
+    }
+}

@@ -54,64 +54,14 @@ impl DxfCodePair {
     }
 }
 
-fn parse_bool(s: String) -> bool {
-    match parse_short(s) {
-        0 => false,
-        _ => true,
-    }
-}
-
-fn parse_double(s: String) -> f64 {
-    match s.parse::<f64>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse double value"),
-    }
-}
-
-fn parse_int(s: String) -> i32 {
-    match s.parse::<i32>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse int value"),
-    }
-}
-
-fn parse_long(s: String) -> i64 {
-    match s.parse::<i64>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse long value"),
-    }
-}
-
-fn parse_short(s: String) -> i16 {
-    match s.parse::<i16>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse short value"),
-    }
-}
-
 struct DxfCodePairAsciiIter<T>
     where T: BufRead
 {
     reader: T,
 }
 
-pub struct DxfCodePairAsciiWriter<T>
-    where T: Write
-{
-    writer: T,
-}
-
 macro_rules! tryr {
     ($expr : expr) => (match $expr { Ok(v) => v, Err(_) => return None })
-}
-
-fn trim_trailing_newline(s: &mut String) {
-    if s.ends_with('\n') {
-        s.pop();
-        if s.ends_with('\r') {
-            s.pop();
-        }
-    }
 }
 
 impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
@@ -144,6 +94,11 @@ impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
     }
 }
 
+pub struct DxfCodePairAsciiWriter<T>
+    where T: Write {
+    writer: T,
+}
+
 impl<T: Write> DxfCodePairAsciiWriter<T> {
     pub fn write_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
@@ -157,42 +112,6 @@ impl<T: Write> DxfCodePairAsciiWriter<T> {
         };
         try!(self.writer.write_fmt(format_args!("{}\r\n", str_val.as_str())));
         Ok(())
-    }
-}
-
-pub fn read_sections<I>(file: &mut DxfFile, peekable: &mut Peekable<I>)
-    where I: Iterator<Item = DxfCodePair>
-{
-    loop {
-        match peekable.peek() {
-            Some(&DxfCodePair { code: 0, value: DxfCodePairValue::Str(_) }) => {
-                let pair = peekable.next().unwrap(); // consume 0/SECTION
-                if string_value(&pair.value).as_str() == "EOF" { return; }
-                if string_value(&pair.value).as_str() != "SECTION" { panic!("expected 0/SECTION, got 0/{}", string_value(&pair.value).as_str()); }
-                match peekable.peek() {
-                    Some(&DxfCodePair { code: 2, value: DxfCodePairValue::Str(_) }) => {
-                        let pair = peekable.next().unwrap(); // consume 2/<section-name>
-                        match string_value(&pair.value).as_str() {
-                            "HEADER" => file.header = header_generated::DxfHeader::read(peekable),
-                            // TODO: read other sections
-                            _ => swallow_section(peekable),
-                        }
-
-                        let mut swallow_endsec = false;
-                        match peekable.peek() {
-                            Some(&DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) }) if s == "ENDSEC" => swallow_endsec = true,
-                            _ => (), // expected 0/ENDSEC
-                        }
-
-                        if swallow_endsec {
-                            peekable.next();
-                        }
-                    },
-                    _ => (), // expected 2/<section-name>
-                }
-            },
-            _ => break,
-        }
     }
 }
 
@@ -274,7 +193,7 @@ impl DxfFile {
         let reader = DxfCodePairAsciiIter { reader: reader };
         let mut peekable = reader.peekable();
         let mut file = DxfFile::new();
-        read_sections(&mut file, &mut peekable);
+        DxfFile::read_sections(&mut file, &mut peekable);
         match peekable.next() {
             Some(DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) }) if s == "EOF" => Ok(file),
             Some(_) => panic!("expected 0/EOF but got something else"),
@@ -301,6 +220,40 @@ impl DxfFile {
         try!(buf.seek(SeekFrom::Start(0)));
         let reader = BufReader::new(&mut buf);
         Ok(reader.lines().map(|l| l.unwrap() + "\r\n").collect())
+    }
+    fn read_sections<I>(file: &mut DxfFile, peekable: &mut Peekable<I>)
+        where I: Iterator<Item = DxfCodePair> {
+        loop {
+            match peekable.peek() {
+                Some(&DxfCodePair { code: 0, value: DxfCodePairValue::Str(_) }) => {
+                    let pair = peekable.next().unwrap(); // consume 0/SECTION
+                    if string_value(&pair.value).as_str() == "EOF" { return; }
+                    if string_value(&pair.value).as_str() != "SECTION" { panic!("expected 0/SECTION, got 0/{}", string_value(&pair.value).as_str()); }
+                    match peekable.peek() {
+                        Some(&DxfCodePair { code: 2, value: DxfCodePairValue::Str(_) }) => {
+                            let pair = peekable.next().unwrap(); // consume 2/<section-name>
+                            match string_value(&pair.value).as_str() {
+                                "HEADER" => file.header = header_generated::DxfHeader::read(peekable),
+                                // TODO: read other sections
+                                _ => swallow_section(peekable),
+                            }
+
+                            let mut swallow_endsec = false;
+                            match peekable.peek() {
+                                Some(&DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) }) if s == "ENDSEC" => swallow_endsec = true,
+                                _ => (), // expected 0/ENDSEC
+                            }
+
+                            if swallow_endsec {
+                                peekable.next();
+                            }
+                        },
+                        _ => (), // expected 2/<section-name>
+                    }
+                },
+                _ => break,
+            }
+        }
     }
 }
 
