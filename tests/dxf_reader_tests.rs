@@ -8,6 +8,11 @@ mod test_helpers;
 use test_helpers::helpers::*;
 
 #[test]
+fn totally_empty_file() {
+    let _file = DxfFile::parse("").ok().unwrap();
+}
+
+#[test]
 fn empty_file_trailing_newline() {
     let _file = DxfFile::parse("0\nEOF\n").ok().unwrap();
 }
