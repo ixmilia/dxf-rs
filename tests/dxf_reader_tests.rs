@@ -8,6 +8,16 @@ mod test_helpers;
 use test_helpers::helpers::*;
 
 #[test]
+fn empty_file_trailing_newline() {
+    let _file = DxfFile::parse("0\nEOF\n").ok().unwrap();
+}
+
+#[test]
+fn empty_file_no_trailing_newline() {
+    let _file = DxfFile::parse("0\nEOF").ok().unwrap();
+}
+
+#[test]
 fn unsupported_section() {
     let _file = from_section("UNSUPPORTED_SECTION", vec!["1", "garbage value 1", "2", "garbage value 2"].join("\n").as_str());
 }

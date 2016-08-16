@@ -6,50 +6,53 @@ use self::chrono::*;
 extern crate uuid;
 use self::uuid::Uuid;
 
+use std::io;
 use enum_primitive::FromPrimitive;
 
-use ::{DxfCodePair, DxfCodePairValue};
+use ::DxfCodePairValue;
 use ::enums::*;
 
 pub fn bool_value(value: &DxfCodePairValue) -> bool {
     match value {
         &DxfCodePairValue::Boolean(b) => b,
-        _ => panic!("expected bool value"),
+        _ => panic!("this should never have happened, please file a bug"),
     }
 }
 
 pub fn long_value(value: &DxfCodePairValue) -> i64 {
     match value {
         &DxfCodePairValue::Long(l) => l,
-        _ => panic!("expected long value"),
+        _ => panic!("this should never have happened, please file a bug"),
     }
 }
 
 pub fn double_value(value: &DxfCodePairValue) -> f64 {
     match value {
         &DxfCodePairValue::Double(f) => f,
-        _ => panic!("expected double value"),
+        _ => panic!("this should never have happened, please file a bug"),
     }
 }
 
 pub fn string_value(value: &DxfCodePairValue) -> String {
     match value {
         &DxfCodePairValue::Str(ref s) => s.clone(),
-        _ => panic!("expected string value"),
+        _ => panic!("this should never have happened, please file a bug"),
     }
 }
 
 pub fn short_value(value: &DxfCodePairValue) -> i16 {
     match value {
         &DxfCodePairValue::Short(s) => s,
-        _ => panic!("expected short value"),
+        _ => panic!("this should never have happened, please file a bug"),
     }
 }
 
-pub fn verify_code(expected: i32, pair: &DxfCodePair) {
-    match pair.code {
-        c if expected == c => (),
-        _ => panic!("expected code {} but got {}", expected, pair.code),
+pub fn verify_code(expected: i32, actual: i32) -> io::Result<()> {
+    if expected == actual {
+        Ok(())
+    }
+    else {
+        Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected code {} but got {}", expected, actual)))
     }
 }
 
@@ -111,8 +114,11 @@ pub fn as_handle(_s: String) -> u32 {
     unimplemented!()
 }
 
-pub fn as_uuid(s: String) -> Uuid {
-    Uuid::parse_str(s.as_str()).unwrap()
+pub fn as_uuid(s: String) -> io::Result<Uuid> {
+    match Uuid::parse_str(s.as_str()) {
+        Ok(uuid) => Ok(uuid),
+        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+    }
 }
 
 pub fn as_short(b: bool) -> i16 {
@@ -127,65 +133,64 @@ pub fn uuid_string(_u: &Uuid) -> String {
     unimplemented!()
 }
 
-pub fn default_if_empty(default: &str) -> Box<Fn(&String) -> String> {
-    let default = String::from(default);
-    Box::new(move |val| if val == "" { default.clone() } else { val.clone() })
+pub fn default_if_empty(val: &String, default: &str) -> String {
+    if val.is_empty() { String::from(default) } else { val.clone() }
 }
 
-pub fn ensure_positive_or_default(default: f64) -> Box<Fn(f64) -> f64> {
-    Box::new(move |val| if val <= 0.0 { default } else { val })
+pub fn ensure_positive_or_default(val: f64, default: f64) -> f64 {
+    if val <= 0.0 { default } else { val }
 }
 
-pub fn clipping_from_bool(b: bool) -> DxfXrefClippingBoundaryVisibility {
-    DxfXrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 }).unwrap()
+pub fn clipping_from_bool(b: bool) -> Option<DxfXrefClippingBoundaryVisibility> {
+    DxfXrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 })
 }
 
 pub fn bool_from_clipping(c: DxfXrefClippingBoundaryVisibility) -> bool {
     c != DxfXrefClippingBoundaryVisibility::NotDisplayedNotPlotted
 }
 
-pub fn version_from_string(v: String) -> DxfAcadVersion {
+pub fn version_from_string(v: String) -> io::Result<DxfAcadVersion> {
     match v.as_str() {
-        "MC0.0" => DxfAcadVersion::Version_1_0,
-        "AC1.2" => DxfAcadVersion::Version_1_2,
-        "AC1.40" => DxfAcadVersion::Version_1_40,
-        "AC1.50" => DxfAcadVersion::Version_2_05,
-        "AC2.10" => DxfAcadVersion::Version_2_10,
-        "AC2.21" => DxfAcadVersion::Version_2_21,
-        "AC2.22" => DxfAcadVersion::Version_2_22,
-        "AC1001" => DxfAcadVersion::Version_2_22,
-        "AC1002" => DxfAcadVersion::Version_2_5,
-        "AC1003" => DxfAcadVersion::Version_2_6,
-        "AC1004" => DxfAcadVersion::R9,
-        "AC1006" => DxfAcadVersion::R10,
-        "AC1009" => DxfAcadVersion::R12,
-        "AC1011" => DxfAcadVersion::R13,
-        "AC1012" => DxfAcadVersion::R13,
-        "AC1014" => DxfAcadVersion::R14,
-        "14" => DxfAcadVersion::R14,
-        "14.01" => DxfAcadVersion::R14,
-        "AC1015" => DxfAcadVersion::R2000,
-        "15.0" => DxfAcadVersion::R2000,
-        "15.05" => DxfAcadVersion::R2000,
-        "15.06" => DxfAcadVersion::R2000,
-        "AC1018" => DxfAcadVersion::R2004,
-        "16.0" => DxfAcadVersion::R2004,
-        "16.1" => DxfAcadVersion::R2004,
-        "16.2" => DxfAcadVersion::R2004,
-        "AC1021" => DxfAcadVersion::R2007,
-        "17.0" => DxfAcadVersion::R2007,
-        "17.1" => DxfAcadVersion::R2007,
-        "17.2" => DxfAcadVersion::R2007,
-        "AC1024" => DxfAcadVersion::R2010,
-        "18.0" => DxfAcadVersion::R2010,
-        "18.1" => DxfAcadVersion::R2010,
-        "18.2" => DxfAcadVersion::R2010,
-        "AC1027" => DxfAcadVersion::R2013,
-        "19.0" => DxfAcadVersion::R2013,
-        "19.1" => DxfAcadVersion::R2013,
-        "19.2" => DxfAcadVersion::R2013,
-        "19.3" => DxfAcadVersion::R2013,
-        _ => panic!("unsupported version {}", v),
+        "MC0.0" => Ok(DxfAcadVersion::Version_1_0),
+        "AC1.2" => Ok(DxfAcadVersion::Version_1_2),
+        "AC1.40" => Ok(DxfAcadVersion::Version_1_40),
+        "AC1.50" => Ok(DxfAcadVersion::Version_2_05),
+        "AC2.10" => Ok(DxfAcadVersion::Version_2_10),
+        "AC2.21" => Ok(DxfAcadVersion::Version_2_21),
+        "AC2.22" => Ok(DxfAcadVersion::Version_2_22),
+        "AC1001" => Ok(DxfAcadVersion::Version_2_22),
+        "AC1002" => Ok(DxfAcadVersion::Version_2_5),
+        "AC1003" => Ok(DxfAcadVersion::Version_2_6),
+        "AC1004" => Ok(DxfAcadVersion::R9),
+        "AC1006" => Ok(DxfAcadVersion::R10),
+        "AC1009" => Ok(DxfAcadVersion::R12),
+        "AC1011" => Ok(DxfAcadVersion::R13),
+        "AC1012" => Ok(DxfAcadVersion::R13),
+        "AC1014" => Ok(DxfAcadVersion::R14),
+        "14" => Ok(DxfAcadVersion::R14),
+        "14.01" => Ok(DxfAcadVersion::R14),
+        "AC1015" => Ok(DxfAcadVersion::R2000),
+        "15.0" => Ok(DxfAcadVersion::R2000),
+        "15.05" => Ok(DxfAcadVersion::R2000),
+        "15.06" => Ok(DxfAcadVersion::R2000),
+        "AC1018" => Ok(DxfAcadVersion::R2004),
+        "16.0" => Ok(DxfAcadVersion::R2004),
+        "16.1" => Ok(DxfAcadVersion::R2004),
+        "16.2" => Ok(DxfAcadVersion::R2004),
+        "AC1021" => Ok(DxfAcadVersion::R2007),
+        "17.0" => Ok(DxfAcadVersion::R2007),
+        "17.1" => Ok(DxfAcadVersion::R2007),
+        "17.2" => Ok(DxfAcadVersion::R2007),
+        "AC1024" => Ok(DxfAcadVersion::R2010),
+        "18.0" => Ok(DxfAcadVersion::R2010),
+        "18.1" => Ok(DxfAcadVersion::R2010),
+        "18.2" => Ok(DxfAcadVersion::R2010),
+        "AC1027" => Ok(DxfAcadVersion::R2013),
+        "19.0" => Ok(DxfAcadVersion::R2013),
+        "19.1" => Ok(DxfAcadVersion::R2013),
+        "19.2" => Ok(DxfAcadVersion::R2013),
+        "19.3" => Ok(DxfAcadVersion::R2013),
+        _ => Err(io::Error::new(io::ErrorKind::InvalidData, format!("unsupported version {}", v))),
     }
 }
 
@@ -215,38 +220,39 @@ pub fn string_from_version(v: &DxfAcadVersion) -> String {
     })
 }
 
-pub fn parse_bool(s: String) -> bool {
+pub fn parse_bool(s: String) -> io::Result<bool> {
     match parse_short(s) {
-        0 => false,
-        _ => true,
+        Ok(0) => Ok(false),
+        Ok(_) => Ok(true),
+        Err(x) => Err(io::Error::new(io::ErrorKind::InvalidData, x)),
     }
 }
 
-pub fn parse_double(s: String) -> f64 {
+pub fn parse_double(s: String) -> io::Result<f64> {
     match s.parse::<f64>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse double value"),
+        Ok(d) => Ok(d),
+        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
     }
 }
 
-pub fn parse_int(s: String) -> i32 {
+pub fn parse_int(s: String) -> io::Result<i32> {
     match s.parse::<i32>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse int value"),
+        Ok(i) => Ok(i),
+        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
     }
 }
 
-pub fn parse_long(s: String) -> i64 {
+pub fn parse_long(s: String) -> io::Result<i64> {
     match s.parse::<i64>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse long value"),
+        Ok(l) => Ok(l),
+        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
     }
 }
 
-pub fn parse_short(s: String) -> i16 {
+pub fn parse_short(s: String) -> io::Result<i16> {
     match s.parse::<i16>() {
-        Ok(v) => v,
-        Err(_) => panic!("Unable to parse short value"),
+        Ok(s) => Ok(s),
+        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
     }
 }
 

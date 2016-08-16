@@ -11,6 +11,11 @@ mod test_helpers;
 use test_helpers::helpers::*;
 
 #[test]
+fn empty_header() {
+    let _file = DxfFile::parse(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str()).ok().unwrap();
+}
+
+#[test]
 fn specific_header_values() {
     let file = from_section("HEADER", "
   9
