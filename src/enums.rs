@@ -475,6 +475,14 @@ pub enum DxfShadowMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DxfShadowType {
+    RayTraced = 0,
+    ShadowMaps = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DxfSnapIsometricPlane {
     Left = 0,
     Top = 1,
@@ -669,6 +677,13 @@ pub enum DxfUnits {
     AstronomicalUnits = 18,
     LightYears = 19,
     Parsecs = 20,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DxfVersion {
+    R2010 = 0,
 }
 }
 

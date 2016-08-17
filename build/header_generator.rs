@@ -3,12 +3,12 @@
 extern crate xml;
 use self::xml::reader::{EventReader, XmlEvent};
 
+use ::{get_code_pair_type, get_expected_type, get_reader_function};
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::iter::Iterator;
-
-include!("../src/expected_type.rs");
 
 pub fn generate_header() {
     let variables = gather_variables();

@@ -1,0 +1,1193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<Spec xmlns="http://IxMilia.com/Dxf/EntitiesSpec">
+  <!--
+
+    ENTITY - the abstract base of all of the following types
+
+    -->
+  <Entity Name="Entity" SubclassMarker="" TypeString="">
+    <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter="DefaultIfNullOrEmpty(&quot;0&quot;)" />
+    <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" />
+    <Field Name="elevation" Code="38" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" MaxVersion="R12" />
+    <Field Name="material_handle" Code="347" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" MinVersion="R2007" />
+    <Field Name="color" Code="62" Type="DxfColor" DefaultValue="DxfColor::by_layer()" ReadConverter="DxfColor::from_raw_value({})" WriteConverter="DxfColor.GetRawValue" DisableWritingDefault="true" />
+    <Field Name="lineweight_enum_value" Code="370" Type="i16" DefaultValue="0" MinVersion="R2000" />
+    <Field Name="linetype_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
+    <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="NotBoolShort" DisableWritingDefault="true" MinVersion="R13" />
+    <Field Name="image_byte_count" Code="92" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" MinVersion="R2000" />
+    <Field Name="color_24_bit" Code="420" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2004" />
+    <Field Name="color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2004" />
+    <Field Name="transparency" Code="440" Type="i32" DefaultValue="0" MinVersion="R2004" />
+    <Pointer Name="plot_style" Code="390" Type="IDxfItem" MinVersion="R2007" />
+    <Field Name="shadow_mode" Code="284" Type="DxfShadowMode" DefaultValue="DxfShadowMode::CastsAndReceivesShadows" ReadConverter="try_result!(DxfShadowMode::from_i16({}))" WriteConverter="(short)" MinVersion="R2007" />
+    <WriteOrder>
+      <WriteSpecificValue Code="5" Value="((IDxfItemInternal)this).Handle" WriteCondition="outputHandles" WriteConverter="UIntHandle" />
+      <WriteExtensionData />
+      <WriteSpecificValue Code="330" Value="((IDxfItemInternal)this).OwnerHandle" WriteCondition="outputHandles" DontWriteIfValueIs="0" WriteConverter="UIntHandle" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbEntity&quot;" />
+      <WriteField Field="IsInPaperSpace" />
+      <WriteField Field="Layer" />
+      <WriteField Field="LinetypeName" />
+      <WriteField Field="Elevation" />
+      <WriteField Field="MaterialHandle" />
+      <WriteField Field="Color" />
+      <WriteField Field="LineweightEnumValue" />
+      <WriteField Field="LinetypeScale" />
+      <WriteField Field="IsVisible" />
+      <WriteField Field="ImageByteCount" />
+      <WriteField Field="PreviewImageData" />
+      <WriteField Field="Color24Bit" />
+      <WriteField Field="ColorName" />
+      <WriteField Field="Transparency" />
+      <WriteField Field="PlotStyle" />
+      <WriteField Field="ShadowMode" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    3DFACE
+
+    -->
+  <Entity Name="Face3D" SubclassMarker="AcDbFace" TypeString="3DFACE">
+    <Field Name="first_corner" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="second_corner" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="third_corner" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />
+    <Field Name="fourth_corner" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="edge_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+      <Flag Name="IsFirstEdgeInvisible" Mask="1" />
+      <Flag Name="IsSecondEdgeInvisible" Mask="2" />
+      <Flag Name="IsThirdEdgeInvisible" Mask="4" />
+      <Flag Name="IsFourthEdgeInvisible" Mask="8" />
+    </Field>
+  </Entity>
+  <!--
+
+    3DSOLID
+
+    -->
+  <Entity Name="Solid3D" SubclassMarker="AcDbModelerGeometry" TypeString="3DSOLID" MinVersion="R13">
+    <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Pointer Name="history_object" Code="350" Type="IDxfItem" MinVersion="R2007" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbModelerGeometry&quot;" />
+      <WriteField Field="FormatVersionNumber" />
+      <WriteField Field="CustomData" />
+      <WriteField Field="CustomData2" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDb3dSolid&quot;" MinVersion="R2007" />
+      <WriteField Field="HistoryObject" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    ACAD_PROXY_ENTITY
+
+    -->
+  <Entity Name="ProxyEntity" SubclassMarker="AcDbProxyEntity" TypeString="ACAD_PROXY_ENTITY" MinVersion="R14">
+    <Field Name="proxy_entity_class_id" Code="90" Type="i32" DefaultValue="498" />
+    <Field Name="application_entity_class_id" Code="91" Type="i32" DefaultValue="500" />
+    <Field Name="graphics_data_size" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="graphics_data_string" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="entity_data_size" Code="93" Type="i32" DefaultValue="0" />
+    <Field Name="entity_data_string" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="object_i_d1" Code="330" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="object_i_d2" Code="340" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="object_i_d3" Code="350" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="object_i_d4" Code="360" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
+    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="(int)" Accessibility="private" MinVersion="R2000" />
+    <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2000" />
+  </Entity>
+  <!--
+
+    ARC
+
+    -->
+  <Entity Name="Arc" SubclassMarker="AcDbArc" TypeString="ARC">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="center" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="radius" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="start_angle" Code="50" Type="f64" DefaultValue="0.0" Comment="Arc start angle in degrees" />
+    <Field Name="end_angle" Code="51" Type="f64" DefaultValue="360.0" Comment="Arc end angle in degrees" />
+  </Entity>
+  <!--
+
+    ARCALIGNEDTEXT
+
+    -->
+  <Entity Name="ArcAlignedText" SubclassMarker="AcDbArcAlignedText" TypeString="ARCALIGNEDTEXT" MinVersion="R2000" MaxVersion="R2000">
+    <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="font_name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="bigfont_name" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="text_style_name" Code="7" Type="String" DefaultValue="String::new()" />
+    <Field Name="center_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="arc_radius" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="width_factor" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="text_height" Code="42" Type="f64" DefaultValue="0.0" />
+    <Field Name="character_spacing" Code="43" Type="f64" DefaultValue="0.0" />
+    <Field Name="offset_from_arc" Code="44" Type="f64" DefaultValue="0.0" />
+    <Field Name="right_offset" Code="45" Type="f64" DefaultValue="0.0" />
+    <Field Name="left_offset" Code="46" Type="f64" DefaultValue="0.0" />
+    <Field Name="start_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="end_angle" Code="51" Type="f64" DefaultValue="0.0" />
+    <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="direction_flag" Code="71" Type="i16" DefaultValue="0" />
+    <Field Name="alignment_flag" Code="72" Type="i16" DefaultValue="0" />
+    <Field Name="side_flag" Code="73" Type="i16" DefaultValue="0" />
+    <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="character_set_value" Code="77" Type="i16" DefaultValue="0" />
+    <Field Name="pitch_and_family_value" Code="78" Type="i16" DefaultValue="0" />
+    <Field Name="font_type" Code="79" Type="DxfFontType" DefaultValue="DxfFontType::TTF" ReadConverter="try_result!(DxfFontType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="color_index" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="wizard_flag" Code="280" Type="i16" DefaultValue="0" />
+  </Entity>
+  <!--
+
+    ATTDEF
+
+    -->
+  <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF" GenerateReaderFunction="false">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="value" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+      <Flag Name="IsTextBackward" Mask="2" />
+      <Flag Name="IsTextUpsideDown" Mask="4" />
+    </Field>
+    <Field Name="horizontal_text_justification" Code="72" Type="DxfHorizontalTextJustification" DefaultValue="DxfHorizontalTextJustification::Left" ReadConverter="try_result!(DxfHorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="second_alignment_point" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="version" Code="280" Type="DxfVersion" DefaultValue="DxfVersion::R2010" ReadConverter="try_result!(DxfVersion::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="prompt" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="text_tag" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsInvisible" Mask="1" />
+      <Flag Name="IsConstant" Mask="2" />
+      <Flag Name="IsInputVerificationRequired" Mask="4" />
+      <Flag Name="IsAttributePresent" Mask="8" />
+    </Field>
+    <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="74" Type="DxfVerticalTextJustification" DefaultValue="DxfVerticalTextJustification::Baseline" ReadConverter="try_result!(DxfVerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="m_text_flag" Code="70" Type="DxfMTextFlag" DefaultValue="DxfMTextFlag::MultilineAttribute" ReadConverter="try_result!(DxfMTextFlag::from_i16({}))" WriteConverter="(short)" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" MinVersion="R2007" />
+    <Pointer Name="secondary_attributes" Code="340" Type="IDxfItem" AllowMultiples="true" MinVersion="R2007" />
+    <Field Name="alignment_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
+    <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
+    <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Pointer Name="m_text" Code="-1" Type="DxfMText" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" MinVersion="R13" />
+      <WriteField Field="Thickness" />
+      <WriteField Field="Location" />
+      <WriteField Field="TextHeight" />
+      <WriteField Field="Value" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbAttributeDefinition&quot;" MinVersion="R13" />
+      <WriteField Field="Rotation" />
+      <WriteField Field="RelativeXScaleFactor" />
+      <WriteField Field="ObliqueAngle" />
+      <WriteField Field="TextStyleName" />
+      <WriteField Field="TextGenerationFlags" />
+      <WriteField Field="HorizontalTextJustification" />
+      <WriteField Field="SecondAlignmentPoint" />
+      <WriteField Field="Normal" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbAttributeDefinition&quot;" MinVersion="R13" />
+      <WriteField Field="Version" />
+      <WriteField Field="Prompt" />
+      <WriteField Field="TextTag" />
+      <WriteField Field="Flags" />
+      <WriteField Field="FieldLength" />
+      <WriteField Field="VerticalTextJustification" />
+      <WriteField Field="IsLockedInBlock" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbXrecord&quot;" MinVersion="R2007" />
+      <WriteField Field="KeepDuplicateRecords" />
+      <WriteField Field="MTextFlag" />
+      <WriteField Field="IsReallyLocked" />
+      <WriteSpecificValue Code="70" Value="(short)SecondaryAttributes.Count" MinVersion="R2007" />
+      <WriteField Field="SecondaryAttributes" />
+      <WriteField Field="AlignmentPoint" />
+      <WriteField Field="AnnotationScale" />
+      <WriteField Field="XRecordTag" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    ATTRIB
+
+    -->
+  <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB" GenerateReaderFunction="false">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="value" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="version" Code="280" Type="DxfVersion" DefaultValue="DxfVersion::R2010" ReadConverter="try_result!(DxfVersion::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="attribute_tag" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsInvisible" Mask="1" />
+      <Flag Name="IsConstant" Mask="2" />
+      <Flag Name="IsInputVerificationRequired" Mask="4" />
+      <Flag Name="IsAttributePresent" Mask="8" />
+    </Field>
+    <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
+    <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+      <Flag Name="IsTextBackward" Mask="2" />
+      <Flag Name="IsTextUpsideDown" Mask="4" />
+    </Field>
+    <Field Name="horizontal_text_justification" Code="72" Type="DxfHorizontalTextJustification" DefaultValue="DxfHorizontalTextJustification::Left" ReadConverter="try_result!(DxfHorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="74" Type="DxfVerticalTextJustification" DefaultValue="DxfVerticalTextJustification::Baseline" ReadConverter="try_result!(DxfVerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="second_alignment_point" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="m_text_flag" Code="70" Type="DxfMTextFlag" DefaultValue="DxfMTextFlag::MultilineAttribute" ReadConverter="(DxfMTextFlag)" WriteConverter="(short)" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" MinVersion="R2007" />
+    <Pointer Name="secondary_attributes" Code="340" Type="IDxfItem" AllowMultiples="true" MinVersion="R2007" />
+    <Field Name="alignment_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
+    <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
+    <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Pointer Name="m_text" Code="-1" Type="DxfMText" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" MinVersion="R13" />
+      <WriteField Field="Thickness" />
+      <WriteField Field="Location" />
+      <WriteField Field="TextHeight" />
+      <WriteField Field="Value" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbAttribute&quot;" MinVersion="R13" />
+      <WriteField Field="Version" />
+      <WriteField Field="AttributeTag" />
+      <WriteField Field="Flags" />
+      <WriteField Field="FieldLength" />
+      <WriteField Field="Rotation" />
+      <WriteField Field="RelativeXScaleFactor" />
+      <WriteField Field="ObliqueAngle" />
+      <WriteField Field="TextStyleName" />
+      <WriteField Field="TextGenerationFlags" />
+      <WriteField Field="HorizontalTextJustification" />
+      <WriteField Field="VerticalTextJustification" />
+      <WriteField Field="SecondAlignmentPoint" />
+      <WriteField Field="Normal" />
+      <WriteField Field="IsLockedInBlock" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbXrecord&quot;" MinVersion="R2007" />
+      <WriteField Field="KeepDuplicateRecords" />
+      <WriteField Field="MTextFlag" />
+      <WriteField Field="IsReallyLocked" />
+      <WriteSpecificValue Code="70" Value="(short)SecondaryAttributes.Count" MinVersion="R2007" />
+      <WriteField Field="SecondaryAttributes" />
+      <WriteField Field="AlignmentPoint" />
+      <WriteField Field="AnnotationScale" />
+      <WriteField Field="XRecordTag" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    BODY
+
+    -->
+  <Entity Name="Body" SubclassMarker="AcDbModelerGeometry" TypeString="BODY" MinVersion="R13">
+    <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+  </Entity>
+  <!--
+
+    CIRCLE
+
+    -->
+  <Entity Name="Circle" SubclassMarker="AcDbCircle" TypeString="CIRCLE">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="center" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="radius" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    DIMENSION
+
+    -->
+  <!-- the class from which all dimensions inherit -->
+  <Entity Name="DimensionBase" SubclassMarker="AcDbDimension" TypeString="DIMENSION" DefaultConstructor="Internal" CopyConstructor="Protected" HasXData="true">
+    <Field Name="version" Code="280" Type="DxfVersion" DefaultValue="DxfVersion::R2010" ReadConverter="try_result!(DxfVersion::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="block_name" Code="2" Type="String" DefaultValue='String::from("*MODEL_SPACE")' />
+    <Field Name="definition_point1" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="text_mid_point" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="dimension_type" Code="70" Type="DxfDimensionType" DefaultValue="DxfDimensionType::Aligned" ReadConverter="try_result!(DxfDimensionType::from_i16({}))" WriteConverter="HandleDimensionType" />
+    <Field Name="attachment_point" Code="71" Type="DxfAttachmentPoint" DefaultValue="DxfAttachmentPoint::TopLeft" ReadConverter="try_result!(DxfAttachmentPoint::from_i16({}))" WriteConverter="(short)" MinVersion="R2000" />
+    <Field Name="text_line_spacing_style" Code="72" Type="DxfTextLineSpacingStyle" DefaultValue="DxfTextLineSpacingStyle::AtLeast" ReadConverter="try_result!(DxfTextLineSpacingStyle::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="actual_measurement" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" ProtectedSet="true" MinVersion="R2000" />
+    <Field Name="text" Code="1" Type="String" DefaultValue='String::from("&lt;&gt;")' />
+    <Field Name="text_rotation_angle" Code="53" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="horizontal_direction_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue='String::from("STANDARD")' MinVersion="R12" />
+  </Entity>
+  <!-- aligned -->
+  <Entity Name="AlignedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="Aligned">
+    <!--<Field Name="InsertionPoint" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />-->
+    <Field Name="definition_point2" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point3" Code="14" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="14,24,34" />
+  </Entity>
+  <!-- linear and rotated -->
+  <Entity Name="RotatedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="RotatedHorizontalOrVertical">
+    <Field Name="insertion_point" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />
+    <Field Name="definition_point2" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point3" Code="14" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="14,24,34" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="extension_line_angle" Code="52" Type="f64" DefaultValue="0.0" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbAlignedDimension&quot;" MinVersion="R13" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="DefinitionPoint2" />
+      <WriteField Field="DefinitionPoint3" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="ExtensionLineAngle" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbRotatedDimension&quot;" MinVersion="R13" />
+    </WriteOrder>
+  </Entity>
+  <!-- radial -->
+  <Entity Name="RadialDimension" SubclassMarker="AcDbRadialDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="Radius">
+    <Field Name="definition_point2" Code="15" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="15,25,35" />
+    <Field Name="leader_length" Code="40" Type="f64" DefaultValue="0.0" />
+  </Entity>
+  <!-- diametric -->
+  <Entity Name="DiameterDimension" SubclassMarker="AcDbDiametricDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="Diameter">
+    <Field Name="definition_point2" Code="15" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="15,25,35" />
+    <Field Name="leader_length" Code="40" Type="f64" DefaultValue="0.0" />
+  </Entity>
+  <!-- angular, 3 point -->
+  <Entity Name="AngularThreePointDimension" SubclassMarker="AcDb3PointAngularDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="AngularThreePoint">
+    <Field Name="definition_point2" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point3" Code="14" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="14,24,34" />
+    <Field Name="definition_point4" Code="15" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="15,25,35" />
+    <Field Name="definition_point5" Code="16" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="16,26,36" />
+  </Entity>
+  <!-- ordinate -->
+  <Entity Name="OrdinateDimension" SubclassMarker="AcDbOrdinateDimension" TypeString="" BaseClass="DxfDimensionBase" CopyConstructor="Inherited" Tag="Ordinate" MinVersion="R11">
+    <Field Name="definition_point2" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point3" Code="14" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="14,24,34" />
+  </Entity>
+  <!--
+
+    ELLIPSE
+
+    -->
+  <Entity Name="Ellipse" SubclassMarker="AcDbEllipse" TypeString="ELLIPSE" MinVersion="R13">
+    <Field Name="center" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="major_axis" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="minor_axis_ratio" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="start_parameter" Code="41" Type="f64" DefaultValue="0.0" Comment="Ellipse start angle in radians" />
+    <Field Name="end_parameter" Code="42" Type="f64" DefaultValue="::std::f64::consts::PI * 2.0" Comment="Ellipse end angle in radians" />
+  </Entity>
+  <!--
+
+    HATCH
+
+    -->
+  <!-- TODO MinVersion="R14" -->
+  <!--
+
+    HELIX
+
+    -->
+  <Entity Name="Helix" SubclassMarker="AcDbHelix" TypeString="HELIX" MinVersion="R2007">
+    <Field Name="major_release_number" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="maintainence_release_number" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="axis_base_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="start_point" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="axis_vector" Code="12" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="12,22,32" />
+    <Field Name="radius" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="number_of_turns" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="turn_height" Code="42" Type="f64" DefaultValue="0.0" />
+    <Field Name="is_right_handed" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="constraint" Code="280" Type="DxfHelixConstraint" DefaultValue="DxfHelixConstraint::ConstrainTurnHeight" ReadConverter="try_result!(DxfHelixConstraint::from_i16({}))" WriteConverter="(short)" />
+  </Entity>
+  <!--
+
+    IMAGE
+
+    -->
+  <Entity Name="Image" SubclassMarker="AcDbRasterImage" TypeString="IMAGE" MinVersion="R14">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="u_vector" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+    <Field Name="v_vector" Code="12" Type="DxfVector" DefaultValue="DxfVector::y_axis()" CodeOverrides="12,22,32" />
+    <Field Name="image_size" Code="13" Type="DxfVector" DefaultValue="DxfVector::zero()" CodeOverrides="13,23" />
+    <Field Name="image_def_reference" Code="340" Type="String" DefaultValue="String::new()" />
+    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="ShowImage" Mask="1" />
+      <Flag Name="ShowImageWhenNotAligned" Mask="2" />
+      <Flag Name="UseClippingBoundary" Mask="4" />
+      <Flag Name="UseTransparency" Mask="8" />
+    </Field>
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
+    <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
+    <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
+    <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
+    <Field Name="clipping_type" Code="71" Type="DxfImageClippingBoundaryType" DefaultValue="DxfImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(DxfImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
+      <WriteField Field="ClassVersion" />
+      <WriteField Field="Location" />
+      <WriteField Field="UVector" />
+      <WriteField Field="VVector" />
+      <WriteField Field="ImageSize" />
+      <WriteField Field="ImageDefReference" />
+      <WriteField Field="DisplayOptionsFlags" />
+      <WriteField Field="UseClipping" />
+      <WriteField Field="Brightness" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <WriteField Field="ImageDefReactorReference" />
+      <WriteField Field="ClippingType" />
+      <WriteSpecificValue Code="91" Value="ClippingVertices.Count" />
+      <Foreach Field="ClippingVertices">
+        <WriteSpecificValue Code="14" Value="item.X" />
+        <WriteSpecificValue Code="24" Value="item.Y" />
+      </Foreach>
+      <WriteField Field="IsInsideClipping" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    INSERT
+
+    -->
+  <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
+    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" DisableWritingDefault="true" />
+    <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="y_scale_factor" Code="42" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="z_scale_factor" Code="43" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="column_count" Code="70" Type="i16" DefaultValue="1" DisableWritingDefault="true" />
+    <Field Name="row_count" Code="71" Type="i16" DefaultValue="1" DisableWritingDefault="true" />
+    <Field Name="column_spacing" Code="44" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    LEADER
+
+    -->
+  <Entity Name="Leader" SubclassMarker="AcDbLeader" TypeString="LEADER" MinVersion="R13" HasXData="true">
+    <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="path_type" Code="72" Type="DxfLeaderPathType" DefaultValue="DxfLeaderPathType::StraightLineSegments" ReadConverter="try_result!(DxfLeaderPathType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="annotation_type" Code="73" Type="DxfLeaderCreationAnnotationType" DefaultValue="DxfLeaderCreationAnnotationType::NoAnnotation" ReadConverter="try_result!(DxfLeaderCreationAnnotationType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="hookline_direction" Code="74" Type="DxfLeaderHooklineDirection" DefaultValue="DxfLeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="try_result!(DxfLeaderHooklineDirection::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="_vertices_x" Code="10" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_vertices_y" Code="20" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_vertices_z" Code="30" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="override_color" Code="77" Type="DxfColor" DefaultValue="DxfColor::by_block()" DisableWritingDefault="true" ReadConverter="DxfColor::from_raw_value({})" WriteConverter="DxfColor.GetRawValue" />
+    <Field Name="associated_annotation_reference" Code="340" Type="String" DefaultValue="String::new()" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="right" Code="211" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="211,221,231" />
+    <Field Name="block_offset" Code="212" Type="DxfVector" DefaultValue="DxfVector::zero()" CodeOverrides="212,222,232" />
+    <Field Name="annotation_offset" Code="213" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="213,223,233" MinVersion="R14" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbLeader&quot;" />
+      <WriteField Field="DimensionStyleName" />
+      <WriteField Field="UseArrowheads" />
+      <WriteField Field="PathType" />
+      <WriteField Field="AnnotationType" />
+      <WriteField Field="HooklineDirection" />
+      <WriteField Field="UseHookline" />
+      <WriteField Field="TextAnnotationHeight" />
+      <WriteField Field="TextAnnotationWidth" />
+      <WriteSpecificValue Code="76" Value="(short)Vertices.Count" />
+      <Foreach Field="Vertices">
+        <WriteSpecificValue Code="10" Value="item.X" />
+        <WriteSpecificValue Code="20" Value="item.Y" />
+        <WriteSpecificValue Code="30" Value="item.Z" />
+      </Foreach>
+      <WriteField Field="OverrideColor" />
+      <WriteField Field="AssociatedAnnotationReference" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Right" />
+      <WriteField Field="BlockOffset" />
+      <WriteField Field="AnnotationOffset" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    LIGHT
+
+    -->
+  <Entity Name="Light" SubclassMarker="AcDbLight" TypeString="LIGHT" MinVersion="R2007">
+    <Field Name="version_number" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="light_type" Code="70" Type="DxfLightType" DefaultValue="DxfLightType::Distant" ReadConverter="try_result!(DxfLightType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="is_active" Code="290" Type="bool" DefaultValue="true" />
+    <Field Name="plot_glyph" Code="291" Type="bool" DefaultValue="true" />
+    <Field Name="intensity" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="position" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="target_location" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="attentuation_type" Code="72" Type="DxfLightAttenuationType" DefaultValue="DxfLightAttenuationType::None" ReadConverter="try_result!(DxfLightAttenuationType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="use_attenuation_limits" Code="292" Type="bool" DefaultValue="true" />
+    <Field Name="attenuation_start_limit" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="attenuation_end_limit" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="hotspot_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="falloff_angle" Code="51" Type="f64" DefaultValue="0.0" />
+    <Field Name="cast_shadows" Code="293" Type="bool" DefaultValue="true" />
+    <Field Name="shadow_type" Code="73" Type="DxfShadowType" DefaultValue="DxfShadowType::RayTraced" ReadConverter="try_result!(DxfShadowType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="shadow_map_size" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="shadow_map_softness" Code="280" Type="i16" DefaultValue="0" />
+  </Entity>
+  <!--
+
+    LINE
+
+    -->
+  <Entity Name="Line" SubclassMarker="AcDbLine" TypeString="LINE,3DLINE">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="p1" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="p2" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    LWPOLYLINE
+
+    -->
+  <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14" GenerateReaderFunction="false">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClosed" Mask="1" />
+      <Flag Name="IsPLineGen" Mask="128" />
+    </Field>
+    <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <!-- <Field Name="vertices" Code="10" Type="DxfLwPolylineVertex" DefaultValue="null" AllowMultiples="true" /> -->
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbPolyline&quot;" />
+      <WriteSpecificValue Code="90" Value="Vertices.Count" />
+      <WriteField Field="Flags" />
+      <WriteField Field="ConstantWidth" />
+      <WriteSpecificValue Code="38" Value="Elevation" DontWriteIfValueIs="0.0" />
+      <WriteField Field="Thickness" />
+      <Foreach Field="Vertices">
+        <WriteSpecificValue Code="10" Value="item.X" />
+        <WriteSpecificValue Code="20" Value="item.Y" />
+        <WriteSpecificValue Code="91" Value="item.Identifier" MinVersion="R2013" />
+        <WriteSpecificValue Code="40" Value="item.StartingWidth" DontWriteIfValueIs="0.0" />
+        <WriteSpecificValue Code="41" Value="item.EndingWidth" DontWriteIfValueIs="0.0" />
+        <WriteSpecificValue Code="42" Value="item.Bulge" DontWriteIfValueIs="0.0" />
+      </Foreach>
+      <WriteField Field="ExtrusionDirection" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    MESH
+
+    -->
+  <!-- TODO MinVersion=R2011 -->
+  <!--
+
+    MLINE
+
+    -->
+  <Entity Name="MLine" SubclassMarker="AcDbMline" TypeString="MLINE" MinVersion="R13">
+    <Field Name="style_name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Pointer Name="style" Code="340" Type="IDxfItem" />
+    <Field Name="scale_factor" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="justification" Code="70" Type="DxfJustification" DefaultValue="DxfJustification::Top" ReadConverter="try_result!(DxfJustification::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="HasAtLeastOneVertex" Mask="1" />
+      <Flag Name="IsClosed" Mask="2" />
+      <Flag Name="SuppressStartCaps" Mask="4" />
+      <Flag Name="SuppressEndCaps" Mask="8" />
+    </Field>
+    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="start_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="210,220,230" DisableWritingDefault="true" />
+    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_x" Code="12" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_y" Code="22" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_z" Code="32" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_x" Code="13" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="parameters" Code="41" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbMline&quot;" />
+      <WriteField Field="StyleName" />
+      <WriteField Field="Style" />
+      <WriteField Field="ScaleFactor" />
+      <WriteField Field="Justification" />
+      <WriteField Field="Flags" />
+      <WriteSpecificValue Code="72" Value="(short)Vertices.Count" />
+      <WriteField Field="StyleElementCount" />
+      <WriteField Field="StartPoint" />
+      <WriteField Field="Normal" />
+      <Foreach Field="Vertices">
+        <WriteSpecificValue Code="10" Value="item.X" />
+        <WriteSpecificValue Code="20" Value="item.Y" />
+        <WriteSpecificValue Code="30" Value="item.Z" />
+      </Foreach>
+      <Foreach Field="SegmentDirections">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="21" Value="item.Y" />
+        <WriteSpecificValue Code="31" Value="item.Z" />
+      </Foreach>
+      <Foreach Field="MiterDirections">
+        <WriteSpecificValue Code="12" Value="item.X" />
+        <WriteSpecificValue Code="22" Value="item.Y" />
+        <WriteSpecificValue Code="32" Value="item.Z" />
+      </Foreach>
+      <WriteSpecificValue Code="74" Value="(short?)Parameters?.Count ?? default(short)" />
+      <WriteField Field="Parameters" />
+      <WriteSpecificValue Code="75" Value="(short?)AreaFillParameters?.Count ?? default(short)" />
+      <WriteField Field="AreaFillParameters" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    MLEADER
+
+    -->
+  <!-- TODO MinVersion=R2007 -->
+  <!--
+
+    MTEXT
+
+    -->
+  <Entity Name="MText" SubclassMarker="AcDbMText" TypeString="MTEXT" HasXData="true" GenerateReaderFunction="false" MinVersion="R13">
+    <Field Name="insertion_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="initial_text_height" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="reference_rectangle_width" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="attachment_point" Code="71" Type="DxfAttachmentPoint" DefaultValue="DxfAttachmentPoint::TopLeft" ReadConverter="try_result!(DxfAttachmentPoint::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="drawing_direction" Code="72" Type="DxfDrawingDirection" DefaultValue="DxfDrawingDirection::LeftToRight" ReadConverter="try_result!(DxfDrawingDirection::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="extended_text" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="x_axis_direction" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+    <Field Name="horizontal_width" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="vertical_height" Code="43" Type="f64" DefaultValue="1.0" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="line_spacing_style" Code="73" Type="DxfMTextLineSpacingStyle" DefaultValue="DxfMTextLineSpacingStyle::AtLeast" ReadConverter="try_result!(DxfMTextLineSpacingStyle::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="line_spacing_factor" Code="44" Type="f64" DefaultValue="1.0" />
+    <Field Name="background_fill_setting" Code="90" Type="DxfBackgroundFillSetting" DefaultValue="DxfBackgroundFillSetting::Off" ReadConverter="try_result!(DxfBackgroundFillSetting::from_i32({}))" WriteConverter="(int)" />
+    <Field Name="background_color_r_g_b" Code="420" Type="i32" DefaultValue="0" />
+    <Field Name="background_color_name" Code="430" Type="String" DefaultValue="String::new()" />
+    <Field Name="fill_box_scale" Code="45" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="background_fill_color" Code="63" Type="DxfColor" DefaultValue="DxfColor::by_layer()" ReadConverter="DxfColor::from_raw_value({})" WriteConverter="DxfColor.GetRawValue" />
+    <Field Name="background_fill_color_transparency" Code="441" Type="i32" DefaultValue="0" />
+    <Field Name="column_type" Code="75" Type="i16" DefaultValue="0" />
+    <Field Name="column_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="is_column_flow_reversed" Code="78" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="column_width" Code="48" Type="f64" DefaultValue="0.0" />
+    <Field Name="column_gutter" Code="49" Type="f64" DefaultValue="0.0" />
+    <Field Name="column_heights" Code="50" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbMText&quot;" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="InitialTextHeight" />
+      <WriteField Field="ReferenceRectangleWidth" />
+      <WriteField Field="AttachmentPoint" />
+      <WriteField Field="DrawingDirection" />
+      <WriteField Field="ExtendedText" />
+      <WriteField Field="Text" />
+      <WriteField Field="TextStyleName" />
+      <WriteField Field="ExtrusionDirection" />
+      <WriteField Field="XAxisDirection" />
+      <WriteField Field="HorizontalWidth" />
+      <WriteField Field="VerticalHeight" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="LineSpacingStyle" />
+      <WriteField Field="LineSpacingFactor" />
+      <WriteField Field="BackgroundFillSetting" />
+      <WriteField Field="BackgroundColorRGB" />
+      <WriteField Field="BackgroundColorName" />
+      <WriteField Field="FillBoxScale" />
+      <WriteField Field="BackgroundFillColor" />
+      <WriteField Field="BackgroundFillColorTransparency" />
+      <WriteField Field="ColumnType" />
+      <WriteField Field="ColumnCount" />
+      <WriteField Field="IsColumnFlowReversed" />
+      <WriteField Field="IsColumnAutoHeight" />
+      <WriteField Field="ColumnWidth" />
+      <WriteField Field="ColumnGutter" />
+      <WriteSpecificValue Code="50" Value="ColumnHeights?.Count ?? default(double)" />
+      <WriteField Field="ColumnHeights" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    OLEFRAME
+
+    -->
+  <Entity Name="OleFrame" SubclassMarker="AcDbOleFrame" TypeString="OLEFRAME" MinVersion="R13">
+    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbOleFrame&quot;" />
+      <WriteField Field="VersionNumber" />
+      <WriteField Field="BinaryDataLength" />
+      <Foreach Field="BinaryDataStrings">
+        <WriteSpecificValue Code="310" Value="item" />
+      </Foreach>
+      <WriteSpecificValue Code="1" Value="&quot;OLE&quot;" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    OLE2FRAME
+
+    -->
+  <Entity Name="Ole2Frame" SubclassMarker="AcDbOle2Frame" TypeString="OLE2FRAME" MinVersion="R14">
+    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="upper_left_corner" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="lower_right_corner" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="object_type" Code="71" Type="DxfOleObjectType" DefaultValue="DxfOleObjectType::Static" ReadConverter="try_result!(DxfOleObjectType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="tile_mode" Code="72" Type="DxfTileModeDescriptor" DefaultValue="DxfTileModeDescriptor::InTiledViewport" ReadConverter="try_result!(DxfTileModeDescriptor::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbOle2Frame&quot;" />
+      <WriteField Field="VersionNumber" />
+      <WriteField Field="Description" />
+      <WriteField Field="UpperLeftCorner" />
+      <WriteField Field="LowerRightCorner" />
+      <WriteField Field="ObjectType" />
+      <WriteField Field="TileMode" />
+      <WriteField Field="BinaryDataLength" />
+      <Foreach Field="BinaryDataStrings">
+        <WriteSpecificValue Code="310" Value="item" />
+      </Foreach>
+      <WriteSpecificValue Code="1" Value="&quot;OLE&quot;" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    POINT
+
+    -->
+  <Entity Name="ModelPoint" SubclassMarker="AcDbPoint" TypeString="POINT">
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="angle" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+  </Entity>
+  <!--
+
+    POLYLINE
+
+    -->
+  <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true">
+    <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" MaxVersion="R13" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+      <Flag Name="IsClosed" Mask="1" />
+      <Flag Name="CurveFitVerticiesAdded" Mask="2" />
+      <Flag Name="SplineFitVerticiesAdded" Mask="4" />
+      <Flag Name="Is3DPolyline" Mask="8" />
+      <Flag Name="Is3DPolygonMesh" Mask="16" />
+      <Flag Name="IsPolygonMeshClosedInNDirection" Mask="32" />
+      <Flag Name="IsPolyfaceMesh" Mask="64" />
+      <Flag Name="IsLinetypePatternGeneratedContinuously" Mask="128" />
+    </Field>
+    <Field Name="default_starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="default_ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="polygon_mesh_m_vertex_count" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="polygon_mesh_n_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="smooth_surface_m_density" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="smooth_surface_n_density" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="surface_type" Code="75" Type="DxfPolylineCurvedAndSmoothSurfaceType" DefaultValue="DxfPolylineCurvedAndSmoothSurfaceType::None" ReadConverter="try_result!(DxfPolylineCurvedAndSmoothSurfaceType::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    RAY
+
+    -->
+  <Entity Name="Ray" SubclassMarker="AcDbRay" TypeString="RAY" MinVersion="R13">
+    <Field Name="start_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="unit_direction_vector" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+  </Entity>
+  <!--
+
+    REGION
+
+    -->
+  <Entity Name="Region" SubclassMarker="AcDbModelerGeometry" TypeString="REGION" MinVersion="R13">
+    <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+  </Entity>
+  <!--
+
+    RTEXT
+
+    -->
+  <Entity Name="RText" SubclassMarker="RText" TypeString="RTEXT" MinVersion="R2000" MaxVersion="R2000">
+    <Field Name="insertion_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="text_height" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="text_style" Code="7" Type="String" DefaultValue='String::from("STANDARD")' />
+    <Field Name="type_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsExpression" Mask="1" />
+      <Flag Name="IsInlineMTextSequencesEnabled" Mask="2" />
+    </Field>
+    <Field Name="contents" Code="1" Type="String" DefaultValue="String::new()" />
+  </Entity>
+  <!--
+
+    SECTION
+
+    -->
+  <Entity Name="EntitySection" SubclassMarker="AcDbSection" TypeString="SECTION" MinVersion="R2007">
+    <Field Name="state" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="flags" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="vertical_direction" Code="10" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="10,20,30" />
+    <Field Name="top_height" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="bottom_height" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="indicator_transparency" Code="70" Type="i16" DefaultValue="0" />
+    <Field Name="indicator_color" Code="63" Type="DxfColor" DefaultValue="DxfColor::by_layer()" ReadConverter="DxfColor::from_raw_value({})" WriteConverter="DxfColor.GetRawValue" />
+    <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
+    <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_back_line_vertex_x" Code="12" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_y" Code="22" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_z" Code="32" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Pointer Name="geometry_settings" Code="360" Type="IDxfItem" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbSection&quot;" />
+      <WriteField Field="State" />
+      <WriteField Field="Flags" />
+      <WriteField Field="Name" />
+      <WriteField Field="VerticalDirection" />
+      <WriteField Field="TopHeight" />
+      <WriteField Field="BottomHeight" />
+      <WriteField Field="IndicatorTransparency" />
+      <WriteField Field="IndicatorColor" />
+      <WriteField Field="IndicatorColorName" />
+      <WriteSpecificValue Code="92" Value="Vertices.Count" />
+      <Foreach Field="Vertices">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="21" Value="item.Y" />
+        <WriteSpecificValue Code="31" Value="item.Z" />
+      </Foreach>
+      <WriteSpecificValue Code="93" Value="BackLineVertices.Count" />
+      <Foreach Field="BackLineVertices">
+        <WriteSpecificValue Code="12" Value="item.X" />
+        <WriteSpecificValue Code="22" Value="item.Y" />
+        <WriteSpecificValue Code="32" Value="item.Z" />
+      </Foreach>
+      <WriteField Field="GeometrySettings" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    SEQEND
+
+    -->
+  <Entity Name="Seqend" SubclassMarker="null" TypeString="SEQEND">
+    <!-- empty entity -->
+  </Entity>
+  <!--
+
+    SHAPE
+
+    -->
+  <Entity Name="Shape" SubclassMarker="AcDbShape" TypeString="SHAPE">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="size" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    SOLID
+
+    -->
+  <Entity Name="Solid" SubclassMarker="AcDbTrace" TypeString="SOLID">
+    <Field Name="first_corner" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="second_corner" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="third_corner" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />
+    <Field Name="fourth_corner" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    SPLINE
+
+    -->
+  <Entity Name="Spline" SubclassMarker="AcDbSpline" TypeString="SPLINE" MinVersion="R13">
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClosed" Mask="1" />
+      <Flag Name="IsPeriodic" Mask="2" />
+      <Flag Name="IsRational" Mask="4" />
+      <Flag Name="IsPlanar" Mask="8" />
+      <Flag Name="IsLinear" Mask="16" />
+    </Field>
+    <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
+    <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
+    <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
+    <Field Name="start_tangent" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />
+    <Field Name="end_tangent" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="knot_values" Code="40" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="weight" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="_control_point_x" Code="10" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_control_point_y" Code="20" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_control_point_z" Code="30" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbSpline&quot;" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Flags" />
+      <WriteField Field="DegreeOfCurve" />
+      <WriteSpecificValue Code="72" Value="(short?)KnotValues?.Count ?? default(short)" />
+      <WriteSpecificValue Code="73" Value="(short?)ControlPoints?.Count ?? default(short)" />
+      <WriteSpecificValue Code="74" Value="(short?)FitPoints?.Count ?? default(short)" />
+      <WriteField Field="KnotTolerance" />
+      <WriteField Field="ControlPointTolerance" />
+      <WriteField Field="FitTolerance" />
+      <WriteField Field="StartTangent" />
+      <WriteField Field="EndTangent" />
+      <WriteField Field="KnotValues" />
+      <WriteField Field="Weight" />
+      <Foreach Field="ControlPoints">
+        <WriteSpecificValue Code="10" Value="item.X" />
+        <WriteSpecificValue Code="20" Value="item.Y" />
+        <WriteSpecificValue Code="30" Value="item.Z" />
+      </Foreach>
+      <Foreach Field="FitPoints">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="21" Value="item.Y" />
+        <WriteSpecificValue Code="31" Value="item.Z" />
+      </Foreach>
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    SURFACE
+
+    -->
+  <!-- TODO MinVersion=R2007 -->
+  <!--
+
+    TABLE
+
+    -->
+  <!-- TODO MinVersion=R2005 -->
+  <!--
+
+    TEXT
+
+    -->
+  <Entity Name="Text" SubclassMarker="AcDbText" TypeString="TEXT">
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="value" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+      <Flag Name="IsTextBackward" Mask="2" />
+      <Flag Name="IsTextUpsideDown" Mask="4" />
+    </Field>
+    <Field Name="horizontal_text_justification" Code="72" Type="DxfHorizontalTextJustification" DefaultValue="DxfHorizontalTextJustification::Left" ReadConverter="try_result!(DxfHorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="second_alignment_point" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" DisableWritingDefault="true" CodeOverrides="11,21,31" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="vertical_text_justification" Code="73" Type="DxfVerticalTextJustification" DefaultValue="DxfVerticalTextJustification::Baseline" ReadConverter="try_result!(DxfVerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" />
+      <WriteField Field="Thickness" />
+      <WriteField Field="Location" />
+      <WriteField Field="TextHeight" />
+      <WriteField Field="Value" />
+      <WriteField Field="Rotation" />
+      <WriteField Field="RelativeXScaleFactor" />
+      <WriteField Field="ObliqueAngle" />
+      <WriteField Field="TextStyleName" />
+      <WriteField Field="TextGenerationFlags" />
+      <WriteField Field="HorizontalTextJustification" />
+      <WriteField Field="SecondAlignmentPoint" />
+      <WriteField Field="Normal" />
+      <WriteField Field="VerticalTextJustification" />
+      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" />
+    </WriteOrder>
+  </Entity>
+  <!--
+
+    TOLERANCE
+
+    -->
+  <Entity Name="Tolerance" SubclassMarker="AcDbFcf" TypeString="TOLERANCE" MinVersion="R13">
+    <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="insertion_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="display_text" Code="1" Type="String" DefaultValue="String::new()" MinVersion="R2000" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="direction_vector" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+  </Entity>
+  <!--
+
+    TRACE
+
+    -->
+  <Entity Name="Trace" SubclassMarker="AcDbTrace" TypeString="TRACE">
+    <Field Name="first_corner" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="second_corner" Code="11" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="11,21,31" />
+    <Field Name="third_corner" Code="12" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="12,22,32" />
+    <Field Name="fourth_corner" Code="13" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="13,23,33" />
+    <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+  </Entity>
+  <!--
+
+    UNDERLAY
+
+    -->
+  <Entity Name="Underlay" SubclassMarker="AcDbUnderlayReference" TypeString="UNDERLAY" DefaultConstructor="Internal" CopyConstructor="Protected" MinVersion="R2007">
+    <Pointer Name="object" Code="340" Type="IDxfItem" />
+    <Field Name="insertion_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="y_scale" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="DxfVector" DefaultValue="DxfVector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClippingOn" Mask="1" />
+      <Flag Name="IsUnderlayOn" Mask="2" />
+      <Flag Name="IsMonochrome" Mask="4" />
+      <Flag Name="AdjustForBackground" Mask="8" />
+      <Flag Name="IsClipInsideMode" Mask="16" />
+    </Field>
+    <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
+    <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
+    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
+      <WriteField Field="Object" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="XScale" />
+      <WriteField Field="YScale" />
+      <WriteField Field="ZScale" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Flags" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <Foreach Field="BoundaryPoints">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="12" Value="item.Y" />
+      </Foreach>
+    </WriteOrder>
+  </Entity>
+  <Entity Name="DgnUnderlay" SubclassMarker="null" TypeString="DGNUNDERLAY" BaseClass="DxfUnderlay" CopyConstructor="Inherited" Tag="DGN" />
+  <Entity Name="DwfUnderlay" SubclassMarker="null" TypeString="DWFUNDERLAY" BaseClass="DxfUnderlay" CopyConstructor="Inherited" Tag="DWF" />
+  <Entity Name="PdfUnderlay" SubclassMarker="null" TypeString="PDFUNDERLAY" BaseClass="DxfUnderlay" CopyConstructor="Inherited" Tag="PDF" />
+  <!--
+
+    VERTEX
+
+    -->
+  <Entity Name="Vertex" SubclassMarker="AcDbVertex" TypeString="VERTEX">
+    <Field Name="location" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="bulge" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsExtraCreatedByCurveFit" Mask="1" />
+      <Flag Name="IsCurveFitTangentDefined" Mask="2" />
+      <Flag Name="IsSplineVertexCreatedBySplineFitting" Mask="8" />
+      <Flag Name="IsSplineFrameControlPoint" Mask="16" />
+      <Flag Name="Is3DPolylineVertex" Mask="32" />
+      <Flag Name="Is3DPolygonMesh" Mask="64" />
+      <Flag Name="IsPolyfaceMeshVertex" Mask="128" />
+    </Field>
+    <Field Name="curve_fit_tangent_direction" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="polyface_mesh_vertex_index1" Code="71" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index2" Code="72" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index3" Code="73" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index4" Code="74" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
+    <Field Name="identifier" Code="91" Type="i32" DefaultValue="0" MinVersion="R2010" />
+  </Entity>
+  <!--
+
+    VIEWPORT
+
+    -->
+  <!-- TODO MinVersion="R12" -->
+  <!--
+
+    WIPEOUT
+
+    -->
+  <Entity Name="Wipeout" SubclassMarker="AcDbWipeout" TypeString="WIPEOUT" BaseClass="DxfImage" MinVersion="R2000">
+    <!-- wholly inherits from IMAGE -->
+  </Entity>
+  <!--
+
+    XLINE
+
+    -->
+  <Entity Name="XLine" SubclassMarker="AcDbXline" TypeString="XLINE" MinVersion="R13">
+    <Field Name="first_point" Code="10" Type="DxfPoint" DefaultValue="DxfPoint::origin()" CodeOverrides="10,20,30" />
+    <Field Name="unit_direction_vector" Code="11" Type="DxfVector" DefaultValue="DxfVector::x_axis()" CodeOverrides="11,21,31" />
+  </Entity>
+</Spec>

@@ -9,17 +9,31 @@ Open a DXF file:
 
 ``` rust
 extern crate dxf;
-use dxf::dxf_file::*;
+use dxf::*;
+use dxf::entities::*;
 
 use std::fs::File;
+use std::io::BufReader;
 use std::path::Path;
 
-fun main() {
+fn main() {
     let path = Path::new("path/to/file.dxf");
     let file = File::open(&path).ok().unwrap();
+    let file = BufReader::new(file);
     let dxf = DxfFile::load(file).ok().unwrap();
-    // ...
+    for e in dxf.entities {
+        match e.specific {
+            EntityType::Circle{ ref center, ref radius, .. } => {
+                // do something with the circle
+            },
+            EntityType::Line{ ref p1, ref p2, .. } => {
+                // do something with the line
+            },
+            _ => (),
+        }
+    }
 }
+
 ```
 
 ## DXF Reference

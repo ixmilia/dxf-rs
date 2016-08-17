@@ -26,6 +26,13 @@ pub fn long_value(value: &DxfCodePairValue) -> i64 {
     }
 }
 
+pub fn int_value(value: &DxfCodePairValue) -> i32 {
+    match value {
+        &DxfCodePairValue::Integer(i) => i,
+        _ => panic!("this should never have happened, please file a bug"),
+    }
+}
+
 pub fn double_value(value: &DxfCodePairValue) -> f64 {
     match value {
         &DxfCodePairValue::Double(f) => f,

@@ -4,8 +4,10 @@
 
 pub mod enums;
 pub mod header;
+pub mod entities;
 
 use self::header::*;
+use self::entities::*;
 
 use std::io;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
@@ -142,7 +144,7 @@ impl<T: Write> DxfCodePairAsciiWriter<T> {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                     DxfHeader
 ////////////////////////////////////////////////////////////////////////////////
-// implementation is in `header_generated.rs`
+// implementation is in `header.rs`
 impl DxfHeader {
     pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<DxfHeader>
         where I: Iterator<Item = io::Result<DxfCodePair>>
@@ -166,7 +168,7 @@ impl DxfHeader {
                     }
                 },
                 Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unable to read header")),
-                _ => break
+                _ => break,
             }
         }
 
@@ -184,10 +186,63 @@ impl DxfHeader {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//                                                                        Entity
+////////////////////////////////////////////////////////////////////////////////
+// implementation is in `entity.rs`
+impl Entity {
+    pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
+        where I: Iterator<Item = io::Result<DxfCodePair>>
+    {
+        // first code pair must be 0/entity-type
+        let entity_type = match peekable.peek() {
+            Some(&Ok(DxfCodePair { code: 0, .. })) => {
+                let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
+                let type_string = string_value(&pair.value);
+                if type_string == "ENDSEC" {
+                    return Ok(None);
+                }
+
+                match EntityType::from_type_string(type_string.as_str()) {
+                    Some(e) => e,
+                    None => return Ok(None), // TODO: swallow unsupported entity before returning
+                }
+            },
+            Some(&Ok(_)) => {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC"));
+            },
+            Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
+            None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+        };
+
+        let mut entity = Entity::new(entity_type);
+        loop {
+            match peekable.peek() {
+                Some(&Ok(DxfCodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
+                Some(&Ok(_)) => {
+                    let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
+                    try!(entity.apply_code_pair(&pair));
+                },
+                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
+                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+            }
+        }
+
+        Ok(Some(entity))
+    }
+    fn apply_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+        if !try!(self.specific.try_apply_code_pair(&pair)) {
+            try!(self.apply_individual_pair(&pair));
+        }
+        Ok(())
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //                                                                       DxfFile
 ////////////////////////////////////////////////////////////////////////////////
 pub struct DxfFile {
     pub header: DxfHeader,
+    pub entities: Vec<Entity>,
 }
 
 // Used to turn Result<T> into ::Result<T>
@@ -204,6 +259,7 @@ impl DxfFile {
     pub fn new() -> DxfFile {
         DxfFile {
             header: DxfHeader::new(),
+            entities: vec![],
         }
     }
     pub fn read<T>(reader: &mut T) -> io::Result<DxfFile>
@@ -262,6 +318,15 @@ impl DxfFile {
                             let pair = peekable.next().unwrap().ok().unwrap(); // consume 2/<section-name>.  unwrap() and ok() calls are valid due to the match above
                             match string_value(&pair.value).as_str() {
                                 "HEADER" => file.header = try!(header::DxfHeader::read(peekable)),
+                                "ENTITIES" => {
+                                    loop {
+                                        match Entity::read(peekable) {
+                                            Ok(Some(e)) => file.entities.push(e),
+                                            Ok(None) => break,
+                                            Err(e) => return Err(e),
+                                        }
+                                    }
+                                },
                                 // TODO: read other sections
                                 _ => DxfFile::swallow_section(peekable),
                             }
@@ -307,7 +372,7 @@ impl DxfFile {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                      DxfPoint
 ////////////////////////////////////////////////////////////////////////////////
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DxfPoint {
     x: f64,
     y: f64,
@@ -340,6 +405,7 @@ impl DxfPoint {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                     DxfVector
 ////////////////////////////////////////////////////////////////////////////////
+#[derive(Clone, Debug, PartialEq)]
 pub struct DxfVector {
     x: f64,
     y: f64,
@@ -381,6 +447,7 @@ impl DxfVector {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                      DxfColor
 ////////////////////////////////////////////////////////////////////////////////
+#[derive(Clone)]
 pub struct DxfColor {
     raw_value: i16,
 }

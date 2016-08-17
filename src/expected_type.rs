@@ -1,6 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-enum ExpectedType {
+pub enum ExpectedType {
     Boolean,
     Integer,
     Long,
@@ -9,7 +9,7 @@ enum ExpectedType {
     Str,
 }
 
-fn get_expected_type(code: i32) -> ::std::io::Result<ExpectedType> {
+pub fn get_expected_type(code: i32) -> ::std::io::Result<ExpectedType> {
     match code {
         0...9 => Ok(ExpectedType::Str),
         10...39 => Ok(ExpectedType::Double),
@@ -54,7 +54,7 @@ fn get_expected_type(code: i32) -> ::std::io::Result<ExpectedType> {
 }
 
 #[allow(dead_code)] // only used in build.rs
-fn get_reader_function(typ: &ExpectedType) -> &str {
+pub fn get_reader_function(typ: &ExpectedType) -> &str {
     match typ {
         &ExpectedType::Boolean => "bool_value",
         &ExpectedType::Integer => "int_value",
@@ -66,7 +66,7 @@ fn get_reader_function(typ: &ExpectedType) -> &str {
 }
 
 #[allow(dead_code)] // only used in build.rs
-fn get_code_pair_type(typ: ExpectedType) -> String {
+pub fn get_code_pair_type(typ: ExpectedType) -> String {
     match typ {
         ExpectedType::Boolean => String::from("bool"),
         ExpectedType::Integer => String::from("int"),
