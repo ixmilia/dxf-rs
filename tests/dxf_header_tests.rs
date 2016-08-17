@@ -159,3 +159,29 @@ fn write_header_flags() {
     file.header.set_parallel_snap(false);
     assert_contains(&file, vec!["  9", "$OSMODE", " 70", "12"].join("\r\n"));
 }
+
+#[test]
+fn read_variable_with_different_codes() {
+    // read $CMLSTYLE as code 7
+    let file = from_section("HEADER", vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n").as_str());
+    assert_eq!("cml-style-7", file.header.current_multiline_style);
+
+    // read $CMLSTYLE as code 2
+    let file = from_section("HEADER", vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n").as_str());
+    assert_eq!("cml-style-2", file.header.current_multiline_style);
+}
+
+#[test]
+fn write_variable_with_different_codes() {
+    // R13 writes $CMLSTYLE as a code 7
+    let mut file = DxfFile::new();
+    file.header.version = DxfAcadVersion::R13;
+    file.header.current_multiline_style = String::from("cml-style-7");
+    assert_contains(&file, vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"));
+
+    // R14+ writes $CMLSTYLE as a code 2
+    let mut file = DxfFile::new();
+    file.header.version = DxfAcadVersion::R14;
+    file.header.current_multiline_style = String::from("cml-style-2");
+    assert_contains(&file, vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"));
+}

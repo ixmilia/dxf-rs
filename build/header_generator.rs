@@ -1,11 +1,12 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate xml;
+use self::xml::reader::{EventReader, XmlEvent};
 
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
-use self::xml::reader::{EventReader, XmlEvent};
+use std::iter::Iterator;
 
 include!("../src/expected_type.rs");
 
@@ -150,21 +151,38 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
     fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &DxfCodePair) -> io::Result<()> {\n");
     fun.push_str("        match variable {\n");
     for v in variables {
-        if !seen_fields.contains(&v.field) { // TODO: handle duplicates
+        if !seen_fields.contains(&v.field) {
             seen_fields.insert(&v.field);
-            fun.push_str(format!("            \"${name}\" => {{ ", name=v.name).as_str());
-            if v.code < 0 {
-                fun.push_str(format!("try!(self.{field}.set(&pair));", field=v.field).as_str());
+            fun.push_str(format!("            \"${name}\" => {{", name=v.name).as_str());
+            let variables_with_name: Vec<&HeaderVariable> = variables.iter().filter(|&vv| vv.name == v.name).collect();
+            if variables_with_name.len() == 1 {
+                // only one variable with that name
+                fun.push_str(" ");
+                if v.code < 0 {
+                    fun.push_str(format!("try!(self.{field}.set(&pair));", field=v.field).as_str());
+                }
+                else {
+                    let read_cmd = get_read_command(&v);
+                    fun.push_str(format!("try!(verify_code({code}, pair.code)); self.{field} = {cmd};", code=v.code, field=v.field, cmd=read_cmd).as_str());
+                }
+
+                fun.push_str(" ");
             }
             else {
-                let expected_type = get_expected_type(v.code).ok().unwrap();
-                let reader_fun = get_reader_function(&expected_type);
-                let converter = if v.read_converter.is_empty() { "{}" } else { v.read_converter.as_str() };
-                let read_cmd = converter.replace("{}", format!("{}(&pair.value)", reader_fun).as_str());
-                fun.push_str(format!("try!(verify_code({code}, pair.code)); self.{field} = {cmd};", code=v.code, field=v.field, cmd=read_cmd).as_str());
+                // multiple variables with that name
+                fun.push_str("\n");
+                fun.push_str("                match pair.code {\n");
+                let expected_codes: Vec<i32> = variables_with_name.iter().map(|&vv| vv.code).collect();
+                for v in variables_with_name {
+                    let read_cmd = get_read_command(&v);
+                    fun.push_str(format!("                    {code} => self.{field} = {cmd},\n", code=v.code, field=v.field, cmd=read_cmd).as_str());
+                }
+                fun.push_str(format!("                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!(\"expected code {:?}, got {{}}\", pair.code))),\n", expected_codes).as_str());
+                fun.push_str("                }\n");
+                fun.push_str("            ");
             }
 
-            fun.push_str(" },\n");
+            fun.push_str("},\n");
         }
     }
     fun.push_str("            _ => (),\n");
@@ -172,6 +190,13 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
     fun.push_str("\n");
     fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
+}
+
+fn get_read_command(variable: &HeaderVariable) -> String {
+    let expected_type = get_expected_type(variable.code).ok().unwrap();
+    let reader_fun = get_reader_function(&expected_type);
+    let converter = if variable.read_converter.is_empty() { "{}" } else { variable.read_converter.as_str() };
+    converter.replace("{}", format!("{}(&pair.value)", reader_fun).as_str())
 }
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
