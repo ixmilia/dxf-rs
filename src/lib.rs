@@ -3,9 +3,9 @@
 #[macro_use] extern crate enum_primitive;
 
 pub mod enums;
-mod header_generated;
+pub mod header;
 
-use self::header_generated::*;
+use self::header::*;
 
 use std::io;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
@@ -261,7 +261,7 @@ impl DxfFile {
                         Some(&Ok(DxfCodePair { code: 2, value: DxfCodePairValue::Str(_) })) => {
                             let pair = peekable.next().unwrap().ok().unwrap(); // consume 2/<section-name>.  unwrap() and ok() calls are valid due to the match above
                             match string_value(&pair.value).as_str() {
-                                "HEADER" => file.header = try!(header_generated::DxfHeader::read(peekable)),
+                                "HEADER" => file.header = try!(header::DxfHeader::read(peekable)),
                                 // TODO: read other sections
                                 _ => DxfFile::swallow_section(peekable),
                             }

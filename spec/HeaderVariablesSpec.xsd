@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <xs:schema id="DwgSpec"
     targetNamespace="http://IxMilia.com/Dxf/HeaderVariablesSpec"
@@ -50,7 +50,7 @@
             <xs:attribute name="Name" type="xs:string" use="required" />
             <xs:attribute name="Code" type="xs:int" use="required" />
             <xs:attribute name="Type" type="xs:string" use="required" />
-            <xs:attribute name="Property" type="xs:string" use="required" />
+            <xs:attribute name="Field" type="xs:string" use="required" />
             <xs:attribute name="DefaultValue" type="xs:string" use="required" />
             <xs:attribute name="ReadConverter" type="xs:string" use="optional" />
             <xs:attribute name="WriteConverter" type="xs:string" use="optional" />

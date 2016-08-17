@@ -53,17 +53,26 @@ macro_rules! try_result {
     generate_add_code_pairs(&mut fun, &variables);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/header_generated.rs").ok().unwrap();
+    let mut file = File::create("src/header.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 
 fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
+    fun.push_str("/// Contains common properties for the DXF file.\n");
     fun.push_str("pub struct DxfHeader {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
             seen_fields.insert(&v.field);
-            fun.push_str(format!("    pub {field}: {typ}, // ${name}\n", field=v.field, typ=v.typ, name=v.name).as_str());
+            let mut comment = String::from(format!("The ${} header variable.  {}", v.name, v.comment));
+            if !v.min_version.is_empty() {
+                comment.push_str(format!("  Minimum AutoCAD version: {}.", v.min_version).as_str());
+            }
+            if !v.max_version.is_empty() {
+                comment.push_str(format!("  Maximum AutoCAD version: {}.", v.max_version).as_str());
+            }
+            fun.push_str(format!("    /// {}\n", comment).as_str());
+            fun.push_str(format!("    pub {field}: {typ},\n", field=v.field, typ=v.typ).as_str());
         }
     }
 
@@ -73,6 +82,7 @@ fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_new(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
+    fun.push_str("/// Creates a new `DxfHeader`.\n");
     fun.push_str("    pub fn new() -> DxfHeader {\n");
     fun.push_str("        DxfHeader {\n");
     for v in variables {
@@ -95,9 +105,18 @@ fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
                 fun.push_str(format!("    // {} flags\n", v.field).as_str());
             }
             for f in &v.flags {
+                let mut comment = format!("{}", f.comment);
+                if !v.min_version.is_empty() {
+                    comment.push_str(format!("  Minimum AutoCAD version: {}.", v.min_version).as_str());
+                }
+                if !v.max_version.is_empty() {
+                    comment.push_str(format!("  Maximum AutoCAD version: {}.", v.max_version).as_str());
+                }
+                fun.push_str(format!("    /// {}\n", comment).as_str());
                 fun.push_str(format!("    pub fn get_{flag}(&self) -> bool {{\n", flag=f.name).as_str());
                 fun.push_str(format!("        self.{field} & {mask} != 0\n", field=v.field, mask=f.mask).as_str());
                 fun.push_str("    }\n");
+                fun.push_str(format!("    /// {}\n", comment).as_str());
                 fun.push_str(format!("    pub fn set_{flag}(&mut self, val: bool) {{\n", flag=f.name).as_str());
                 fun.push_str(format!("        if val {{\n").as_str());
                 fun.push_str(format!("            self.{field} |= {mask};\n", field=v.field, mask=f.mask).as_str());
@@ -113,6 +132,7 @@ fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
+    fun.push_str("    /// Sets the default values on the header.\n");
     fun.push_str("    pub fn set_defaults(&mut self) {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
@@ -126,6 +146,7 @@ fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
+    fun.push_str("    /// Sets the header variable as specified by the `DxfCodePair`.\n");
     fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &DxfCodePair) -> io::Result<()> {\n");
     fun.push_str("        match variable {\n");
     for v in variables {
@@ -154,6 +175,7 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
 }
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
+    fun.push_str("    /// Writes the `DxfCodePair`s representing the header to the specified writer.\n");
     fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut DxfCodePairAsciiWriter<T>) -> io::Result<()> where T: Write {\n");
     for v in variables {
         // prepare writing predicate
