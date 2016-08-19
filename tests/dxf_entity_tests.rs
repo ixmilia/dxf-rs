@@ -20,6 +20,55 @@ fn empty_entities_section() {
 }
 
 #[test]
+fn unsupported_entity() {
+    let file = DxfFile::parse(vec![
+        "0", "SECTION",
+            "2", "ENTITIES",
+                "0", "UNSUPPORTED_ENTITY",
+                    "1", "unsupported string",
+        "0", "ENDSEC",
+        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+    assert_eq!(0, file.entities.len());
+}
+
+#[test]
+fn unsupported_entity_between_supported_entities() {
+    let file = DxfFile::parse(vec![
+        "0", "SECTION",
+            "2", "ENTITIES",
+                "0", "LINE",
+                "0", "UNSUPPORTED_ENTITY",
+                    "1", "unsupported string",
+                "0", "CIRCLE",
+        "0", "ENDSEC",
+        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+    assert_eq!(2, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Line{..} => (),
+        _ => panic!("expected a line"),
+    }
+    match file.entities[1].specific {
+        EntityType::Circle{..} => (),
+        _ => panic!("expected a circle"),
+    }
+}
+
+#[test]
+fn read_entity_with_no_values() {
+    let file = DxfFile::parse(vec![
+        "0", "SECTION",
+            "2", "ENTITIES",
+                "0", "LINE",
+        "0", "ENDSEC",
+        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+    assert_eq!(1, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Line{..} => (),
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
 fn read_common_entity_fields() {
     let ent = read_entity("LINE", vec!["8", "layer"].join("\r\n"));
     assert_eq!("layer", ent.layer);

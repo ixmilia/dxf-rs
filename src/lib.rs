@@ -193,26 +193,40 @@ impl Entity {
     pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<DxfCodePair>>
     {
-        // first code pair must be 0/entity-type
-        let entity_type = match peekable.peek() {
-            Some(&Ok(DxfCodePair { code: 0, .. })) => {
-                let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
-                let type_string = string_value(&pair.value);
-                if type_string == "ENDSEC" {
-                    return Ok(None);
-                }
+        let entity_type;
+        loop {
+            match peekable.peek() {
+                // first code pair must be 0/entity-type
+                Some(&Ok(DxfCodePair { code: 0, .. })) => {
+                    let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
+                    let type_string = string_value(&pair.value);
+                    if type_string == "ENDSEC" {
+                        return Ok(None);
+                    }
 
-                match EntityType::from_type_string(type_string.as_str()) {
-                    Some(e) => e,
-                    None => return Ok(None), // TODO: swallow unsupported entity before returning
-                }
-            },
-            Some(&Ok(_)) => {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC"));
-            },
-            Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
-            None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
-        };
+                    match EntityType::from_type_string(type_string.as_str()) {
+                        Some(e) => {
+                            entity_type = e;
+                            break;
+                        },
+                        None => {
+                            // swallow unsupported entity
+                            loop {
+                               match peekable.peek() {
+                                    Some(&Ok(DxfCodePair { code: 0, .. })) => break, // found another entity or 0/ENDSEC
+                                    Some(&Ok(_)) => { peekable.next(); }, // part of the unsupported entity
+                                    Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected error")),
+                                    None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                                }
+                            }
+                        }
+                    }
+                },
+                Some(&Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC")),
+                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
+                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+            }
+        }
 
         let mut entity = Entity::new(entity_type);
         loop {
@@ -222,7 +236,7 @@ impl Entity {
                     let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
                     try!(entity.apply_code_pair(&pair));
                 },
-                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
+                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading file")),
                 None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
             }
         }
@@ -320,10 +334,9 @@ impl DxfFile {
                                 "HEADER" => file.header = try!(header::DxfHeader::read(peekable)),
                                 "ENTITIES" => {
                                     loop {
-                                        match Entity::read(peekable) {
-                                            Ok(Some(e)) => file.entities.push(e),
-                                            Ok(None) => break,
-                                            Err(e) => return Err(e),
+                                        match try!(Entity::read(peekable)) {
+                                            Some(e) => file.entities.push(e),
+                                            None => break,
                                         }
                                     }
                                 },
