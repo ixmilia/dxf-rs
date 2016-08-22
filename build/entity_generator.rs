@@ -54,9 +54,10 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("#[derive(Clone)]\n");
     fun.push_str("pub struct Entity {\n");
     for c in &entity.children {
+        let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
         match c.name.as_str() {
             "Field" => {
-                fun.push_str(format!("    pub {name}: {typ},\n", name=name(c), typ=typ(c)).as_str());
+                fun.push_str(format!("    pub {name}: {typ},\n", name=name(c), typ=t).as_str());
             },
             "Pointer" => {
                 fun.push_str(format!("    // TODO: '{}' pointer here\n", name(c)).as_str());
@@ -94,7 +95,13 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
         if c.name == "Field" { // TODO: support pointers
-            fun.push_str(format!("            {code} => {{ self.{field} = {reader} }},\n", code=code(c), field=name(c), reader=get_field_reader(&c)).as_str());
+            let read_fun = if allow_multiples(&c) {
+                format!(".push({})", get_field_reader(&c))
+            }
+            else {
+                format!(" = {}", get_field_reader(&c))
+            };
+            fun.push_str(format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun).as_str());
         }
     }
 
@@ -116,9 +123,10 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
             fun.push_str(format!("    {typ} {{\n", typ=name(c)).as_str());
             for f in &c.children {
+                let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
                 match f.name.as_str() {
                     "Field" => {
-                        fun.push_str(format!("        {name}: {typ},\n", name=name(f), typ=typ(f)).as_str());
+                        fun.push_str(format!("        {name}: {typ},\n", name=name(f), typ=t).as_str());
                     },
                     "Pointer" => {
                         fun.push_str(format!("        // TODO: '{}' pointer here\n", name(f)).as_str());
@@ -197,7 +205,15 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                             let reader = get_field_reader(&f);
                             let codes = codes(&f);
                             let write_cmd = match codes.len() {
-                                1 => format!("*{field} = {reader};", field=name(&f), reader=reader),
+                                1 => {
+                                    let (prefix, read_fun) = if allow_multiples(&f) {
+                                        ("", format!(".push({})", reader))
+                                    }
+                                    else {
+                                        ("*", format!(" = {}", reader))
+                                    };
+                                    format!("{prefix}{field}{read_fun}", prefix=prefix, field=name(&f), read_fun=read_fun)
+                                },
                                 _ => {
                                     let suffix = match i {
                                         0 => "x",
@@ -205,10 +221,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                         2 => "z",
                                         _ => panic!("impossible"),
                                     };
-                                    format!("{field}.{suffix} = {reader};", field=name(&f), suffix=suffix, reader=reader)
+                                    format!("{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
                                 }
                             };
-                            fun.push_str(format!("                    {code} => {{ {cmd} }},\n", code=cd, cmd=write_cmd).as_str());
+                            fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
                         }
                     }
                 }
@@ -236,6 +252,10 @@ fn attr(element: &Element, name: &str) -> String {
         &Some(v) => v.clone(),
         &None => String::new(),
     }
+}
+
+fn allow_multiples(element: &Element) -> bool {
+    attr(element, "AllowMultiples") == "true"
 }
 
 fn name(element: &Element) -> String {

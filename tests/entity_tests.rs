@@ -127,3 +127,21 @@ fn read_multiple_entities() {
         _ => panic!("expected a line"),
     }
 }
+
+#[test]
+fn read_field_with_multiples_common() {
+    let ent = read_entity("LINE", vec!["310", "one", "310", "two"].join("\r\n"));
+    assert_eq!(vec!["one", "two"], ent.preview_image_data);
+}
+
+#[test]
+fn read_field_with_multiples_specific() {
+    let ent = read_entity("3DSOLID", vec!["1", "one-1", "1", "one-2", "3", "three-1", "3", "three-2"].join("\r\n"));
+    match ent.specific {
+        EntityType::Solid3D{ ref custom_data, ref custom_data2, .. } => {
+            assert_eq!(vec!["one-1", "one-2"], *custom_data);
+            assert_eq!(vec!["three-1", "three-2"], *custom_data2);
+        },
+        _ => panic!("expected a 3DSOLID"),
+    }
+}

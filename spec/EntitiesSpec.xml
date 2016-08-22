@@ -17,7 +17,7 @@
     <Field Name="linetype_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="NotBoolShort" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="image_byte_count" Code="92" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2000" />
-    <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" MinVersion="R2000" />
+    <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
     <Field Name="color_24_bit" Code="420" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2004" />
     <Field Name="color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2004" />
     <Field Name="transparency" Code="440" Type="i32" DefaultValue="0" MinVersion="R2004" />
@@ -70,8 +70,8 @@
     -->
   <Entity Name="Solid3D" SubclassMarker="AcDbModelerGeometry" TypeString="3DSOLID" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
-    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="history_object" Code="350" Type="IItem" MinVersion="R2007" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbModelerGeometry&quot;" />
@@ -91,13 +91,13 @@
     <Field Name="proxy_entity_class_id" Code="90" Type="i32" DefaultValue="498" />
     <Field Name="application_entity_class_id" Code="91" Type="i32" DefaultValue="500" />
     <Field Name="graphics_data_size" Code="92" Type="i32" DefaultValue="0" />
-    <Field Name="graphics_data_string" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="graphics_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="entity_data_size" Code="93" Type="i32" DefaultValue="0" />
-    <Field Name="entity_data_string" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="object_i_d1" Code="330" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="object_i_d2" Code="340" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="object_i_d3" Code="350" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="object_i_d4" Code="360" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="entity_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_i_d1" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_i_d2" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_i_d3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_i_d4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
     <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="(int)" Accessibility="private" MinVersion="R2000" />
     <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2000" />
@@ -305,8 +305,8 @@
     -->
   <Entity Name="Body" SubclassMarker="AcDbModelerGeometry" TypeString="BODY" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
-    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
   </Entity>
   <!--
 
@@ -447,8 +447,8 @@
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
     <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
-    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
-    <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
@@ -507,9 +507,9 @@
     <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
     <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
-    <Field Name="_vertices_x" Code="10" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
-    <Field Name="_vertices_y" Code="20" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
-    <Field Name="_vertices_z" Code="30" Type="f64" DefaultValue="0.0" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_vertices_x" Code="10" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_vertices_y" Code="20" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
+    <Field Name="_vertices_z" Code="30" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
     <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" />
     <Field Name="associated_annotation_reference" Code="340" Type="String" DefaultValue="String::new()" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
@@ -588,7 +588,7 @@
     </Field>
     <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <!-- <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="null" AllowMultiples="true" /> -->
+    <!-- <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="vec![]" AllowMultiples="true" /> -->
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbPolyline&quot;" />
@@ -634,19 +634,19 @@
     <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
     <Field Name="start_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" DisableWritingDefault="true" />
-    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_segment_direction_x" Code="12" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_segment_direction_y" Code="22" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_segment_direction_z" Code="32" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_miter_direction_x" Code="13" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_segment_direction_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_x" Code="13" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
     <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
-    <Field Name="parameters" Code="41" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="parameters" Code="41" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
-    <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbMline&quot;" />
       <WriteField Field="StyleName" />
@@ -696,7 +696,7 @@
     <Field Name="reference_rectangle_width" Code="41" Type="f64" DefaultValue="1.0" />
     <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="(short)" />
     <Field Name="drawing_direction" Code="72" Type="DrawingDirection" DefaultValue="DrawingDirection::LeftToRight" ReadConverter="try_result!(DrawingDirection::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="extended_text" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="extended_text" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
@@ -718,7 +718,7 @@
     <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
     <Field Name="column_width" Code="48" Type="f64" DefaultValue="0.0" />
     <Field Name="column_gutter" Code="49" Type="f64" DefaultValue="0.0" />
-    <Field Name="column_heights" Code="50" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="column_heights" Code="50" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbMText&quot;" />
       <WriteField Field="InsertionPoint" />
@@ -760,7 +760,7 @@
   <Entity Name="OleFrame" SubclassMarker="AcDbOleFrame" TypeString="OLEFRAME" MinVersion="R13">
     <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbOleFrame&quot;" />
       <WriteField Field="VersionNumber" />
@@ -784,7 +784,7 @@
     <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="try_result!(OleObjectType::from_i16({}))" WriteConverter="(short)" />
     <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="try_result!(TileModeDescriptor::from_i16({}))" WriteConverter="(short)" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbOle2Frame&quot;" />
       <WriteField Field="VersionNumber" />
@@ -855,8 +855,8 @@
     -->
   <Entity Name="Region" SubclassMarker="AcDbModelerGeometry" TypeString="REGION" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
-    <Field Name="custom_data" Code="1" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
-    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="String::new()" AllowMultiples="true" />
+    <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="custom_data2" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
   </Entity>
   <!--
 
@@ -891,13 +891,13 @@
     <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" />
     <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
     <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
-    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_vertex_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
     <Field Name="_back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
-    <Field Name="_back_line_vertex_x" Code="12" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_back_line_vertex_y" Code="22" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_back_line_vertex_z" Code="32" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_back_line_vertex_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
     <Pointer Name="geometry_settings" Code="360" Type="IItem" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbSection&quot;" />
@@ -984,14 +984,14 @@
     <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
     <Field Name="start_tangent" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
     <Field Name="end_tangent" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="knot_values" Code="40" Type="f64" DefaultValue="0.0" AllowMultiples="true" />
+    <Field Name="knot_values" Code="40" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="weight" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
-    <Field Name="_control_point_x" Code="10" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_control_point_y" Code="20" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_control_point_z" Code="30" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_fit_point_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_fit_point_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_fit_point_z" Code="31" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_control_point_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_control_point_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_control_point_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_fit_point_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbSpline&quot;" />
       <WriteField Field="Normal" />
@@ -1118,8 +1118,8 @@
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
-    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
-    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="0.0" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
       <WriteField Field="Object" />
