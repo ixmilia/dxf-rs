@@ -57,10 +57,10 @@
     <Field Name="third_corner" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
     <Field Name="fourth_corner" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
     <Field Name="edge_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
-      <Flag Name="IsFirstEdgeInvisible" Mask="1" />
-      <Flag Name="IsSecondEdgeInvisible" Mask="2" />
-      <Flag Name="IsThirdEdgeInvisible" Mask="4" />
-      <Flag Name="IsFourthEdgeInvisible" Mask="8" />
+      <Flag Name="is_first_edge_invisible" Mask="1" />
+      <Flag Name="is_second_edge_invisible" Mask="2" />
+      <Flag Name="is_third_edge_invisible" Mask="4" />
+      <Flag Name="is_fourth_edge_invisible" Mask="8" />
     </Field>
   </Entity>
   <!--
@@ -164,8 +164,8 @@
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
     <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
-      <Flag Name="IsTextBackward" Mask="2" />
-      <Flag Name="IsTextUpsideDown" Mask="4" />
+      <Flag Name="is_text_backwards" Mask="2" />
+      <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
     <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
@@ -174,10 +174,10 @@
     <Field Name="prompt" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="text_tag" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsInvisible" Mask="1" />
-      <Flag Name="IsConstant" Mask="2" />
-      <Flag Name="IsInputVerificationRequired" Mask="4" />
-      <Flag Name="IsAttributePresent" Mask="8" />
+      <Flag Name="is_invisible" Mask="1" />
+      <Flag Name="is_constant" Mask="2" />
+      <Flag Name="is_input_verification_required" Mask="4" />
+      <Flag Name="is_attribute_present" Mask="8" />
     </Field>
     <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
     <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
@@ -238,10 +238,10 @@
     <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
     <Field Name="attribute_tag" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsInvisible" Mask="1" />
-      <Flag Name="IsConstant" Mask="2" />
-      <Flag Name="IsInputVerificationRequired" Mask="4" />
-      <Flag Name="IsAttributePresent" Mask="8" />
+      <Flag Name="is_invisible" Mask="1" />
+      <Flag Name="is_constant" Mask="2" />
+      <Flag Name="is_input_verification_required" Mask="4" />
+      <Flag Name="is_attribute_present" Mask="8" />
     </Field>
     <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
     <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -249,8 +249,8 @@
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
     <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
-      <Flag Name="IsTextBackward" Mask="2" />
-      <Flag Name="IsTextUpsideDown" Mask="4" />
+      <Flag Name="is_text_backwards" Mask="2" />
+      <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
     <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
     <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
@@ -435,10 +435,10 @@
     <Field Name="image_size" Code="13" Type="Vector" DefaultValue="Vector::zero()" CodeOverrides="13,23" />
     <Field Name="image_def_reference" Code="340" Type="String" DefaultValue="String::new()" />
     <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="ShowImage" Mask="1" />
-      <Flag Name="ShowImageWhenNotAligned" Mask="2" />
-      <Flag Name="UseClippingBoundary" Mask="4" />
-      <Flag Name="UseTransparency" Mask="8" />
+      <Flag Name="show_image" Mask="1" />
+      <Flag Name="show_image_when_not_alligned" Mask="2" />
+      <Flag Name="use_clipping_boundary" Mask="4" />
+      <Flag Name="use_transparency" Mask="8" />
     </Field>
     <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
     <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
@@ -582,8 +582,8 @@
     -->
   <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14">
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClosed" Mask="1" />
-      <Flag Name="IsPLineGen" Mask="128" />
+      <Flag Name="is_closed" Mask="1" />
+      <Flag Name="is_p_line_gen" Mask="128" />
     </Field>
     <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -624,10 +624,10 @@
     <Field Name="scale_factor" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="justification" Code="70" Type="Justification" DefaultValue="Justification::Top" ReadConverter="try_result!(Justification::from_i16({}))" WriteConverter="(short)" />
     <Field Name="flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="HasAtLeastOneVertex" Mask="1" />
-      <Flag Name="IsClosed" Mask="2" />
-      <Flag Name="SuppressStartCaps" Mask="4" />
-      <Flag Name="SuppressEndCaps" Mask="8" />
+      <Flag Name="has_at_least_one_vertex" Mask="1" />
+      <Flag Name="is_closed" Mask="2" />
+      <Flag Name="suppress_start_caps" Mask="4" />
+      <Flag Name="suppress_end_caps" Mask="8" />
     </Field>
     <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
     <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
@@ -820,14 +820,14 @@
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
-      <Flag Name="IsClosed" Mask="1" />
-      <Flag Name="CurveFitVerticiesAdded" Mask="2" />
-      <Flag Name="SplineFitVerticiesAdded" Mask="4" />
-      <Flag Name="Is3DPolyline" Mask="8" />
-      <Flag Name="Is3DPolygonMesh" Mask="16" />
-      <Flag Name="IsPolygonMeshClosedInNDirection" Mask="32" />
-      <Flag Name="IsPolyfaceMesh" Mask="64" />
-      <Flag Name="IsLinetypePatternGeneratedContinuously" Mask="128" />
+      <Flag Name="is_closed" Mask="1" />
+      <Flag Name="curve_fit_vertices_added" Mask="2" />
+      <Flag Name="spline_fit_vertices_added" Mask="4" />
+      <Flag Name="is_3d_polyline" Mask="8" />
+      <Flag Name="is_3d_polygon_mesh" Mask="16" />
+      <Flag Name="is_polygon_mesh_closed_in_n_direction" Mask="32" />
+      <Flag Name="is_polyface_mesh" Mask="64" />
+      <Flag Name="is_linetype_pattern_generated_continuously" Mask="128" />
     </Field>
     <Field Name="default_starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="default_ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -869,8 +869,8 @@
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="text_style" Code="7" Type="String" DefaultValue='String::from("STANDARD")' />
     <Field Name="type_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsExpression" Mask="1" />
-      <Flag Name="IsInlineMTextSequencesEnabled" Mask="2" />
+      <Flag Name="is_expression" Mask="1" />
+      <Flag Name="is_inline_mtext_sequences_enabled" Mask="2" />
     </Field>
     <Field Name="contents" Code="1" Type="String" DefaultValue="String::new()" />
   </Entity>
@@ -968,11 +968,11 @@
   <Entity Name="Spline" SubclassMarker="AcDbSpline" TypeString="SPLINE" MinVersion="R13">
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClosed" Mask="1" />
-      <Flag Name="IsPeriodic" Mask="2" />
-      <Flag Name="IsRational" Mask="4" />
-      <Flag Name="IsPlanar" Mask="8" />
-      <Flag Name="IsLinear" Mask="16" />
+      <Flag Name="is_closed" Mask="1" />
+      <Flag Name="is_periodic" Mask="2" />
+      <Flag Name="is_rational" Mask="4" />
+      <Flag Name="is_planar" Mask="8" />
+      <Flag Name="is_linear" Mask="16" />
     </Field>
     <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="(short)" />
     <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
@@ -1045,8 +1045,8 @@
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
     <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
-      <Flag Name="IsTextBackward" Mask="2" />
-      <Flag Name="IsTextUpsideDown" Mask="4" />
+      <Flag Name="is_text_backwards" Mask="2" />
+      <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
     <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" DisableWritingDefault="true" CodeOverrides="11,21,31" />
@@ -1109,11 +1109,11 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClippingOn" Mask="1" />
-      <Flag Name="IsUnderlayOn" Mask="2" />
-      <Flag Name="IsMonochrome" Mask="4" />
-      <Flag Name="AdjustForBackground" Mask="8" />
-      <Flag Name="IsClipInsideMode" Mask="16" />
+      <Flag Name="is_clipping_on" Mask="1" />
+      <Flag Name="is_underlay_on" Mask="2" />
+      <Flag Name="is_monochrome" Mask="4" />
+      <Flag Name="adjust_for_background" Mask="8" />
+      <Flag Name="is_clip_inside_mode" Mask="16" />
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
@@ -1146,11 +1146,11 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClippingOn" Mask="1" />
-      <Flag Name="IsUnderlayOn" Mask="2" />
-      <Flag Name="IsMonochrome" Mask="4" />
-      <Flag Name="AdjustForBackground" Mask="8" />
-      <Flag Name="IsClipInsideMode" Mask="16" />
+      <Flag Name="is_clipping_on" Mask="1" />
+      <Flag Name="is_underlay_on" Mask="2" />
+      <Flag Name="is_monochrome" Mask="4" />
+      <Flag Name="adjust_for_background" Mask="8" />
+      <Flag Name="is_clip_inside_mode" Mask="16" />
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
@@ -1183,11 +1183,11 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClippingOn" Mask="1" />
-      <Flag Name="IsUnderlayOn" Mask="2" />
-      <Flag Name="IsMonochrome" Mask="4" />
-      <Flag Name="AdjustForBackground" Mask="8" />
-      <Flag Name="IsClipInsideMode" Mask="16" />
+      <Flag Name="is_clipping_on" Mask="1" />
+      <Flag Name="is_underlay_on" Mask="2" />
+      <Flag Name="is_monochrome" Mask="4" />
+      <Flag Name="adjust_for_background" Mask="8" />
+      <Flag Name="is_clip_inside_mode" Mask="16" />
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
@@ -1220,11 +1220,11 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsClippingOn" Mask="1" />
-      <Flag Name="IsUnderlayOn" Mask="2" />
-      <Flag Name="IsMonochrome" Mask="4" />
-      <Flag Name="AdjustForBackground" Mask="8" />
-      <Flag Name="IsClipInsideMode" Mask="16" />
+      <Flag Name="is_clipping_on" Mask="1" />
+      <Flag Name="is_underlay_on" Mask="2" />
+      <Flag Name="is_monochrome" Mask="4" />
+      <Flag Name="adjust_for_background" Mask="8" />
+      <Flag Name="is_clip_inside_mode" Mask="16" />
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
@@ -1259,13 +1259,13 @@
     <Field Name="ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="bulge" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
-      <Flag Name="IsExtraCreatedByCurveFit" Mask="1" />
-      <Flag Name="IsCurveFitTangentDefined" Mask="2" />
-      <Flag Name="IsSplineVertexCreatedBySplineFitting" Mask="8" />
-      <Flag Name="IsSplineFrameControlPoint" Mask="16" />
-      <Flag Name="Is3DPolylineVertex" Mask="32" />
-      <Flag Name="Is3DPolygonMesh" Mask="64" />
-      <Flag Name="IsPolyfaceMeshVertex" Mask="128" />
+      <Flag Name="is_extra_created_by_curve_fit" Mask="1" />
+      <Flag Name="is_curve_fit_tangent_defined" Mask="2" />
+      <Flag Name="is_spline_vertex_created_by_spline_fitting" Mask="8" />
+      <Flag Name="is_spline_frame_control_point" Mask="16" />
+      <Flag Name="is_3d_polyline_vertex" Mask="32" />
+      <Flag Name="is_3d_polygon_mesh" Mask="64" />
+      <Flag Name="is_polyface_mesh_vertex" Mask="128" />
     </Field>
     <Field Name="curve_fit_tangent_direction" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="polyface_mesh_vertex_index1" Code="71" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />

@@ -188,8 +188,36 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
             fun.push_str("        }\n");
             fun.push_str("    }\n");
+
+            // flags
+            generate_flags_methods(fun, &c);
+
             fun.push_str("}\n");
             fun.push_str("\n");
+        }
+    }
+}
+
+fn generate_flags_methods(fun: &mut String, element: &Element) {
+    for field in &element.children {
+        if field.name == "Field" {
+            for flag in &field.children {
+                if flag.name == "Flag" {
+                    let flag_name = name(&flag);
+                    let mask = attr(&flag, "Mask");
+                    fun.push_str(format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name).as_str());
+                    fun.push_str(format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str("    }\n");
+                    fun.push_str(format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name).as_str());
+                    fun.push_str("        if val {\n");
+                    fun.push_str(format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str("        }\n");
+                    fun.push_str("        else {\n");
+                    fun.push_str(format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str("        }\n");
+                    fun.push_str("    }\n");
+                }
+            }
         }
     }
 }

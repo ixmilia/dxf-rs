@@ -190,3 +190,15 @@ fn entity_with_custom_reader_mtext() {
         _ => panic!("expected an MTEXT"),
     }
 }
+
+#[test]
+fn entity_with_flags() {
+    let ent = read_entity("IMAGE", vec!["70", "5"].join("\r\n"));
+    match ent.specific {
+        EntityType::Image(ref image) => {
+            assert!(image.get_show_image());
+            assert!(image.get_use_clipping_boundary());
+        },
+        _ => panic!("expected an IMAGE"),
+    }
+}
