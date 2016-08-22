@@ -39,7 +39,6 @@ macro_rules! try_result {
     generate_entity_types(&mut fun, &element);
 
     fun.push_str("impl EntityType {\n");
-    generate_new_functions(&mut fun, &element);
     generate_from_type_string(&mut fun, &element);
     generate_try_apply_code_pair(&mut fun, &element);
     fun.push_str("}\n");
@@ -93,7 +92,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     for c in &entity.children {
         match c.name.as_str() {
             "Field" => {
-                fun.push_str(format!("            {name}: {val},\n", name=name(c), val=attr(&c, "DefaultValue")).as_str());
+                fun.push_str(format!("            {name}: {val},\n", name=name(c), val=default_value(&c)).as_str());
             },
             "Pointer" => {
                 fun.push_str(format!("            // TODO: '{}' pointer here\n", name(c)).as_str());
@@ -136,43 +135,61 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
         if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
             // TODO: handle dimensions
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-            fun.push_str(format!("    {typ} {{\n", typ=name(c)).as_str());
-            for f in &c.children {
-                let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
-                match f.name.as_str() {
-                    "Field" => {
-                        fun.push_str(format!("        {name}: {typ},\n", name=name(f), typ=t).as_str());
-                    },
-                    "Pointer" => {
-                        fun.push_str(format!("        // TODO: '{}' pointer here\n", name(f)).as_str());
-                    },
-                    "WriteOrder" => (), // TODO:
-                    _ => panic!("unexpected element {} under Entity", f.name),
-                }
-            }
-            fun.push_str("    },\n");
+            fun.push_str(format!("    {typ}({typ}),\n", typ=name(c)).as_str());
         }
     }
 
     fun.push_str("}\n");
     fun.push_str("\n");
-}
 
-fn generate_new_functions(fun: &mut String, element: &Element) {
+    // individual structs
     for c in &element.children {
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" { // TODO: handle dimensions
-            fun.push_str(format!("    pub fn new_{typ}() -> EntityType {{\n", typ=pascal_to_camel(name(c))).as_str());
-            fun.push_str(format!("        EntityType::{} {{\n", name(c)).as_str());
+        if c.name != "Entity" { panic!("expected top level entity"); }
+        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
+            // TODO: handle dimensions
+            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
+
+            // definition
+            fun.push_str("#[derive(Clone)]\n");
+            fun.push_str(format!("pub struct {typ} {{\n", typ=name(c)).as_str());
             for f in &c.children {
+                let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
                 match f.name.as_str() {
-                    "Field" => fun.push_str(format!("            {name}: {val},\n", name=name(f), val=attr(&f, "DefaultValue")).as_str()),
-                    "Pointer" => fun.push_str(format!("            // TODO: '{}' pointer here\n", name(f)).as_str()),
-                    "WriteOrder" => (),
+                    "Field" => {
+                        fun.push_str(format!("    pub {name}: {typ},\n", name=name(f), typ=t).as_str());
+                    },
+                    "Pointer" => {
+                        fun.push_str(format!("    // TODO: '{}' pointer here\n", name(f)).as_str());
+                    },
+                    "WriteOrder" => (), // TODO:
                     _ => panic!("unexpected element {} under Entity", f.name),
                 }
             }
+
+            fun.push_str("}\n");
+            fun.push_str("\n");
+
+            // implementation
+            fun.push_str(format!("impl {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str("    pub fn new() -> Self {\n");
+            fun.push_str(format!("        {typ} {{\n", typ=name(c)).as_str());
+            for f in &c.children {
+                match f.name.as_str() {
+                    "Field" => {
+                        fun.push_str(format!("            {name}: {val},\n", name=name(f), val=default_value(&f)).as_str());
+                    },
+                    "Pointer" => {
+                        fun.push_str(format!("            // TODO: '{}' pointer here\n", name(f)).as_str());
+                    },
+                    "WriteOrder" => (), // TODO:
+                    _ => panic!("unexpected element {} under Entity", f.name),
+                }
+            }
+
             fun.push_str("        }\n");
             fun.push_str("    }\n");
+            fun.push_str("}\n");
+            fun.push_str("\n");
         }
     }
 }
@@ -185,7 +202,7 @@ fn generate_from_type_string(fun: &mut String, element: &Element) {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
-                fun.push_str(format!("            \"{type_string}\" => Some(EntityType::new_{typ}()),\n", type_string=t, typ=pascal_to_camel(name(c))).as_str());
+                fun.push_str(format!("            \"{type_string}\" => Some(EntityType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)).as_str());
             }
         }
     }
@@ -204,13 +221,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
             if generate_reader_function(&c) {
                 // TODO: handle dimensions
                 // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-                let mut fields = vec![];
-                for f in &c.children {
-                    if f.name == "Field" { // TODO: support pointers
-                        fields.push(format!("ref mut {}", name(f)));
-                    }
-                }
-                fun.push_str(format!("            &mut EntityType::{typ} {{ {body} }} => {{\n", typ=name(c), body=fields.join(", ")).as_str());
+                fun.push_str(format!("            &mut EntityType::{typ}(ref mut ent) => {{\n", typ=name(c)).as_str());
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
@@ -222,13 +233,13 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                 let codes = codes(&f);
                                 let write_cmd = match codes.len() {
                                     1 => {
-                                        let (prefix, read_fun) = if allow_multiples(&f) {
-                                            ("", format!(".push({})", reader))
+                                        let read_fun = if allow_multiples(&f) {
+                                            format!(".push({})", reader)
                                         }
                                         else {
-                                            ("*", format!(" = {}", reader))
+                                            format!(" = {}", reader)
                                         };
-                                        format!("{prefix}{field}{read_fun}", prefix=prefix, field=name(&f), read_fun=read_fun)
+                                        format!("ent.{field}{read_fun}", field=name(&f), read_fun=read_fun)
                                     },
                                     _ => {
                                         let suffix = match i {
@@ -237,7 +248,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                             2 => "z",
                                             _ => panic!("impossible"),
                                         };
-                                        format!("{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
+                                        format!("ent.{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
                                     }
                                 };
                                 fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
@@ -251,7 +262,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("            },\n");
             }
             else {
-                fun.push_str(format!("            &mut EntityType::{typ} {{ .. }} => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)).as_str());
+                fun.push_str(format!("            &mut EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)).as_str());
             }
         }
     }
@@ -300,24 +311,6 @@ fn codes(element: &Element) -> Vec<i32> {
     }
 }
 
-fn pascal_to_camel(s: String) -> String {
-    let mut result = String::new();
-    for c in s.chars() {
-        if c.is_lowercase() {
-            result.push(c);
-        }
-        else {
-            if result.len() > 0 {
-                result.push('_');
-            }
-
-            result.push_str(c.to_lowercase().collect::<String>().as_str());
-        }
-    }
-
-    return result;
-}
-
 fn get_field_reader(element: &Element) -> String {
     let expected_type = get_expected_type(code(&element)).ok().unwrap();
     let reader_fun = get_reader_function(&expected_type);
@@ -331,4 +324,8 @@ fn get_field_reader(element: &Element) -> String {
 
 fn generate_reader_function(element: &Element) -> bool {
     attr(&element, "GenerateReaderFunction") != "false"
+}
+
+fn default_value(element: &Element) -> String {
+    attr(&element, "DefaultValue")
 }

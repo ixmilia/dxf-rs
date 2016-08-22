@@ -44,11 +44,11 @@ fn unsupported_entity_between_supported_entities() {
         "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
     assert_eq!(2, file.entities.len());
     match file.entities[0].specific {
-        EntityType::Line{..} => (),
+        EntityType::Line(_) => (),
         _ => panic!("expected a line"),
     }
     match file.entities[1].specific {
-        EntityType::Circle{..} => (),
+        EntityType::Circle(_) => (),
         _ => panic!("expected a circle"),
     }
 }
@@ -63,7 +63,7 @@ fn read_entity_with_no_values() {
         "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
     assert_eq!(1, file.entities.len());
     match file.entities[0].specific {
-        EntityType::Line{..} => (),
+        EntityType::Line(_) => (),
         _ => panic!("expected a line"),
     }
 }
@@ -84,9 +84,9 @@ fn read_line() {
         "21", "5.5",
         "31", "6.6"].join("\r\n"));
     match ent.specific {
-        EntityType::Line{ ref p1, ref p2, .. } => {
-            assert_eq!(Point::new(1.1, 2.2, 3.3), *p1);
-            assert_eq!(Point::new(4.4, 5.5, 6.6), *p2);
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(1.1, 2.2, 3.3), line.p1);
+            assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
         },
         _ => panic!("expected a line"),
     }
@@ -111,18 +111,18 @@ fn read_multiple_entities() {
 
     // verify circle
     match file.entities[0].specific {
-        EntityType::Circle{ ref center, ref radius, .. } => {
-            assert_eq!(Point::new(1.1, 2.2, 3.3), *center);
-            assert_eq!(4.4, *radius);
+        EntityType::Circle(ref circle) => {
+            assert_eq!(Point::new(1.1, 2.2, 3.3), circle.center);
+            assert_eq!(4.4, circle.radius);
         },
         _ => panic!("expected a line"),
     }
 
     // verify line
     match file.entities[1].specific {
-        EntityType::Line{ ref p1, ref p2, .. } => {
-            assert_eq!(Point::new(5.5, 6.6, 7.7), *p1);
-            assert_eq!(Point::new(8.8, 9.9, 10.1), *p2);
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(5.5, 6.6, 7.7), line.p1);
+            assert_eq!(Point::new(8.8, 9.9, 10.1), line.p2);
         },
         _ => panic!("expected a line"),
     }
@@ -138,9 +138,9 @@ fn read_field_with_multiples_common() {
 fn read_field_with_multiples_specific() {
     let ent = read_entity("3DSOLID", vec!["1", "one-1", "1", "one-2", "3", "three-1", "3", "three-2"].join("\r\n"));
     match ent.specific {
-        EntityType::Solid3D{ ref custom_data, ref custom_data2, .. } => {
-            assert_eq!(vec!["one-1", "one-2"], *custom_data);
-            assert_eq!(vec!["three-1", "three-2"], *custom_data2);
+        EntityType::Solid3D(ref solid3d) => {
+            assert_eq!(vec!["one-1", "one-2"], solid3d.custom_data);
+            assert_eq!(vec!["three-1", "three-2"], solid3d.custom_data2);
         },
         _ => panic!("expected a 3DSOLID"),
     }
@@ -157,11 +157,11 @@ fn entity_with_custom_reader_image() {
         "24", "6.6",
     ].join("\r\n"));
     match ent.specific {
-        EntityType::Image { ref clipping_vertices, .. } => {
-            assert_eq!(3, clipping_vertices.len());
-            assert_eq!(Point::new(1.1, 2.2, 0.0), clipping_vertices[0]);
-            assert_eq!(Point::new(3.3, 4.4, 0.0), clipping_vertices[1]);
-            assert_eq!(Point::new(5.5, 6.6, 0.0), clipping_vertices[2]);
+        EntityType::Image(ref image) => {
+            assert_eq!(3, image.clipping_vertices.len());
+            assert_eq!(Point::new(1.1, 2.2, 0.0), image.clipping_vertices[0]);
+            assert_eq!(Point::new(3.3, 4.4, 0.0), image.clipping_vertices[1]);
+            assert_eq!(Point::new(5.5, 6.6, 0.0), image.clipping_vertices[2]);
         },
         _ => panic!("expected an IMAGE"),
     }
@@ -178,14 +178,14 @@ fn entity_with_custom_reader_mtext() {
         "50", "30",
     ].join("\r\n"));
     match ent.specific {
-        EntityType::MText { ref rotation_angle, ref column_type, ref column_count, ref column_heights, .. } => {
-            assert_eq!(1.1, *rotation_angle);
-            assert_eq!(7, *column_type);
-            assert_eq!(3, *column_count);
-            assert_eq!(3, column_heights.len());
-            assert_eq!(10.0, column_heights[0]);
-            assert_eq!(20.0, column_heights[1]);
-            assert_eq!(30.0, column_heights[2]);
+        EntityType::MText(ref mtext) => {
+            assert_eq!(1.1, mtext.rotation_angle);
+            assert_eq!(7, mtext.column_type);
+            assert_eq!(3, mtext.column_count);
+            assert_eq!(3, mtext.column_heights.len());
+            assert_eq!(10.0, mtext.column_heights[0]);
+            assert_eq!(20.0, mtext.column_heights[1]);
+            assert_eq!(30.0, mtext.column_heights[2]);
         },
         _ => panic!("expected an MTEXT"),
     }

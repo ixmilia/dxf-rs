@@ -23,10 +23,10 @@ fn main() {
     for e in drawing.entities {
         println!("found entity on layer {}", e.common.layer);
         match e.specific {
-            EntityType::Circle{ ref center, ref radius, .. } => {
+            EntityType::Circle(ref circle) => {
                 // do something with the circle
             },
-            EntityType::Line{ ref p1, ref p2, .. } => {
+            EntityType::Line(ref line) => {
                 // do something with the line
             },
             _ => (),
