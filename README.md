@@ -18,9 +18,8 @@ use std::path::Path;
 
 fn main() {
     let path = Path::new("path/to/file.dxf");
-    let file = File::open(&path).ok().unwrap();
-    let file = BufReader::new(file);
-    let drawing = Drawing::load(file).ok().unwrap();
+    let mut file = File::open(&path).ok().unwrap();
+    let drawing = Drawing::read(&mut file).ok().unwrap();
     for e in drawing.entities {
         match e.specific {
             EntityType::Circle{ ref center, ref radius, .. } => {
@@ -33,7 +32,6 @@ fn main() {
         }
     }
 }
-
 ```
 
 ## DXF Reference
