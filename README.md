@@ -21,6 +21,7 @@ fn main() {
     let mut file = File::open(&path).ok().unwrap();
     let drawing = Drawing::read(&mut file).ok().unwrap();
     for e in drawing.entities {
+        println!("found entity on layer {}", e.common.layer);
         match e.specific {
             EntityType::Circle{ ref center, ref radius, .. } => {
                 // do something with the circle
