@@ -16,7 +16,7 @@ pub fn generate_entities() {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `src/build` directory.
 
-use ::{DxfCodePair, DxfColor, DxfPoint, DxfVector};
+use ::{CodePair, Color, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
@@ -90,7 +90,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("        }\n");
     fun.push_str("    }\n");
 
-    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {\n");
+    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> io::Result<()> {\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
         if c.name == "Field" { // TODO: support pointers
@@ -111,7 +111,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
     fun.push_str("pub enum EntityType {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DxfDimensionBase" && attr(&c, "BaseClass") != "DxfDimensionBase" {
+        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
             // TODO: handle dimensions
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
             fun.push_str(format!("    {typ} {{\n", typ=name(c)).as_str());
@@ -137,7 +137,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
 fn generate_new_functions(fun: &mut String, element: &Element) {
     for c in &element.children {
-        if name(c) != "Entity" && attr(&c, "BaseClass") != "DxfDimensionBase" { // TODO: handle dimensions
+        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" { // TODO: handle dimensions
             fun.push_str(format!("    pub fn new_{typ}() -> EntityType {{\n", typ=pascal_to_camel(name(c))).as_str());
             fun.push_str(format!("        EntityType::{} {{\n", name(c)).as_str());
             for f in &c.children {
@@ -158,7 +158,7 @@ fn generate_from_type_string(fun: &mut String, element: &Element) {
     fun.push_str("    pub fn from_type_string(type_string: &str) -> Option<EntityType> {\n");
     fun.push_str("        match type_string {\n");
     for c in &element.children {
-        if name(c) != "Entity" && !attr(&c, "TypeString").is_empty() {
+        if name(c) != "Entity" && name(c) != "DimensionBase" && !attr(&c, "TypeString").is_empty() {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
@@ -173,11 +173,11 @@ fn generate_from_type_string(fun: &mut String, element: &Element) {
 }
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
-    fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<bool> {\n");
+    fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &CodePair) -> io::Result<bool> {\n");
     fun.push_str("        match self {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DxfDimensionBase" && attr(&c, "BaseClass") != "DxfDimensionBase" {
+        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
             // TODO: handle dimensions
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
             let mut fields = vec![];

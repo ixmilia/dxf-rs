@@ -20,8 +20,8 @@ fn main() {
     let path = Path::new("path/to/file.dxf");
     let file = File::open(&path).ok().unwrap();
     let file = BufReader::new(file);
-    let dxf = DxfFile::load(file).ok().unwrap();
-    for e in dxf.entities {
+    let drawing = Drawing::load(file).ok().unwrap();
+    for e in drawing.entities {
         match e.specific {
             EntityType::Circle{ ref center, ref radius, .. } => {
                 // do something with the circle

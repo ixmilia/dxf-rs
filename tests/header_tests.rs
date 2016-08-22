@@ -12,7 +12,7 @@ use test_helpers::helpers::*;
 
 #[test]
 fn empty_header() {
-    let _file = DxfFile::parse(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str()).ok().unwrap();
+    let _file = Drawing::parse(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str()).ok().unwrap();
 }
 
 #[test]
@@ -59,14 +59,14 @@ $LUPREC
  70
 7".trim_left());
     assert_eq!(16, file.header.maintenance_version);
-    assert_eq!(DxfAcadVersion::R13, file.header.version);
+    assert_eq!(AcadVersion::R13, file.header.version);
     assert_eq!(55.0, file.header.angle_zero_direction);
-    assert_eq!(DxfAngleDirection::Clockwise, file.header.angle_direction);
-    assert_eq!(DxfAttributeVisibility::Normal, file.header.attribute_visibility);
-    assert_eq!(DxfAngleFormat::Radians, file.header.angle_unit_format);
+    assert_eq!(AngleDirection::Clockwise, file.header.angle_direction);
+    assert_eq!(AttributeVisibility::Normal, file.header.attribute_visibility);
+    assert_eq!(AngleFormat::Radians, file.header.angle_unit_format);
     assert_eq!(7, file.header.angle_unit_precision);
     assert_eq!("<current layer>", file.header.current_layer);
-    assert_eq!(DxfUnitFormat::Architectural, file.header.unit_format);
+    assert_eq!(UnitFormat::Architectural, file.header.unit_format);
     assert_eq!(7, file.header.unit_precision);
 }
 
@@ -80,7 +80,7 @@ fn date_conversion_read() {
 #[test]
 fn date_conversion_write() {
     // from AutoDesk spec: 2451544.91568287[0429] = 31 December 1999, 9:58:35PM
-    let mut file = DxfFile::new();
+    let mut file = Drawing::new();
     file.header.creation_date = Local.ymd(1999, 12, 31).and_hms(21, 58, 35);
     assert!(to_test_string(&file).contains(vec!["  9", "$TDCREATE", " 40", "2451544.915682870429"].join("\r\n").as_str()));
 }
@@ -88,25 +88,25 @@ fn date_conversion_write() {
 #[test]
 fn read_alternate_version() {
     let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "15.05"].join("\r\n").as_str());
-    assert_eq!(DxfAcadVersion::R2000, file.header.version);
+    assert_eq!(AcadVersion::R2000, file.header.version);
 }
 
 #[test]
 fn read_multi_value_variable() {
     let file = from_section("HEADER", vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"].join("\r\n").as_str());
-    assert_eq!(DxfPoint::new(1.1, 2.2, 3.3), file.header.minimum_drawing_extents)
+    assert_eq!(Point::new(1.1, 2.2, 3.3), file.header.minimum_drawing_extents)
 }
 
 #[test]
 fn write_multiple_value_variable() {
-    let mut file = DxfFile::new();
-    file.header.minimum_drawing_extents = DxfPoint::new(1.1, 2.2, 3.3);
+    let mut file = Drawing::new();
+    file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
     assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.100000000000", " 20", "2.200000000000", " 30", "3.300000000000"].join("\r\n").as_str()));
 }
 
 #[test]
 fn write_header_with_invalid_values() {
-    let mut file = DxfFile::new();
+    let mut file = Drawing::new();
     file.header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
     file.header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
     file.header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
@@ -143,7 +143,7 @@ fn read_header_flags() {
 
 #[test]
 fn write_header_flags() {
-    let mut file = DxfFile::new();
+    let mut file = Drawing::new();
     file.header.set_end_point_snap(false);
     file.header.set_mid_point_snap(false);
     file.header.set_center_snap(true);
@@ -174,14 +174,14 @@ fn read_variable_with_different_codes() {
 #[test]
 fn write_variable_with_different_codes() {
     // R13 writes $CMLSTYLE as a code 7
-    let mut file = DxfFile::new();
-    file.header.version = DxfAcadVersion::R13;
+    let mut file = Drawing::new();
+    file.header.version = AcadVersion::R13;
     file.header.current_multiline_style = String::from("cml-style-7");
     assert_contains(&file, vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"));
 
     // R14+ writes $CMLSTYLE as a code 2
-    let mut file = DxfFile::new();
-    file.header.version = DxfAcadVersion::R14;
+    let mut file = Drawing::new();
+    file.header.version = AcadVersion::R14;
     file.header.current_multiline_style = String::from("cml-style-2");
     assert_contains(&file, vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"));
 }

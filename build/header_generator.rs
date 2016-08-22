@@ -17,7 +17,7 @@ pub fn generate_header() {
 // The contents of this file are automatically generated and should not be modified directly.  See the `src/build` directory.
 
 // types from `lib.rs`.
-use ::{DxfCodePair, DxfCodePairAsciiWriter, DxfColor, DxfLineWeight, DxfPoint, DxfVector};
+use ::{CodePair, CodePairAsciiWriter, Color, LineWeight, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
@@ -46,7 +46,7 @@ macro_rules! try_result {
 ".trim_left());
     generate_struct(&mut fun, &variables);
 
-    fun.push_str("impl DxfHeader {\n");
+    fun.push_str("impl Header {\n");
     generate_new(&mut fun, &variables);
     generate_flags(&mut fun, &variables);
     generate_set_defaults(&mut fun, &variables);
@@ -61,7 +61,7 @@ macro_rules! try_result {
 fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
     fun.push_str("/// Contains common properties for the DXF file.\n");
-    fun.push_str("pub struct DxfHeader {\n");
+    fun.push_str("pub struct Header {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
             seen_fields.insert(&v.field);
@@ -83,9 +83,9 @@ fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_new(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
-    fun.push_str("/// Creates a new `DxfHeader`.\n");
-    fun.push_str("    pub fn new() -> DxfHeader {\n");
-    fun.push_str("        DxfHeader {\n");
+    fun.push_str("/// Creates a new `Header`.\n");
+    fun.push_str("    pub fn new() -> Header {\n");
+    fun.push_str("        Header {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
             seen_fields.insert(&v.field);
@@ -147,8 +147,8 @@ fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
-    fun.push_str("    /// Sets the header variable as specified by the `DxfCodePair`.\n");
-    fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &DxfCodePair) -> io::Result<()> {\n");
+    fun.push_str("    /// Sets the header variable as specified by the `CodePair`.\n");
+    fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> io::Result<()> {\n");
     fun.push_str("        match variable {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
@@ -200,16 +200,16 @@ fn get_read_command(variable: &HeaderVariable) -> String {
 }
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
-    fun.push_str("    /// Writes the `DxfCodePair`s representing the header to the specified writer.\n");
-    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut DxfCodePairAsciiWriter<T>) -> io::Result<()> where T: Write {\n");
+    fun.push_str("    /// Writes the `CodePair`s representing the header to the specified writer.\n");
+    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()> where T: Write {\n");
     for v in variables {
         // prepare writing predicate
         let mut parts = vec![];
         if !v.min_version.is_empty() {
-            parts.push(format!("self.version >= DxfAcadVersion::{}", v.min_version));
+            parts.push(format!("self.version >= AcadVersion::{}", v.min_version));
         }
         if !v.max_version.is_empty() {
-            parts.push(format!("self.version <= DxfAcadVersion::{}", v.max_version));
+            parts.push(format!("self.version <= AcadVersion::{}", v.max_version));
         }
         if v.dont_write_default {
             parts.push(format!("self.{} != {}", v.field, v.default_value));
@@ -224,12 +224,12 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
         if parts.len() > 0 {
             fun.push_str(format!("        if {} {{\n", parts.join(" && ")).as_str());
         }
-        fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_str(9, \"${name}\")));\n", name=v.name, indent=indent).as_str());
+        fun.push_str(format!("        {indent}try!(writer.write_code_pair(&CodePair::new_str(9, \"${name}\")));\n", name=v.name, indent=indent).as_str());
         let write_converter = if v.write_converter.is_empty() { "{}" } else { v.write_converter.as_str() };
         if v.code > 0 {
             let expected_type = get_code_pair_type(get_expected_type(v.code).ok().unwrap());
             let value = write_converter.replace("{}", format!("self.{}", v.field).as_str());
-            fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_{typ}({code}, {value})));\n",
+            fun.push_str(format!("        {indent}try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
                 code=v.code,
                 value=value,
                 typ=expected_type,
@@ -245,7 +245,7 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
                     _ => panic!("unexpected number of values"),
                 };
                 let value = write_converter.replace("{}", format!("self.{}.{}", v.field, field).as_str());
-                fun.push_str(format!("        {indent}try!(writer.write_code_pair(&DxfCodePair::new_double({code}, {value})));\n",
+                fun.push_str(format!("        {indent}try!(writer.write_code_pair(&CodePair::new_double({code}, {value})));\n",
                     code=code,
                     value=value,
                     indent=indent).as_str());

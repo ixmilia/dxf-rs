@@ -5,7 +5,7 @@ extern crate num;
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Dxf3DDwfPrecision {
+pub enum Dwf3DPrecision {
     Deviation_1 = 1,
     Deviation_0_5 = 2,
     Deviation_0_2 = 3,
@@ -17,7 +17,7 @@ pub enum Dxf3DDwfPrecision {
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, PartialOrd)]
-pub enum DxfAcadVersion {
+pub enum AcadVersion {
     Version_1_0,
     Version_1_2,
     Version_1_40,
@@ -42,7 +42,7 @@ pub enum DxfAcadVersion {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfAngleDirection {
+pub enum AngleDirection {
     CounterClockwise = 0,
     Clockwise = 1,
 }
@@ -50,7 +50,7 @@ pub enum DxfAngleDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfAngleFormat {
+pub enum AngleFormat {
     DecimalDegrees = 0,
     DegreesMinutesSeconds = 1,
     Gradians = 2,
@@ -61,7 +61,7 @@ pub enum DxfAngleFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfAttachmentPoint {
+pub enum AttachmentPoint {
     TopLeft = 1,
     TopCenter = 2,
     TopRight = 3,
@@ -76,7 +76,7 @@ pub enum DxfAttachmentPoint {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfAttributeVisibility {
+pub enum AttributeVisibility {
     None = 0,
     Normal = 1,
     All = 2,
@@ -85,7 +85,7 @@ pub enum DxfAttributeVisibility {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfBackgroundFillSetting {
+pub enum BackgroundFillSetting {
     Off = 0,
     UseBackgroundFillColor = 1,
     UseDrawingWindowColor = 2,
@@ -94,7 +94,7 @@ pub enum DxfBackgroundFillSetting {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfBottomTextAttachmentDirection {
+pub enum BottomTextAttachmentDirection {
     Center = 9,
     UnderlineAndCenter = 10,
 }
@@ -102,7 +102,7 @@ pub enum DxfBottomTextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfCoordinateDisplay {
+pub enum CoordinateDisplay {
     Static = 0,
     ContinuousUpdate = 1,
     DistanceAngleFormat = 2,
@@ -111,7 +111,7 @@ pub enum DxfCoordinateDisplay {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionArcSymbolDisplayMode {
+pub enum DimensionArcSymbolDisplayMode {
     SymbolBeforeText = 0,
     SymbolAboveText = 1,
     Suppress = 2,
@@ -120,7 +120,7 @@ pub enum DxfDimensionArcSymbolDisplayMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionAssociativity {
+pub enum DimensionAssociativity {
     NoAssociationExploded = 0,
     NonAssociativeObjects = 1,
     AssociativeObjects = 2,
@@ -129,7 +129,7 @@ pub enum DxfDimensionAssociativity {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionFit {
+pub enum DimensionFit {
     TextAndArrowsOutsideLines = 0,
     MoveArrowsFirst = 1,
     MoveTextFirst = 2,
@@ -139,7 +139,7 @@ pub enum DxfDimensionFit {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionFractionFormat {
+pub enum DimensionFractionFormat {
     HorizontalStacking = 0,
     DiagonalStacking = 1,
     NotStacked = 2,
@@ -148,7 +148,7 @@ pub enum DxfDimensionFractionFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionTextBackgroundColorMode {
+pub enum DimensionTextBackgroundColorMode {
     None = 0,
     UseDrawingBackground = 1,
     Custom = 2,
@@ -157,7 +157,7 @@ pub enum DxfDimensionTextBackgroundColorMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionTextJustification {
+pub enum DimensionTextJustification {
     AboveLineCenter = 0,
     AboveLineNextToFirstExtension = 1,
     AboveLineNextToSecondExtension = 2,
@@ -168,7 +168,7 @@ pub enum DxfDimensionTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionTextMovementRule {
+pub enum DimensionTextMovementRule {
     MoveLineWithText = 0,
     AddLeaderWhenTextIsMoved = 1,
     MoveTextFreely = 2,
@@ -177,7 +177,7 @@ pub enum DxfDimensionTextMovementRule {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDimensionType {
+pub enum DimensionType {
     RotatedHorizontalOrVertical = 0,
     Aligned = 1,
     Angular = 2,
@@ -190,7 +190,7 @@ pub enum DxfDimensionType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDragMode {
+pub enum DragMode {
     Off = 0,
     On = 1,
     Auto = 2,
@@ -199,7 +199,7 @@ pub enum DxfDragMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDrawingDirection {
+pub enum DrawingDirection {
     LeftToRight = 1,
     TopToBottom = 3,
     ByStyle = 5,
@@ -208,7 +208,7 @@ pub enum DxfDrawingDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfDrawingUnits {
+pub enum DrawingUnits {
     English = 0,
     Metric = 1,
 }
@@ -216,7 +216,7 @@ pub enum DxfDrawingUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfEndCapSetting {
+pub enum EndCapSetting {
     None = 0,
     Round = 1,
     Angle = 2,
@@ -226,7 +226,7 @@ pub enum DxfEndCapSetting {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfFontType {
+pub enum FontType {
     TTF = 0,
     SHX = 1,
 }
@@ -234,7 +234,7 @@ pub enum DxfFontType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfHelixConstraint {
+pub enum HelixConstraint {
     ConstrainTurnHeight = 0,
     ConstrainTurns = 1,
     ConstrainHeight = 2,
@@ -243,7 +243,7 @@ pub enum DxfHelixConstraint {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfHorizontalTextJustification {
+pub enum HorizontalTextJustification {
     Left = 0,
     Center = 1,
     Right = 2,
@@ -255,7 +255,7 @@ pub enum DxfHorizontalTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfImageClippingBoundaryType {
+pub enum ImageClippingBoundaryType {
     Rectangular = 1,
     Polygonal = 2,
 }
@@ -263,7 +263,7 @@ pub enum DxfImageClippingBoundaryType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfJoinStyle {
+pub enum JoinStyle {
     None = 0,
     Round = 1,
     Angle = 2,
@@ -273,7 +273,7 @@ pub enum DxfJoinStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfJustification {
+pub enum Justification {
     Top = 0,
     Middle = 1,
     Bottom = 2,
@@ -282,7 +282,7 @@ pub enum DxfJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLayerAndSpatialIndexSaveMode {
+pub enum LayerAndSpatialIndexSaveMode {
     None = 0,
     LayerIndex = 1,
     SpatialIndex = 2,
@@ -292,7 +292,7 @@ pub enum DxfLayerAndSpatialIndexSaveMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLeaderCreationAnnotationType {
+pub enum LeaderCreationAnnotationType {
     WithTextAnnotation = 0,
     WithToleranceAnnotation = 1,
     WithBlockReferenceAnnotation = 2,
@@ -302,7 +302,7 @@ pub enum DxfLeaderCreationAnnotationType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLeaderHooklineDirection {
+pub enum LeaderHooklineDirection {
     OppositeFromHorizontalVector = 0,
     SameAsHorizontalVector = 1,
 }
@@ -310,7 +310,7 @@ pub enum DxfLeaderHooklineDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLeaderPathType {
+pub enum LeaderPathType {
     StraightLineSegments = 0,
     Spline = 1,
 }
@@ -318,7 +318,7 @@ pub enum DxfLeaderPathType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLightAttenuationType {
+pub enum LightAttenuationType {
     None = 0,
     InverseLinear = 1,
     InverseSquare = 2,
@@ -327,7 +327,7 @@ pub enum DxfLightAttenuationType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLightType {
+pub enum LightType {
     Distant = 1,
     Point = 2,
     Spot = 3,
@@ -336,7 +336,7 @@ pub enum DxfLightType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLinetypeStyle {
+pub enum LinetypeStyle {
     Off = 0,
     Solid = 1,
     Dashed = 2,
@@ -354,7 +354,7 @@ pub enum DxfLinetypeStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfLoftedObjectNormalMode {
+pub enum LoftedObjectNormalMode {
     Ruled = 0,
     SmoothFit = 1,
     StartCrossSection = 2,
@@ -367,7 +367,7 @@ pub enum DxfLoftedObjectNormalMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfMTextFlag {
+pub enum MTextFlag {
     MultilineAttribute = 2,
     ConstantMultilineAttributeDefinition = 4,
 }
@@ -375,7 +375,7 @@ pub enum DxfMTextFlag {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfMTextLineSpacingStyle {
+pub enum MTextLineSpacingStyle {
     AtLeast = 1,
     Exact = 2,
 }
@@ -383,7 +383,7 @@ pub enum DxfMTextLineSpacingStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfNonAngularUnits {
+pub enum NonAngularUnits {
     Scientific = 1,
     Decimal = 2,
     Engineering = 3,
@@ -395,7 +395,7 @@ pub enum DxfNonAngularUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfOleObjectType {
+pub enum OleObjectType {
     Link = 1,
     Embedded = 2,
     Static = 3,
@@ -404,7 +404,7 @@ pub enum DxfOleObjectType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfOrthographicViewType {
+pub enum OrthographicViewType {
     None = 0,
     Top = 1,
     Bottom = 2,
@@ -417,7 +417,7 @@ pub enum DxfOrthographicViewType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfPickStyle {
+pub enum PickStyle {
     None = 0,
     Group = 1,
     AssociativeHatch = 2,
@@ -427,7 +427,7 @@ pub enum DxfPickStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfPlotStyle {
+pub enum PlotStyle {
     ByLayer = 0,
     ByBlock = 1,
     ByDictionaryDefault = 2,
@@ -437,7 +437,7 @@ pub enum DxfPlotStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfPolylineCurvedAndSmoothSurfaceType {
+pub enum PolylineCurvedAndSmoothSurfaceType {
     None = 0,
     QuadraticBSpline = 5,
     CubicBSpline = 6,
@@ -447,7 +447,7 @@ pub enum DxfPolylineCurvedAndSmoothSurfaceType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfPolySketchMode {
+pub enum PolySketchMode {
     SketchLines = 0,
     SketchPolylines = 1,
 }
@@ -455,7 +455,7 @@ pub enum DxfPolySketchMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfShadeEdgeMode {
+pub enum ShadeEdgeMode {
     FacesShadedEdgeNotHighlighted = 0,
     FacesShadedEdgesHighlightedInBlack = 1,
     FacesNotFilledEdgesInEntityColor = 2,
@@ -465,7 +465,7 @@ pub enum DxfShadeEdgeMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfShadowMode {
+pub enum ShadowMode {
     CastsAndReceivesShadows = 0,
     CastsShadows = 1,
     ReceivesShadows = 2,
@@ -475,7 +475,7 @@ pub enum DxfShadowMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfShadowType {
+pub enum ShadowType {
     RayTraced = 0,
     ShadowMaps = 1,
 }
@@ -483,7 +483,7 @@ pub enum DxfShadowType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfSnapIsometricPlane {
+pub enum SnapIsometricPlane {
     Left = 0,
     Top = 1,
     Right = 2,
@@ -492,7 +492,7 @@ pub enum DxfSnapIsometricPlane {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfSnapStyle {
+pub enum SnapStyle {
     Standard = 0,
     Isometric = 1,
 }
@@ -500,7 +500,7 @@ pub enum DxfSnapStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfSolidHistoryMode {
+pub enum SolidHistoryMode {
     None = 0,
     DoesNotOverride = 1,
     Override = 2,
@@ -509,7 +509,7 @@ pub enum DxfSolidHistoryMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfTextAttachmentDirection {
+pub enum TextAttachmentDirection {
     Horizontal = 0,
     Vertical = 1,
 }
@@ -517,7 +517,7 @@ pub enum DxfTextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfTextDirection {
+pub enum TextDirection {
     LeftToRight = 0,
     RightToLeft = 1,
 }
@@ -525,7 +525,7 @@ pub enum DxfTextDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfTextLineSpacingStyle {
+pub enum TextLineSpacingStyle {
     AtLeast = 1,
     Exact = 2,
 }
@@ -533,7 +533,7 @@ pub enum DxfTextLineSpacingStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfTileModeDescriptor {
+pub enum TileModeDescriptor {
     InTiledViewport = 0,
     InNonTiledViewport = 1,
 }
@@ -542,7 +542,7 @@ pub enum DxfTileModeDescriptor {
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
-pub enum DxfTimeZone {
+pub enum DrawingTimeZone {
     InternationalDateLineWest = -12000,
     MidwayIsland_Samoa = -11000,
     Hawaii = -10000,
@@ -625,7 +625,7 @@ pub enum DxfTimeZone {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfTopTextAttachmentDirection {
+pub enum TopTextAttachmentDirection {
     Center = 9,
     OverlineAndCenter = 10,
 }
@@ -633,7 +633,7 @@ pub enum DxfTopTextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfUnderlayFrameMode {
+pub enum UnderlayFrameMode {
     None = 0,
     DisplayAndPlot = 1,
     DisplayNoPlot = 2,
@@ -642,7 +642,7 @@ pub enum DxfUnderlayFrameMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfUnitFormat {
+pub enum UnitFormat {
     Scientific = 1,
     Decimal = 2,
     Engineering = 3,
@@ -655,7 +655,7 @@ pub enum DxfUnitFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfUnits {
+pub enum Units {
     Unitless = 0,
     Inches = 1,
     Feet = 2,
@@ -682,14 +682,14 @@ pub enum DxfUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfVersion {
+pub enum Version {
     R2010 = 0,
 }
 }
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfVerticalTextJustification {
+pub enum VerticalTextJustification {
     Baseline = 0,
     Bottom = 1,
     Middle = 2,
@@ -699,7 +699,7 @@ pub enum DxfVerticalTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfXrefClippingBoundaryVisibility {
+pub enum XrefClippingBoundaryVisibility {
     NotDisplayedNotPlotted = 0,
     DisplayedAndPlotted = 1,
     DisplayedNotPlotted = 2,
@@ -708,7 +708,7 @@ pub enum DxfXrefClippingBoundaryVisibility {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DxfUnitZeroSuppression {
+pub enum UnitZeroSuppression {
     SuppressZeroFeetAndZeroInches = 0,
     IncludeZeroFeetAndZeroInches = 1,
     IncludeZeroFeetAndSuppressZeroInches = 2,

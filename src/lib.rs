@@ -19,10 +19,10 @@ mod helper_functions;
 use helper_functions::*;
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                              DxfCodePairValue
+//                                                                 CodePairValue
 ////////////////////////////////////////////////////////////////////////////////
 #[derive(Debug)]
-pub enum DxfCodePairValue {
+pub enum CodePairValue {
     Boolean(bool),
     Integer(i32),
     Long(i64),
@@ -32,41 +32,41 @@ pub enum DxfCodePairValue {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                   DxfCodePair
+//                                                                      CodePair
 ////////////////////////////////////////////////////////////////////////////////
-pub struct DxfCodePair {
+pub struct CodePair {
     code: i32,
-    value: DxfCodePairValue,
+    value: CodePairValue,
 }
 
-impl DxfCodePair {
-    pub fn new(code: i32, val: DxfCodePairValue) -> DxfCodePair {
-        DxfCodePair { code: code, value: val }
+impl CodePair {
+    pub fn new(code: i32, val: CodePairValue) -> CodePair {
+        CodePair { code: code, value: val }
     }
-    pub fn new_str(code: i32, val: &str) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Str(val.to_string()))
+    pub fn new_str(code: i32, val: &str) -> CodePair {
+        CodePair::new(code, CodePairValue::Str(val.to_string()))
     }
-    pub fn new_string(code: i32, val: &String) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Str(val.clone()))
+    pub fn new_string(code: i32, val: &String) -> CodePair {
+        CodePair::new(code, CodePairValue::Str(val.clone()))
     }
-    pub fn new_short(code: i32, val: i16) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Short(val))
+    pub fn new_short(code: i32, val: i16) -> CodePair {
+        CodePair::new(code, CodePairValue::Short(val))
     }
-    pub fn new_double(code: i32, val: f64) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Double(val))
+    pub fn new_double(code: i32, val: f64) -> CodePair {
+        CodePair::new(code, CodePairValue::Double(val))
     }
-    pub fn new_long(code: i32, val: i64) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Long(val))
+    pub fn new_long(code: i32, val: i64) -> CodePair {
+        CodePair::new(code, CodePairValue::Long(val))
     }
-    pub fn new_bool(code: i32, val: bool) -> DxfCodePair {
-        DxfCodePair::new(code, DxfCodePairValue::Boolean(val))
+    pub fn new_bool(code: i32, val: bool) -> CodePair {
+        CodePair::new(code, CodePairValue::Boolean(val))
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                          DxfCodePairAsciiIter
+//                                                             CodePairAsciiIter
 ////////////////////////////////////////////////////////////////////////////////
-struct DxfCodePairAsciiIter<T>
+struct CodePairAsciiIter<T>
     where T: BufRead
 {
     reader: T,
@@ -82,9 +82,9 @@ macro_rules! try_option {
     )
 }
 
-impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
-    type Item = io::Result<DxfCodePair>;
-    fn next(&mut self) -> Option<io::Result<DxfCodePair>> {
+impl<T: BufRead> Iterator for CodePairAsciiIter<T> {
+    type Item = io::Result<CodePair>;
+    fn next(&mut self) -> Option<io::Result<CodePair>> {
         // Read code.  If no line is available, fail gracefully.
         let mut code_line = String::new();
         match self.reader.read_line(&mut code_line) {
@@ -102,15 +102,15 @@ impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
 
         // construct the value pair
         let value = match try_option!(get_expected_type(code)) {
-            ExpectedType::Boolean => DxfCodePairValue::Boolean(try_option!(parse_bool(value_line))),
-            ExpectedType::Integer => DxfCodePairValue::Integer(try_option!(parse_int(value_line))),
-            ExpectedType::Long => DxfCodePairValue::Long(try_option!(parse_long(value_line))),
-            ExpectedType::Short => DxfCodePairValue::Short(try_option!(parse_short(value_line))),
-            ExpectedType::Double => DxfCodePairValue::Double(try_option!(parse_double(value_line))),
-            ExpectedType::Str => DxfCodePairValue::Str(value_line), // TODO: un-escape
+            ExpectedType::Boolean => CodePairValue::Boolean(try_option!(parse_bool(value_line))),
+            ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_int(value_line))),
+            ExpectedType::Long => CodePairValue::Long(try_option!(parse_long(value_line))),
+            ExpectedType::Short => CodePairValue::Short(try_option!(parse_short(value_line))),
+            ExpectedType::Double => CodePairValue::Double(try_option!(parse_double(value_line))),
+            ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
         };
 
-        Some(Ok(DxfCodePair {
+        Some(Ok(CodePair {
             code: code,
             value: value,
         }))
@@ -118,23 +118,23 @@ impl<T: BufRead> Iterator for DxfCodePairAsciiIter<T> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                        DxfCodePairAsciiWriter
+//                                                           CodePairAsciiWriter
 ////////////////////////////////////////////////////////////////////////////////
-pub struct DxfCodePairAsciiWriter<T>
+pub struct CodePairAsciiWriter<T>
     where T: Write {
     writer: T,
 }
 
-impl<T: Write> DxfCodePairAsciiWriter<T> {
-    pub fn write_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+impl<T: Write> CodePairAsciiWriter<T> {
+    pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
         let str_val = match &pair.value {
-            &DxfCodePairValue::Boolean(b) => String::from(if b { "1" } else { "0" }),
-            &DxfCodePairValue::Integer(i) => format!("{}", i),
-            &DxfCodePairValue::Long(l) => format!("{}", l),
-            &DxfCodePairValue::Short(s) => format!("{}", s),
-            &DxfCodePairValue::Double(d) => format!("{:.12}", d), // TODO: use proper precision
-            &DxfCodePairValue::Str(ref s) => s.clone(), // TODO: escape
+            &CodePairValue::Boolean(b) => String::from(if b { "1" } else { "0" }),
+            &CodePairValue::Integer(i) => format!("{}", i),
+            &CodePairValue::Long(l) => format!("{}", l),
+            &CodePairValue::Short(s) => format!("{}", s),
+            &CodePairValue::Double(d) => format!("{:.12}", d), // TODO: use proper precision
+            &CodePairValue::Str(ref s) => s.clone(), // TODO: escape
         };
         try!(self.writer.write_fmt(format_args!("{}\r\n", str_val.as_str())));
         Ok(())
@@ -142,22 +142,22 @@ impl<T: Write> DxfCodePairAsciiWriter<T> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                     DxfHeader
+//                                                                        Header
 ////////////////////////////////////////////////////////////////////////////////
 // implementation is in `header.rs`
-impl DxfHeader {
-    pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<DxfHeader>
-        where I: Iterator<Item = io::Result<DxfCodePair>>
+impl Header {
+    pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Header>
+        where I: Iterator<Item = io::Result<CodePair>>
     {
-        let mut header = DxfHeader::new();
+        let mut header = Header::new();
         loop {
             match peekable.peek() {
-                Some(&Ok(DxfCodePair { code: 9, value: _ })) => {
+                Some(&Ok(CodePair { code: 9, value: _ })) => {
                     let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
                     let last_header_variable = string_value(&pair.value);
                     loop {
                         match peekable.peek() {
-                            Some(&Ok(DxfCodePair { code: c, value: _ })) if c == 0 || c == 9 => break, // 0/ENDSEC or a new header variable
+                            Some(&Ok(CodePair { code: c, value: _ })) if c == 0 || c == 9 => break, // 0/ENDSEC or a new header variable
                             Some(&Ok(_)) => {
                                 let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
                                 try!(header.set_header_value(last_header_variable.as_str(), &pair));
@@ -174,13 +174,13 @@ impl DxfHeader {
 
         Ok(header)
     }
-    pub fn write<T>(&self, writer: &mut DxfCodePairAsciiWriter<T>) -> io::Result<()>
+    pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write
     {
-        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&DxfCodePair::new_str(2, "HEADER")));
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "HEADER")));
         try!(self.write_code_pairs(writer));
-        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "ENDSEC")));
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
 }
@@ -191,13 +191,13 @@ impl DxfHeader {
 // implementation is in `entity.rs`
 impl Entity {
     pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
-        where I: Iterator<Item = io::Result<DxfCodePair>>
+        where I: Iterator<Item = io::Result<CodePair>>
     {
         let entity_type;
         loop {
             match peekable.peek() {
                 // first code pair must be 0/entity-type
-                Some(&Ok(DxfCodePair { code: 0, .. })) => {
+                Some(&Ok(CodePair { code: 0, .. })) => {
                     let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
                     let type_string = string_value(&pair.value);
                     if type_string == "ENDSEC" {
@@ -213,7 +213,7 @@ impl Entity {
                             // swallow unsupported entity
                             loop {
                                match peekable.peek() {
-                                    Some(&Ok(DxfCodePair { code: 0, .. })) => break, // found another entity or 0/ENDSEC
+                                    Some(&Ok(CodePair { code: 0, .. })) => break, // found another entity or 0/ENDSEC
                                     Some(&Ok(_)) => { peekable.next(); }, // part of the unsupported entity
                                     Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected error")),
                                     None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
@@ -231,19 +231,19 @@ impl Entity {
         let mut entity = Entity::new(entity_type);
         loop {
             match peekable.peek() {
-                Some(&Ok(DxfCodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
+                Some(&Ok(CodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
                 Some(&Ok(_)) => {
                     let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
                     try!(entity.apply_code_pair(&pair));
                 },
-                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading file")),
+                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading drawing")),
                 None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
             }
         }
 
         Ok(Some(entity))
     }
-    fn apply_code_pair(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+    fn apply_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         if !try!(self.specific.try_apply_code_pair(&pair)) {
             try!(self.apply_individual_pair(&pair));
         }
@@ -252,14 +252,14 @@ impl Entity {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                       DxfFile
+//                                                                       Drawing
 ////////////////////////////////////////////////////////////////////////////////
-pub struct DxfFile {
-    pub header: DxfHeader,
+pub struct Drawing {
+    pub header: Header,
     pub entities: Vec<Entity>,
 }
 
-// Used to turn Result<T> into ::Result<T>
+// Used to turn Result<T> into io::Result<T>
 macro_rules! try_result {
     ($expr : expr) => (
         match $expr {
@@ -269,46 +269,46 @@ macro_rules! try_result {
     )
 }
 
-impl DxfFile {
-    pub fn new() -> DxfFile {
-        DxfFile {
-            header: DxfHeader::new(),
+impl Drawing {
+    pub fn new() -> Self {
+        Drawing {
+            header: Header::new(),
             entities: vec![],
         }
     }
-    pub fn read<T>(reader: &mut T) -> io::Result<DxfFile>
+    pub fn read<T>(reader: &mut T) -> io::Result<Drawing>
         where T: Read
     {
         let buf_reader = BufReader::new(reader);
-        DxfFile::load(buf_reader)
+        Drawing::load(buf_reader)
     }
-    pub fn load<T>(reader: T) -> io::Result<DxfFile>
+    pub fn load<T>(reader: T) -> io::Result<Drawing>
         where T: BufRead {
-        let reader = DxfCodePairAsciiIter { reader: reader };
+        let reader = CodePairAsciiIter { reader: reader };
         let mut peekable = reader.peekable();
-        let mut file = DxfFile::new();
-        match DxfFile::read_sections(&mut file, &mut peekable) {
+        let mut drawing = Drawing::new();
+        match Drawing::read_sections(&mut drawing, &mut peekable) {
             Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
             _ => (),
         }
         match peekable.next() {
-            Some(Ok(DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) })) if s == "EOF" => Ok(file),
-            Some(Ok(DxfCodePair { code: c, value: v })) => Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got {}/{:?}", c, v))),
+            Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
+            Some(Ok(CodePair { code: c, value: v })) => Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got {}/{:?}", c, v))),
             Some(Err(e)) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-            None => Ok(file), //Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got nothing"))), // n.b., this is probably fine
+            None => Ok(drawing), //Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got nothing"))), // n.b., this is probably fine
         }
     }
-    pub fn parse(s: &str) -> io::Result<DxfFile> {
+    pub fn parse(s: &str) -> io::Result<Drawing> {
         let data = String::from(s);
         let bytes = data.as_bytes();
-        DxfFile::load(bytes)
+        Drawing::load(bytes)
     }
     pub fn write<T>(&self, writer: &mut T) -> io::Result<()>
         where T: Write {
-        let mut writer = DxfCodePairAsciiWriter { writer: writer };
+        let mut writer = CodePairAsciiWriter { writer: writer };
         try!(self.header.write(&mut writer));
         // TODO: write other sections
-        try!(writer.write_code_pair(&DxfCodePair::new_str(0, "EOF")));
+        try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
     pub fn to_string(&self) -> io::Result<String> {
@@ -319,34 +319,34 @@ impl DxfFile {
         let reader = BufReader::new(&mut buf);
         Ok(reader.lines().map(|l| l.unwrap() + "\r\n").collect())
     }
-    fn read_sections<I>(file: &mut DxfFile, peekable: &mut Peekable<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<DxfCodePair>> {
+    fn read_sections<I>(drawing: &mut Drawing, peekable: &mut Peekable<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<CodePair>> {
         loop {
             match peekable.peek() {
-                Some(&Ok(DxfCodePair { code: 0, value: DxfCodePairValue::Str(_) })) => {
+                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(_) })) => {
                     let pair = peekable.next().unwrap().ok().unwrap(); // consume 0/SECTION.  unwrap() and ok() calls are valid due to the match above
                     if string_value(&pair.value).as_str() == "EOF" { break; }
                     if string_value(&pair.value).as_str() != "SECTION" { return Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/SECTION, got 0/{}", string_value(&pair.value).as_str()))); }
                     match peekable.peek() {
-                        Some(&Ok(DxfCodePair { code: 2, value: DxfCodePairValue::Str(_) })) => {
+                        Some(&Ok(CodePair { code: 2, value: CodePairValue::Str(_) })) => {
                             let pair = peekable.next().unwrap().ok().unwrap(); // consume 2/<section-name>.  unwrap() and ok() calls are valid due to the match above
                             match string_value(&pair.value).as_str() {
-                                "HEADER" => file.header = try!(header::DxfHeader::read(peekable)),
+                                "HEADER" => drawing.header = try!(header::Header::read(peekable)),
                                 "ENTITIES" => {
                                     loop {
                                         match try!(Entity::read(peekable)) {
-                                            Some(e) => file.entities.push(e),
+                                            Some(e) => drawing.entities.push(e),
                                             None => break,
                                         }
                                     }
                                 },
                                 // TODO: read other sections
-                                _ => DxfFile::swallow_section(peekable),
+                                _ => Drawing::swallow_section(peekable),
                             }
 
                             let mut swallow_endsec = false;
                             match peekable.peek() {
-                                Some(&Ok(DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) })) if s == "ENDSEC" => swallow_endsec = true,
+                                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => swallow_endsec = true,
                                 _ => (), // expected 0/ENDSEC
                             }
 
@@ -364,11 +364,11 @@ impl DxfFile {
         Ok(())
     }
     fn swallow_section<I>(peekable: &mut Peekable<I>)
-        where I: Iterator<Item = io::Result<DxfCodePair>> {
+        where I: Iterator<Item = io::Result<CodePair>> {
         loop {
             let mut quit = false;
             match peekable.peek() {
-                Some(&Ok(DxfCodePair { code: 0, value: DxfCodePairValue::Str(ref s) })) if s == "ENDSEC" => quit = true,
+                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => quit = true,
                 _ => (),
             }
 
@@ -383,32 +383,32 @@ impl DxfFile {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                      DxfPoint
+//                                                                         Point
 ////////////////////////////////////////////////////////////////////////////////
 #[derive(Clone, Debug, PartialEq)]
-pub struct DxfPoint {
+pub struct Point {
     x: f64,
     y: f64,
     z: f64,
 }
 
-impl DxfPoint {
-    pub fn new(x: f64, y: f64, z: f64) -> DxfPoint {
-        DxfPoint{
+impl Point {
+    pub fn new(x: f64, y: f64, z: f64) -> Point {
+        Point{
             x: x,
             y: y,
             z: z,
         }
     }
-    pub fn origin() -> DxfPoint {
-        DxfPoint::new(0.0, 0.0, 0.0)
+    pub fn origin() -> Point {
+        Point::new(0.0, 0.0, 0.0)
     }
-    pub fn set(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+    pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
             20 => self.y = double_value(&pair.value),
             30 => self.z = double_value(&pair.value),
-            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for DxfPoint: {}", pair.code))),
+            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Point: {}", pair.code))),
         }
 
         Ok(())
@@ -416,41 +416,41 @@ impl DxfPoint {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                     DxfVector
+//                                                                        Vector
 ////////////////////////////////////////////////////////////////////////////////
 #[derive(Clone, Debug, PartialEq)]
-pub struct DxfVector {
+pub struct Vector {
     x: f64,
     y: f64,
     z: f64,
 }
 
-impl DxfVector {
-    pub fn new(x: f64, y: f64, z: f64) -> DxfVector {
-        DxfVector {
+impl Vector {
+    pub fn new(x: f64, y: f64, z: f64) -> Vector {
+        Vector {
             x: x,
             y: y,
             z: z,
         }
     }
-    pub fn zero() -> DxfVector {
-        DxfVector::new(0.0, 0.0, 0.0)
+    pub fn zero() -> Vector {
+        Vector::new(0.0, 0.0, 0.0)
     }
-    pub fn x_axis() -> DxfVector {
-        DxfVector::new(1.0, 0.0, 0.0)
+    pub fn x_axis() -> Vector {
+        Vector::new(1.0, 0.0, 0.0)
     }
-    pub fn y_axis() -> DxfVector {
-        DxfVector::new(0.0, 1.0, 0.0)
+    pub fn y_axis() -> Vector {
+        Vector::new(0.0, 1.0, 0.0)
     }
-    pub fn z_axis() -> DxfVector {
-        DxfVector::new(0.0, 0.0, 1.0)
+    pub fn z_axis() -> Vector {
+        Vector::new(0.0, 0.0, 1.0)
     }
-    pub fn set(&mut self, pair: &DxfCodePair) -> io::Result<()> {
+    pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
             20 => self.y = double_value(&pair.value),
             30 => self.z = double_value(&pair.value),
-            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for DxfVector: {}", pair.code))),
+            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Vector: {}", pair.code))),
         }
 
         Ok(())
@@ -458,14 +458,14 @@ impl DxfVector {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                      DxfColor
+//                                                                         Color
 ////////////////////////////////////////////////////////////////////////////////
 #[derive(Clone)]
-pub struct DxfColor {
+pub struct Color {
     raw_value: i16,
 }
 
-impl DxfColor {
+impl Color {
     pub fn is_by_layer(&self) -> bool {
         self.raw_value == 256
     }
@@ -504,39 +504,39 @@ impl DxfColor {
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
-    pub fn from_raw_value(val: i16) -> DxfColor {
-        DxfColor { raw_value: val }
+    pub fn from_raw_value(val: i16) -> Color {
+        Color { raw_value: val }
     }
-    pub fn by_layer() -> DxfColor {
-        DxfColor { raw_value: 256 }
+    pub fn by_layer() -> Color {
+        Color { raw_value: 256 }
     }
-    pub fn by_block() -> DxfColor {
-        DxfColor { raw_value: 0 }
+    pub fn by_block() -> Color {
+        Color { raw_value: 0 }
     }
-    pub fn by_entity() -> DxfColor {
-        DxfColor { raw_value: 257 }
+    pub fn by_entity() -> Color {
+        Color { raw_value: 257 }
     }
-    pub fn from_index(i: u8) -> DxfColor {
-        DxfColor { raw_value: i as i16 }
+    pub fn from_index(i: u8) -> Color {
+        Color { raw_value: i as i16 }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                 DxfLineWeight
+//                                                                    LineWeight
 ////////////////////////////////////////////////////////////////////////////////
-pub struct DxfLineWeight {
+pub struct LineWeight {
     raw_value: i16,
 }
 
-impl DxfLineWeight {
-    pub fn from_raw_value(v: i16) -> DxfLineWeight {
-        DxfLineWeight { raw_value: v }
+impl LineWeight {
+    pub fn from_raw_value(v: i16) -> LineWeight {
+        LineWeight { raw_value: v }
     }
-    pub fn by_block() -> DxfLineWeight {
-        DxfLineWeight::from_raw_value(-1)
+    pub fn by_block() -> LineWeight {
+        LineWeight::from_raw_value(-1)
     }
-    pub fn by_layer() -> DxfLineWeight {
-        DxfLineWeight::from_raw_value(-2)
+    pub fn by_layer() -> LineWeight {
+        LineWeight::from_raw_value(-2)
     }
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value

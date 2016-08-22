@@ -7,19 +7,19 @@ extern crate dxf;
 pub mod helpers {
     use dxf::*;
 
-    pub fn from_section(section: &str, body: &str) -> DxfFile {
+    pub fn from_section(section: &str, body: &str) -> Drawing {
         let text = vec!["0", "SECTION", "2", section, body.trim(), "0", "ENDSEC", "0", "EOF"].join("\n");
-        DxfFile::parse(text.trim()).ok().unwrap()
+        Drawing::parse(text.trim()).ok().unwrap()
     }
 
-    pub fn to_test_string(file: &DxfFile) -> String {
-        let contents = file.to_string().ok().unwrap();
+    pub fn to_test_string(drawing: &Drawing) -> String {
+        let contents = drawing.to_string().ok().unwrap();
         println!("{}", contents); // will only be displayed on the console if the test fails
         contents
     }
 
-    pub fn assert_contains(file: &DxfFile, contents: String) {
-        let actual = to_test_string(&file);
+    pub fn assert_contains(drawing: &Drawing, contents: String) {
+        let actual = to_test_string(&drawing);
         assert!(actual.contains(contents.as_str()));
     }
 }

@@ -15,13 +15,13 @@ fn read_entity(entity_type: &str, body: String) -> Entity {
 
 #[test]
 fn empty_entities_section() {
-    let file = DxfFile::parse(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+    let file = Drawing::parse(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
     assert_eq!(0, file.entities.len());
 }
 
 #[test]
 fn unsupported_entity() {
-    let file = DxfFile::parse(vec![
+    let file = Drawing::parse(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "UNSUPPORTED_ENTITY",
@@ -33,7 +33,7 @@ fn unsupported_entity() {
 
 #[test]
 fn unsupported_entity_between_supported_entities() {
-    let file = DxfFile::parse(vec![
+    let file = Drawing::parse(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
@@ -55,7 +55,7 @@ fn unsupported_entity_between_supported_entities() {
 
 #[test]
 fn read_entity_with_no_values() {
-    let file = DxfFile::parse(vec![
+    let file = Drawing::parse(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
@@ -85,8 +85,8 @@ fn read_line() {
         "31", "6.6"].join("\r\n"));
     match ent.specific {
         EntityType::Line{ ref p1, ref p2, .. } => {
-            assert_eq!(DxfPoint::new(1.1, 2.2, 3.3), *p1);
-            assert_eq!(DxfPoint::new(4.4, 5.5, 6.6), *p2);
+            assert_eq!(Point::new(1.1, 2.2, 3.3), *p1);
+            assert_eq!(Point::new(4.4, 5.5, 6.6), *p2);
         },
         _ => panic!("expected a line"),
     }
@@ -112,7 +112,7 @@ fn read_multiple_entities() {
     // verify circle
     match file.entities[0].specific {
         EntityType::Circle{ ref center, ref radius, .. } => {
-            assert_eq!(DxfPoint::new(1.1, 2.2, 3.3), *center);
+            assert_eq!(Point::new(1.1, 2.2, 3.3), *center);
             assert_eq!(4.4, *radius);
         },
         _ => panic!("expected a line"),
@@ -121,8 +121,8 @@ fn read_multiple_entities() {
     // verify line
     match file.entities[1].specific {
         EntityType::Line{ ref p1, ref p2, .. } => {
-            assert_eq!(DxfPoint::new(5.5, 6.6, 7.7), *p1);
-            assert_eq!(DxfPoint::new(8.8, 9.9, 10.1), *p2);
+            assert_eq!(Point::new(5.5, 6.6, 7.7), *p1);
+            assert_eq!(Point::new(8.8, 9.9, 10.1), *p2);
         },
         _ => panic!("expected a line"),
     }
