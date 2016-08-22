@@ -1285,8 +1285,50 @@
     WIPEOUT
 
     -->
-  <Entity Name="Wipeout" SubclassMarker="AcDbWipeout" TypeString="WIPEOUT" BaseClass="Image" MinVersion="R2000">
-    <!-- wholly inherits from IMAGE -->
+  <Entity Name="Wipeout" SubclassMarker="AcDbWipeout" TypeString="WIPEOUT" GenerateReaderFunction="false" MinVersion="R2000">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="u_vector" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
+    <Field Name="v_vector" Code="12" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="12,22,32" />
+    <Field Name="image_size" Code="13" Type="Vector" DefaultValue="Vector::zero()" CodeOverrides="13,23" />
+    <Field Name="image_def_reference" Code="340" Type="String" DefaultValue="String::new()" />
+    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="show_image" Mask="1" />
+      <Flag Name="show_image_when_not_alligned" Mask="2" />
+      <Flag Name="use_clipping_boundary" Mask="4" />
+      <Flag Name="use_transparency" Mask="8" />
+    </Field>
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
+    <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
+    <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
+    <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
+    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
+      <WriteField Field="ClassVersion" />
+      <WriteField Field="Location" />
+      <WriteField Field="UVector" />
+      <WriteField Field="VVector" />
+      <WriteField Field="ImageSize" />
+      <WriteField Field="ImageDefReference" />
+      <WriteField Field="DisplayOptionsFlags" />
+      <WriteField Field="UseClipping" />
+      <WriteField Field="Brightness" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <WriteField Field="ImageDefReactorReference" />
+      <WriteField Field="ClippingType" />
+      <WriteSpecificValue Code="91" Value="ClippingVertices.Count" />
+      <Foreach Field="ClippingVertices">
+        <WriteSpecificValue Code="14" Value="item.X" />
+        <WriteSpecificValue Code="24" Value="item.Y" />
+      </Foreach>
+      <WriteField Field="IsInsideClipping" />
+    </WriteOrder>
   </Entity>
   <!--
 

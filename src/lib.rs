@@ -375,6 +375,45 @@ impl Entity {
                     }
                 }
             },
+            EntityType::Wipeout(ref mut wo) => {
+                loop {
+                    let pair = next_pair!(peekable);
+                    match pair.code {
+                        90 => { wo.class_version = int_value(&pair.value); },
+                        10 => { wo.location.x = double_value(&pair.value); },
+                        20 => { wo.location.y = double_value(&pair.value); },
+                        30 => { wo.location.z = double_value(&pair.value); },
+                        11 => { wo.u_vector.x = double_value(&pair.value); },
+                        21 => { wo.u_vector.y = double_value(&pair.value); },
+                        31 => { wo.u_vector.z = double_value(&pair.value); },
+                        12 => { wo.v_vector.x = double_value(&pair.value); },
+                        22 => { wo.v_vector.y = double_value(&pair.value); },
+                        32 => { wo.v_vector.z = double_value(&pair.value); },
+                        13 => { wo.image_size.x = double_value(&pair.value); },
+                        23 => { wo.image_size.y = double_value(&pair.value); },
+                        340 => { wo.image_def_reference = string_value(&pair.value); },
+                        70 => { wo.display_options_flags = short_value(&pair.value) as i32; },
+                        280 => { wo.use_clipping = as_bool(short_value(&pair.value)); },
+                        281 => { wo.brightness = short_value(&pair.value); },
+                        282 => { wo.contrast = short_value(&pair.value); },
+                        283 => { wo.fade = short_value(&pair.value); },
+                        360 => { wo.image_def_reactor_reference = string_value(&pair.value); },
+                        71 => { wo.clipping_type = try_result!(ImageClippingBoundaryType::from_i16(short_value(&pair.value))); },
+                        91 => { wo.clipping_vertex_count = int_value(&pair.value); },
+                        14 => {
+                            // add new clipping vertex x value
+                            wo.clipping_vertices.push(Point::new(double_value(&pair.value), 0.0, 0.0));
+                        },
+                        24 => {
+                            // append existing clipping vertex y value
+                            let last = wo.clipping_vertices.len(); // TODO: handle index out of bounds
+                            wo.clipping_vertices[last - 1].y = double_value(&pair.value);
+                        }
+                        290 => { wo.is_inside_clipping = bool_value(&pair.value); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
             _ => return Ok(false), // no custom reader
         }
 
