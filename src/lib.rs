@@ -9,6 +9,9 @@ pub mod entities;
 use self::header::*;
 use self::entities::*;
 
+use self::enums::*;
+use enum_primitive::FromPrimitive;
+
 use std::io;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::iter::Peekable;
@@ -188,6 +191,24 @@ impl Header {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                        Entity
 ////////////////////////////////////////////////////////////////////////////////
+// returns the next CodePair that's not 0, or bails out early
+macro_rules! next_pair {
+    ($expr : expr) => (
+        match $expr.peek() {
+            Some(&Ok(CodePair { code: 0, .. })) | None => return Ok(true),
+            _ => $expr.next().unwrap().ok().unwrap(), // unwrap() and ok() calls are valid due to the match above
+        }
+    )
+}
+// Used to turn Option<T> into io::Result<T>.
+macro_rules! try_result {
+    ($expr : expr) => (
+        match $expr {
+            Some(v) => v,
+            None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected enum value"))
+        }
+    )
+}
 // implementation is in `entity.rs`
 impl Entity {
     pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
@@ -229,15 +250,18 @@ impl Entity {
         }
 
         let mut entity = Entity::new(entity_type);
-        loop {
-            match peekable.peek() {
-                Some(&Ok(CodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
-                Some(&Ok(_)) => {
-                    let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
-                    try!(entity.apply_code_pair(&pair));
-                },
-                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading drawing")),
-                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+        if !try!(entity.apply_custom_reader(peekable)) {
+            // no custom reader, use the auto-generated one
+            loop {
+                match peekable.peek() {
+                    Some(&Ok(CodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
+                    Some(&Ok(_)) => {
+                        let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
+                        try!(entity.apply_code_pair(&pair));
+                    },
+                    Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading drawing")),
+                    None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                }
             }
         }
 
@@ -245,9 +269,116 @@ impl Entity {
     }
     fn apply_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         if !try!(self.specific.try_apply_code_pair(&pair)) {
-            try!(self.apply_individual_pair(&pair));
+            try!(self.common.apply_individual_pair(&pair));
         }
         Ok(())
+    }
+    fn apply_custom_reader<I>(&mut self, peekable: &mut Peekable<I>) -> io::Result<bool>
+        where I: Iterator<Item = io::Result<CodePair>>
+    {
+        match self.specific {
+            EntityType::Image { ref mut class_version, ref mut location, ref mut u_vector, ref mut v_vector, ref mut image_size, ref mut image_def_reference, ref mut display_options_flags, ref mut use_clipping, ref mut brightness, ref mut contrast, ref mut fade, ref mut image_def_reactor_reference, ref mut clipping_type, ref mut clipping_vertex_count, ref mut clipping_vertices, ref mut is_inside_clipping } => {
+                loop {
+                    let pair = next_pair!(peekable);
+                    match pair.code {
+                        90 => { *class_version = int_value(&pair.value); },
+                        10 => { location.x = double_value(&pair.value); },
+                        20 => { location.y = double_value(&pair.value); },
+                        30 => { location.z = double_value(&pair.value); },
+                        11 => { u_vector.x = double_value(&pair.value); },
+                        21 => { u_vector.y = double_value(&pair.value); },
+                        31 => { u_vector.z = double_value(&pair.value); },
+                        12 => { v_vector.x = double_value(&pair.value); },
+                        22 => { v_vector.y = double_value(&pair.value); },
+                        32 => { v_vector.z = double_value(&pair.value); },
+                        13 => { image_size.x = double_value(&pair.value); },
+                        23 => { image_size.y = double_value(&pair.value); },
+                        340 => { *image_def_reference = string_value(&pair.value); },
+                        70 => { *display_options_flags = short_value(&pair.value) as i32; },
+                        280 => { *use_clipping = as_bool(short_value(&pair.value)); },
+                        281 => { *brightness = short_value(&pair.value); },
+                        282 => { *contrast = short_value(&pair.value); },
+                        283 => { *fade = short_value(&pair.value); },
+                        360 => { *image_def_reactor_reference = string_value(&pair.value); },
+                        71 => { *clipping_type = try_result!(ImageClippingBoundaryType::from_i16(short_value(&pair.value))); },
+                        91 => { *clipping_vertex_count = int_value(&pair.value); },
+                        14 => {
+                            // add new clipping vertex x value
+                            clipping_vertices.push(Point::new(double_value(&pair.value), 0.0, 0.0));
+                        },
+                        24 => {
+                            // append existing clipping vertex y value
+                            let last = clipping_vertices.len(); // TODO: handle index out of bounds
+                            clipping_vertices[last - 1].y = double_value(&pair.value);
+                        }
+                        290 => { *is_inside_clipping = bool_value(&pair.value); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
+            EntityType::MText { ref mut insertion_point, ref mut initial_text_height, ref mut reference_rectangle_width, ref mut attachment_point, ref mut drawing_direction, ref mut extended_text, ref mut text, ref mut text_style_name, ref mut extrusion_direction, ref mut x_axis_direction, ref mut horizontal_width, ref mut vertical_height, ref mut rotation_angle, ref mut line_spacing_style, ref mut line_spacing_factor, ref mut background_fill_setting, ref mut background_color_r_g_b, ref mut background_color_name, ref mut fill_box_scale, ref mut background_fill_color, ref mut background_fill_color_transparency, ref mut column_type, ref mut column_count, ref mut is_column_flow_reversed, ref mut is_column_auto_height, ref mut column_width, ref mut column_gutter, ref mut column_heights } => {
+                let mut reading_column_data = false;
+                let mut read_column_count = false;
+                loop {
+                    let pair = next_pair!(peekable);
+                    match pair.code {
+                        10 => { insertion_point.x = double_value(&pair.value); },
+                        20 => { insertion_point.y = double_value(&pair.value); },
+                        30 => { insertion_point.z = double_value(&pair.value); },
+                        40 => { *initial_text_height = double_value(&pair.value); },
+                        41 => { *reference_rectangle_width = double_value(&pair.value); },
+                        71 => { *attachment_point = try_result!(AttachmentPoint::from_i16(short_value(&pair.value))); },
+                        72 => { *drawing_direction = try_result!(DrawingDirection::from_i16(short_value(&pair.value))); },
+                        3 => { extended_text.push(string_value(&pair.value)); },
+                        1 => { *text = string_value(&pair.value); },
+                        7 => { *text_style_name = string_value(&pair.value); },
+                        210 => { extrusion_direction.x = double_value(&pair.value); },
+                        220 => { extrusion_direction.y = double_value(&pair.value); },
+                        230 => { extrusion_direction.z = double_value(&pair.value); },
+                        11 => { x_axis_direction.x = double_value(&pair.value); },
+                        21 => { x_axis_direction.y = double_value(&pair.value); },
+                        31 => { x_axis_direction.z = double_value(&pair.value); },
+                        42 => { *horizontal_width = double_value(&pair.value); },
+                        43 => { *vertical_height = double_value(&pair.value); },
+                        50 => {
+                            if reading_column_data {
+                                if read_column_count {
+                                    column_heights.push(double_value(&pair.value));
+                                }
+                                else {
+                                    *column_count = double_value(&pair.value) as i32;
+                                    read_column_count = true;
+                                }
+                            }
+                            else {
+                                *rotation_angle = double_value(&pair.value);
+                            }
+                        },
+                        73 => { *line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(short_value(&pair.value))); },
+                        44 => { *line_spacing_factor = double_value(&pair.value); },
+                        90 => { *background_fill_setting = try_result!(BackgroundFillSetting::from_i32(int_value(&pair.value))); },
+                        420 => { *background_color_r_g_b = int_value(&pair.value); },
+                        430 => { *background_color_name = string_value(&pair.value); },
+                        45 => { *fill_box_scale = double_value(&pair.value); },
+                        63 => { *background_fill_color = Color::from_raw_value(short_value(&pair.value)); },
+                        441 => { *background_fill_color_transparency = int_value(&pair.value); },
+                        75 => {
+                            *column_type = short_value(&pair.value);
+                            reading_column_data = true;
+                        },
+                        76 => { *column_count = short_value(&pair.value) as i32; },
+                        78 => { *is_column_flow_reversed = as_bool(short_value(&pair.value)); },
+                        79 => { *is_column_auto_height = as_bool(short_value(&pair.value)); },
+                        48 => { *column_width = double_value(&pair.value); },
+                        49 => { *column_gutter = double_value(&pair.value); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
+            _ => return Ok(false), // no custom reader
+        }
+
+        Ok(true)
     }
 }
 

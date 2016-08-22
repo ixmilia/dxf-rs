@@ -52,7 +52,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     let entity = &element.children[0];
     if name(&entity) != "Entity" { panic!("Expected first entity to be 'Entity'."); }
     fun.push_str("#[derive(Clone)]\n");
-    fun.push_str("pub struct Entity {\n");
+    fun.push_str("pub struct EntityCommon {\n");
     for c in &entity.children {
         let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
         match c.name.as_str() {
@@ -67,13 +67,29 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         }
     }
 
+    fun.push_str("}\n");
+    fun.push_str("\n");
+
+    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("pub struct Entity {\n");
+    fun.push_str("    pub common: EntityCommon,\n");
     fun.push_str("    pub specific: EntityType,\n");
     fun.push_str("}\n");
     fun.push_str("\n");
 
     fun.push_str("impl Entity {\n");
-    fun.push_str("    pub fn new(specific: EntityType) -> Entity {\n");
+    fun.push_str("    pub fn new(specific: EntityType) -> Self {\n");
     fun.push_str("        Entity {\n");
+    fun.push_str("            common: EntityCommon::new(),\n");
+    fun.push_str("            specific: specific,\n");
+    fun.push_str("        }\n");
+    fun.push_str("    }\n");
+    fun.push_str("}\n");
+    fun.push_str("\n");
+
+    fun.push_str("impl EntityCommon {\n");
+    fun.push_str("    pub fn new() -> Self {\n");
+    fun.push_str("        EntityCommon {\n");
     for c in &entity.children {
         match c.name.as_str() {
             "Field" => {
@@ -87,7 +103,6 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         }
     }
 
-    fun.push_str("            specific: specific,\n");
     fun.push_str("        }\n");
     fun.push_str("    }\n");
 
@@ -186,53 +201,58 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
         if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
-            // TODO: handle dimensions
-            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-            let mut fields = vec![];
-            for f in &c.children {
-                if f.name == "Field" { // TODO: support pointers
-                    fields.push(format!("ref mut {}", name(f)));
+            if generate_reader_function(&c) {
+                // TODO: handle dimensions
+                // TODO: handle complex subtypes: e.g., lwpolyline has vertices
+                let mut fields = vec![];
+                for f in &c.children {
+                    if f.name == "Field" { // TODO: support pointers
+                        fields.push(format!("ref mut {}", name(f)));
+                    }
                 }
-            }
-            fun.push_str(format!("            &mut EntityType::{typ} {{ {body} }} => {{\n", typ=name(c), body=fields.join(", ")).as_str());
-            fun.push_str("                match pair.code {\n");
-            let mut seen_codes = HashSet::new();
-            for f in &c.children {
-                if f.name == "Field" { // TODO: support pointers
-                    for (i, &cd) in codes(&f).iter().enumerate() {
-                        if !seen_codes.contains(&cd) {
-                            seen_codes.insert(cd); // TODO: allow for duplicates
-                            let reader = get_field_reader(&f);
-                            let codes = codes(&f);
-                            let write_cmd = match codes.len() {
-                                1 => {
-                                    let (prefix, read_fun) = if allow_multiples(&f) {
-                                        ("", format!(".push({})", reader))
+                fun.push_str(format!("            &mut EntityType::{typ} {{ {body} }} => {{\n", typ=name(c), body=fields.join(", ")).as_str());
+                fun.push_str("                match pair.code {\n");
+                let mut seen_codes = HashSet::new();
+                for f in &c.children {
+                    if f.name == "Field" { // TODO: support pointers
+                        for (i, &cd) in codes(&f).iter().enumerate() {
+                            if !seen_codes.contains(&cd) {
+                                seen_codes.insert(cd); // TODO: allow for duplicates
+                                let reader = get_field_reader(&f);
+                                let codes = codes(&f);
+                                let write_cmd = match codes.len() {
+                                    1 => {
+                                        let (prefix, read_fun) = if allow_multiples(&f) {
+                                            ("", format!(".push({})", reader))
+                                        }
+                                        else {
+                                            ("*", format!(" = {}", reader))
+                                        };
+                                        format!("{prefix}{field}{read_fun}", prefix=prefix, field=name(&f), read_fun=read_fun)
+                                    },
+                                    _ => {
+                                        let suffix = match i {
+                                            0 => "x",
+                                            1 => "y",
+                                            2 => "z",
+                                            _ => panic!("impossible"),
+                                        };
+                                        format!("{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
                                     }
-                                    else {
-                                        ("*", format!(" = {}", reader))
-                                    };
-                                    format!("{prefix}{field}{read_fun}", prefix=prefix, field=name(&f), read_fun=read_fun)
-                                },
-                                _ => {
-                                    let suffix = match i {
-                                        0 => "x",
-                                        1 => "y",
-                                        2 => "z",
-                                        _ => panic!("impossible"),
-                                    };
-                                    format!("{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
-                                }
-                            };
-                            fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
+                                };
+                                fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
+                            }
                         }
                     }
                 }
-            }
 
-            fun.push_str("                    _ => return Ok(false),\n");
-            fun.push_str("                }\n");
-            fun.push_str("            },\n");
+                fun.push_str("                    _ => return Ok(false),\n");
+                fun.push_str("                }\n");
+                fun.push_str("            },\n");
+            }
+            else {
+                fun.push_str(format!("            &mut EntityType::{typ} {{ .. }} => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)).as_str());
+            }
         }
     }
 
@@ -307,4 +327,8 @@ fn get_field_reader(element: &Element) -> String {
     }
     let read_cmd = format!("{reader}(&pair.value)", reader=reader_fun);
     read_converter.replace("{}", read_cmd.as_str())
+}
+
+fn generate_reader_function(element: &Element) -> bool {
+    attr(&element, "GenerateReaderFunction") != "false"
 }

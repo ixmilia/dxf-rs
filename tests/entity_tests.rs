@@ -71,7 +71,7 @@ fn read_entity_with_no_values() {
 #[test]
 fn read_common_entity_fields() {
     let ent = read_entity("LINE", vec!["8", "layer"].join("\r\n"));
-    assert_eq!("layer", ent.layer);
+    assert_eq!("layer", ent.common.layer);
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn read_multiple_entities() {
 #[test]
 fn read_field_with_multiples_common() {
     let ent = read_entity("LINE", vec!["310", "one", "310", "two"].join("\r\n"));
-    assert_eq!(vec!["one", "two"], ent.preview_image_data);
+    assert_eq!(vec!["one", "two"], ent.common.preview_image_data);
 }
 
 #[test]
@@ -143,5 +143,50 @@ fn read_field_with_multiples_specific() {
             assert_eq!(vec!["three-1", "three-2"], *custom_data2);
         },
         _ => panic!("expected a 3DSOLID"),
+    }
+}
+
+#[test]
+fn entity_with_custom_reader_image() {
+    let ent = read_entity("IMAGE", vec![
+        "14", "1.1", // clipping_vertices[0]
+        "24", "2.2",
+        "14", "3.3", // clipping_vertices[1]
+        "24", "4.4",
+        "14", "5.5", // clipping_vertices[2]
+        "24", "6.6",
+    ].join("\r\n"));
+    match ent.specific {
+        EntityType::Image { ref clipping_vertices, .. } => {
+            assert_eq!(3, clipping_vertices.len());
+            assert_eq!(Point::new(1.1, 2.2, 0.0), clipping_vertices[0]);
+            assert_eq!(Point::new(3.3, 4.4, 0.0), clipping_vertices[1]);
+            assert_eq!(Point::new(5.5, 6.6, 0.0), clipping_vertices[2]);
+        },
+        _ => panic!("expected an IMAGE"),
+    }
+}
+
+#[test]
+fn entity_with_custom_reader_mtext() {
+    let ent = read_entity("MTEXT", vec![
+        "50", "1.1", // rotation angle
+        "75", "7", // column type
+        "50", "3", // column count
+        "50", "10", // column values
+        "50", "20",
+        "50", "30",
+    ].join("\r\n"));
+    match ent.specific {
+        EntityType::MText { ref rotation_angle, ref column_type, ref column_count, ref column_heights, .. } => {
+            assert_eq!(1.1, *rotation_angle);
+            assert_eq!(7, *column_type);
+            assert_eq!(3, *column_count);
+            assert_eq!(3, column_heights.len());
+            assert_eq!(10.0, column_heights[0]);
+            assert_eq!(20.0, column_heights[1]);
+            assert_eq!(30.0, column_heights[2]);
+        },
+        _ => panic!("expected an MTEXT"),
     }
 }

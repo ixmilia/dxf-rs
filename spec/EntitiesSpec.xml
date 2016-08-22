@@ -154,7 +154,7 @@
     ATTDEF
 
     -->
-  <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF" GenerateReaderFunction="false">
+  <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
@@ -230,7 +230,7 @@
     ATTRIB
 
     -->
-  <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB" GenerateReaderFunction="false">
+  <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
@@ -427,7 +427,7 @@
     IMAGE
 
     -->
-  <Entity Name="Image" SubclassMarker="AcDbRasterImage" TypeString="IMAGE" MinVersion="R14">
+  <Entity Name="Image" SubclassMarker="AcDbRasterImage" TypeString="IMAGE" GenerateReaderFunction="false" MinVersion="R14">
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="u_vector" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
@@ -447,8 +447,7 @@
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
     <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
-    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
-    <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" Accessibility="private" AllowMultiples="true" />
+    <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
@@ -581,7 +580,7 @@
     LWPOLYLINE
 
     -->
-  <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14" GenerateReaderFunction="false">
+  <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14">
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
       <Flag Name="IsClosed" Mask="1" />
       <Flag Name="IsPLineGen" Mask="128" />
