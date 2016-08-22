@@ -1100,7 +1100,7 @@
     UNDERLAY
 
     -->
-  <Entity Name="Underlay" SubclassMarker="AcDbUnderlayReference" TypeString="UNDERLAY" DefaultConstructor="Internal" CopyConstructor="Protected" MinVersion="R2007">
+  <Entity Name="Underlay" SubclassMarker="AcDbUnderlayReference" TypeString="UNDERLAY" MinVersion="R2007">
     <Pointer Name="object" Code="340" Type="IItem" />
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
@@ -1137,9 +1137,117 @@
       </Foreach>
     </WriteOrder>
   </Entity>
-  <Entity Name="DgnUnderlay" SubclassMarker="null" TypeString="DGNUNDERLAY" BaseClass="Underlay" CopyConstructor="Inherited" Tag="DGN" />
-  <Entity Name="DwfUnderlay" SubclassMarker="null" TypeString="DWFUNDERLAY" BaseClass="Underlay" CopyConstructor="Inherited" Tag="DWF" />
-  <Entity Name="PdfUnderlay" SubclassMarker="null" TypeString="PDFUNDERLAY" BaseClass="Underlay" CopyConstructor="Inherited" Tag="PDF" />
+  <Entity Name="DgnUnderlay" SubclassMarker="null" TypeString="DGNUNDERLAY" Tag="DGN" MinVersion="R2007">
+    <Pointer Name="object" Code="340" Type="IItem" />
+    <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="y_scale" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClippingOn" Mask="1" />
+      <Flag Name="IsUnderlayOn" Mask="2" />
+      <Flag Name="IsMonochrome" Mask="4" />
+      <Flag Name="AdjustForBackground" Mask="8" />
+      <Flag Name="IsClipInsideMode" Mask="16" />
+    </Field>
+    <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
+    <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
+    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
+      <WriteField Field="Object" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="XScale" />
+      <WriteField Field="YScale" />
+      <WriteField Field="ZScale" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Flags" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <Foreach Field="BoundaryPoints">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="12" Value="item.Y" />
+      </Foreach>
+    </WriteOrder>
+  </Entity>
+  <Entity Name="DwfUnderlay" SubclassMarker="null" TypeString="DWFUNDERLAY" Tag="DWF" MinVersion="R2007">
+    <Pointer Name="object" Code="340" Type="IItem" />
+    <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="y_scale" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClippingOn" Mask="1" />
+      <Flag Name="IsUnderlayOn" Mask="2" />
+      <Flag Name="IsMonochrome" Mask="4" />
+      <Flag Name="AdjustForBackground" Mask="8" />
+      <Flag Name="IsClipInsideMode" Mask="16" />
+    </Field>
+    <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
+    <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
+    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
+      <WriteField Field="Object" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="XScale" />
+      <WriteField Field="YScale" />
+      <WriteField Field="ZScale" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Flags" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <Foreach Field="BoundaryPoints">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="12" Value="item.Y" />
+      </Foreach>
+    </WriteOrder>
+  </Entity>
+  <Entity Name="PdfUnderlay" SubclassMarker="null" TypeString="PDFUNDERLAY" Tag="PDF" MinVersion="R2007">
+    <Pointer Name="object" Code="340" Type="IItem" />
+    <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="y_scale" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
+    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
+    <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+      <Flag Name="IsClippingOn" Mask="1" />
+      <Flag Name="IsUnderlayOn" Mask="2" />
+      <Flag Name="IsMonochrome" Mask="4" />
+      <Flag Name="AdjustForBackground" Mask="8" />
+      <Flag Name="IsClipInsideMode" Mask="16" />
+    </Field>
+    <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
+    <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
+    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
+      <WriteField Field="Object" />
+      <WriteField Field="InsertionPoint" />
+      <WriteField Field="XScale" />
+      <WriteField Field="YScale" />
+      <WriteField Field="ZScale" />
+      <WriteField Field="RotationAngle" />
+      <WriteField Field="Normal" />
+      <WriteField Field="Flags" />
+      <WriteField Field="Contrast" />
+      <WriteField Field="Fade" />
+      <Foreach Field="BoundaryPoints">
+        <WriteSpecificValue Code="11" Value="item.X" />
+        <WriteSpecificValue Code="12" Value="item.Y" />
+      </Foreach>
+    </WriteOrder>
+  </Entity>
   <!--
 
     VERTEX
