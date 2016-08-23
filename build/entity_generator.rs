@@ -59,7 +59,8 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
                 fun.push_str(format!("    pub {name}: {typ},\n", name=name(c), typ=t).as_str());
             },
             "Pointer" => {
-                fun.push_str(format!("    // TODO: '{}' pointer here\n", name(c)).as_str());
+                // TODO: proper handling of pointers
+                fun.push_str(format!("    pub {name}: u32,\n", name=name(c)).as_str());
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -91,11 +92,10 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("        EntityCommon {\n");
     for c in &entity.children {
         match c.name.as_str() {
-            "Field" => {
-                fun.push_str(format!("            {name}: {val},\n", name=name(c), val=default_value(&c)).as_str());
-            },
-            "Pointer" => {
-                fun.push_str(format!("            // TODO: '{}' pointer here\n", name(c)).as_str());
+            "Field" | "Pointer" => {
+                // TODO: proper handling of pointers
+                let default_value = if c.name == "Field" { default_value(&c) } else { String::from("0") };
+                fun.push_str(format!("            {name}: {val},\n", name=name(c), val=default_value).as_str());
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -108,7 +108,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> io::Result<()> {\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
-        if c.name == "Field" { // TODO: support pointers
+        if c.name == "Field" {
             let read_fun = if allow_multiples(&c) {
                 format!(".push({})", get_field_reader(&c))
             }
@@ -116,6 +116,10 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
                 format!(" = {}", get_field_reader(&c))
             };
             fun.push_str(format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun).as_str());
+        }
+        else if c.name == "Pointer" {
+            // TODO: proper handling of pointers
+            fun.push_str(format!("            {code} => {{ self.{field} = try!(as_handle(string_value(&pair.value))) }},\n", code=code(&c), field=name(c)).as_str());
         }
     }
 
@@ -160,7 +164,8 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t).as_str());
                     },
                     "Pointer" => {
-                        fun.push_str(format!("    // TODO: '{}' pointer here\n", name(f)).as_str());
+                        // TODO: proper handling of pointers
+                        fun.push_str(format!("    pub {name}: u32,\n", name=name(f)).as_str());
                     },
                     "WriteOrder" => (), // TODO:
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -180,7 +185,8 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(format!("            {name}: {val},\n", name=name(f), val=default_value(&f)).as_str());
                     },
                     "Pointer" => {
-                        fun.push_str(format!("            // TODO: '{}' pointer here\n", name(f)).as_str());
+                        // TODO: proper handling of pointers
+                        fun.push_str(format!("            {name}: 0,\n", name=name(f)).as_str());
                     },
                     "WriteOrder" => (), // TODO:
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -254,7 +260,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
-                    if f.name == "Field" && generate_reader(&f) { // TODO: support pointers
+                    if f.name == "Field" && generate_reader(&f) {
                         for (i, &cd) in codes(&f).iter().enumerate() {
                             if !seen_codes.contains(&cd) {
                                 seen_codes.insert(cd); // TODO: allow for duplicates
@@ -283,6 +289,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                 fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
                             }
                         }
+                    }
+                    else if f.name == "Pointer" {
+                        // TODO: proper handling of pointers
+                        fun.push_str(format!("                    {code} => {{ ent.{field} = try!(as_handle(string_value(&pair.value))); }},\n", code=code(&f), field=name(&f)).as_str());
                     }
                 }
 

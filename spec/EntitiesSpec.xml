@@ -7,6 +7,8 @@
 
     -->
   <Entity Name="Entity" SubclassMarker="" TypeString="">
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_handle({}))" />
+    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_handle({}))" />
     <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter="DefaultIfNullOrEmpty(&quot;0&quot;)" />
     <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" />

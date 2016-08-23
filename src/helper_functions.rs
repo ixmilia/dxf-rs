@@ -117,8 +117,31 @@ pub fn as_duration(_d: f64) -> Duration {
     unimplemented!()
 }
 
-pub fn as_handle(_s: String) -> u32 {
-    unimplemented!()
+pub fn as_handle(s: String) -> io::Result<u32> {
+    let mut result = 0;
+    for c in s.chars() {
+        match c {
+            '0' => result = result * 16,
+            '1' => result = result * 16 + 1,
+            '2' => result = result * 16 + 2,
+            '3' => result = result * 16 + 3,
+            '4' => result = result * 16 + 4,
+            '5' => result = result * 16 + 5,
+            '6' => result = result * 16 + 6,
+            '7' => result = result * 16 + 7,
+            '8' => result = result * 16 + 8,
+            '9' => result = result * 16 + 9,
+            'A' | 'a' => result = result * 16 + 10,
+            'B' | 'b' => result = result * 16 + 11,
+            'C' | 'c' => result = result * 16 + 12,
+            'D' | 'd' => result = result * 16 + 13,
+            'E' | 'e' => result = result * 16 + 14,
+            'F' | 'f' => result = result * 16 + 15,
+            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "invalid hex character")),
+        }
+    }
+
+    Ok(result)
 }
 
 pub fn as_uuid(s: String) -> io::Result<Uuid> {

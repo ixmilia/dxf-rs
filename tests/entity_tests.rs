@@ -202,3 +202,18 @@ fn entity_with_flags() {
         _ => panic!("expected an IMAGE"),
     }
 }
+
+#[test]
+fn entity_with_handle_and_pointer() {
+    let ent = read_entity("3DSOLID", vec![
+        "5", "A1", // handle
+        "330", "A2", // owner handle
+        "350", "A3", // history_object pointer
+    ].join("\r\n"));
+    assert_eq!(0xa1, ent.common.handle);
+    assert_eq!(0xa2, ent.common.owner_handle);
+    match ent.specific {
+        EntityType::Solid3D(ref solid) => assert_eq!(0xa3, solid.history_object),
+        _ => panic!("expected a 3DSOLID entity"),
+    }
+}
