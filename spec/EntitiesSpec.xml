@@ -7,45 +7,45 @@
 
     -->
   <Entity Name="Entity" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_handle({}))" />
-    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_handle({}))" />
-    <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" DisableWritingDefault="true" MinVersion="R12" />
-    <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter="DefaultIfNullOrEmpty(&quot;0&quot;)" />
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter='&amp;default_if_empty(&amp;{}, "0")' />
     <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" />
     <Field Name="elevation" Code="38" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" MaxVersion="R12" />
     <Field Name="material_handle" Code="347" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" MinVersion="R2007" />
-    <Field Name="color" Code="62" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" DisableWritingDefault="true" />
+    <Field Name="color" Code="62" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" DisableWritingDefault="true" />
     <Field Name="lineweight_enum_value" Code="370" Type="i16" DefaultValue="0" MinVersion="R2000" />
     <Field Name="linetype_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
-    <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="NotBoolShort" DisableWritingDefault="true" MinVersion="R13" />
+    <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_short(!{})" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="image_byte_count" Code="92" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
     <Field Name="color_24_bit" Code="420" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2004" />
     <Field Name="color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2004" />
     <Field Name="transparency" Code="440" Type="i32" DefaultValue="0" MinVersion="R2004" />
     <Pointer Name="plot_style" Code="390" Type="IItem" MinVersion="R2007" />
-    <Field Name="shadow_mode" Code="284" Type="ShadowMode" DefaultValue="ShadowMode::CastsAndReceivesShadows" ReadConverter="try_result!(ShadowMode::from_i16({}))" WriteConverter="(short)" MinVersion="R2007" />
+    <Field Name="shadow_mode" Code="284" Type="ShadowMode" DefaultValue="ShadowMode::CastsAndReceivesShadows" ReadConverter="try_result!(ShadowMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
     <WriteOrder>
-      <WriteSpecificValue Code="5" Value="((IItemInternal)this).Handle" WriteCondition="outputHandles" WriteConverter="UIntHandle" />
+      <WriteField Field="handle" WriteCondition="write_handles" />
       <WriteExtensionData />
-      <WriteSpecificValue Code="330" Value="((IItemInternal)this).OwnerHandle" WriteCondition="outputHandles" DontWriteIfValueIs="0" WriteConverter="UIntHandle" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbEntity&quot;" />
-      <WriteField Field="IsInPaperSpace" />
-      <WriteField Field="Layer" />
-      <WriteField Field="LinetypeName" />
-      <WriteField Field="Elevation" />
-      <WriteField Field="MaterialHandle" />
-      <WriteField Field="Color" />
-      <WriteField Field="LineweightEnumValue" />
-      <WriteField Field="LinetypeScale" />
-      <WriteField Field="IsVisible" />
-      <WriteField Field="ImageByteCount" />
-      <WriteField Field="PreviewImageData" />
-      <WriteField Field="Color24Bit" />
-      <WriteField Field="ColorName" />
-      <WriteField Field="Transparency" />
-      <WriteField Field="PlotStyle" />
-      <WriteField Field="ShadowMode" />
+      <WriteField Field="owner_handle" WriteCondition="write_handles" DontWriteIfValueIs="0" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbEntity")' />
+      <WriteField Field="is_in_paper_space" />
+      <WriteField Field="layer" />
+      <WriteField Field="linetype_name" />
+      <WriteField Field="elevation" />
+      <WriteField Field="material_handle" />
+      <WriteField Field="color" />
+      <WriteField Field="lineweight_enum_value" />
+      <WriteField Field="linetype_scale" />
+      <WriteField Field="is_visible" />
+      <WriteField Field="image_byte_count" />
+      <WriteField Field="preview_image_data" />
+      <WriteField Field="color_24_bit" />
+      <WriteField Field="color_name" />
+      <WriteField Field="transparency" />
+      <WriteField Field="plot_style" />
+      <WriteField Field="shadow_mode" />
     </WriteOrder>
   </Entity>
   <!--
@@ -58,7 +58,7 @@
     <Field Name="second_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="third_corner" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
     <Field Name="fourth_corner" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="edge_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+    <Field Name="edge_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
       <Flag Name="is_first_edge_invisible" Mask="1" />
       <Flag Name="is_second_edge_invisible" Mask="2" />
       <Flag Name="is_third_edge_invisible" Mask="4" />
@@ -76,12 +76,12 @@
     <Field Name="custom_data2" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="history_object" Code="350" Type="IItem" MinVersion="R2007" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbModelerGeometry&quot;" />
-      <WriteField Field="FormatVersionNumber" />
-      <WriteField Field="CustomData" />
-      <WriteField Field="CustomData2" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDb3dSolid&quot;" MinVersion="R2007" />
-      <WriteField Field="HistoryObject" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbModelerGeometry")' />
+      <WriteField Field="format_version_number" />
+      <WriteField Field="custom_data" />
+      <WriteField Field="custom_data2" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDb3dSolid")' MinVersion="R2007" />
+      <WriteField Field="history_object" />
     </WriteOrder>
   </Entity>
   <!--
@@ -101,8 +101,8 @@
     <Field Name="object_i_d3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_i_d4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
-    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="(int)" Accessibility="private" MinVersion="R2000" />
-    <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2000" />
+    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" Accessibility="private" MinVersion="R2000" />
+    <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2000" />
   </Entity>
   <!--
 
@@ -137,16 +137,16 @@
     <Field Name="left_offset" Code="46" Type="f64" DefaultValue="0.0" />
     <Field Name="start_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="end_angle" Code="51" Type="f64" DefaultValue="0.0" />
-    <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="direction_flag" Code="71" Type="i16" DefaultValue="0" />
     <Field Name="alignment_flag" Code="72" Type="i16" DefaultValue="0" />
     <Field Name="side_flag" Code="73" Type="i16" DefaultValue="0" />
-    <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
-    <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
-    <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="character_set_value" Code="77" Type="i16" DefaultValue="0" />
     <Field Name="pitch_and_family_value" Code="78" Type="i16" DefaultValue="0" />
-    <Field Name="font_type" Code="79" Type="FontType" DefaultValue="FontType::TTF" ReadConverter="try_result!(FontType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="font_type" Code="79" Type="FontType" DefaultValue="FontType::TTF" ReadConverter="try_result!(FontType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="color_index" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="wizard_flag" Code="280" Type="i16" DefaultValue="0" />
@@ -165,66 +165,66 @@
     <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
-    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2010" />
     <Field Name="prompt" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="text_tag" Code="2" Type="String" DefaultValue="String::new()" />
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_invisible" Mask="1" />
       <Flag Name="is_constant" Mask="2" />
       <Flag Name="is_input_verification_required" Mask="4" />
       <Flag Name="is_attribute_present" Mask="8" />
     </Field>
     <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
-    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
-    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="try_result!(MTextFlag::from_i16({}))" WriteConverter="(short)" MinVersion="R2007" />
-    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" MinVersion="R2007" />
+    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="try_result!(MTextFlag::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
     <Pointer Name="m_text" Code="-1" Type="MText" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" MinVersion="R13" />
-      <WriteField Field="Thickness" />
-      <WriteField Field="Location" />
-      <WriteField Field="TextHeight" />
-      <WriteField Field="Value" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbAttributeDefinition&quot;" MinVersion="R13" />
-      <WriteField Field="Rotation" />
-      <WriteField Field="RelativeXScaleFactor" />
-      <WriteField Field="ObliqueAngle" />
-      <WriteField Field="TextStyleName" />
-      <WriteField Field="TextGenerationFlags" />
-      <WriteField Field="HorizontalTextJustification" />
-      <WriteField Field="SecondAlignmentPoint" />
-      <WriteField Field="Normal" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbAttributeDefinition&quot;" MinVersion="R13" />
-      <WriteField Field="Version" />
-      <WriteField Field="Prompt" />
-      <WriteField Field="TextTag" />
-      <WriteField Field="Flags" />
-      <WriteField Field="FieldLength" />
-      <WriteField Field="VerticalTextJustification" />
-      <WriteField Field="IsLockedInBlock" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbXrecord&quot;" MinVersion="R2007" />
-      <WriteField Field="KeepDuplicateRecords" />
-      <WriteField Field="MTextFlag" />
-      <WriteField Field="IsReallyLocked" />
-      <WriteSpecificValue Code="70" Value="(short)SecondaryAttributes.Count" MinVersion="R2007" />
-      <WriteField Field="SecondaryAttributes" />
-      <WriteField Field="AlignmentPoint" />
-      <WriteField Field="AnnotationScale" />
-      <WriteField Field="XRecordTag" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
+      <WriteField Field="thickness" />
+      <WriteField Field="location" />
+      <WriteField Field="text_height" />
+      <WriteField Field="value" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAttributeDefinition")' MinVersion="R13" />
+      <WriteField Field="rotation" />
+      <WriteField Field="relative_x_scale_factor" />
+      <WriteField Field="oblique_angle" />
+      <WriteField Field="text_style_name" />
+      <WriteField Field="text_generation_flags" />
+      <WriteField Field="horizontal_text_justification" />
+      <WriteField Field="second_alignment_point" />
+      <WriteField Field="normal" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAttributeDefinition")' MinVersion="R13" />
+      <WriteField Field="version" />
+      <WriteField Field="prompt" />
+      <WriteField Field="text_tag" />
+      <WriteField Field="flags" />
+      <WriteField Field="field_length" />
+      <WriteField Field="vertical_text_justification" />
+      <WriteField Field="is_locked_in_block" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbXrecord")' MinVersion="R2007" />
+      <WriteField Field="keep_duplicate_records" />
+      <WriteField Field="m_text_flag" />
+      <WriteField Field="is_really_locked" />
+      <WriteSpecificValue Code="70" Value="ent.secondary_attributes.len() as i16" MinVersion="R2007" />
+      <WriteField Field="secondary_attributes" />
+      <WriteField Field="alignment_point" />
+      <WriteField Field="annotation_scale" />
+      <WriteField Field="x_record_tag" />
     </WriteOrder>
   </Entity>
   <!--
@@ -237,9 +237,9 @@
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="value" Code="1" Type="String" DefaultValue="String::new()" />
-    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2010" />
     <Field Name="attribute_tag" Code="2" Type="String" DefaultValue="String::new()" />
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_invisible" Mask="1" />
       <Flag Name="is_constant" Mask="2" />
       <Flag Name="is_input_verification_required" Mask="4" />
@@ -250,54 +250,54 @@
     <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
-    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
-    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="(MTextFlag)" WriteConverter="(short)" MinVersion="R2007" />
-    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" MinVersion="R2007" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="(MTextFlag)" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
     <Pointer Name="m_text" Code="-1" Type="MText" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" MinVersion="R13" />
-      <WriteField Field="Thickness" />
-      <WriteField Field="Location" />
-      <WriteField Field="TextHeight" />
-      <WriteField Field="Value" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbAttribute&quot;" MinVersion="R13" />
-      <WriteField Field="Version" />
-      <WriteField Field="AttributeTag" />
-      <WriteField Field="Flags" />
-      <WriteField Field="FieldLength" />
-      <WriteField Field="Rotation" />
-      <WriteField Field="RelativeXScaleFactor" />
-      <WriteField Field="ObliqueAngle" />
-      <WriteField Field="TextStyleName" />
-      <WriteField Field="TextGenerationFlags" />
-      <WriteField Field="HorizontalTextJustification" />
-      <WriteField Field="VerticalTextJustification" />
-      <WriteField Field="SecondAlignmentPoint" />
-      <WriteField Field="Normal" />
-      <WriteField Field="IsLockedInBlock" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbXrecord&quot;" MinVersion="R2007" />
-      <WriteField Field="KeepDuplicateRecords" />
-      <WriteField Field="MTextFlag" />
-      <WriteField Field="IsReallyLocked" />
-      <WriteSpecificValue Code="70" Value="(short)SecondaryAttributes.Count" MinVersion="R2007" />
-      <WriteField Field="SecondaryAttributes" />
-      <WriteField Field="AlignmentPoint" />
-      <WriteField Field="AnnotationScale" />
-      <WriteField Field="XRecordTag" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
+      <WriteField Field="thickness" />
+      <WriteField Field="location" />
+      <WriteField Field="text_height" />
+      <WriteField Field="value" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAttribute")' MinVersion="R13" />
+      <WriteField Field="version" />
+      <WriteField Field="attribute_tag" />
+      <WriteField Field="flags" />
+      <WriteField Field="field_length" />
+      <WriteField Field="rotation" />
+      <WriteField Field="relative_x_scale_factor" />
+      <WriteField Field="oblique_angle" />
+      <WriteField Field="text_style_name" />
+      <WriteField Field="text_generation_flags" />
+      <WriteField Field="horizontal_text_justification" />
+      <WriteField Field="vertical_text_justification" />
+      <WriteField Field="second_alignment_point" />
+      <WriteField Field="normal" />
+      <WriteField Field="is_locked_in_block" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbXrecord")' MinVersion="R2007" />
+      <WriteField Field="keep_duplicate_records" />
+      <WriteField Field="m_text_flag" />
+      <WriteField Field="is_really_locked" />
+      <WriteSpecificValue Code="70" Value="ent.secondary_attributes.len() as i16" MinVersion="R2007" />
+      <WriteField Field="secondary_attributes" />
+      <WriteField Field="alignment_point" />
+      <WriteField Field="annotation_scale" />
+      <WriteField Field="x_record_tag" />
     </WriteOrder>
   </Entity>
   <!--
@@ -328,13 +328,13 @@
     -->
   <!-- the class from which all dimensions inherit -->
   <Entity Name="DimensionBase" SubclassMarker="AcDbDimension" TypeString="DIMENSION" DefaultConstructor="Internal" CopyConstructor="Protected" HasXData="true">
-    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="(short)" MinVersion="R2010" />
+    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2010" />
     <Field Name="block_name" Code="2" Type="String" DefaultValue='String::from("*MODEL_SPACE")' />
     <Field Name="definition_point1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_mid_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" ReadConverter="try_result!(DimensionType::from_i16({}))" WriteConverter="HandleDimensionType" />
-    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="(short)" MinVersion="R2000" />
-    <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" ReadConverter="try_result!(TextLineSpacingStyle::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+    <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" ReadConverter="try_result!(TextLineSpacingStyle::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="actual_measurement" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" ProtectedSet="true" MinVersion="R2000" />
     <Field Name="text" Code="1" Type="String" DefaultValue='String::from("&lt;&gt;")' />
@@ -357,13 +357,13 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="extension_line_angle" Code="52" Type="f64" DefaultValue="0.0" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbAlignedDimension&quot;" MinVersion="R13" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="DefinitionPoint2" />
-      <WriteField Field="DefinitionPoint3" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="ExtensionLineAngle" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbRotatedDimension&quot;" MinVersion="R13" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAlignedDimension")' MinVersion="R13" />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="definition_point2" />
+      <WriteField Field="definition_point3" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="extension_line_angle" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRotatedDimension")' MinVersion="R13" />
     </WriteOrder>
   </Entity>
   <!-- radial -->
@@ -422,7 +422,7 @@
     <Field Name="number_of_turns" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="turn_height" Code="42" Type="f64" DefaultValue="0.0" />
     <Field Name="is_right_handed" Code="290" Type="bool" DefaultValue="false" />
-    <Field Name="constraint" Code="280" Type="HelixConstraint" DefaultValue="HelixConstraint::ConstrainTurnHeight" ReadConverter="try_result!(HelixConstraint::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="constraint" Code="280" Type="HelixConstraint" DefaultValue="HelixConstraint::ConstrainTurnHeight" ReadConverter="try_result!(HelixConstraint::from_i16({}))" WriteConverter="{} as i16" />
   </Entity>
   <!--
 
@@ -436,44 +436,44 @@
     <Field Name="v_vector" Code="12" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="12,22,32" />
     <Field Name="image_size" Code="13" Type="Vector" DefaultValue="Vector::zero()" CodeOverrides="13,23" />
     <Field Name="image_def_reference" Code="340" Type="String" DefaultValue="String::new()" />
-    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="show_image" Mask="1" />
       <Flag Name="show_image_when_not_alligned" Mask="2" />
       <Flag Name="use_clipping_boundary" Mask="4" />
       <Flag Name="use_transparency" Mask="8" />
     </Field>
-    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
-    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
-      <WriteField Field="ClassVersion" />
-      <WriteField Field="Location" />
-      <WriteField Field="UVector" />
-      <WriteField Field="VVector" />
-      <WriteField Field="ImageSize" />
-      <WriteField Field="ImageDefReference" />
-      <WriteField Field="DisplayOptionsFlags" />
-      <WriteField Field="UseClipping" />
-      <WriteField Field="Brightness" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <WriteField Field="ImageDefReactorReference" />
-      <WriteField Field="ClippingType" />
-      <WriteSpecificValue Code="91" Value="ClippingVertices.Count" />
-      <Foreach Field="ClippingVertices">
-        <WriteSpecificValue Code="14" Value="item.X" />
-        <WriteSpecificValue Code="24" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRasterImage")' />
+      <WriteField Field="class_version" />
+      <WriteField Field="location" />
+      <WriteField Field="u_vector" />
+      <WriteField Field="v_vector" />
+      <WriteField Field="image_size" />
+      <WriteField Field="image_def_reference" />
+      <WriteField Field="display_options_flags" />
+      <WriteField Field="use_clipping" />
+      <WriteField Field="brightness" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <WriteField Field="image_def_reactor_reference" />
+      <WriteField Field="clipping_type" />
+      <WriteSpecificValue Code="91" Value="ent.clipping_vertices.len() as i32" />
+      <Foreach Field="ent.clipping_vertices">
+        <WriteSpecificValue Code="14" Value="item.x" />
+        <WriteSpecificValue Code="24" Value="item.y" />
       </Foreach>
-      <WriteField Field="IsInsideClipping" />
+      <WriteField Field="is_inside_clipping" />
     </WriteOrder>
   </Entity>
   <!--
@@ -482,7 +482,7 @@
 
     -->
   <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
-    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" DisableWritingDefault="true" />
+    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" DisableWritingDefault="true" />
     <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
@@ -502,46 +502,46 @@
     -->
   <Entity Name="Leader" SubclassMarker="AcDbLeader" TypeString="LEADER" MinVersion="R13" HasXData="true">
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
-    <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
-    <Field Name="path_type" Code="72" Type="LeaderPathType" DefaultValue="LeaderPathType::StraightLineSegments" ReadConverter="try_result!(LeaderPathType::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="annotation_type" Code="73" Type="LeaderCreationAnnotationType" DefaultValue="LeaderCreationAnnotationType::NoAnnotation" ReadConverter="try_result!(LeaderCreationAnnotationType::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="hookline_direction" Code="74" Type="LeaderHooklineDirection" DefaultValue="LeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="try_result!(LeaderHooklineDirection::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="path_type" Code="72" Type="LeaderPathType" DefaultValue="LeaderPathType::StraightLineSegments" ReadConverter="try_result!(LeaderPathType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="annotation_type" Code="73" Type="LeaderCreationAnnotationType" DefaultValue="LeaderCreationAnnotationType::NoAnnotation" ReadConverter="try_result!(LeaderCreationAnnotationType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="hookline_direction" Code="74" Type="LeaderHooklineDirection" DefaultValue="LeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="try_result!(LeaderHooklineDirection::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
-    <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="_vertices_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_vertices_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_vertices_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="10" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" />
+    <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="associated_annotation_reference" Code="340" Type="String" DefaultValue="String::new()" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="right" Code="211" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="211,221,231" />
     <Field Name="block_offset" Code="212" Type="Vector" DefaultValue="Vector::zero()" CodeOverrides="212,222,232" />
     <Field Name="annotation_offset" Code="213" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="213,223,233" MinVersion="R14" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbLeader&quot;" />
-      <WriteField Field="DimensionStyleName" />
-      <WriteField Field="UseArrowheads" />
-      <WriteField Field="PathType" />
-      <WriteField Field="AnnotationType" />
-      <WriteField Field="HooklineDirection" />
-      <WriteField Field="UseHookline" />
-      <WriteField Field="TextAnnotationHeight" />
-      <WriteField Field="TextAnnotationWidth" />
-      <WriteSpecificValue Code="76" Value="(short)Vertices.Count" />
-      <Foreach Field="Vertices">
-        <WriteSpecificValue Code="10" Value="item.X" />
-        <WriteSpecificValue Code="20" Value="item.Y" />
-        <WriteSpecificValue Code="30" Value="item.Z" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbLeader")' />
+      <WriteField Field="dimension_style_name" />
+      <WriteField Field="use_arrowheads" />
+      <WriteField Field="path_type" />
+      <WriteField Field="annotation_type" />
+      <WriteField Field="hookline_direction" />
+      <WriteField Field="use_hookline" />
+      <WriteField Field="text_annotation_height" />
+      <WriteField Field="text_annotation_width" />
+      <WriteSpecificValue Code="76" Value="ent.vertices.len() as i16" />
+      <Foreach Field="ent.vertices">
+        <WriteSpecificValue Code="10" Value="item.x" />
+        <WriteSpecificValue Code="20" Value="item.y" />
+        <WriteSpecificValue Code="30" Value="item.z" />
       </Foreach>
-      <WriteField Field="OverrideColor" />
-      <WriteField Field="AssociatedAnnotationReference" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Right" />
-      <WriteField Field="BlockOffset" />
-      <WriteField Field="AnnotationOffset" />
+      <WriteField Field="override_color" />
+      <WriteField Field="associated_annotation_reference" />
+      <WriteField Field="normal" />
+      <WriteField Field="right" />
+      <WriteField Field="block_offset" />
+      <WriteField Field="annotation_offset" />
     </WriteOrder>
   </Entity>
   <!--
@@ -552,20 +552,20 @@
   <Entity Name="Light" SubclassMarker="AcDbLight" TypeString="LIGHT" MinVersion="R2007">
     <Field Name="version_number" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
-    <Field Name="light_type" Code="70" Type="LightType" DefaultValue="LightType::Distant" ReadConverter="try_result!(LightType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="light_type" Code="70" Type="LightType" DefaultValue="LightType::Distant" ReadConverter="try_result!(LightType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="is_active" Code="290" Type="bool" DefaultValue="true" />
     <Field Name="plot_glyph" Code="291" Type="bool" DefaultValue="true" />
     <Field Name="intensity" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="position" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="target_location" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="attentuation_type" Code="72" Type="LightAttenuationType" DefaultValue="LightAttenuationType::None" ReadConverter="try_result!(LightAttenuationType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="attentuation_type" Code="72" Type="LightAttenuationType" DefaultValue="LightAttenuationType::None" ReadConverter="try_result!(LightAttenuationType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="use_attenuation_limits" Code="292" Type="bool" DefaultValue="true" />
     <Field Name="attenuation_start_limit" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="attenuation_end_limit" Code="42" Type="f64" DefaultValue="1.0" />
     <Field Name="hotspot_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="falloff_angle" Code="51" Type="f64" DefaultValue="0.0" />
     <Field Name="cast_shadows" Code="293" Type="bool" DefaultValue="true" />
-    <Field Name="shadow_type" Code="73" Type="ShadowType" DefaultValue="ShadowType::RayTraced" ReadConverter="try_result!(ShadowType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="shadow_type" Code="73" Type="ShadowType" DefaultValue="ShadowType::RayTraced" ReadConverter="try_result!(ShadowType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="shadow_map_size" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="shadow_map_softness" Code="280" Type="i16" DefaultValue="0" />
   </Entity>
@@ -586,7 +586,7 @@
 
     -->
   <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14">
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_closed" Mask="1" />
       <Flag Name="is_p_line_gen" Mask="128" />
     </Field>
@@ -595,21 +595,21 @@
     <!-- <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="vec![]" AllowMultiples="true" /> -->
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbPolyline&quot;" />
-      <WriteSpecificValue Code="90" Value="Vertices.Count" />
-      <WriteField Field="Flags" />
-      <WriteField Field="ConstantWidth" />
-      <WriteSpecificValue Code="38" Value="Elevation" DontWriteIfValueIs="0.0" />
-      <WriteField Field="Thickness" />
-      <Foreach Field="Vertices">
-        <WriteSpecificValue Code="10" Value="item.X" />
-        <WriteSpecificValue Code="20" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbPolyline")' />
+      <!-- <WriteSpecificValue Code="90" Value="ent.vertices.len() as i32" /> -->
+      <WriteField Field="flags" />
+      <WriteField Field="constant_width" />
+      <WriteSpecificValue Code="38" Value="common.elevation" DontWriteIfValueIs="0.0" />
+      <WriteField Field="thickness" />
+      <!-- <Foreach Field="ent.vertices">
+        <WriteSpecificValue Code="10" Value="item.x" />
+        <WriteSpecificValue Code="20" Value="item.y" />
         <WriteSpecificValue Code="91" Value="item.Identifier" MinVersion="R2013" />
         <WriteSpecificValue Code="40" Value="item.StartingWidth" DontWriteIfValueIs="0.0" />
         <WriteSpecificValue Code="41" Value="item.EndingWidth" DontWriteIfValueIs="0.0" />
         <WriteSpecificValue Code="42" Value="item.Bulge" DontWriteIfValueIs="0.0" />
-      </Foreach>
-      <WriteField Field="ExtrusionDirection" />
+      </Foreach> -->
+      <WriteField Field="extrusion_direction" />
     </WriteOrder>
   </Entity>
   <!--
@@ -627,15 +627,15 @@
     <Field Name="style_name" Code="2" Type="String" DefaultValue="String::new()" />
     <Pointer Name="style" Code="340" Type="IItem" />
     <Field Name="scale_factor" Code="40" Type="f64" DefaultValue="1.0" />
-    <Field Name="justification" Code="70" Type="Justification" DefaultValue="Justification::Top" ReadConverter="try_result!(Justification::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="justification" Code="70" Type="Justification" DefaultValue="Justification::Top" ReadConverter="try_result!(Justification::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="has_at_least_one_vertex" Mask="1" />
       <Flag Name="is_closed" Mask="2" />
       <Flag Name="suppress_start_caps" Mask="4" />
       <Flag Name="suppress_end_caps" Mask="8" />
     </Field>
-    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
-    <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="start_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" DisableWritingDefault="true" />
     <Field Name="_vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -650,40 +650,40 @@
     <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="miter_directions" Code="13" Type="Vector" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
     <Field Name="parameters" Code="41" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
     <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbMline&quot;" />
-      <WriteField Field="StyleName" />
-      <WriteField Field="Style" />
-      <WriteField Field="ScaleFactor" />
-      <WriteField Field="Justification" />
-      <WriteField Field="Flags" />
-      <WriteSpecificValue Code="72" Value="(short)Vertices.Count" />
-      <WriteField Field="StyleElementCount" />
-      <WriteField Field="StartPoint" />
-      <WriteField Field="Normal" />
-      <Foreach Field="Vertices">
-        <WriteSpecificValue Code="10" Value="item.X" />
-        <WriteSpecificValue Code="20" Value="item.Y" />
-        <WriteSpecificValue Code="30" Value="item.Z" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMline")' />
+      <WriteField Field="style_name" />
+      <WriteField Field="style" />
+      <WriteField Field="scale_factor" />
+      <WriteField Field="justification" />
+      <WriteField Field="flags" />
+      <WriteSpecificValue Code="72" Value="ent.vertices.len() as i16" />
+      <WriteField Field="style_element_count" />
+      <WriteField Field="start_point" />
+      <WriteField Field="normal" />
+      <Foreach Field="ent.vertices">
+        <WriteSpecificValue Code="10" Value="item.x" />
+        <WriteSpecificValue Code="20" Value="item.y" />
+        <WriteSpecificValue Code="30" Value="item.z" />
       </Foreach>
-      <Foreach Field="SegmentDirections">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="21" Value="item.Y" />
-        <WriteSpecificValue Code="31" Value="item.Z" />
+      <Foreach Field="ent.segment_directions">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="21" Value="item.y" />
+        <WriteSpecificValue Code="31" Value="item.z" />
       </Foreach>
-      <Foreach Field="MiterDirections">
-        <WriteSpecificValue Code="12" Value="item.X" />
-        <WriteSpecificValue Code="22" Value="item.Y" />
-        <WriteSpecificValue Code="32" Value="item.Z" />
+      <Foreach Field="ent.miter_directions">
+        <WriteSpecificValue Code="12" Value="item.x" />
+        <WriteSpecificValue Code="22" Value="item.y" />
+        <WriteSpecificValue Code="32" Value="item.z" />
       </Foreach>
-      <WriteSpecificValue Code="74" Value="(short?)Parameters?.Count ?? default(short)" />
-      <WriteField Field="Parameters" />
-      <WriteSpecificValue Code="75" Value="(short?)AreaFillParameters?.Count ?? default(short)" />
-      <WriteField Field="AreaFillParameters" />
+      <WriteSpecificValue Code="74" Value="ent.parameters.len() as i16" />
+      <WriteField Field="parameters" />
+      <WriteSpecificValue Code="75" Value="ent.area_fill_parameters.len() as i16" />
+      <WriteField Field="area_fill_parameters" />
     </WriteOrder>
   </Entity>
   <!--
@@ -701,8 +701,8 @@
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="initial_text_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="reference_rectangle_width" Code="41" Type="f64" DefaultValue="1.0" />
-    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="drawing_direction" Code="72" Type="DrawingDirection" DefaultValue="DrawingDirection::LeftToRight" ReadConverter="try_result!(DrawingDirection::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="drawing_direction" Code="72" Type="DrawingDirection" DefaultValue="DrawingDirection::LeftToRight" ReadConverter="try_result!(DrawingDirection::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="extended_text" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
@@ -711,52 +711,52 @@
     <Field Name="horizontal_width" Code="42" Type="f64" DefaultValue="1.0" />
     <Field Name="vertical_height" Code="43" Type="f64" DefaultValue="1.0" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
-    <Field Name="line_spacing_style" Code="73" Type="MTextLineSpacingStyle" DefaultValue="MTextLineSpacingStyle::AtLeast" ReadConverter="try_result!(MTextLineSpacingStyle::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="line_spacing_style" Code="73" Type="MTextLineSpacingStyle" DefaultValue="MTextLineSpacingStyle::AtLeast" ReadConverter="try_result!(MTextLineSpacingStyle::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="line_spacing_factor" Code="44" Type="f64" DefaultValue="1.0" />
-    <Field Name="background_fill_setting" Code="90" Type="BackgroundFillSetting" DefaultValue="BackgroundFillSetting::Off" ReadConverter="try_result!(BackgroundFillSetting::from_i32({}))" WriteConverter="(int)" />
+    <Field Name="background_fill_setting" Code="90" Type="BackgroundFillSetting" DefaultValue="BackgroundFillSetting::Off" ReadConverter="try_result!(BackgroundFillSetting::from_i32({}))" WriteConverter="{} as i32" />
     <Field Name="background_color_r_g_b" Code="420" Type="i32" DefaultValue="0" />
     <Field Name="background_color_name" Code="430" Type="String" DefaultValue="String::new()" />
     <Field Name="fill_box_scale" Code="45" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
-    <Field Name="background_fill_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" />
+    <Field Name="background_fill_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="background_fill_color_transparency" Code="441" Type="i32" DefaultValue="0" />
     <Field Name="column_type" Code="75" Type="i16" DefaultValue="0" />
-    <Field Name="column_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
-    <Field Name="is_column_flow_reversed" Code="78" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
-    <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="column_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="is_column_flow_reversed" Code="78" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="column_width" Code="48" Type="f64" DefaultValue="0.0" />
     <Field Name="column_gutter" Code="49" Type="f64" DefaultValue="0.0" />
     <Field Name="column_heights" Code="50" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbMText&quot;" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="InitialTextHeight" />
-      <WriteField Field="ReferenceRectangleWidth" />
-      <WriteField Field="AttachmentPoint" />
-      <WriteField Field="DrawingDirection" />
-      <WriteField Field="ExtendedText" />
-      <WriteField Field="Text" />
-      <WriteField Field="TextStyleName" />
-      <WriteField Field="ExtrusionDirection" />
-      <WriteField Field="XAxisDirection" />
-      <WriteField Field="HorizontalWidth" />
-      <WriteField Field="VerticalHeight" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="LineSpacingStyle" />
-      <WriteField Field="LineSpacingFactor" />
-      <WriteField Field="BackgroundFillSetting" />
-      <WriteField Field="BackgroundColorRGB" />
-      <WriteField Field="BackgroundColorName" />
-      <WriteField Field="FillBoxScale" />
-      <WriteField Field="BackgroundFillColor" />
-      <WriteField Field="BackgroundFillColorTransparency" />
-      <WriteField Field="ColumnType" />
-      <WriteField Field="ColumnCount" />
-      <WriteField Field="IsColumnFlowReversed" />
-      <WriteField Field="IsColumnAutoHeight" />
-      <WriteField Field="ColumnWidth" />
-      <WriteField Field="ColumnGutter" />
-      <WriteSpecificValue Code="50" Value="ColumnHeights?.Count ?? default(double)" />
-      <WriteField Field="ColumnHeights" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMText")' />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="initial_text_height" />
+      <WriteField Field="reference_rectangle_width" />
+      <WriteField Field="attachment_point" />
+      <WriteField Field="drawing_direction" />
+      <WriteField Field="extended_text" />
+      <WriteField Field="text" />
+      <WriteField Field="text_style_name" />
+      <WriteField Field="extrusion_direction" />
+      <WriteField Field="x_axis_direction" />
+      <WriteField Field="horizontal_width" />
+      <WriteField Field="vertical_height" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="line_spacing_style" />
+      <WriteField Field="line_spacing_factor" />
+      <WriteField Field="background_fill_setting" />
+      <WriteField Field="background_color_r_g_b" />
+      <WriteField Field="background_color_name" />
+      <WriteField Field="fill_box_scale" />
+      <WriteField Field="background_fill_color" />
+      <WriteField Field="background_fill_color_transparency" />
+      <WriteField Field="column_type" />
+      <WriteField Field="column_count" />
+      <WriteField Field="is_column_flow_reversed" />
+      <WriteField Field="is_column_auto_height" />
+      <WriteField Field="column_width" />
+      <WriteField Field="column_gutter" />
+      <WriteSpecificValue Code="50" Value="ent.column_heights.len() as f64" />
+      <WriteField Field="column_heights" />
     </WriteOrder>
   </Entity>
   <!--
@@ -765,17 +765,17 @@
 
     -->
   <Entity Name="OleFrame" SubclassMarker="AcDbOleFrame" TypeString="OLEFRAME" MinVersion="R13">
-    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbOleFrame&quot;" />
-      <WriteField Field="VersionNumber" />
-      <WriteField Field="BinaryDataLength" />
-      <Foreach Field="BinaryDataStrings">
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbOleFrame")' />
+      <WriteField Field="version_number" />
+      <WriteField Field="binary_data_length" />
+      <Foreach Field="ent.binary_data_strings">
         <WriteSpecificValue Code="310" Value="item" />
       </Foreach>
-      <WriteSpecificValue Code="1" Value="&quot;OLE&quot;" />
+      <WriteSpecificValue Code="1" Value='&amp;String::from("OLE")' />
     </WriteOrder>
   </Entity>
   <!--
@@ -784,27 +784,27 @@
 
     -->
   <Entity Name="Ole2Frame" SubclassMarker="AcDbOle2Frame" TypeString="OLE2FRAME" MinVersion="R14">
-    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" />
+    <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="upper_left_corner" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="lower_right_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="try_result!(OleObjectType::from_i16({}))" WriteConverter="(short)" />
-    <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="try_result!(TileModeDescriptor::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="try_result!(OleObjectType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="try_result!(TileModeDescriptor::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbOle2Frame&quot;" />
-      <WriteField Field="VersionNumber" />
-      <WriteField Field="Description" />
-      <WriteField Field="UpperLeftCorner" />
-      <WriteField Field="LowerRightCorner" />
-      <WriteField Field="ObjectType" />
-      <WriteField Field="TileMode" />
-      <WriteField Field="BinaryDataLength" />
-      <Foreach Field="BinaryDataStrings">
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbOle2Frame")' />
+      <WriteField Field="version_number" />
+      <WriteField Field="description" />
+      <WriteField Field="upper_left_corner" />
+      <WriteField Field="lower_right_corner" />
+      <WriteField Field="object_type" />
+      <WriteField Field="tile_mode" />
+      <WriteField Field="binary_data_length" />
+      <Foreach Field="ent.binary_data_strings">
         <WriteSpecificValue Code="310" Value="item" />
       </Foreach>
-      <WriteSpecificValue Code="1" Value="&quot;OLE&quot;" />
+      <WriteSpecificValue Code="1" Value='&amp;String::from("OLE")' />
     </WriteOrder>
   </Entity>
   <!--
@@ -824,10 +824,10 @@
 
     -->
   <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true">
-    <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" MaxVersion="R13" />
+    <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MaxVersion="R13" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
       <Flag Name="is_closed" Mask="1" />
       <Flag Name="curve_fit_vertices_added" Mask="2" />
       <Flag Name="spline_fit_vertices_added" Mask="4" />
@@ -839,11 +839,11 @@
     </Field>
     <Field Name="default_starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="default_ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <Field Name="polygon_mesh_m_vertex_count" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
-    <Field Name="polygon_mesh_n_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
-    <Field Name="smooth_surface_m_density" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
-    <Field Name="smooth_surface_n_density" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true" />
-    <Field Name="surface_type" Code="75" Type="PolylineCurvedAndSmoothSurfaceType" DefaultValue="PolylineCurvedAndSmoothSurfaceType::None" ReadConverter="try_result!(PolylineCurvedAndSmoothSurfaceType::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="polygon_mesh_m_vertex_count" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="polygon_mesh_n_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="smooth_surface_m_density" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="smooth_surface_n_density" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="surface_type" Code="75" Type="PolylineCurvedAndSmoothSurfaceType" DefaultValue="PolylineCurvedAndSmoothSurfaceType::None" ReadConverter="try_result!(PolylineCurvedAndSmoothSurfaceType::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
   </Entity>
   <!--
@@ -876,7 +876,7 @@
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="text_style" Code="7" Type="String" DefaultValue='String::from("STANDARD")' />
-    <Field Name="type_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="type_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_expression" Mask="1" />
       <Flag Name="is_inline_mtext_sequences_enabled" Mask="2" />
     </Field>
@@ -895,7 +895,7 @@
     <Field Name="top_height" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="bottom_height" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="indicator_transparency" Code="70" Type="i16" DefaultValue="0" />
-    <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color.GetRawValue" />
+    <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
     <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
     <Field Name="_vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -909,29 +909,29 @@
     <Field Name="back_line_vertices" Code="12" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Pointer Name="geometry_settings" Code="360" Type="IItem" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbSection&quot;" />
-      <WriteField Field="State" />
-      <WriteField Field="Flags" />
-      <WriteField Field="Name" />
-      <WriteField Field="VerticalDirection" />
-      <WriteField Field="TopHeight" />
-      <WriteField Field="BottomHeight" />
-      <WriteField Field="IndicatorTransparency" />
-      <WriteField Field="IndicatorColor" />
-      <WriteField Field="IndicatorColorName" />
-      <WriteSpecificValue Code="92" Value="Vertices.Count" />
-      <Foreach Field="Vertices">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="21" Value="item.Y" />
-        <WriteSpecificValue Code="31" Value="item.Z" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSection")' />
+      <WriteField Field="state" />
+      <WriteField Field="flags" />
+      <WriteField Field="name" />
+      <WriteField Field="vertical_direction" />
+      <WriteField Field="top_height" />
+      <WriteField Field="bottom_height" />
+      <WriteField Field="indicator_transparency" />
+      <WriteField Field="indicator_color" />
+      <WriteField Field="indicator_color_name" />
+      <WriteSpecificValue Code="92" Value="ent.vertices.len() as i32" />
+      <Foreach Field="ent.vertices">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="21" Value="item.y" />
+        <WriteSpecificValue Code="31" Value="item.z" />
       </Foreach>
-      <WriteSpecificValue Code="93" Value="BackLineVertices.Count" />
-      <Foreach Field="BackLineVertices">
-        <WriteSpecificValue Code="12" Value="item.X" />
-        <WriteSpecificValue Code="22" Value="item.Y" />
-        <WriteSpecificValue Code="32" Value="item.Z" />
+      <WriteSpecificValue Code="93" Value="ent.back_line_vertices.len() as i32" />
+      <Foreach Field="ent.back_line_vertices">
+        <WriteSpecificValue Code="12" Value="item.x" />
+        <WriteSpecificValue Code="22" Value="item.y" />
+        <WriteSpecificValue Code="32" Value="item.z" />
       </Foreach>
-      <WriteField Field="GeometrySettings" />
+      <WriteField Field="geometry_settings" />
     </WriteOrder>
   </Entity>
   <!--
@@ -939,7 +939,7 @@
     SEQEND
 
     -->
-  <Entity Name="Seqend" SubclassMarker="null" TypeString="SEQEND">
+  <Entity Name="Seqend" SubclassMarker="" TypeString="SEQEND">
     <!-- empty entity -->
   </Entity>
   <!--
@@ -977,17 +977,17 @@
     -->
   <Entity Name="Spline" SubclassMarker="AcDbSpline" TypeString="SPLINE" MinVersion="R13">
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_closed" Mask="1" />
       <Flag Name="is_periodic" Mask="2" />
       <Flag Name="is_rational" Mask="4" />
       <Flag Name="is_planar" Mask="8" />
       <Flag Name="is_linear" Mask="16" />
     </Field>
-    <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="(short)" />
-    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
-    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
-    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" Accessibility="private" />
+    <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
     <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
@@ -1004,29 +1004,29 @@
     <Field Name="_fit_point_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="fit_points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbSpline&quot;" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Flags" />
-      <WriteField Field="DegreeOfCurve" />
-      <WriteSpecificValue Code="72" Value="(short?)KnotValues?.Count ?? default(short)" />
-      <WriteSpecificValue Code="73" Value="(short?)ControlPoints?.Count ?? default(short)" />
-      <WriteSpecificValue Code="74" Value="(short?)FitPoints?.Count ?? default(short)" />
-      <WriteField Field="KnotTolerance" />
-      <WriteField Field="ControlPointTolerance" />
-      <WriteField Field="FitTolerance" />
-      <WriteField Field="StartTangent" />
-      <WriteField Field="EndTangent" />
-      <WriteField Field="KnotValues" />
-      <WriteField Field="Weight" />
-      <Foreach Field="ControlPoints">
-        <WriteSpecificValue Code="10" Value="item.X" />
-        <WriteSpecificValue Code="20" Value="item.Y" />
-        <WriteSpecificValue Code="30" Value="item.Z" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSpline")' />
+      <WriteField Field="normal" />
+      <WriteField Field="flags" />
+      <WriteField Field="degree_of_curve" />
+      <WriteSpecificValue Code="72" Value="ent.knot_values.len() as i16" />
+      <WriteSpecificValue Code="73" Value="ent.control_points.len() as i16" />
+      <WriteSpecificValue Code="74" Value="ent.fit_points.len() as i16" />
+      <WriteField Field="knot_tolerance" />
+      <WriteField Field="control_point_tolerance" />
+      <WriteField Field="fit_tolerance" />
+      <WriteField Field="start_tangent" />
+      <WriteField Field="end_tangent" />
+      <WriteField Field="knot_values" />
+      <WriteField Field="weight" />
+      <Foreach Field="ent.control_points">
+        <WriteSpecificValue Code="10" Value="item.x" />
+        <WriteSpecificValue Code="20" Value="item.y" />
+        <WriteSpecificValue Code="30" Value="item.z" />
       </Foreach>
-      <Foreach Field="FitPoints">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="21" Value="item.Y" />
-        <WriteSpecificValue Code="31" Value="item.Z" />
+      <Foreach Field="ent.fit_points">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="21" Value="item.y" />
+        <WriteSpecificValue Code="31" Value="item.z" />
       </Foreach>
     </WriteOrder>
   </Entity>
@@ -1056,30 +1056,30 @@
     <Field Name="relative_x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
     <Field Name="oblique_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="text_style_name" Code="7" Type="String" DefaultValue='String::from("STANDARD")' DisableWritingDefault="true" />
-    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)" DisableWritingDefault="true">
+    <Field Name="text_generation_flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="try_result!(HorizontalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" DisableWritingDefault="true" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="vertical_text_justification" Code="73" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="(short)" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="73" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" />
-      <WriteField Field="Thickness" />
-      <WriteField Field="Location" />
-      <WriteField Field="TextHeight" />
-      <WriteField Field="Value" />
-      <WriteField Field="Rotation" />
-      <WriteField Field="RelativeXScaleFactor" />
-      <WriteField Field="ObliqueAngle" />
-      <WriteField Field="TextStyleName" />
-      <WriteField Field="TextGenerationFlags" />
-      <WriteField Field="HorizontalTextJustification" />
-      <WriteField Field="SecondAlignmentPoint" />
-      <WriteField Field="Normal" />
-      <WriteField Field="VerticalTextJustification" />
-      <WriteSpecificValue Code="100" Value="&quot;AcDbText&quot;" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' />
+      <WriteField Field="thickness" />
+      <WriteField Field="location" />
+      <WriteField Field="text_height" />
+      <WriteField Field="value" />
+      <WriteField Field="rotation" />
+      <WriteField Field="relative_x_scale_factor" />
+      <WriteField Field="oblique_angle" />
+      <WriteField Field="text_style_name" />
+      <WriteField Field="text_generation_flags" />
+      <WriteField Field="horizontal_text_justification" />
+      <WriteField Field="second_alignment_point" />
+      <WriteField Field="normal" />
+      <WriteField Field="vertical_text_justification" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' />
     </WriteOrder>
   </Entity>
   <!--
@@ -1120,7 +1120,7 @@
     <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_clipping_on" Mask="1" />
       <Flag Name="is_underlay_on" Mask="2" />
       <Flag Name="is_monochrome" Mask="4" />
@@ -1133,20 +1133,20 @@
     <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
-      <WriteField Field="Object" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="XScale" />
-      <WriteField Field="YScale" />
-      <WriteField Field="ZScale" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Flags" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <Foreach Field="BoundaryPoints">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="12" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
+      <WriteField Field="object" />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="x_scale" />
+      <WriteField Field="y_scale" />
+      <WriteField Field="z_scale" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="normal" />
+      <WriteField Field="flags" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <Foreach Field="ent.points">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="12" Value="item.y" />
       </Foreach>
     </WriteOrder>
   </Entity>
@@ -1158,7 +1158,7 @@
     <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_clipping_on" Mask="1" />
       <Flag Name="is_underlay_on" Mask="2" />
       <Flag Name="is_monochrome" Mask="4" />
@@ -1171,20 +1171,20 @@
     <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
-      <WriteField Field="Object" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="XScale" />
-      <WriteField Field="YScale" />
-      <WriteField Field="ZScale" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Flags" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <Foreach Field="BoundaryPoints">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="12" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
+      <WriteField Field="object" />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="x_scale" />
+      <WriteField Field="y_scale" />
+      <WriteField Field="z_scale" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="normal" />
+      <WriteField Field="flags" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <Foreach Field="ent.points">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="12" Value="item.y" />
       </Foreach>
     </WriteOrder>
   </Entity>
@@ -1196,7 +1196,7 @@
     <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_clipping_on" Mask="1" />
       <Flag Name="is_underlay_on" Mask="2" />
       <Flag Name="is_monochrome" Mask="4" />
@@ -1209,20 +1209,20 @@
     <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
-      <WriteField Field="Object" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="XScale" />
-      <WriteField Field="YScale" />
-      <WriteField Field="ZScale" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Flags" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <Foreach Field="BoundaryPoints">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="12" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
+      <WriteField Field="object" />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="x_scale" />
+      <WriteField Field="y_scale" />
+      <WriteField Field="z_scale" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="normal" />
+      <WriteField Field="flags" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <Foreach Field="ent.points">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="12" Value="item.y" />
       </Foreach>
     </WriteOrder>
   </Entity>
@@ -1234,7 +1234,7 @@
     <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_clipping_on" Mask="1" />
       <Flag Name="is_underlay_on" Mask="2" />
       <Flag Name="is_monochrome" Mask="4" />
@@ -1247,20 +1247,20 @@
     <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbUnderlayReference&quot;" />
-      <WriteField Field="Object" />
-      <WriteField Field="InsertionPoint" />
-      <WriteField Field="XScale" />
-      <WriteField Field="YScale" />
-      <WriteField Field="ZScale" />
-      <WriteField Field="RotationAngle" />
-      <WriteField Field="Normal" />
-      <WriteField Field="Flags" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <Foreach Field="BoundaryPoints">
-        <WriteSpecificValue Code="11" Value="item.X" />
-        <WriteSpecificValue Code="12" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
+      <WriteField Field="object" />
+      <WriteField Field="insertion_point" />
+      <WriteField Field="x_scale" />
+      <WriteField Field="y_scale" />
+      <WriteField Field="z_scale" />
+      <WriteField Field="rotation_angle" />
+      <WriteField Field="normal" />
+      <WriteField Field="flags" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <Foreach Field="ent.points">
+        <WriteSpecificValue Code="11" Value="item.x" />
+        <WriteSpecificValue Code="12" Value="item.y" />
       </Foreach>
     </WriteOrder>
   </Entity>
@@ -1274,7 +1274,7 @@
     <Field Name="starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="bulge" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_extra_created_by_curve_fit" Mask="1" />
       <Flag Name="is_curve_fit_tangent_defined" Mask="2" />
       <Flag Name="is_spline_vertex_created_by_spline_fitting" Mask="8" />
@@ -1284,10 +1284,10 @@
       <Flag Name="is_polyface_mesh_vertex" Mask="128" />
     </Field>
     <Field Name="curve_fit_tangent_direction" Code="50" Type="f64" DefaultValue="0.0" />
-    <Field Name="polyface_mesh_vertex_index1" Code="71" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
-    <Field Name="polyface_mesh_vertex_index2" Code="72" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
-    <Field Name="polyface_mesh_vertex_index3" Code="73" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
-    <Field Name="polyface_mesh_vertex_index4" Code="74" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="(short)" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index1" Code="71" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index2" Code="72" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index3" Code="73" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R13" />
+    <Field Name="polyface_mesh_vertex_index4" Code="74" Type="i32" DefaultValue="0" DisableWritingDefault="true" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R13" />
     <Field Name="identifier" Code="91" Type="i32" DefaultValue="0" MinVersion="R2010" />
   </Entity>
   <!--
@@ -1308,44 +1308,44 @@
     <Field Name="v_vector" Code="12" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="12,22,32" />
     <Field Name="image_size" Code="13" Type="Vector" DefaultValue="Vector::zero()" CodeOverrides="13,23" />
     <Field Name="image_def_reference" Code="340" Type="String" DefaultValue="String::new()" />
-    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="(short)">
+    <Field Name="display_options_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="show_image" Mask="1" />
       <Flag Name="show_image_when_not_alligned" Mask="2" />
       <Flag Name="use_clipping_boundary" Mask="4" />
       <Flag Name="use_transparency" Mask="8" />
     </Field>
-    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="BoolShort" />
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
     <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
-    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="(short)" />
+    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_clipping_vertices_y" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value="&quot;AcDbRasterImage&quot;" />
-      <WriteField Field="ClassVersion" />
-      <WriteField Field="Location" />
-      <WriteField Field="UVector" />
-      <WriteField Field="VVector" />
-      <WriteField Field="ImageSize" />
-      <WriteField Field="ImageDefReference" />
-      <WriteField Field="DisplayOptionsFlags" />
-      <WriteField Field="UseClipping" />
-      <WriteField Field="Brightness" />
-      <WriteField Field="Contrast" />
-      <WriteField Field="Fade" />
-      <WriteField Field="ImageDefReactorReference" />
-      <WriteField Field="ClippingType" />
-      <WriteSpecificValue Code="91" Value="ClippingVertices.Count" />
-      <Foreach Field="ClippingVertices">
-        <WriteSpecificValue Code="14" Value="item.X" />
-        <WriteSpecificValue Code="24" Value="item.Y" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRasterImage")' />
+      <WriteField Field="class_version" />
+      <WriteField Field="location" />
+      <WriteField Field="u_vector" />
+      <WriteField Field="v_vector" />
+      <WriteField Field="image_size" />
+      <WriteField Field="image_def_reference" />
+      <WriteField Field="display_options_flags" />
+      <WriteField Field="use_clipping" />
+      <WriteField Field="brightness" />
+      <WriteField Field="contrast" />
+      <WriteField Field="fade" />
+      <WriteField Field="image_def_reactor_reference" />
+      <WriteField Field="clipping_type" />
+      <WriteSpecificValue Code="91" Value="ent.clipping_vertices.len() as i32" />
+      <Foreach Field="ent.clipping_vertices">
+        <WriteSpecificValue Code="14" Value="item.x" />
+        <WriteSpecificValue Code="24" Value="item.y" />
       </Foreach>
-      <WriteField Field="IsInsideClipping" />
+      <WriteField Field="is_inside_clipping" />
     </WriteOrder>
   </Entity>
   <!--

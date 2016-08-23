@@ -62,6 +62,9 @@ impl CodePair {
     pub fn new_long(code: i32, val: i64) -> CodePair {
         CodePair::new(code, CodePairValue::Long(val))
     }
+    pub fn new_int(code: i32, val: i32) -> CodePair {
+        CodePair::new(code, CodePairValue::Integer(val))
+    }
     pub fn new_bool(code: i32, val: bool) -> CodePair {
         CodePair::new(code, CodePairValue::Boolean(val))
     }
@@ -212,6 +215,12 @@ macro_rules! try_result {
 }
 // implementation is in `entity.rs`
 impl Entity {
+    pub fn new(specific: EntityType) -> Self {
+        Entity {
+            common: EntityCommon::new(),
+            specific: specific,
+        }
+    }
     pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<CodePair>>
     {
@@ -385,6 +394,16 @@ impl Entity {
 
         Ok(true)
     }
+    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+        where T: Write {
+        if self.specific.is_supported_on_version(version) {
+            try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
+            try!(self.common.write(version, write_handles, writer));
+            try!(self.specific.write(&self.common, version, writer));
+        }
+
+        Ok(())
+    }
 }
 
 fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
@@ -462,8 +481,21 @@ impl Drawing {
         where T: Write {
         let mut writer = CodePairAsciiWriter { writer: writer };
         try!(self.header.write(&mut writer));
+        let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        try!(self.write_entities(write_handles, &mut writer));
         // TODO: write other sections
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
+        Ok(())
+    }
+    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+        where T: Write {
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "ENTITIES")));
+        for e in &self.entities {
+            try!(e.write(&self.header.version, write_handles, writer));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
     pub fn to_string(&self) -> io::Result<String> {
@@ -615,7 +647,7 @@ impl Vector {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                         Color
 ////////////////////////////////////////////////////////////////////////////////
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Color {
     raw_value: i16,
 }

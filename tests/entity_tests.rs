@@ -3,6 +3,7 @@
 extern crate dxf;
 use self::dxf::*;
 use self::dxf::entities::*;
+use self::dxf::enums::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -93,6 +94,43 @@ fn read_line() {
 }
 
 #[test]
+fn write_common_entity_fields() {
+    let mut drawing = Drawing::new();
+    let mut ent = Entity {
+        common: EntityCommon::new(),
+        specific: EntityType::Line(Default::default())
+    };
+    ent.common.layer = "some-layer".to_owned();
+    drawing.entities.push(ent);
+    assert_contains(&drawing, vec![
+        "  0", "LINE",
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "some-layer",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_specific_entity_fields() {
+    let mut drawing = Drawing::new();
+    let line = Line {
+        p1: Point::new(1.1, 2.2, 3.3),
+        p2: Point::new(4.4, 5.5, 6.6),
+        .. Default::default()
+    };
+    drawing.entities.push(Entity::new(EntityType::Line(line)));
+    assert_contains(&drawing, vec![
+        "100", "AcDbLine",
+        " 10", "1.100000000000",
+        " 20", "2.200000000000",
+        " 30", "3.300000000000",
+        " 11", "4.400000000000",
+        " 21", "5.500000000000",
+        " 31", "6.600000000000",
+    ].join("\r\n"));
+}
+
+#[test]
 fn read_multiple_entities() {
     let file = from_section("ENTITIES", vec![
         "0", "CIRCLE",
@@ -135,6 +173,17 @@ fn read_field_with_multiples_common() {
 }
 
 #[test]
+fn write_field_with_multiples_common() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R2000;
+    drawing.entities.push(Entity {
+        common: EntityCommon { preview_image_data: vec![String::from("one"), String::from("two")], .. Default::default() },
+        specific: EntityType::Line(Default::default()),
+    });
+    assert_contains(&drawing, vec!["310", "one", "310", "two"].join("\r\n"));
+}
+
+#[test]
 fn read_field_with_multiples_specific() {
     let ent = read_entity("3DSOLID", vec!["1", "one-1", "1", "one-2", "3", "three-1", "3", "three-2"].join("\r\n"));
     match ent.specific {
@@ -144,6 +193,21 @@ fn read_field_with_multiples_specific() {
         },
         _ => panic!("expected a 3DSOLID"),
     }
+}
+
+#[test]
+fn write_field_with_multiples_specific() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R13; // 3DSOLID is only supported on R13+
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Solid3D(Solid3D {
+            custom_data: vec![String::from("one-1"), String::from("one-2")],
+            custom_data2: vec![String::from("three-1"), String::from("three-2")],
+            .. Default::default()
+        }),
+    });
+    assert_contains(&drawing, vec!["  1", "one-1", "  1", "one-2", "  3", "three-1", "  3", "three-2"].join("\r\n"));
 }
 
 #[test]
@@ -168,7 +232,29 @@ fn entity_with_post_parse() {
 }
 
 #[test]
-fn entity_with_custom_reader_mtext() {
+fn write_entity_with_write_order() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Image(Image {
+            clipping_vertices: vec![Point::new(1.1, 2.2, 0.0), Point::new(3.3, 4.4, 0.0), Point::new(5.5, 6.6, 0.0)],
+            .. Default::default()
+        }),
+    });
+    assert_contains(&drawing, vec![
+        " 91", "3",
+        " 14", "1.100000000000",
+        " 24", "2.200000000000",
+        " 14", "3.300000000000",
+        " 24", "4.400000000000",
+        " 14", "5.500000000000",
+        " 24", "6.600000000000",
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_entity_with_custom_reader_mtext() {
     let ent = read_entity("MTEXT", vec![
         "50", "1.1", // rotation angle
         "75", "7", // column type
@@ -192,7 +278,7 @@ fn entity_with_custom_reader_mtext() {
 }
 
 #[test]
-fn entity_with_flags() {
+fn read_entity_with_flags() {
     let ent = read_entity("IMAGE", vec!["70", "5"].join("\r\n"));
     match ent.specific {
         EntityType::Image(ref image) => {
@@ -204,7 +290,26 @@ fn entity_with_flags() {
 }
 
 #[test]
-fn entity_with_handle_and_pointer() {
+fn write_entity_with_flags() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
+    let mut image = Image::default();
+    assert_eq!(0, image.display_options_flags);
+    image.set_show_image(true);
+    image.set_use_clipping_boundary(true);
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Image(image),
+    });
+    assert_contains(&drawing, vec![
+        " 70", "5", // flags
+        "280", "1", // sentinels to make sure we're not reading a header value
+        "281", "50",
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_entity_with_handle_and_pointer() {
     let ent = read_entity("3DSOLID", vec![
         "5", "A1", // handle
         "330", "A2", // owner handle
@@ -216,4 +321,47 @@ fn entity_with_handle_and_pointer() {
         EntityType::Solid3D(ref solid) => assert_eq!(0xa3, solid.history_object),
         _ => panic!("expected a 3DSOLID entity"),
     }
+}
+
+#[test]
+fn write_entity_with_handle_and_pointer() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R2000;
+    drawing.entities.push(Entity {
+        common: EntityCommon {
+            handle: 0xa1,
+            owner_handle: 0xa2,
+            .. Default::default()
+        },
+        specific: EntityType::Line(Default::default()),
+    });
+    assert_contains(&drawing, vec![
+        "  5", "A1",
+        "330", "A2",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_version_specific_entity() {
+    let mut drawing = Drawing::new();
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Solid3D(Default::default()),
+    });
+
+    // 3DSOLID not supported in R12 and below
+    drawing.header.version = AcadVersion::R12;
+    assert_contains(&drawing, vec![
+        "  0", "SECTION",
+        "  2", "ENTITIES",
+        "  0", "ENDSEC",
+    ].join("\r\n"));
+
+    // but it is in R13 and above
+    drawing.header.version = AcadVersion::R13;
+    assert_contains(&drawing, vec![
+        "  0", "SECTION",
+        "  2", "ENTITIES",
+        "  0", "3DSOLID",
+    ].join("\r\n"));
 }

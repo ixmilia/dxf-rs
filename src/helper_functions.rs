@@ -117,7 +117,7 @@ pub fn as_duration(_d: f64) -> Duration {
     unimplemented!()
 }
 
-pub fn as_handle(s: String) -> io::Result<u32> {
+pub fn as_u32(s: String) -> io::Result<u32> {
     let mut result = 0;
     for c in s.chars() {
         match c {
@@ -144,6 +144,10 @@ pub fn as_handle(s: String) -> io::Result<u32> {
     Ok(result)
 }
 
+pub fn as_handle(h: u32) -> String {
+    format!("{:X}", h)
+}
+
 pub fn as_uuid(s: String) -> io::Result<Uuid> {
     match Uuid::parse_str(s.as_str()) {
         Ok(uuid) => Ok(uuid),
@@ -155,12 +159,8 @@ pub fn as_short(b: bool) -> i16 {
     if b { 1 } else { 0 }
 }
 
-pub fn u32_handle(h: &u32) -> String {
-    format!("{:X}", h)
-}
-
-pub fn uuid_string(_u: &Uuid) -> String {
-    unimplemented!()
+pub fn uuid_string(u: &Uuid) -> String {
+    format!("{}", u)
 }
 
 pub fn default_if_empty(val: &String, default: &str) -> String {
