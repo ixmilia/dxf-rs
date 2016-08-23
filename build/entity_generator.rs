@@ -87,8 +87,8 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("}\n");
     fun.push_str("\n");
 
-    fun.push_str("impl EntityCommon {\n");
-    fun.push_str("    pub fn new() -> Self {\n");
+    fun.push_str("impl Default for EntityCommon {\n");
+    fun.push_str("    fn default() -> EntityCommon {\n");
     fun.push_str("        EntityCommon {\n");
     for c in &entity.children {
         match c.name.as_str() {
@@ -103,6 +103,13 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     }
 
     fun.push_str("        }\n");
+    fun.push_str("    }\n");
+    fun.push_str("}\n");
+    fun.push_str("\n");
+
+    fun.push_str("impl EntityCommon {\n");
+    fun.push_str("    pub fn new() -> Self {\n");
+    fun.push_str("        Default::default()\n");
     fun.push_str("    }\n");
 
     fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> io::Result<()> {\n");
@@ -176,8 +183,8 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("\n");
 
             // implementation
-            fun.push_str(format!("impl {typ} {{\n", typ=name(c)).as_str());
-            fun.push_str("    pub fn new() -> Self {\n");
+            fun.push_str(format!("impl Default for {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str(format!("    fn default() -> {typ} {{\n", typ=name(c)).as_str());
             fun.push_str(format!("        {typ} {{\n", typ=name(c)).as_str());
             for f in &c.children {
                 match f.name.as_str() {
@@ -194,6 +201,13 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             }
 
             fun.push_str("        }\n");
+            fun.push_str("    }\n");
+            fun.push_str("}\n");
+            fun.push_str("\n");
+
+            fun.push_str(format!("impl {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str("    pub fn new() -> Self {\n");
+            fun.push_str("        Default::default()\n");
             fun.push_str("    }\n");
 
             // flags
