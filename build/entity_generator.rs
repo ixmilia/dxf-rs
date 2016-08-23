@@ -154,9 +154,10 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str(format!("pub struct {typ} {{\n", typ=name(c)).as_str());
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
+                let acc = if attr(&f, "Accessibility") == "private" { "" } else { "pub " };
                 match f.name.as_str() {
                     "Field" => {
-                        fun.push_str(format!("    pub {name}: {typ},\n", name=name(f), typ=t).as_str());
+                        fun.push_str(format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t).as_str());
                     },
                     "Pointer" => {
                         fun.push_str(format!("    // TODO: '{}' pointer here\n", name(f)).as_str());
@@ -253,7 +254,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
-                    if f.name == "Field" { // TODO: support pointers
+                    if f.name == "Field" && generate_reader(&f) { // TODO: support pointers
                         for (i, &cd) in codes(&f).iter().enumerate() {
                             if !seen_codes.contains(&cd) {
                                 seen_codes.insert(cd); // TODO: allow for duplicates
@@ -348,6 +349,10 @@ fn get_field_reader(element: &Element) -> String {
     }
     let read_cmd = format!("{reader}(&pair.value)", reader=reader_fun);
     read_converter.replace("{}", read_cmd.as_str())
+}
+
+fn generate_reader(element: &Element) -> bool {
+    attr(&element, "GenerateReader") != "false"
 }
 
 fn generate_reader_function(element: &Element) -> bool {

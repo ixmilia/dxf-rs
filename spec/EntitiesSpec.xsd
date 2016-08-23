@@ -37,8 +37,6 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="public" />
             <xs:enumeration value="private" />
-            <xs:enumeration value="protected" />
-            <xs:enumeration value="internal" />
         </xs:restriction>
     </xs:simpleType>
 
@@ -68,6 +66,7 @@
             <xs:attribute name="WriteConverter" type="xs:string" use="optional" />
             <xs:attribute name="ProtectedSet" type="xs:boolean" use="optional" />
             <xs:attribute name="WriteCondition" type="xs:string" use="optional" />
+            <xs:attribute name="GenerateReader" type="xs:boolean" use="optional" />
             <xs:attribute name="Comment" type="xs:string" use="optional" />
             <xs:attribute name="MinVersion" type="VersionType" use="optional" />
             <xs:attribute name="MaxVersion" type="VersionType" use="optional" />

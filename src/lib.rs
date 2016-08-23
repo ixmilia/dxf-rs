@@ -12,6 +12,7 @@ use self::entities::*;
 use self::enums::*;
 use enum_primitive::FromPrimitive;
 
+use std::cmp::min;
 use std::io;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::iter::Peekable;
@@ -263,6 +264,8 @@ impl Entity {
                     None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
                 }
             }
+
+            try!(entity.post_parse());
         }
 
         Ok(Some(entity))
@@ -273,49 +276,51 @@ impl Entity {
         }
         Ok(())
     }
+    fn post_parse(&mut self) -> io::Result<()> {
+        match self.specific {
+            EntityType::Image(ref mut image) => {
+                combine_points_2(&mut image._clipping_vertices_x, &mut image._clipping_vertices_y, &mut image.clipping_vertices, Point::new);
+            },
+            EntityType::Leader(ref mut leader) => {
+                combine_points_3(&mut leader._vertices_x, &mut leader._vertices_y, &mut leader._vertices_z, &mut leader.vertices, Point::new);
+            },
+            EntityType::MLine(ref mut mline) => {
+                combine_points_3(&mut mline._vertices_x, &mut mline._vertices_y, &mut mline._vertices_z, &mut mline.vertices, Point::new);
+                combine_points_3(&mut mline._segment_direction_x, &mut mline._segment_direction_y, &mut mline._segment_direction_z, &mut mline.segment_directions, Vector::new);
+                combine_points_3(&mut mline._miter_direction_x, &mut mline._miter_direction_y, &mut mline._miter_direction_z, &mut mline.miter_directions, Vector::new);
+            },
+            EntityType::Section(ref mut section) => {
+                combine_points_3(&mut section._vertices_x, &mut section._vertices_y, &mut section._vertices_z, &mut section.vertices, Point::new);
+                combine_points_3(&mut section._back_line_vertices_x, &mut section._back_line_vertices_y, &mut section._back_line_vertices_z, &mut section.back_line_vertices, Point::new);
+            },
+            EntityType::Spline(ref mut spline) => {
+                combine_points_3(&mut spline._control_point_x, &mut spline._control_point_y, &mut spline._control_point_z, &mut spline.control_points, Point::new);
+                combine_points_3(&mut spline._fit_point_x, &mut spline._fit_point_y, &mut spline._fit_point_z, &mut spline.fit_points, Point::new);
+            },
+            EntityType::Underlay(ref mut underlay) => {
+                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+            },
+            EntityType::DgnUnderlay(ref mut underlay) => {
+                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+            },
+            EntityType::DwfUnderlay(ref mut underlay) => {
+                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+            },
+            EntityType::PdfUnderlay(ref mut underlay) => {
+                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+            },
+            EntityType::Wipeout(ref mut wo) => {
+                combine_points_2(&mut wo._clipping_vertices_x, &mut wo._clipping_vertices_y, &mut wo.clipping_vertices, Point::new);
+            },
+            _ => (),
+        }
+
+        Ok(())
+    }
     fn apply_custom_reader<I>(&mut self, peekable: &mut Peekable<I>) -> io::Result<bool>
         where I: Iterator<Item = io::Result<CodePair>>
     {
         match self.specific {
-            EntityType::Image(ref mut image) => {
-                loop {
-                    let pair = next_pair!(peekable);
-                    match pair.code {
-                        90 => { image.class_version = int_value(&pair.value); },
-                        10 => { image.location.x = double_value(&pair.value); },
-                        20 => { image.location.y = double_value(&pair.value); },
-                        30 => { image.location.z = double_value(&pair.value); },
-                        11 => { image.u_vector.x = double_value(&pair.value); },
-                        21 => { image.u_vector.y = double_value(&pair.value); },
-                        31 => { image.u_vector.z = double_value(&pair.value); },
-                        12 => { image.v_vector.x = double_value(&pair.value); },
-                        22 => { image.v_vector.y = double_value(&pair.value); },
-                        32 => { image.v_vector.z = double_value(&pair.value); },
-                        13 => { image.image_size.x = double_value(&pair.value); },
-                        23 => { image.image_size.y = double_value(&pair.value); },
-                        340 => { image.image_def_reference = string_value(&pair.value); },
-                        70 => { image.display_options_flags = short_value(&pair.value) as i32; },
-                        280 => { image.use_clipping = as_bool(short_value(&pair.value)); },
-                        281 => { image.brightness = short_value(&pair.value); },
-                        282 => { image.contrast = short_value(&pair.value); },
-                        283 => { image.fade = short_value(&pair.value); },
-                        360 => { image.image_def_reactor_reference = string_value(&pair.value); },
-                        71 => { image.clipping_type = try_result!(ImageClippingBoundaryType::from_i16(short_value(&pair.value))); },
-                        91 => { image.clipping_vertex_count = int_value(&pair.value); },
-                        14 => {
-                            // add new clipping vertex x value
-                            image.clipping_vertices.push(Point::new(double_value(&pair.value), 0.0, 0.0));
-                        },
-                        24 => {
-                            // append existing clipping vertex y value
-                            let last = image.clipping_vertices.len(); // TODO: handle index out of bounds
-                            image.clipping_vertices[last - 1].y = double_value(&pair.value);
-                        }
-                        290 => { image.is_inside_clipping = bool_value(&pair.value); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
-                    }
-                }
-            },
             EntityType::MText(ref mut mtext) => {
                 let mut reading_column_data = false;
                 let mut read_column_count = false;
@@ -375,50 +380,30 @@ impl Entity {
                     }
                 }
             },
-            EntityType::Wipeout(ref mut wo) => {
-                loop {
-                    let pair = next_pair!(peekable);
-                    match pair.code {
-                        90 => { wo.class_version = int_value(&pair.value); },
-                        10 => { wo.location.x = double_value(&pair.value); },
-                        20 => { wo.location.y = double_value(&pair.value); },
-                        30 => { wo.location.z = double_value(&pair.value); },
-                        11 => { wo.u_vector.x = double_value(&pair.value); },
-                        21 => { wo.u_vector.y = double_value(&pair.value); },
-                        31 => { wo.u_vector.z = double_value(&pair.value); },
-                        12 => { wo.v_vector.x = double_value(&pair.value); },
-                        22 => { wo.v_vector.y = double_value(&pair.value); },
-                        32 => { wo.v_vector.z = double_value(&pair.value); },
-                        13 => { wo.image_size.x = double_value(&pair.value); },
-                        23 => { wo.image_size.y = double_value(&pair.value); },
-                        340 => { wo.image_def_reference = string_value(&pair.value); },
-                        70 => { wo.display_options_flags = short_value(&pair.value) as i32; },
-                        280 => { wo.use_clipping = as_bool(short_value(&pair.value)); },
-                        281 => { wo.brightness = short_value(&pair.value); },
-                        282 => { wo.contrast = short_value(&pair.value); },
-                        283 => { wo.fade = short_value(&pair.value); },
-                        360 => { wo.image_def_reactor_reference = string_value(&pair.value); },
-                        71 => { wo.clipping_type = try_result!(ImageClippingBoundaryType::from_i16(short_value(&pair.value))); },
-                        91 => { wo.clipping_vertex_count = int_value(&pair.value); },
-                        14 => {
-                            // add new clipping vertex x value
-                            wo.clipping_vertices.push(Point::new(double_value(&pair.value), 0.0, 0.0));
-                        },
-                        24 => {
-                            // append existing clipping vertex y value
-                            let last = wo.clipping_vertices.len(); // TODO: handle index out of bounds
-                            wo.clipping_vertices[last - 1].y = double_value(&pair.value);
-                        }
-                        290 => { wo.is_inside_clipping = bool_value(&pair.value); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
-                    }
-                }
-            },
             _ => return Ok(false), // no custom reader
         }
 
         Ok(true)
     }
+}
+
+fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+    where F: Fn(f64, f64, f64) -> T {
+    for i in 0..min(v1.len(), v2.len()) {
+        result.push(comb(v1[i], v2[i], 0.0));
+    }
+    v1.clear();
+    v2.clear();
+}
+
+fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+    where F: Fn(f64, f64, f64) -> T {
+    for i in 0..min(v1.len(), min(v2.len(), v3.len())) {
+        result.push(comb(v1[i], v2[i], v3[i]));
+    }
+    v1.clear();
+    v2.clear();
+    v3.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

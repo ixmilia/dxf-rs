@@ -147,7 +147,7 @@ fn read_field_with_multiples_specific() {
 }
 
 #[test]
-fn entity_with_custom_reader_image() {
+fn entity_with_post_parse() {
     let ent = read_entity("IMAGE", vec![
         "14", "1.1", // clipping_vertices[0]
         "24", "2.2",
