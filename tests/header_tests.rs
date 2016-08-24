@@ -12,7 +12,7 @@ use test_helpers::helpers::*;
 
 #[test]
 fn empty_header() {
-    let _file = Drawing::parse(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str()).ok().unwrap();
+    let _file = parse_drawing(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str());
 }
 
 #[test]

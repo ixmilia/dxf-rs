@@ -13,9 +13,11 @@ use self::enums::*;
 use enum_primitive::FromPrimitive;
 
 use std::cmp::min;
+use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::iter::Peekable;
+use std::path::Path;
 
 include!("expected_type.rs");
 
@@ -74,7 +76,7 @@ impl CodePair {
 //                                                             CodePairAsciiIter
 ////////////////////////////////////////////////////////////////////////////////
 struct CodePairAsciiIter<T>
-    where T: BufRead
+    where T: Read
 {
     reader: T,
 }
@@ -89,12 +91,24 @@ macro_rules! try_option {
     )
 }
 
-impl<T: BufRead> Iterator for CodePairAsciiIter<T> {
+// because I don't want to depend on BufRead here
+fn read_line<T>(reader: &mut T, result: &mut String) -> io::Result<()>
+    where T: Read {
+    for c in reader.bytes() { // .bytes() is OK since DXF files must be ASCII encoded
+        let c = try!(c) as char;
+        result.push(c);
+        if c == '\n' { break; }
+    }
+
+    Ok(())
+}
+
+impl<T: Read> Iterator for CodePairAsciiIter<T> {
     type Item = io::Result<CodePair>;
     fn next(&mut self) -> Option<io::Result<CodePair>> {
         // Read code.  If no line is available, fail gracefully.
         let mut code_line = String::new();
-        match self.reader.read_line(&mut code_line) {
+        match read_line(&mut self.reader, &mut code_line) {
             Ok(_) => (),
             Err(_) => return None,
         }
@@ -104,7 +118,7 @@ impl<T: BufRead> Iterator for CodePairAsciiIter<T> {
 
         // Read value.  If no line is available die horribly.
         let mut value_line = String::new();
-        try_option!(self.reader.read_line(&mut value_line));
+        try_option!(read_line(&mut self.reader, &mut value_line));
         trim_trailing_newline(&mut value_line);
 
         // construct the value pair
@@ -443,6 +457,7 @@ macro_rules! try_result {
     )
 }
 
+// public implementation
 impl Drawing {
     pub fn new() -> Self {
         Drawing {
@@ -450,14 +465,8 @@ impl Drawing {
             entities: vec![],
         }
     }
-    pub fn read<T>(reader: &mut T) -> io::Result<Drawing>
-        where T: Read
-    {
-        let buf_reader = BufReader::new(reader);
-        Drawing::load(buf_reader)
-    }
     pub fn load<T>(reader: T) -> io::Result<Drawing>
-        where T: BufRead {
+        where T: Read {
         let reader = CodePairAsciiIter { reader: reader };
         let mut peekable = reader.peekable();
         let mut drawing = Drawing::new();
@@ -472,12 +481,13 @@ impl Drawing {
             None => Ok(drawing), //Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got nothing"))), // n.b., this is probably fine
         }
     }
-    pub fn parse(s: &str) -> io::Result<Drawing> {
-        let data = String::from(s);
-        let bytes = data.as_bytes();
-        Drawing::load(bytes)
+    pub fn load_file(file_name: &str) -> io::Result<Drawing> {
+        let path = Path::new(file_name);
+        let file = try!(File::open(&path));
+        let buf_reader = BufReader::new(file);
+        Drawing::load(buf_reader)
     }
-    pub fn write<T>(&self, writer: &mut T) -> io::Result<()>
+    pub fn save<T>(&self, writer: &mut T) -> io::Result<()>
         where T: Write {
         let mut writer = CodePairAsciiWriter { writer: writer };
         try!(self.header.write(&mut writer));
@@ -487,6 +497,16 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
+    pub fn save_file(&self, file_name: &str) -> io::Result<()> {
+        let path = Path::new(file_name);
+        let file = try!(File::create(&path));
+        let mut buf_writer = BufWriter::new(file);
+        self.save(&mut buf_writer)
+    }
+}
+
+// private implementation
+impl Drawing {
     fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
@@ -497,14 +517,6 @@ impl Drawing {
 
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
-    }
-    pub fn to_string(&self) -> io::Result<String> {
-        use std::io::Cursor;
-        let mut buf = Cursor::new(vec![]);
-        try!(self.write(&mut buf));
-        try!(buf.seek(SeekFrom::Start(0)));
-        let reader = BufReader::new(&mut buf);
-        Ok(reader.lines().map(|l| l.unwrap() + "\r\n").collect())
     }
     fn read_sections<I>(drawing: &mut Drawing, peekable: &mut Peekable<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {

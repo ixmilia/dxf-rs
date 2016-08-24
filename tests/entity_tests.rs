@@ -15,26 +15,26 @@ fn read_entity(entity_type: &str, body: String) -> Entity {
 }
 
 #[test]
-fn empty_entities_section() {
-    let file = Drawing::parse(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+fn read_empty_entities_section() {
+    let file = parse_drawing(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str());
     assert_eq!(0, file.entities.len());
 }
 
 #[test]
-fn unsupported_entity() {
-    let file = Drawing::parse(vec![
+fn read_unsupported_entity() {
+    let file = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "UNSUPPORTED_ENTITY",
                     "1", "unsupported string",
         "0", "ENDSEC",
-        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+        "0", "EOF"].join("\r\n").as_str());
     assert_eq!(0, file.entities.len());
 }
 
 #[test]
-fn unsupported_entity_between_supported_entities() {
-    let file = Drawing::parse(vec![
+fn read_unsupported_entity_between_supported_entities() {
+    let file = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
@@ -42,7 +42,7 @@ fn unsupported_entity_between_supported_entities() {
                     "1", "unsupported string",
                 "0", "CIRCLE",
         "0", "ENDSEC",
-        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+        "0", "EOF"].join("\r\n").as_str());
     assert_eq!(2, file.entities.len());
     match file.entities[0].specific {
         EntityType::Line(_) => (),
@@ -56,12 +56,12 @@ fn unsupported_entity_between_supported_entities() {
 
 #[test]
 fn read_entity_with_no_values() {
-    let file = Drawing::parse(vec![
+    let file = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
         "0", "ENDSEC",
-        "0", "EOF"].join("\r\n").as_str()).ok().unwrap();
+        "0", "EOF"].join("\r\n").as_str());
     assert_eq!(1, file.entities.len());
     match file.entities[0].specific {
         EntityType::Line(_) => (),
@@ -211,7 +211,7 @@ fn write_field_with_multiples_specific() {
 }
 
 #[test]
-fn entity_with_post_parse() {
+fn read_entity_with_post_parse() {
     let ent = read_entity("IMAGE", vec![
         "14", "1.1", // clipping_vertices[0]
         "24", "2.2",
