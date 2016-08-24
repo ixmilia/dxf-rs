@@ -185,3 +185,9 @@ fn write_variable_with_different_codes() {
     file.header.current_multiline_style = String::from("cml-style-2");
     assert_contains(&file, vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"));
 }
+
+#[test]
+fn read_drawing_edit_duration() {
+    let file = from_section("HEADER", vec!["  9", "$TDINDWG", " 40", "100.0"].join("\r\n").as_str());
+    assert_eq!(Duration::seconds(100), file.header.time_in_drawing);
+}

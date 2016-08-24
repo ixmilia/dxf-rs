@@ -113,8 +113,8 @@ pub fn duration_as_double(duration: Duration) -> f64 {
     duration.num_seconds() as f64
 }
 
-pub fn as_duration(_d: f64) -> Duration {
-    unimplemented!()
+pub fn as_duration(d: f64) -> Duration {
+    Duration::seconds(d as i64)
 }
 
 pub fn as_u32(s: String) -> io::Result<u32> {
