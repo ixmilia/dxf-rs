@@ -14,7 +14,6 @@ pub mod helpers {
 
     pub fn from_section(section: &str, body: &str) -> Drawing {
         let text = vec!["0", "SECTION", "2", section, body.trim(), "0", "ENDSEC", "0", "EOF"].join("\n");
-        println!("attempting to parse: {}", text);
         parse_drawing(text.trim())
     }
 

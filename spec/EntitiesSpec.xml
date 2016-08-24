@@ -845,6 +845,7 @@
     <Field Name="smooth_surface_n_density" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="surface_type" Code="75" Type="PolylineCurvedAndSmoothSurfaceType" DefaultValue="PolylineCurvedAndSmoothSurfaceType::None" ReadConverter="try_result!(PolylineCurvedAndSmoothSurfaceType::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="vertices" Code="10" Type="Vertex" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
   </Entity>
   <!--
 

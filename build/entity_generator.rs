@@ -168,7 +168,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
 
             // definition
-            fun.push_str("#[derive(Clone)]\n");
+            fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
             fun.push_str(format!("pub struct {typ} {{\n", typ=name(c)).as_str());
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
@@ -313,7 +313,8 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
             if generate_reader_function(&c) {
                 // TODO: handle dimensions
                 // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-                fun.push_str(format!("            &mut EntityType::{typ}(ref mut ent) => {{\n", typ=name(c)).as_str());
+                let ent = if name(&c) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
+                fun.push_str(format!("            &mut EntityType::{typ}(ref mut {ent}) => {{\n", typ=name(c), ent=ent).as_str());
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
@@ -379,7 +380,8 @@ fn generate_write(fun: &mut String, element: &Element) {
     fun.push_str("        match self {\n");
     for entity in &element.children {
         if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
-            fun.push_str(format!("            &EntityType::{typ}(ref ent) => {{\n", typ=name(&entity)).as_str());
+            let ent = if name(&entity) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
+            fun.push_str(format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent).as_str());
             for line in generate_write_code_pairs(&entity) {
                 fun.push_str(format!("                {}\n", line).as_str());
             }
@@ -423,14 +425,16 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
         commands.push(format!("try!(writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\")));", subclass=subclass));
     }
     for field in &entity.children {
-        match field.name.as_str() {
-            "Field" => {
-                for line in get_write_lines_for_field(&field, vec![]) {
-                    commands.push(line);
-                }
-            },
-            "Pointer" => { panic!("not used"); },
-            _ => panic!("unexpected item {} in entity", field.name),
+        if generate_writer(&field) {
+            match field.name.as_str() {
+                "Field" => {
+                    for line in get_write_lines_for_field(&field, vec![]) {
+                        commands.push(line);
+                    }
+                },
+                "Pointer" => { panic!("not used"); },
+                _ => panic!("unexpected item {} in entity", field.name),
+            }
         }
     }
     return commands;
@@ -638,6 +642,10 @@ fn get_field_reader(element: &Element) -> String {
 
 fn generate_reader(element: &Element) -> bool {
     attr(&element, "GenerateReader") != "false"
+}
+
+fn generate_writer(element: &Element) -> bool {
+    attr(&element, "GenerateWriter") != "false"
 }
 
 fn generate_reader_function(element: &Element) -> bool {

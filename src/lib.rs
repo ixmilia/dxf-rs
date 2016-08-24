@@ -414,6 +414,23 @@ impl Entity {
             try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
             try!(self.common.write(version, write_handles, writer));
             try!(self.specific.write(&self.common, version, writer));
+            try!(self.post_write(&version, write_handles, writer));
+        }
+
+        Ok(())
+    }
+    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+        where T: Write {
+        match self.specific {
+            EntityType::Polyline(ref poly) => {
+                for v in &poly.vertices {
+                    let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
+                    try!(v.write(&version, write_handles, writer));
+                }
+                let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
+                try!(seqend.write(&version, write_handles, writer));
+            },
+            _ => (),
         }
 
         Ok(())
@@ -531,14 +548,7 @@ impl Drawing {
                             let pair = peekable.next().unwrap().ok().unwrap(); // consume 2/<section-name>.  unwrap() and ok() calls are valid due to the match above
                             match string_value(&pair.value).as_str() {
                                 "HEADER" => drawing.header = try!(header::Header::read(peekable)),
-                                "ENTITIES" => {
-                                    loop {
-                                        match try!(Entity::read(peekable)) {
-                                            Some(e) => drawing.entities.push(e),
-                                            None => break,
-                                        }
-                                    }
-                                },
+                                "ENTITIES" => try!(drawing.read_entities(peekable)),
                                 // TODO: read other sections
                                 _ => Drawing::swallow_section(peekable),
                             }
@@ -577,6 +587,76 @@ impl Drawing {
             else {
                 peekable.next();
             }
+        }
+    }
+    fn read_entities<I>(&mut self, peekable: &mut Peekable<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<CodePair>> {
+        let mut peekable = EntityIter { peekable: peekable }.peekable();
+        loop {
+            match peekable.peek() {
+                Some(&Ok(Entity { specific: EntityType::Polyline(_), .. })) => {
+                    let entity = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
+                    match entity.specific {
+                        EntityType::Polyline(ref poly) => {
+                            // found a polyline, gather the following VERTEX entities
+                            let mut poly = poly.clone(); // 13 fields
+                            loop {
+                                match peekable.peek() {
+                                    Some(&Ok(Entity { specific: EntityType::Vertex(_), .. })) => {
+                                        let vertex = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
+                                        match vertex.specific {
+                                            EntityType::Vertex(v) => poly.vertices.push(v),
+                                            _ => panic!("this will never happen"),
+                                        }
+                                    },
+                                    _ => break, // stop gathering on any non-VERTEX
+                                }
+                            }
+
+                            // swallow the following SEQEND if it's present
+                            match peekable.peek() {
+                                Some(&Ok(Entity { specific: EntityType::Seqend(_), .. })) => drop(peekable.next()),
+                                _ => (),
+                            }
+
+                            // and finally keep the POLYLINE
+                            self.entities.push(Entity {
+                                common: entity.common.clone(), // 18 fields
+                                specific: EntityType::Polyline(poly)
+                            });
+                        },
+                        _ => panic!("this will never happen"),
+                    }
+                },
+                Some(&Ok(_)) => {
+                    let entity = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
+                    self.entities.push(entity);
+                },
+                Some(&Err(_)) => {
+                    let err = peekable.next().unwrap().err().unwrap(); // these unwrap() and err() calls are valid due to the match above
+                    return Err(err);
+                },
+                None => break,
+            }
+        }
+
+        Ok(())
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//                                                                    EntityIter
+////////////////////////////////////////////////////////////////////////////////
+struct EntityIter<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> {
+    peekable: &'a mut Peekable<I>,
+}
+
+impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<'a, I> {
+    type Item = io::Result<Entity>;
+    fn next(&mut self) -> Option<io::Result<Entity>> {
+        match Entity::read(self.peekable) {
+            Ok(Some(e)) => Some(Ok(e)),
+            Ok(None) | Err(_) => None,
         }
     }
 }
@@ -659,7 +739,7 @@ impl Vector {
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                         Color
 ////////////////////////////////////////////////////////////////////////////////
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Color {
     raw_value: i16,
 }

@@ -9,32 +9,32 @@ mod test_helpers;
 use test_helpers::helpers::*;
 
 fn read_entity(entity_type: &str, body: String) -> Entity {
-    let file = from_section("ENTITIES", vec!["0", entity_type, body.as_str()].join("\r\n").as_str());
-    assert_eq!(1, file.entities.len());
-    file.entities[0].to_owned()
+    let drawing = from_section("ENTITIES", vec!["0", entity_type, body.as_str()].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    drawing.entities[0].to_owned()
 }
 
 #[test]
 fn read_empty_entities_section() {
-    let file = parse_drawing(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str());
-    assert_eq!(0, file.entities.len());
+    let drawing = parse_drawing(vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"].join("\r\n").as_str());
+    assert_eq!(0, drawing.entities.len());
 }
 
 #[test]
 fn read_unsupported_entity() {
-    let file = parse_drawing(vec![
+    let drawing = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "UNSUPPORTED_ENTITY",
                     "1", "unsupported string",
         "0", "ENDSEC",
         "0", "EOF"].join("\r\n").as_str());
-    assert_eq!(0, file.entities.len());
+    assert_eq!(0, drawing.entities.len());
 }
 
 #[test]
 fn read_unsupported_entity_between_supported_entities() {
-    let file = parse_drawing(vec![
+    let drawing = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
@@ -43,12 +43,12 @@ fn read_unsupported_entity_between_supported_entities() {
                 "0", "CIRCLE",
         "0", "ENDSEC",
         "0", "EOF"].join("\r\n").as_str());
-    assert_eq!(2, file.entities.len());
-    match file.entities[0].specific {
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
         EntityType::Line(_) => (),
         _ => panic!("expected a line"),
     }
-    match file.entities[1].specific {
+    match drawing.entities[1].specific {
         EntityType::Circle(_) => (),
         _ => panic!("expected a circle"),
     }
@@ -56,14 +56,14 @@ fn read_unsupported_entity_between_supported_entities() {
 
 #[test]
 fn read_entity_with_no_values() {
-    let file = parse_drawing(vec![
+    let drawing = parse_drawing(vec![
         "0", "SECTION",
             "2", "ENTITIES",
                 "0", "LINE",
         "0", "ENDSEC",
         "0", "EOF"].join("\r\n").as_str());
-    assert_eq!(1, file.entities.len());
-    match file.entities[0].specific {
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
         EntityType::Line(_) => (),
         _ => panic!("expected a line"),
     }
@@ -132,7 +132,7 @@ fn write_specific_entity_fields() {
 
 #[test]
 fn read_multiple_entities() {
-    let file = from_section("ENTITIES", vec![
+    let drawing = from_section("ENTITIES", vec![
         "0", "CIRCLE",
             "10", "1.1", // center
             "20", "2.2",
@@ -145,10 +145,10 @@ fn read_multiple_entities() {
             "11", "8.8", // p2
             "21", "9.9",
             "31", "10.1"].join("\r\n").as_str());
-    assert_eq!(2, file.entities.len());
+    assert_eq!(2, drawing.entities.len());
 
     // verify circle
-    match file.entities[0].specific {
+    match drawing.entities[0].specific {
         EntityType::Circle(ref circle) => {
             assert_eq!(Point::new(1.1, 2.2, 3.3), circle.center);
             assert_eq!(4.4, circle.radius);
@@ -157,7 +157,7 @@ fn read_multiple_entities() {
     }
 
     // verify line
-    match file.entities[1].specific {
+    match drawing.entities[1].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(5.5, 6.6, 7.7), line.p1);
             assert_eq!(Point::new(8.8, 9.9, 10.1), line.p2);
@@ -363,5 +363,248 @@ fn write_version_specific_entity() {
         "  0", "SECTION",
         "  2", "ENTITIES",
         "  0", "3DSOLID",
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_polyline() {
+    let drawing = from_section("ENTITIES", vec![
+        "  0", "POLYLINE", // polyline sentinel
+        "  0", "VERTEX", // vertex 1
+        " 10", "1.1",
+        " 20", "2.1",
+        " 30", "3.1",
+        "  0", "VERTEX", // vertex 2
+        " 10", "1.2",
+        " 20", "2.2",
+        " 30", "3.2",
+        "  0", "VERTEX", // vertex 3
+        " 10", "1.3",
+        " 20", "2.3",
+        " 30", "3.3",
+        "  0", "SEQEND", // end sequence
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => {
+            assert_eq!(vec![
+                Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+                Vertex { location: Point::new(1.2, 2.2, 3.2), .. Default::default() },
+                Vertex { location: Point::new(1.3, 2.3, 3.3), .. Default::default() },
+            ], poly.vertices);
+        },
+        _ => panic!("expected a POLYLINE"),
+    }
+}
+
+#[test]
+fn read_polyline_without_seqend() {
+    let drawing = from_section("ENTITIES", vec![
+        "  0", "POLYLINE", // polyline sentinel
+        "  0", "VERTEX", // vertex 1
+        " 10", "1.1",
+        " 20", "2.1",
+        " 30", "3.1",
+        "  0", "VERTEX", // vertex 2
+        " 10", "1.2",
+        " 20", "2.2",
+        " 30", "3.2",
+        "  0", "VERTEX", // vertex 3
+        " 10", "1.3",
+        " 20", "2.3",
+        " 30", "3.3",
+        // no end sequence
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => {
+            assert_eq!(vec![
+                Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+                Vertex { location: Point::new(1.2, 2.2, 3.2), .. Default::default() },
+                Vertex { location: Point::new(1.3, 2.3, 3.3), .. Default::default() },
+            ], poly.vertices);
+        },
+        _ => panic!("expected a POLYLINE"),
+    }
+}
+
+#[test]
+fn read_empty_polyline() {
+    let drawing = from_section("ENTITIES", vec!["0", "POLYLINE", "0", "SEQEND"].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        _ => panic!("expected a POLYLINE"),
+    }
+}
+
+#[test]
+fn read_empty_polyline_without_seqend() {
+    let drawing = from_section("ENTITIES", vec!["0", "POLYLINE"].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        _ => panic!("expected a POLYLINE"),
+    }
+}
+
+#[test]
+fn read_polyline_with_trailing_entity() {
+    let drawing = from_section("ENTITIES", vec![
+        "  0", "POLYLINE", // polyline sentinel
+        "  0", "VERTEX", // vertex 1
+        " 10", "1.1",
+        " 20", "2.1",
+        " 30", "3.1",
+        "  0", "VERTEX", // vertex 2
+        " 10", "1.2",
+        " 20", "2.2",
+        " 30", "3.2",
+        "  0", "VERTEX", // vertex 3
+        " 10", "1.3",
+        " 20", "2.3",
+        " 30", "3.3",
+        "  0", "SEQEND", // end sequence
+        "  0", "LINE", // trailing entity
+    ].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => {
+            assert_eq!(vec![
+                Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+                Vertex { location: Point::new(1.2, 2.2, 3.2), .. Default::default() },
+                Vertex { location: Point::new(1.3, 2.3, 3.3), .. Default::default() },
+            ], poly.vertices);
+        },
+        _ => panic!("expected a POLYLINE"),
+    }
+
+    match drawing.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a LINE"),
+    }
+}
+
+#[test]
+fn read_polyline_without_seqend_with_trailing_entity() {
+    let drawing = from_section("ENTITIES", vec![
+        "  0", "POLYLINE", // polyline sentinel
+        "  0", "VERTEX", // vertex 1
+        " 10", "1.1",
+        " 20", "2.1",
+        " 30", "3.1",
+        "  0", "VERTEX", // vertex 2
+        " 10", "1.2",
+        " 20", "2.2",
+        " 30", "3.2",
+        "  0", "VERTEX", // vertex 3
+        " 10", "1.3",
+        " 20", "2.3",
+        " 30", "3.3",
+        // no end sequence
+        "  0", "LINE", // trailing entity
+    ].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => {
+            assert_eq!(vec![
+                Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+                Vertex { location: Point::new(1.2, 2.2, 3.2), .. Default::default() },
+                Vertex { location: Point::new(1.3, 2.3, 3.3), .. Default::default() },
+            ], poly.vertices);
+        },
+        _ => panic!("expected a POLYLINE"),
+    }
+
+    match drawing.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a LINE"),
+    }
+}
+
+#[test]
+fn read_empty_polyline_with_trailing_entity() {
+    let drawing = from_section("ENTITIES", vec!["0", "POLYLINE", "0", "SEQEND", "0", "LINE"].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        _ => panic!("expected a POLYLINE"),
+    }
+    match drawing.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a LINE"),
+    }
+}
+
+#[test]
+fn read_empty_polyline_without_seqend_with_trailing_entity() {
+    let drawing = from_section("ENTITIES", vec!["0", "POLYLINE", "0", "LINE"].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        _ => panic!("expected a POLYLINE"),
+    }
+    match drawing.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a LINE"),
+    }
+}
+
+#[test]
+fn write_polyline() {
+    let mut drawing = Drawing::new();
+    let poly = Polyline {
+        vertices: vec![
+            Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+            Vertex { location: Point::new(1.2, 2.2, 3.2), .. Default::default() },
+            Vertex { location: Point::new(1.3, 2.3, 3.3), .. Default::default() },
+        ],
+        .. Default::default()
+    };
+    drawing.entities.push(Entity {
+        common: EntityCommon::new(),
+        specific: EntityType::Polyline(poly),
+    });
+    assert_contains(&drawing, vec![
+        "  0", "POLYLINE", // polyline
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDb2dPolyline",
+        " 66", "1",
+        " 10", "0.000000000000",
+        " 20", "0.000000000000",
+        " 30", "0.000000000000",
+        "  0", "VERTEX", // vertex 1
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDbVertex",
+        " 10", "1.100000000000",
+        " 20", "2.100000000000",
+        " 30", "3.100000000000",
+        " 70", "0",
+        " 50", "0.000000000000",
+        "  0", "VERTEX", // vertex 2
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDbVertex",
+        " 10", "1.200000000000",
+        " 20", "2.200000000000",
+        " 30", "3.200000000000",
+        " 70", "0",
+        " 50", "0.000000000000",
+        "  0", "VERTEX", // vertex 3
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDbVertex",
+        " 10", "1.300000000000",
+        " 20", "2.300000000000",
+        " 30", "3.300000000000",
+        " 70", "0",
+        " 50", "0.000000000000",
+        "  0", "SEQEND", // end sequence
     ].join("\r\n"));
 }
