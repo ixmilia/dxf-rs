@@ -106,35 +106,39 @@ fn read_line<T>(reader: &mut T, result: &mut String) -> io::Result<()>
 impl<T: Read> Iterator for CodePairAsciiIter<T> {
     type Item = io::Result<CodePair>;
     fn next(&mut self) -> Option<io::Result<CodePair>> {
-        // Read code.  If no line is available, fail gracefully.
-        let mut code_line = String::new();
-        match read_line(&mut self.reader, &mut code_line) {
-            Ok(_) => (),
-            Err(_) => return None,
+        loop {
+            // Read code.  If no line is available, fail gracefully.
+            let mut code_line = String::new();
+            match read_line(&mut self.reader, &mut code_line) {
+                Ok(_) => (),
+                Err(_) => return None,
+            }
+            let code_line = code_line.trim();
+            if code_line.is_empty() { return None; }
+            let code = try_option!(code_line.parse::<i32>());
+
+            // Read value.  If no line is available die horribly.
+            let mut value_line = String::new();
+            try_option!(read_line(&mut self.reader, &mut value_line));
+            trim_trailing_newline(&mut value_line);
+
+            // construct the value pair
+            let value = match try_option!(get_expected_type(code)) {
+                ExpectedType::Boolean => CodePairValue::Boolean(try_option!(parse_bool(value_line))),
+                ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_int(value_line))),
+                ExpectedType::Long => CodePairValue::Long(try_option!(parse_long(value_line))),
+                ExpectedType::Short => CodePairValue::Short(try_option!(parse_short(value_line))),
+                ExpectedType::Double => CodePairValue::Double(try_option!(parse_double(value_line))),
+                ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
+            };
+
+            if code != 999 {
+                return Some(Ok(CodePair {
+                    code: code,
+                    value: value,
+                }));
+            }
         }
-        let code_line = code_line.trim();
-        if code_line.is_empty() { return None; }
-        let code = try_option!(code_line.parse::<i32>());
-
-        // Read value.  If no line is available die horribly.
-        let mut value_line = String::new();
-        try_option!(read_line(&mut self.reader, &mut value_line));
-        trim_trailing_newline(&mut value_line);
-
-        // construct the value pair
-        let value = match try_option!(get_expected_type(code)) {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_option!(parse_bool(value_line))),
-            ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_int(value_line))),
-            ExpectedType::Long => CodePairValue::Long(try_option!(parse_long(value_line))),
-            ExpectedType::Short => CodePairValue::Short(try_option!(parse_short(value_line))),
-            ExpectedType::Double => CodePairValue::Double(try_option!(parse_double(value_line))),
-            ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
-        };
-
-        Some(Ok(CodePair {
-            code: code,
-            value: value,
-        }))
     }
 }
 

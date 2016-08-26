@@ -1,7 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
+use self::dxf::*;
 use self::dxf::enums::*;
+use self::dxf::entities::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -35,4 +37,30 @@ fn read_lf_and_crlf() {
 
     let crlf_file = parse_drawing(code_pairs.join("\r\n").as_str());
     assert_eq!(AcadVersion::R2013, crlf_file.header.version);
+}
+
+#[test]
+fn read_file_with_comments() {
+    let file = parse_drawing(vec![
+        "999", "comment",
+        "0", "SECTION",
+            "999", "", // empty comment
+            "2", "ENTITIES",
+                "0", "LINE",
+                "999", "comment",
+                "10", "1.1",
+                "999", "comment",
+                "20", "2.2",
+                "999", "comment",
+            "0", "ENDSEC",
+        "0", "EOF",
+        "999", "comment",
+    ].join("\r\n").trim());
+    assert_eq!(1, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(1.1, 2.2, 0.0), line.p1);
+        },
+        _ => panic!("expected a LINE"),
+    }
 }
