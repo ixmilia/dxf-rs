@@ -4,3 +4,4 @@ Cargo.lock
 # these files are generated
 src/entities.rs
 src/header.rs
+src/tables.rs

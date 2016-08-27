@@ -111,6 +111,15 @@ pub enum CoordinateDisplay {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DefaultLightingType
+{
+    OneDistantLight = 0,
+    TwoDistantLights = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DimensionArcSymbolDisplayMode {
     SymbolBeforeText = 0,
     SymbolAboveText = 1,
@@ -677,6 +686,81 @@ pub enum Units {
     AstronomicalUnits = 18,
     LightYears = 19,
     Parsecs = 20,
+}
+}
+
+pub struct ViewMode {
+    flags: i32,
+}
+
+impl Default for ViewMode {
+    fn default() -> Self {
+        ViewMode {
+            flags: 0,
+        }
+    }
+}
+
+impl ViewMode {
+    pub fn from_i16(val: i16) -> Self {
+        ViewMode {
+            flags: val as i32,
+        }
+    }
+    fn get_flag(&self, mask: i32) -> bool {
+        self.flags & mask != 0
+    }
+    fn set_flag(&mut self, mask: i32, val: bool) {
+        if val {
+            self.flags |= mask;
+        }
+        else {
+            self.flags &= !mask
+        }
+    }
+    pub fn get_is_perspective_view_active(&self) -> bool {
+        self.get_flag(1)
+    }
+    pub fn set_is_perspective_view_active(&mut self, val: bool) {
+        self.set_flag(1, val)
+    }
+    pub fn get_is_front_clipping_on(&self) -> bool {
+        self.get_flag(2)
+    }
+    pub fn set_is_front_clipping_on(&mut self, val: bool) {
+        self.set_flag(2, val)
+    }
+    pub fn get_is_back_clipping_on(&self) -> bool {
+        self.get_flag(4)
+    }
+    pub fn set_is_back_clipping_on(&mut self, val: bool) {
+        self.set_flag(4, val)
+    }
+    pub fn get_is_ucs_follow_mode_on(&self) -> bool {
+        self.get_flag(8)
+    }
+    pub fn set_is_ucs_follow_mode_on(&mut self, val: bool) {
+        self.set_flag(8, val)
+    }
+    pub fn get_is_front_clipping_at_eye(&self) -> bool {
+        self.get_flag(16)
+    }
+    pub fn set_is_front_clipping_at_eye(&mut self, val: bool) {
+        self.set_flag(16, val)
+    }
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ViewRenderMode
+{
+    Classic2D = 0,
+    Wireframe = 1,
+    HiddenLine = 2,
+    FlatShaded = 3,
+    GouraudShaded = 4,
+    FlatShadedWithWireframe = 5,
+    GouraudShadedWithWireframe = 6,
 }
 }
 

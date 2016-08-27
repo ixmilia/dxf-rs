@@ -14,7 +14,7 @@ pub fn generate_header() {
     let variables = gather_variables();
     let mut fun = String::new();
     fun.push_str("
-// The contents of this file are automatically generated and should not be modified directly.  See the `src/build` directory.
+// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 // types from `lib.rs`.
 use ::{CodePair, CodePairAsciiWriter, Color, LineWeight, Point, Vector};

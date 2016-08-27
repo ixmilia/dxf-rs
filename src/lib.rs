@@ -1,13 +1,16 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 #[macro_use] extern crate enum_primitive;
+extern crate itertools;
 
 pub mod enums;
 pub mod header;
 pub mod entities;
+pub mod tables;
 
 use self::header::*;
 use self::entities::*;
+use self::tables::*;
 
 use self::enums::*;
 use enum_primitive::FromPrimitive;
@@ -16,8 +19,9 @@ use std::cmp::min;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::iter::Peekable;
 use std::path::Path;
+
+use itertools::PutBack;
 
 include!("expected_type.rs");
 
@@ -171,29 +175,41 @@ impl<T: Write> CodePairAsciiWriter<T> {
 ////////////////////////////////////////////////////////////////////////////////
 // implementation is in `header.rs`
 impl Header {
-    pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Header>
-        where I: Iterator<Item = io::Result<CodePair>>
-    {
+    pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Header>
+        where I: Iterator<Item = io::Result<CodePair>> {
         let mut header = Header::new();
         loop {
-            match peekable.peek() {
-                Some(&Ok(CodePair { code: 9, value: _ })) => {
-                    let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
-                    let last_header_variable = string_value(&pair.value);
-                    loop {
-                        match peekable.peek() {
-                            Some(&Ok(CodePair { code: c, value: _ })) if c == 0 || c == 9 => break, // 0/ENDSEC or a new header variable
-                            Some(&Ok(_)) => {
-                                let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
-                                try!(header.set_header_value(last_header_variable.as_str(), &pair));
-                            },
-                            Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unable to read header variable value")),
-                            None => break,
-                        }
+            match iter.next() {
+                Some(Ok(pair)) => {
+                    match pair.code {
+                        0 => {
+                            iter.put_back(Ok(pair));
+                            break;
+                        },
+                        9 => {
+                            let last_header_variable = string_value(&pair.value);
+                            loop {
+                                match iter.next() {
+                                    Some(Ok(pair)) => {
+                                        if pair.code == 0 || pair.code == 9 {
+                                            // ENDSEC or a new header variable
+                                            iter.put_back(Ok(pair));
+                                            break;
+                                        }
+                                        else {
+                                            try!(header.set_header_value(last_header_variable.as_str(), &pair));
+                                        }
+                                    },
+                                    Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                                    None => break,
+                                }
+                            }
+                        },
+                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected code pair")),
                     }
                 },
-                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unable to read header")),
-                _ => break,
+                Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                None => break,
             }
         }
 
@@ -216,9 +232,14 @@ impl Header {
 // returns the next CodePair that's not 0, or bails out early
 macro_rules! next_pair {
     ($expr : expr) => (
-        match $expr.peek() {
-            Some(&Ok(CodePair { code: 0, .. })) | None => return Ok(true),
-            _ => $expr.next().unwrap().ok().unwrap(), // unwrap() and ok() calls are valid due to the match above
+        match $expr.next() {
+            Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                $expr.put_back(Ok(pair));
+                return Ok(true);
+            },
+            Some(Ok(pair)) => pair,
+            Some(Err(e)) => return Err(e),
+            None => return Ok(true),
         }
     )
 }
@@ -239,63 +260,64 @@ impl Entity {
             specific: specific,
         }
     }
-    pub fn read<I>(peekable: &mut Peekable<I>) -> io::Result<Option<Entity>>
+    pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<CodePair>>
     {
-        let entity_type;
         loop {
-            match peekable.peek() {
+            match iter.next() {
                 // first code pair must be 0/entity-type
-                Some(&Ok(CodePair { code: 0, .. })) => {
-                    let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
+                Some(Ok(pair @ CodePair { code: 0, .. })) => {
                     let type_string = string_value(&pair.value);
                     if type_string == "ENDSEC" {
+                        iter.put_back(Ok(pair));
                         return Ok(None);
                     }
 
                     match EntityType::from_type_string(type_string.as_str()) {
                         Some(e) => {
-                            entity_type = e;
-                            break;
+                            let mut entity = Entity::new(e);
+                            if !try!(entity.apply_custom_reader(iter)) {
+                                // no custom reader, use the auto-generated one
+                                loop {
+                                    match iter.next() {
+                                        Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                                            // new entity or ENDSEC
+                                            iter.put_back(Ok(pair));
+                                            break;
+                                        },
+                                        Some(Ok(pair)) => try!(entity.apply_code_pair(&pair)),
+                                        Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                                        None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                                    }
+                                }
+
+                                try!(entity.post_parse());
+                            }
+
+                            return Ok(Some(entity));
                         },
                         None => {
                             // swallow unsupported entity
                             loop {
-                               match peekable.peek() {
-                                    Some(&Ok(CodePair { code: 0, .. })) => break, // found another entity or 0/ENDSEC
-                                    Some(&Ok(_)) => { peekable.next(); }, // part of the unsupported entity
-                                    Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected error")),
+                               match iter.next() {
+                                    Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                                        // found another entity or ENDSEC
+                                        iter.put_back(Ok(pair));
+                                        break;
+                                    },
+                                    Some(Ok(_)) => (), // part of the unsupported entity
+                                    Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
                                     None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
                                 }
                             }
                         }
                     }
                 },
-                Some(&Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC")),
-                Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "")),
+                Some(Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC")),
+                Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
                 None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
             }
         }
-
-        let mut entity = Entity::new(entity_type);
-        if !try!(entity.apply_custom_reader(peekable)) {
-            // no custom reader, use the auto-generated one
-            loop {
-                match peekable.peek() {
-                    Some(&Ok(CodePair { code: 0, .. })) => break, // new entity or 0/ENDSEC
-                    Some(&Ok(_)) => {
-                        let pair = peekable.next().unwrap().ok().unwrap(); // unwrap() and ok() calls are valid due to the match above
-                        try!(entity.apply_code_pair(&pair));
-                    },
-                    Some(&Err(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "error reading drawing")),
-                    None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
-                }
-            }
-
-            try!(entity.post_parse());
-        }
-
-        Ok(Some(entity))
     }
     fn apply_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         if !try!(self.specific.try_apply_code_pair(&pair)) {
@@ -344,7 +366,7 @@ impl Entity {
 
         Ok(())
     }
-    fn apply_custom_reader<I>(&mut self, peekable: &mut Peekable<I>) -> io::Result<bool>
+    fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<bool>
         where I: Iterator<Item = io::Result<CodePair>>
     {
         match self.specific {
@@ -352,7 +374,7 @@ impl Entity {
                 let mut reading_column_data = false;
                 let mut read_column_count = false;
                 loop {
-                    let pair = next_pair!(peekable);
+                    let pair = next_pair!(iter);
                     match pair.code {
                         10 => { mtext.insertion_point.x = double_value(&pair.value); },
                         20 => { mtext.insertion_point.y = double_value(&pair.value); },
@@ -466,6 +488,15 @@ fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64
 pub struct Drawing {
     pub header: Header,
     pub entities: Vec<Entity>,
+    pub app_ids: Vec<AppId>,
+    pub block_records: Vec<BlockRecord>,
+    pub dim_styles: Vec<DimStyle>,
+    pub layers: Vec<Layer>,
+    pub line_types: Vec<LineType>,
+    pub styles: Vec<Style>,
+    pub ucs: Vec<Ucs>,
+    pub views: Vec<View>,
+    pub view_ports: Vec<ViewPort>,
 }
 
 // Used to turn Result<T> into io::Result<T>
@@ -484,22 +515,28 @@ impl Drawing {
         Drawing {
             header: Header::new(),
             entities: vec![],
+            app_ids: vec![],
+            block_records: vec![],
+            dim_styles: vec![],
+            layers: vec![],
+            line_types: vec![],
+            styles: vec![],
+            ucs: vec![],
+            views: vec![],
+            view_ports: vec![],
         }
     }
     pub fn load<T>(reader: T) -> io::Result<Drawing>
         where T: Read {
         let reader = CodePairAsciiIter { reader: reader };
-        let mut peekable = reader.peekable();
         let mut drawing = Drawing::new();
-        match Drawing::read_sections(&mut drawing, &mut peekable) {
-            Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-            _ => (),
-        }
-        match peekable.next() {
+        let mut iter = PutBack::new(reader);
+        try!(Drawing::read_sections(&mut drawing, &mut iter));
+        match iter.next() {
             Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
             Some(Ok(CodePair { code: c, value: v })) => Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got {}/{:?}", c, v))),
             Some(Err(e)) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-            None => Ok(drawing), //Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got nothing"))), // n.b., this is probably fine
+            None => Ok(drawing),
         }
     }
     pub fn load_file(file_name: &str) -> io::Result<Drawing> {
@@ -539,108 +576,147 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
-    fn read_sections<I>(drawing: &mut Drawing, peekable: &mut Peekable<I>) -> io::Result<()>
+    fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
         loop {
-            match peekable.peek() {
-                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(_) })) => {
-                    let pair = peekable.next().unwrap().ok().unwrap(); // consume 0/SECTION.  unwrap() and ok() calls are valid due to the match above
-                    if string_value(&pair.value).as_str() == "EOF" { break; }
-                    if string_value(&pair.value).as_str() != "SECTION" { return Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/SECTION, got 0/{}", string_value(&pair.value).as_str()))); }
-                    match peekable.peek() {
-                        Some(&Ok(CodePair { code: 2, value: CodePairValue::Str(_) })) => {
-                            let pair = peekable.next().unwrap().ok().unwrap(); // consume 2/<section-name>.  unwrap() and ok() calls are valid due to the match above
-                            match string_value(&pair.value).as_str() {
-                                "HEADER" => drawing.header = try!(header::Header::read(peekable)),
-                                "ENTITIES" => try!(drawing.read_entities(peekable)),
-                                // TODO: read other sections
-                                _ => Drawing::swallow_section(peekable),
-                            }
+            match iter.next() {
+                Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                    match string_value(&pair.value).as_str() {
+                        "EOF" => {
+                            iter.put_back(Ok(pair));
+                            break;
+                        },
+                        "SECTION" => {
+                            match iter.next() {
+                               Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
+                                    match s.as_str() {
+                                        "HEADER" => drawing.header = try!(header::Header::read(iter)),
+                                        "ENTITIES" => try!(drawing.read_entities(iter)),
+                                        "TABLES" => try!(drawing.read_tables(iter)),
+                                        // TODO: read other sections
+                                        _ => try!(Drawing::swallow_section(iter)),
+                                    }
 
-                            let mut swallow_endsec = false;
-                            match peekable.peek() {
-                                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => swallow_endsec = true,
-                                _ => (), // expected 0/ENDSEC
-                            }
-
-                            if swallow_endsec {
-                                peekable.next();
+                                    match iter.next() {
+                                        Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => (),
+                                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "Expected 0/ENDSEC")),
+                                    }
+                                },
+                                _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected section name")),
                             }
                         },
-                        _ => (), // expected 2/<section-name>
+                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/SECTION, got 0/{:?}", pair.value))),
                     }
                 },
-                _ => break,
+                Some(Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/SECTION or 0/EOF")),
+                Some(Err(e)) => return Err(e),
+                None => break, // ideally should have been 0/EOF
             }
         }
 
         Ok(())
     }
-    fn swallow_section<I>(peekable: &mut Peekable<I>)
+    fn swallow_section<I>(iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
         loop {
-            let mut quit = false;
-            match peekable.peek() {
-                Some(&Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => quit = true,
-                _ => (),
-            }
-
-            if quit {
-                return;
-            }
-            else {
-                peekable.next();
-            }
-        }
-    }
-    fn read_entities<I>(&mut self, peekable: &mut Peekable<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
-        let mut peekable = EntityIter { peekable: peekable }.peekable();
-        loop {
-            match peekable.peek() {
-                Some(&Ok(Entity { specific: EntityType::Polyline(_), .. })) => {
-                    let entity = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
-                    match entity.specific {
-                        EntityType::Polyline(ref poly) => {
-                            // found a polyline, gather the following VERTEX entities
-                            let mut poly = poly.clone(); // 13 fields
-                            loop {
-                                match peekable.peek() {
-                                    Some(&Ok(Entity { specific: EntityType::Vertex(_), .. })) => {
-                                        let vertex = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
-                                        match vertex.specific {
-                                            EntityType::Vertex(v) => poly.vertices.push(v),
-                                            _ => panic!("this will never happen"),
-                                        }
-                                    },
-                                    _ => break, // stop gathering on any non-VERTEX
-                                }
-                            }
-
-                            // swallow the following SEQEND if it's present
-                            match peekable.peek() {
-                                Some(&Ok(Entity { specific: EntityType::Seqend(_), .. })) => drop(peekable.next()),
-                                _ => (),
-                            }
-
-                            // and finally keep the POLYLINE
-                            self.entities.push(Entity {
-                                common: entity.common.clone(), // 18 fields
-                                specific: EntityType::Polyline(poly)
-                            });
-                        },
-                        _ => panic!("this will never happen"),
+            match iter.next() {
+                Some(Ok(pair)) => {
+                    if pair.code == 0 && string_value(&pair.value) == "ENDSEC" {
+                        iter.put_back(Ok(pair));
+                        break;
                     }
                 },
-                Some(&Ok(_)) => {
-                    let entity = peekable.next().unwrap().ok().unwrap(); // these unwrap() and ok() calls are valid due to the match above
-                    self.entities.push(entity);
-                },
-                Some(&Err(_)) => {
-                    let err = peekable.next().unwrap().err().unwrap(); // these unwrap() and err() calls are valid due to the match above
-                    return Err(err);
-                },
+                Some(Err(e)) => return Err(e),
                 None => break,
+            }
+        }
+
+        Ok(())
+    }
+    fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<CodePair>> {
+        let mut iter = PutBack::new(EntityIter { iter: iter });
+        loop {
+            match iter.next() {
+                Some(Ok(Entity { common, specific: EntityType::Polyline(poly) })) => {
+                    let mut poly = poly.clone(); // 13 fields
+                    loop {
+                        match iter.next() {
+                            Some(Ok(Entity { specific: EntityType::Vertex(vertex), .. })) => poly.vertices.push(vertex),
+                            Some(Ok(ent)) => {
+                                // stop gathering on any non-VERTEX
+                                iter.put_back(Ok(ent));
+                                break;
+                            },
+                            Some(Err(e)) => return Err(e),
+                            None => break,
+                        }
+                    }
+
+                    // swallow the following SEQEND if it's present
+                    match iter.next() {
+                        Some(Ok(Entity { specific: EntityType::Seqend(_), .. })) => (),
+                        Some(Ok(ent)) => iter.put_back(Ok(ent)),
+                        _ => (),
+                    }
+
+                    // and finally keep the POLYLINE
+                    self.entities.push(Entity {
+                        common: common.clone(), // 18 fields
+                        specific: EntityType::Polyline(poly)
+                    });
+                },
+                Some(Ok(entity)) => self.entities.push(entity),
+                Some(Err(e)) => return Err(e),
+                None => break,
+            }
+        }
+
+        Ok(())
+    }
+    fn read_tables<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<CodePair>> {
+        loop {
+            match iter.next() {
+                Some(Ok(pair)) => {
+                    if pair.code == 0 {
+                        match string_value(&pair.value).as_str() {
+                            "ENDSEC" => {
+                                iter.put_back(Ok(pair));
+                                break;
+                            },
+                            "TABLE" => try!(read_specific_table(self, iter)),
+                            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected code pair")),
+                        }
+                    }
+                    else {
+                        return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected value pair"));
+                    }
+                },
+                Some(Err(e)) => return Err(e),
+                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+            }
+        }
+
+        Ok(())
+    }
+    pub fn swallow_table<I>(iter: &mut PutBack<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<CodePair>> {
+        loop {
+            match iter.next() {
+                Some(Ok(pair)) => {
+                    if pair.code == 0 {
+                        match string_value(&pair.value).as_str() {
+                            "TABLE" | "ENDSEC" => {
+                                iter.put_back(Ok(pair));
+                                break;
+                            },
+                            _ => (), // swallow the code pair
+                        }
+                    }
+                }
+                Some(Err(e)) => return Err(e),
+                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
             }
         }
 
@@ -652,13 +728,13 @@ impl Drawing {
 //                                                                    EntityIter
 ////////////////////////////////////////////////////////////////////////////////
 struct EntityIter<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> {
-    peekable: &'a mut Peekable<I>,
+    iter: &'a mut PutBack<I>,
 }
 
 impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<'a, I> {
     type Item = io::Result<Entity>;
     fn next(&mut self) -> Option<io::Result<Entity>> {
-        match Entity::read(self.peekable) {
+        match Entity::read(self.iter) {
             Ok(Some(e)) => Some(Ok(e)),
             Ok(None) | Err(_) => None,
         }
@@ -812,6 +888,9 @@ pub struct LineWeight {
 }
 
 impl LineWeight {
+    pub fn new() -> LineWeight {
+        LineWeight::from_raw_value(0)
+    }
     pub fn from_raw_value(v: i16) -> LineWeight {
         LineWeight { raw_value: v }
     }

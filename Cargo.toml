@@ -7,6 +7,7 @@ build = "build/build.rs"
 [dependencies]
 chrono = "0.2.25"
 enum_primitive = "0.1.0"
+itertools = "0.4.18"
 num = "0.1.34"
 time = "0.1"
 uuid = { version = "0.3.0", features = ["use_std", "v4"] }

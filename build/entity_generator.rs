@@ -3,7 +3,9 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::{ExpectedType, get_code_pair_type, get_expected_type, get_reader_function};
+use ::{ExpectedType, get_code_pair_type, get_expected_type};
+
+use xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -14,7 +16,7 @@ pub fn generate_entities() {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
-// The contents of this file are automatically generated and should not be modified directly.  See the `src/build` directory.
+// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 use ::{CodePair, CodePairAsciiWriter, Color, Point, Vector};
 use ::helper_functions::*;
@@ -596,56 +598,8 @@ fn load_xml() -> Element {
     Element::parse(file).unwrap()
 }
 
-fn attr(element: &Element, name: &str) -> String {
-    match &element.attributes.get(name) {
-        &Some(v) => v.clone(),
-        &None => String::new(),
-    }
-}
-
-fn allow_multiples(element: &Element) -> bool {
-    attr(element, "AllowMultiples") == "true"
-}
-
-fn name(element: &Element) -> String {
-    attr(element, "Name")
-}
-
 fn typ(element: &Element) -> String {
     attr(element, "Type")
-}
-
-fn code(element: &Element) -> i32 {
-    attr(element, "Code").parse::<i32>().unwrap()
-}
-
-fn codes(element: &Element) -> Vec<i32> {
-    let code_overrides = attr(&element, "CodeOverrides");
-    if code_overrides.is_empty() {
-        return vec![code(&element)];
-    }
-    else {
-        return code_overrides.split(",").map(|c| c.parse::<i32>().unwrap()).collect::<Vec<_>>();
-    }
-}
-
-fn get_field_reader(element: &Element) -> String {
-    let expected_type = get_expected_type(code(&element)).ok().unwrap();
-    let reader_fun = get_reader_function(&expected_type);
-    let mut read_converter = attr(&element, "ReadConverter");
-    if read_converter.is_empty() {
-        read_converter = String::from("{}");
-    }
-    let read_cmd = format!("{reader}(&pair.value)", reader=reader_fun);
-    read_converter.replace("{}", read_cmd.as_str())
-}
-
-fn generate_reader(element: &Element) -> bool {
-    attr(&element, "GenerateReader") != "false"
-}
-
-fn generate_writer(element: &Element) -> bool {
-    attr(&element, "GenerateWriter") != "false"
 }
 
 fn generate_reader_function(element: &Element) -> bool {

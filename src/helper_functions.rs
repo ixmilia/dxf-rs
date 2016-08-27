@@ -9,8 +9,9 @@ use self::uuid::Uuid;
 use std::io;
 use enum_primitive::FromPrimitive;
 
-use ::CodePairValue;
+use ::{CodePairValue, Color};
 use ::enums::*;
+use ::tables::Layer;
 
 pub fn bool_value(value: &CodePairValue) -> bool {
     match value {
@@ -293,4 +294,9 @@ pub fn trim_trailing_newline(s: &mut String) {
             s.pop();
         }
     }
+}
+
+pub fn read_color_value(layer: &mut Layer, color: i16) -> Color {
+    layer.is_layer_on = color >= 0;
+    Color::from_raw_value(color.abs())
 }
