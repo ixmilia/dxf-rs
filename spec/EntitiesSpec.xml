@@ -96,10 +96,10 @@
     <Field Name="graphics_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="entity_data_size" Code="93" Type="i32" DefaultValue="0" />
     <Field Name="entity_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="object_i_d1" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="object_i_d2" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="object_i_d3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="object_i_d4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_id_1" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_id_2" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_id_3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_id_4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
     <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" Accessibility="private" MinVersion="R2000" />
     <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2000" />
@@ -588,7 +588,7 @@
   <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14">
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_closed" Mask="1" />
-      <Flag Name="is_p_line_gen" Mask="128" />
+      <Flag Name="is_pline_gen" Mask="128" />
     </Field>
     <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -714,7 +714,7 @@
     <Field Name="line_spacing_style" Code="73" Type="MTextLineSpacingStyle" DefaultValue="MTextLineSpacingStyle::AtLeast" ReadConverter="try_result!(MTextLineSpacingStyle::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="line_spacing_factor" Code="44" Type="f64" DefaultValue="1.0" />
     <Field Name="background_fill_setting" Code="90" Type="BackgroundFillSetting" DefaultValue="BackgroundFillSetting::Off" ReadConverter="try_result!(BackgroundFillSetting::from_i32({}))" WriteConverter="{} as i32" />
-    <Field Name="background_color_r_g_b" Code="420" Type="i32" DefaultValue="0" />
+    <Field Name="background_color_rgb" Code="420" Type="i32" DefaultValue="0" />
     <Field Name="background_color_name" Code="430" Type="String" DefaultValue="String::new()" />
     <Field Name="fill_box_scale" Code="45" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
     <Field Name="background_fill_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
@@ -744,7 +744,7 @@
       <WriteField Field="line_spacing_style" />
       <WriteField Field="line_spacing_factor" />
       <WriteField Field="background_fill_setting" />
-      <WriteField Field="background_color_r_g_b" />
+      <WriteField Field="background_color_rgb" />
       <WriteField Field="background_color_name" />
       <WriteField Field="fill_box_scale" />
       <WriteField Field="background_fill_color" />

@@ -411,7 +411,7 @@ impl Entity {
                         73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(short_value(&pair.value))); },
                         44 => { mtext.line_spacing_factor = double_value(&pair.value); },
                         90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(int_value(&pair.value))); },
-                        420 => { mtext.background_color_r_g_b = int_value(&pair.value); },
+                        420 => { mtext.background_color_rgb = int_value(&pair.value); },
                         430 => { mtext.background_color_name = string_value(&pair.value); },
                         45 => { mtext.fill_box_scale = double_value(&pair.value); },
                         63 => { mtext.background_fill_color = Color::from_raw_value(short_value(&pair.value)); },
