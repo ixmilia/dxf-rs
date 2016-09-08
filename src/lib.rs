@@ -550,6 +550,7 @@ impl Drawing {
         let mut writer = CodePairAsciiWriter { writer: writer };
         try!(self.header.write(&mut writer));
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        try!(self.write_tables(write_handles, &mut writer));
         try!(self.write_entities(write_handles, &mut writer));
         // TODO: write other sections
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
@@ -565,6 +566,14 @@ impl Drawing {
 
 // private implementation
 impl Drawing {
+    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+        where T: Write {
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "TABLES")));
+        try!(write_tables(&self, write_handles, writer));
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        Ok(())
+    }
     fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
@@ -877,6 +886,18 @@ impl Color {
     }
     pub fn from_index(i: u8) -> Color {
         Color { raw_value: i as i16 }
+    }
+    pub fn get_writable_color_value(&self, layer: &Layer) -> i16 {
+       let value = match self.get_raw_value().abs() {
+            0 | 256 => 7i16, // BYLAYER and BYBLOCK aren't valid
+            v => v,
+        };
+        let value = match layer.is_layer_on {
+            true => value,
+            false => -value,
+        };
+
+        value
     }
 }
 

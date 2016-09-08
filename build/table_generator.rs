@@ -3,7 +3,7 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-//use ::{ExpectedType, get_code_pair_type, get_expected_type, get_reader_function};
+use ::{get_code_pair_type, get_expected_type};
 
 use xml_helpers::*;
 
@@ -20,13 +20,14 @@ pub fn generate_tables() {
 
 extern crate itertools;
 
-use ::{CodePair, Color, Drawing, LineWeight, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, Color, Drawing, LineWeight, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
 
 use std::io;
+use std::io::Write;
 
 use itertools::PutBack;
 
@@ -43,6 +44,7 @@ macro_rules! try_result {
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);
     generate_table_reader(&mut fun, &element);
+    generate_table_writer(&mut fun, &element);
 
     let mut file = File::create("src/tables.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
@@ -199,6 +201,117 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        }\n");
         fun.push_str("    }\n");
         fun.push_str("\n");
+        fun.push_str("    Ok(())\n");
+        fun.push_str("}\n");
+        fun.push_str("\n");
+    }
+}
+
+fn generate_table_writer(fun: &mut String, element: &Element) {
+    fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n");
+    fun.push_str("    where T: Write {\n");
+    for table in &element.children {
+        fun.push_str(format!("    try!(write_{collection}(drawing, write_handles, writer));\n", collection=attr(&table, "Collection")).as_str());
+    }
+
+    fun.push_str("    Ok(())\n");
+    fun.push_str("}\n");
+    fun.push_str("\n");
+
+    for table in &element.children {
+        let table_item = &table.children[0];
+        fun.push_str(format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n", collection=attr(&table, "Collection")).as_str());
+        fun.push_str("    where T: Write {\n");
+        fun.push_str(format!("    if drawing.{collection}.len() == 0 {{\n", collection=attr(&table, "Collection")).as_str());
+        fun.push_str("        return Ok(()) // nothing to write\n");
+        fun.push_str("    }\n");
+        fun.push_str("\n");
+        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(0, \"TABLE\")));\n");
+        fun.push_str(format!("    try!(writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")).as_str());
+
+        // TODO: handles
+        // fun.push_str("    if write_handles {\n");
+        // fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(5, \"0\")));\n");
+        // fun.push_str("    }\n");
+        // fun.push_str("\n");
+
+        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\")));\n");
+        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_short(70, 0)));\n");
+        fun.push_str(format!("    for item in &drawing.{collection} {{\n", collection=attr(&table, "Collection")).as_str());
+        fun.push_str(format!("        try!(writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")).as_str());
+        fun.push_str("        if write_handles {\n");
+        fun.push_str("            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(item.handle))));\n");
+        fun.push_str("        }\n");
+        fun.push_str("\n");
+        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\")));\n");
+        fun.push_str(format!("        try!(writer.write_code_pair(&CodePair::new_str(100, \"{class_name}\")));\n", class_name=attr(&table_item, "ClassName")).as_str());
+        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_string(2, &item.name)));\n");
+        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_short(70, 0)));\n"); // TODO: flags
+        for field in &table_item.children {
+            if generate_writer(&field) {
+                let mut predicates = vec![];
+                if !min_version(&field).is_empty() {
+                    predicates.push(format!("drawing.header.version >= AcadVersion::{}", min_version(&field)));
+                }
+                if !max_version(&field).is_empty() {
+                    predicates.push(format!("drawing.header.version <= AcadVersion::{}", max_version(&field)));
+                }
+                if !write_condition(&field).is_empty() {
+                    predicates.push(write_condition(&field));
+                }
+                if disable_writing_default(&field) {
+                    predicates.push(format!("item.{field} != {default_value}", field=name(&field), default_value=default_value(&field)));
+                }
+                let indent = if predicates.len() == 0 { "" } else { "    " };
+                if predicates.len() != 0 {
+                    fun.push_str(format!("        if {predicate} {{\n", predicate=predicates.join(" && ")).as_str());
+                }
+
+                if allow_multiples(&field) {
+                    let code = code(&field);
+                    let typ = get_expected_type(code).unwrap();
+                    let typ = get_code_pair_type(typ);
+                    let deref = if typ == "string" { "" } else { "*" };
+                    fun.push_str(format!("{indent}        for x in &item.{field} {{\n", indent=indent, field=name(&field)).as_str());
+                    fun.push_str(format!("{indent}            try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x)))\n",
+                        indent=indent, typ=typ, code=code, deref=deref).as_str());
+                    fun.push_str(format!("{indent}        }}\n", indent=indent).as_str());
+                }
+                else {
+                    let codes = codes(&field);
+                    if codes.len() == 1 {
+                        let code = codes[0];
+                        let typ = get_expected_type(code).unwrap();
+                        let typ = get_code_pair_type(typ);
+                        let value = format!("item.{}", name(&field));
+                        let write_converter = if attr(&field, "WriteConverter").is_empty() { String::from("{}") } else { attr(&field, "WriteConverter") };
+                        let value = write_converter.replace("{}", value.as_str());
+                        fun.push_str(format!("{indent}        try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
+                            indent=indent, typ=typ, code=code, value=value).as_str());
+                    }
+                    else {
+                        for (i, code) in codes.iter().enumerate() {
+                            let suffix = match i {
+                                0 => "x",
+                                1 => "y",
+                                2 => "z",
+                                _ => panic!("impossible"),
+                            };
+                            fun.push_str(format!("{indent}        try!(writer.write_code_pair(&CodePair::new_double({code}, item.{field}.{suffix})));\n",
+                                indent=indent, code=code, field=name(&field), suffix=suffix).as_str());
+                        }
+                    }
+                }
+
+                if predicates.len() != 0 {
+                    fun.push_str("        }\n");
+                }
+            }
+        }
+
+        fun.push_str("    }\n");
+        fun.push_str("\n");
+        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(0, \"ENDTAB\")));\n");
         fun.push_str("    Ok(())\n");
         fun.push_str("}\n");
         fun.push_str("\n");

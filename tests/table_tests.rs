@@ -2,6 +2,7 @@
 
 extern crate dxf;
 use self::dxf::*;
+use self::dxf::tables::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -108,4 +109,69 @@ fn read_layer_color_and_layer_is_off() {
     let layer = &drawing.layers[0];
     assert_eq!(5, layer.color.get_raw_value());
     assert!(!layer.is_layer_on);
+}
+
+#[test]
+fn write_layer() {
+    let mut drawing = Drawing::new();
+    let mut layer = Layer::new();
+    layer.name = String::from("layer-name");
+    layer.color = Color::from_index(3);
+    drawing.layers.push(layer);
+    assert_contains(&drawing, vec![
+        "  0", "TABLE",
+        "  2", "LAYER",
+        "100", "AcDbSymbolTable",
+        " 70", "0",
+            "  0", "LAYER",
+            "  5", "0",
+            "100", "AcDbSymbolTableRecord",
+            "100", "AcDbLayerTableRecord",
+            "  2", "layer-name",
+            " 70", "0",
+            " 62", "3",
+            "  6", "CONTINUOUS",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_layer_with_invalid_values() {
+    let mut drawing = Drawing::new();
+    let mut layer = Layer::new();
+    layer.name = String::from("layer-name");
+    layer.color = Color::by_layer(); // code 62, value 256 not valid; normalized to 7
+    layer.linetype_name = String::from(""); // code 6, empty string not valid; normalized to CONTINUOUS
+    drawing.layers.push(layer);
+    assert_contains(&drawing, vec![
+        "  2", "layer-name",
+        " 70", "0",
+        " 62", "7",
+        "  6", "CONTINUOUS",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_view_with_invalid_values() {
+    let mut drawing = Drawing::new();
+    let mut view = View::new();
+    view.name = String::from("view-name");
+    view.view_height = 0.0; // code 40, invalid; normalized to 1.0
+    view.view_width = -1.0; // code 41, invalid; normalized to 1.0
+    view.lens_length = 42.0; // code 42, valid
+    drawing.views.push(view);
+    assert_contains(&drawing, vec![
+        "  2", "view-name",
+        " 70", "0",
+        " 40", "1.000000000000",
+        " 10", "0.000000000000",
+        " 20", "0.000000000000",
+        " 41", "1.000000000000",
+        " 11", "0.000000000000",
+        " 21", "0.000000000000",
+        " 31", "1.000000000000",
+        " 12", "0.000000000000",
+        " 22", "0.000000000000",
+        " 32", "0.000000000000",
+        " 42", "42.000000000000",
+    ].join("\r\n"));
 }

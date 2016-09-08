@@ -30,6 +30,14 @@ pub fn codes(element: &Element) -> Vec<i32> {
     }
 }
 
+pub fn default_value(element: &Element) -> String {
+    attr(&element, "DefaultValue")
+}
+
+pub fn disable_writing_default(element: &Element) -> bool {
+    attr(&element, "DisableWritingDefault") == "true"
+}
+
 pub fn generate_reader(element: &Element) -> bool {
     attr(&element, "GenerateReader") != "false"
 }
@@ -49,6 +57,18 @@ pub fn get_field_reader(element: &Element) -> String {
     read_converter.replace("{}", read_cmd.as_str())
 }
 
+pub fn min_version(element: &Element) -> String {
+    attr(&element, "MinVersion")
+}
+
+pub fn max_version(element: &Element) -> String {
+    attr(&element, "MaxVersion")
+}
+
 pub fn name(element: &Element) -> String {
     attr(element, "Name")
+}
+
+pub fn write_condition(element: &Element) -> String {
+    attr(element, "WriteCondition")
 }

@@ -707,6 +707,9 @@ impl ViewMode {
             flags: val as i32,
         }
     }
+    pub fn get_raw(&self) -> i32 {
+        self.flags
+    }
     fn get_flag(&self, mask: i32) -> bool {
         self.flags & mask != 0
     }

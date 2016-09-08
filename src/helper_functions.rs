@@ -172,6 +172,18 @@ pub fn ensure_positive_or_default(val: f64, default: f64) -> f64 {
     if val <= 0.0 { default } else { val }
 }
 
+pub fn ensure_positive_or_default_i32(val: i32, default: i32) -> i32 {
+    if val <= 0 { default } else { val }
+}
+
+pub fn ensure_positive_or_default_i16(val: i16, default: i16) -> i16 {
+    if val <= 0 { default } else { val }
+}
+
+pub fn get_writable_linetype_name<'a>(val: &'a str) -> &'a str {
+    if val.is_empty() { "CONTINUOUS" } else { val }
+}
+
 pub fn clipping_from_bool(b: bool) -> Option<XrefClippingBoundaryVisibility> {
     XrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 })
 }

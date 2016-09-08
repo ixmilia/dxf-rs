@@ -605,19 +605,3 @@ fn typ(element: &Element) -> String {
 fn generate_reader_function(element: &Element) -> bool {
     attr(&element, "GenerateReaderFunction") != "false"
 }
-
-fn default_value(element: &Element) -> String {
-    attr(&element, "DefaultValue")
-}
-
-fn min_version(element: &Element) -> String {
-    attr(&element, "MinVersion")
-}
-
-fn max_version(element: &Element) -> String {
-    attr(&element, "MaxVersion")
-}
-
-fn disable_writing_default(element: &Element) -> bool {
-    attr(&element, "DisableWritingDefault") == "true"
-}
