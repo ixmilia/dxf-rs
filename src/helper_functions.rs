@@ -193,7 +193,7 @@ pub fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
 }
 
 pub fn version_from_string(v: String) -> io::Result<AcadVersion> {
-    match v.as_str() {
+    match &*v {
         "MC0.0" => Ok(AcadVersion::Version_1_0),
         "AC1.2" => Ok(AcadVersion::Version_1_2),
         "AC1.40" => Ok(AcadVersion::Version_1_40),

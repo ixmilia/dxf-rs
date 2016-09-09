@@ -54,7 +54,7 @@ pub fn get_field_reader(element: &Element) -> String {
         read_converter = String::from("{}");
     }
     let read_cmd = format!("{reader}(&pair.value)", reader=reader_fun);
-    read_converter.replace("{}", read_cmd.as_str())
+    read_converter.replace("{}", &read_cmd)
 }
 
 pub fn min_version(element: &Element) -> String {

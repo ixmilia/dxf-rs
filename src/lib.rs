@@ -165,7 +165,7 @@ impl<T: Write> CodePairAsciiWriter<T> {
             &CodePairValue::Double(d) => format!("{:.12}", d), // TODO: use proper precision
             &CodePairValue::Str(ref s) => s.clone(), // TODO: escape
         };
-        try!(self.writer.write_fmt(format_args!("{}\r\n", str_val.as_str())));
+        try!(self.writer.write_fmt(format_args!("{}\r\n", &str_val)));
         Ok(())
     }
 }
@@ -197,7 +197,7 @@ impl Header {
                                             break;
                                         }
                                         else {
-                                            try!(header.set_header_value(last_header_variable.as_str(), &pair));
+                                            try!(header.set_header_value(&last_header_variable, &pair));
                                         }
                                     },
                                     Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
@@ -273,7 +273,7 @@ impl Entity {
                         return Ok(None);
                     }
 
-                    match EntityType::from_type_string(type_string.as_str()) {
+                    match EntityType::from_type_string(&type_string) {
                         Some(e) => {
                             let mut entity = Entity::new(e);
                             if !try!(entity.apply_custom_reader(iter)) {
@@ -590,7 +590,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match string_value(&pair.value).as_str() {
+                    match &*string_value(&pair.value) {
                         "EOF" => {
                             iter.put_back(Ok(pair));
                             break;
@@ -598,7 +598,7 @@ impl Drawing {
                         "SECTION" => {
                             match iter.next() {
                                Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
-                                    match s.as_str() {
+                                    match &*s {
                                         "HEADER" => drawing.header = try!(header::Header::read(iter)),
                                         "ENTITIES" => try!(drawing.read_entities(iter)),
                                         "TABLES" => try!(drawing.read_tables(iter)),
@@ -689,7 +689,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match string_value(&pair.value).as_str() {
+                        match &*string_value(&pair.value) {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -715,7 +715,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match string_value(&pair.value).as_str() {
+                        match &*string_value(&pair.value) {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;

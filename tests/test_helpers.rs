@@ -29,6 +29,6 @@ pub mod helpers {
 
     pub fn assert_contains(drawing: &Drawing, contents: String) {
         let actual = to_test_string(&drawing);
-        assert!(actual.contains(contents.as_str()));
+        assert!(actual.contains(&contents));
     }
 }

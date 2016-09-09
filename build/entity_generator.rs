@@ -59,14 +59,14 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("pub struct EntityCommon {\n");
     for c in &entity.children {
         let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
-        match c.name.as_str() {
+        match &*c.name {
             "Field" => {
-                fun.push_str(format!("    pub {name}: {typ},\n", name=name(c), typ=t).as_str());
+                fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=t));
             },
             "Pointer" => {
                 // TODO: proper handling of pointers
                 let typ = if allow_multiples(&c) { "Vec<u32>" } else { "u32" };
-                fun.push_str(format!("    pub {name}: {typ},\n", name=name(c), typ=typ).as_str());
+                fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=typ));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -87,11 +87,11 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    fn default() -> EntityCommon {\n");
     fun.push_str("        EntityCommon {\n");
     for c in &entity.children {
-        match c.name.as_str() {
+        match &*c.name {
             "Field" | "Pointer" => {
                 // TODO: proper handling of pointers
                 let default_value = if c.name == "Field" { default_value(&c) } else { String::from("0") };
-                fun.push_str(format!("            {name}: {val},\n", name=name(c), val=default_value).as_str());
+                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -119,11 +119,11 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
             else {
                 format!(" = {}", get_field_reader(&c))
             };
-            fun.push_str(format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun).as_str());
+            fun.push_str(&format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun));
         }
         else if c.name == "Pointer" {
             // TODO: proper handling of pointers
-            fun.push_str(format!("            {code} => {{ self.{field} = try!(as_u32(string_value(&pair.value))) }},\n", code=code(&c), field=name(c)).as_str());
+            fun.push_str(&format!("            {code} => {{ self.{field} = try!(as_u32(string_value(&pair.value))) }},\n", code=code(&c), field=name(c)));
         }
     }
 
@@ -137,7 +137,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("        where T: Write {\n");
     fun.push_str("        let ent = self;\n");
     for line in generate_write_code_pairs(&entity) {
-        fun.push_str(format!("        {}\n", line).as_str());
+        fun.push_str(&format!("        {}\n", line));
     }
 
     fun.push_str("        Ok(())\n");
@@ -155,7 +155,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
         if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
             // TODO: handle dimensions
             // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-            fun.push_str(format!("    {typ}({typ}),\n", typ=name(c)).as_str());
+            fun.push_str(&format!("    {typ}({typ}),\n", typ=name(c)));
         }
     }
 
@@ -171,18 +171,18 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
-            fun.push_str(format!("pub struct {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str(&format!("pub struct {typ} {{\n", typ=name(c)));
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
                 let acc = if attr(&f, "Accessibility") == "private" { "" } else { "pub " };
-                match f.name.as_str() {
+                match &*f.name {
                     "Field" => {
-                        fun.push_str(format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t).as_str());
+                        fun.push_str(&format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t));
                     },
                     "Pointer" => {
                         // TODO: proper handling of pointers
                         let typ = if allow_multiples(&f) { "Vec<u32>" } else { "u32" };
-                        fun.push_str(format!("    pub {name}: {typ},\n", name=name(f), typ=typ).as_str());
+                        fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=typ));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -193,18 +193,18 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("\n");
 
             // implementation
-            fun.push_str(format!("impl Default for {typ} {{\n", typ=name(c)).as_str());
-            fun.push_str(format!("    fn default() -> {typ} {{\n", typ=name(c)).as_str());
-            fun.push_str(format!("        {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str(&format!("impl Default for {typ} {{\n", typ=name(c)));
+            fun.push_str(&format!("    fn default() -> {typ} {{\n", typ=name(c)));
+            fun.push_str(&format!("        {typ} {{\n", typ=name(c)));
             for f in &c.children {
-                match f.name.as_str() {
+                match &*f.name {
                     "Field" => {
-                        fun.push_str(format!("            {name}: {val},\n", name=name(f), val=default_value(&f)).as_str());
+                        fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=default_value(&f)));
                     },
                     "Pointer" => {
                         // TODO: proper handling of pointers
                         let val = if allow_multiples(&f) { "vec![]" } else { "0" };
-                        fun.push_str(format!("            {name}: {val},\n", name=name(f), val=val).as_str());
+                        fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=val));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -216,7 +216,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("}\n");
             fun.push_str("\n");
 
-            fun.push_str(format!("impl {typ} {{\n", typ=name(c)).as_str());
+            fun.push_str(&format!("impl {typ} {{\n", typ=name(c)));
             fun.push_str("    pub fn new() -> Self {\n");
             fun.push_str("        Default::default()\n");
             fun.push_str("    }\n");
@@ -237,15 +237,15 @@ fn generate_flags_methods(fun: &mut String, element: &Element) {
                 if flag.name == "Flag" {
                     let flag_name = name(&flag);
                     let mask = attr(&flag, "Mask");
-                    fun.push_str(format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name).as_str());
-                    fun.push_str(format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str(&format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name));
+                    fun.push_str(&format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask));
                     fun.push_str("    }\n");
-                    fun.push_str(format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name).as_str());
+                    fun.push_str(&format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name));
                     fun.push_str("        if val {\n");
-                    fun.push_str(format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str(&format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask));
                     fun.push_str("        }\n");
                     fun.push_str("        else {\n");
-                    fun.push_str(format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask).as_str());
+                    fun.push_str(&format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask));
                     fun.push_str("        }\n");
                     fun.push_str("    }\n");
                 }
@@ -268,7 +268,7 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
                 predicates.push(format!("*version <= AcadVersion::{}", max_version(&entity)));
             }
             let predicate = if predicates.len() == 0 { String::from("true") } else { predicates.join(" && ") };
-            fun.push_str(format!("            &EntityType::{typ}(_) => {{ {predicate} }},\n", typ=name(&entity), predicate=predicate).as_str());
+            fun.push_str(&format!("            &EntityType::{typ}(_) => {{ {predicate} }},\n", typ=name(&entity), predicate=predicate));
         }
     }
     fun.push_str("        }\n");
@@ -283,7 +283,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
-                fun.push_str(format!("            \"{type_string}\" => Some(EntityType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)).as_str());
+                fun.push_str(&format!("            \"{type_string}\" => Some(EntityType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)));
             }
         }
     }
@@ -299,7 +299,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
         let type_string = attr(&c, "TypeString");
         let type_strings = type_string.split(',').collect::<Vec<_>>();
         if name(c) != "Entity" && name(c) != "DimensionBase" && !type_string.is_empty() {
-            fun.push_str(format!("            &EntityType::{typ}(_) => {{ \"{type_string}\" }},\n", typ=name(c), type_string=type_strings[0]).as_str());
+            fun.push_str(&format!("            &EntityType::{typ}(_) => {{ \"{type_string}\" }},\n", typ=name(c), type_string=type_strings[0]));
         }
     }
     fun.push_str("        }\n");
@@ -316,7 +316,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 // TODO: handle dimensions
                 // TODO: handle complex subtypes: e.g., lwpolyline has vertices
                 let ent = if name(&c) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
-                fun.push_str(format!("            &mut EntityType::{typ}(ref mut {ent}) => {{\n", typ=name(c), ent=ent).as_str());
+                fun.push_str(&format!("            &mut EntityType::{typ}(ref mut {ent}) => {{\n", typ=name(c), ent=ent));
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
@@ -346,17 +346,17 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                         format!("ent.{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
                                     }
                                 };
-                                fun.push_str(format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
+                                fun.push_str(&format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd));
                             }
                         }
                     }
                     else if f.name == "Pointer" {
                         // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(format!("                    {code} => {{ ent.{field}.push(try!(as_u32(string_value(&pair.value)))); }},\n", code=code(&f), field=name(&f)).as_str());
+                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(try!(as_u32(string_value(&pair.value)))); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(format!("                    {code} => {{ ent.{field} = try!(as_u32(string_value(&pair.value))); }},\n", code=code(&f), field=name(&f)).as_str());
+                            fun.push_str(&format!("                    {code} => {{ ent.{field} = try!(as_u32(string_value(&pair.value))); }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }
@@ -366,7 +366,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("            },\n");
             }
             else {
-                fun.push_str(format!("            &mut EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)).as_str());
+                fun.push_str(&format!("            &mut EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)));
             }
         }
     }
@@ -383,9 +383,9 @@ fn generate_write(fun: &mut String, element: &Element) {
     for entity in &element.children {
         if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
             let ent = if name(&entity) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
-            fun.push_str(format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent).as_str());
+            fun.push_str(&format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent));
             for line in generate_write_code_pairs(&entity) {
-                fun.push_str(format!("                {}\n", line).as_str());
+                fun.push_str(&format!("                {}\n", line));
             }
 
             fun.push_str("            },\n");
@@ -428,7 +428,7 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
     }
     for field in &entity.children {
         if generate_writer(&field) {
-            match field.name.as_str() {
+            match &*field.name {
                 "Field" => {
                     for line in get_write_lines_for_field(&field, vec![]) {
                         commands.push(line);
@@ -444,7 +444,7 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
 
 fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &Element) -> Vec<String> {
     let mut commands = vec![];
-    match write_command.name.as_str() {
+    match &*write_command.name {
         "WriteField" => {
             let field_name = write_command.attributes.get("Field").unwrap();
             let field = get_field_with_name(&entity, &field_name);
@@ -588,7 +588,7 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     if let Some(suffix) = suffix {
         field_access = format!("{}.{}", field_access, suffix);
     }
-    let writer = write_converter.replace("{}", field_access.as_str());
+    let writer = write_converter.replace("{}", &field_access);
     format!("CodePair::new_{typ}({code}, {writer})", typ=typ, code=code, writer=writer)
 }
 
