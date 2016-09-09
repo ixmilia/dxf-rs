@@ -716,7 +716,7 @@ impl Drawing {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
                         match string_value(&pair.value).as_str() {
-                            "TABLE" | "ENDSEC" => {
+                            "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;
                             },

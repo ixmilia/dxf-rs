@@ -20,7 +20,7 @@ pub fn generate_tables() {
 
 extern crate itertools;
 
-use ::{CodePair, CodePairAsciiWriter, Color, Drawing, LineWeight, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, CodePairValue, Color, Drawing, LineWeight, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
@@ -118,6 +118,13 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 
     fun.push_str("                _ => try!(Drawing::swallow_table(iter)),\n");
     fun.push_str("            }\n");
+    fun.push_str("\n");
+    fun.push_str("            match iter.next() {\n");
+    fun.push_str("                Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == \"ENDTAB\" => (),\n");
+    fun.push_str("                Some(Ok(CodePair { code, value })) => return Err(io::Error::new(io::ErrorKind::InvalidData, format!(\"expected 0/ENDTAB, got {}/{:?}\", code, value))),\n");
+    fun.push_str("                Some(Err(e)) => return Err(e),\n");
+    fun.push_str("                None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+    fun.push_str("            }\n");
     fun.push_str("        },\n");
     fun.push_str("        Some(Err(e)) => return Err(e),\n");
     fun.push_str("        None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
@@ -135,27 +142,24 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("    loop {\n");
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
-        fun.push_str("                if pair.code != 0 {\n");
-        fun.push_str("                    return Err(io::Error::new(io::ErrorKind::InvalidData, \"expected table item, new table, or end of section\"));\n");
-        fun.push_str("                }\n");
+        fun.push_str("                if pair.code == 0 {\n");
+         fun.push_str(format!("                    if string_value(&pair.value) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")).as_str());
+        fun.push_str("                        iter.put_back(Ok(pair));\n");
+        fun.push_str("                        break;\n");
+        fun.push_str("                    }\n");
         fun.push_str("\n");
-        fun.push_str(format!("                if string_value(&pair.value) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")).as_str());
-        fun.push_str("                    iter.put_back(Ok(pair));\n");
-        fun.push_str("                    break;\n");
-        fun.push_str("                }\n");
-        fun.push_str("\n");
-        fun.push_str(format!("                let mut item = {typ}::new();\n", typ=attr(&table_item, "Name")).as_str());
-        fun.push_str("                loop {\n");
-        fun.push_str("                    match iter.next() {\n");
-        fun.push_str("                        Some(Ok(pair @ CodePair { code: 0, .. })) => {\n");
-        fun.push_str("                            iter.put_back(Ok(pair));\n");
-        fun.push_str("                            break;\n");
-        fun.push_str("                        },\n");
-        fun.push_str("                        Some(Ok(pair)) => {\n");
-        fun.push_str("                            match pair.code {\n");
-        fun.push_str("                                2 => item.name = string_value(&pair.value),\n");
-        fun.push_str("                                5 => item.handle = try!(as_u32(string_value(&pair.value))),\n");
-        fun.push_str("                                330 => item.owner_handle = try!(as_u32(string_value(&pair.value))),\n");
+        fun.push_str(format!("                    let mut item = {typ}::new();\n", typ=attr(&table_item, "Name")).as_str());
+        fun.push_str("                    loop {\n");
+        fun.push_str("                        match iter.next() {\n");
+        fun.push_str("                            Some(Ok(pair @ CodePair { code: 0, .. })) => {\n");
+        fun.push_str("                                iter.put_back(Ok(pair));\n");
+        fun.push_str("                                break;\n");
+        fun.push_str("                            },\n");
+        fun.push_str("                            Some(Ok(pair)) => {\n");
+        fun.push_str("                                match pair.code {\n");
+        fun.push_str("                                    2 => item.name = string_value(&pair.value),\n");
+        fun.push_str("                                    5 => item.handle = try!(as_u32(string_value(&pair.value))),\n");
+        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(string_value(&pair.value))),\n");
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {
@@ -181,20 +185,24 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
                             format!("item.{field}.{suffix} = {reader}", field=name(&field), suffix=suffix, reader=reader)
                         }
                     };
-                    fun.push_str(format!("                                {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
+                    fun.push_str(format!("                                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd).as_str());
                 }
             }
         }
 
-        fun.push_str("                                _ => (), // unsupported code\n");
-        fun.push_str("                            }\n");
-        fun.push_str("                        },\n");
-        fun.push_str("                        Some(Err(e)) => return Err(e),\n");
-        fun.push_str("                        None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+        fun.push_str("                                    _ => (), // unsupported code\n");
+        fun.push_str("                                }\n");
+        fun.push_str("                            },\n");
+        fun.push_str("                            Some(Err(e)) => return Err(e),\n");
+        fun.push_str("                            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+        fun.push_str("                        }\n");
         fun.push_str("                    }\n");
-        fun.push_str("                }\n");
         fun.push_str("\n");
-        fun.push_str(format!("                drawing.{collection}.push(item);\n", collection=attr(&table, "Collection")).as_str());
+        fun.push_str(format!("                    drawing.{collection}.push(item);\n", collection=attr(&table, "Collection")).as_str());
+        fun.push_str("                }\n");
+        fun.push_str("                else {\n");
+        fun.push_str("                    // do nothing, probably the table's handle or flags\n");
+        fun.push_str("                }\n");
         fun.push_str("            },\n");
         fun.push_str("            Some(Err(e)) => return Err(e),\n");
         fun.push_str("            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");

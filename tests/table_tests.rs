@@ -13,12 +13,16 @@ fn read_table(table_name: &str, value_pairs: Vec<&str>) -> Drawing {
         "2", "TABLES",
             "0", "TABLE",
             "2", table_name,
+            "100", "AcDbSymbolTable",
+            "70", "0",
     ];
 
     for pair in value_pairs {
         pairs.push(pair);
     }
 
+    pairs.push("0");
+    pairs.push("ENDTAB");
     pairs.push("0");
     pairs.push("ENDSEC");
     pairs.push("0");
@@ -36,9 +40,11 @@ fn read_unsupported_table() {
             "2", "UNSUPPORTED",
                 "0", "UNSUPPORTED",
                 "2", "unsupported-name",
+            "0", "ENDTAB",
             "0", "TABLE",
             "2", "LAYER",
                 "0", "LAYER",
+            "0", "ENDTAB",
         "0", "ENDSEC",
         "0", "EOF",
     ].join("\r\n").as_str());
@@ -63,12 +69,14 @@ fn read_variable_table_items() {
             // no app ids
             "0", "TABLE",
             "2", "APPID",
+            "0", "ENDTAB",
 
             // 1 layer
             "0", "TABLE",
             "2", "LAYER",
                 "0", "LAYER",
                 "2", "layer-name",
+            "0", "ENDTAB",
 
             // 2 styles
             "0", "TABLE",
@@ -77,6 +85,7 @@ fn read_variable_table_items() {
                 "40", "1.1",
                 "0", "STYLE",
                 "40", "2.2",
+            "0", "ENDTAB",
         "0", "ENDSEC",
         "0", "EOF",
     ].join("\r\n").as_str());

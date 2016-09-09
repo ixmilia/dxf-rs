@@ -64,3 +64,19 @@ fn read_file_with_comments() {
         _ => panic!("expected a LINE"),
     }
 }
+
+#[test]
+fn round_trip() {
+    // drawing with one entity and one layer
+    let mut drawing = Drawing::new();
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Line(Default::default()),
+    });
+    drawing.layers.push(Default::default());
+
+    // ensure they're still there
+    let drawing = parse_drawing(&to_test_string(&drawing));
+    assert_eq!(1, drawing.entities.len());
+    assert_eq!(1, drawing.layers.len());
+}
