@@ -1,5 +1,93 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+//! This crate provides the ability to read and write DXF CAD files.
+//!
+//! # Examples
+//!
+//! Open a DXF file from disk:
+//!
+//! ``` rust
+//! # use dxf::*;
+//! # use dxf::entities::*;
+//! # fn main() { }
+//! # fn ex() -> std::io::Result<()> {
+//! let drawing = try!(Drawing::load_file("path/to/file.dxf"));
+//! for e in drawing.entities {
+//!     println!("found entity on layer {}", e.common.layer);
+//!     match e.specific {
+//!         EntityType::Circle(ref circle) => {
+//!             // do something with the circle
+//!         },
+//!         EntityType::Line(ref line) => {
+//!             // do something with the line
+//!         },
+//!         _ => (),
+//!     }
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Saving a DXF file to disk:
+//!
+//! ``` rust
+//! # use dxf::*;
+//! # use dxf::entities::*;
+//! # fn main() { }
+//! # fn ex() -> std::io::Result<()> {
+//! let mut drawing = Drawing::new();
+//! drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
+//! try!(drawing.save_file("path/to/file.dxf"));
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Reference
+//!
+//! Since I don't want to fall afoul of Autodesk's lawyers, this repo can't include the actual DXF documentation.  It can,
+//! however contain links to the official documents that I've been able to scrape together.  For most scenarios the 2014
+//! documentation should suffice, but all other versions are included here for backwards compatibility and reference
+//! between versions.
+//!
+//! [R10 (non-Autodesk source)](http://www.martinreddy.net/gfx/3d/DXF10.spec)
+//!
+//! [R11 (differences between R10 and R11)](http://autodesk.blogs.com/between_the_lines/ACAD_R11.html)
+//!
+//! [R12 (non-Autodesk source)](http://www.martinreddy.net/gfx/3d/DXF12.spec)
+//!
+//! [R13 (self-extracting 16-bit executable)](http://www.autodesk.com/techpubs/autocad/dxf/dxf13_hlp.exe)
+//!
+//! [R14](http://www.autodesk.com/techpubs/autocad/acadr14/dxf/index.htm)
+//!
+//! [2000](http://www.autodesk.com/techpubs/autocad/acad2000/dxf/index.htm)
+//!
+//! [2002](http://www.autodesk.com/techpubs/autocad/dxf/dxf2002.pdf)
+//!
+//! [2004](http://download.autodesk.com/prodsupp/downloads/dxf.pdf)
+//!
+//! [2005](http://download.autodesk.com/prodsupp/downloads/acad_dxf.pdf)
+//!
+//! [2006](http://images.autodesk.com/adsk/files/dxf_format.pdf)
+//!
+//! 2007 (Autodesk's link erroneously points to the R2008 documentation)
+//!
+//! [2008](http://images.autodesk.com/adsk/files/acad_dxf0.pdf)
+//!
+//! [2009](http://images.autodesk.com/adsk/files/acad_dxf.pdf)
+//!
+//! [2010](http://images.autodesk.com/adsk/files/acad_dxf1.pdf)
+//!
+//! [2011](http://images.autodesk.com/adsk/files/acad_dxf2.pdf)
+//!
+//! [2012](http://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf)
+//!
+//! [2013](http://images.autodesk.com/adsk/files/autocad_2013_pdf_dxf_reference_enu.pdf)
+//!
+//! [2014](http://images.autodesk.com/adsk/files/autocad_2014_pdf_dxf_reference_enu.pdf)
+//!
+//! These links were compiled from the archive.org May 9, 2013 snapshot of http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853
+//! (https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853)
+
 #[macro_use] extern crate enum_primitive;
 extern crate itertools;
 
@@ -28,9 +116,10 @@ include!("expected_type.rs");
 mod helper_functions;
 use helper_functions::*;
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                 CodePairValue
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// (INTERNAL USE ONLY) Represents a single value in a `CodePair`
 #[derive(Debug)]
 pub enum CodePairValue {
     Boolean(bool),
@@ -41,44 +130,56 @@ pub enum CodePairValue {
     Str(String),
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                      CodePair
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// (INTERNAL USE ONLY) Represents a numeric code (a loose indicator of the type
+/// of `value`) and the actual value of a code pair.
 pub struct CodePair {
+    /// (INTERNAL USE ONLY) The numeric code of the pair.
     code: i32,
+    /// (INTERNAL USE ONLY) The value of the pair.
     value: CodePairValue,
 }
 
 impl CodePair {
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` with the specified code and value.
     pub fn new(code: i32, val: CodePairValue) -> CodePair {
         CodePair { code: code, value: val }
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `&str`.
     pub fn new_str(code: i32, val: &str) -> CodePair {
         CodePair::new(code, CodePairValue::Str(val.to_string()))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `String`.
     pub fn new_string(code: i32, val: &String) -> CodePair {
         CodePair::new(code, CodePairValue::Str(val.clone()))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i16`.
     pub fn new_short(code: i32, val: i16) -> CodePair {
         CodePair::new(code, CodePairValue::Short(val))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `f64`.
     pub fn new_double(code: i32, val: f64) -> CodePair {
         CodePair::new(code, CodePairValue::Double(val))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i64`.
     pub fn new_long(code: i32, val: i64) -> CodePair {
         CodePair::new(code, CodePairValue::Long(val))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i32`.
     pub fn new_int(code: i32, val: i32) -> CodePair {
         CodePair::new(code, CodePairValue::Integer(val))
     }
+    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `bool`.
     pub fn new_bool(code: i32, val: bool) -> CodePair {
         CodePair::new(code, CodePairValue::Boolean(val))
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                             CodePairAsciiIter
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 struct CodePairAsciiIter<T>
     where T: Read
 {
@@ -146,15 +247,17 @@ impl<T: Read> Iterator for CodePairAsciiIter<T> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                           CodePairAsciiWriter
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// (INTERNAL USE ONLY) Used for writing DXF files.
 pub struct CodePairAsciiWriter<T>
     where T: Write {
     writer: T,
 }
 
 impl<T: Write> CodePairAsciiWriter<T> {
+    /// (INTERNAL USE ONLY) Writes the specified code pair.
     pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
         let str_val = match &pair.value {
@@ -170,11 +273,12 @@ impl<T: Write> CodePairAsciiWriter<T> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                        Header
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 // implementation is in `header.rs`
 impl Header {
+    /// (INTERNAL USE ONLY) Reads in the header.
     pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Header>
         where I: Iterator<Item = io::Result<CodePair>> {
         let mut header = Header::new();
@@ -215,6 +319,7 @@ impl Header {
 
         Ok(header)
     }
+    /// (INTERNAL USE ONLY) Writes the header.
     pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write
     {
@@ -226,9 +331,9 @@ impl Header {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                        Entity
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 // returns the next CodePair that's not 0, or bails out early
 macro_rules! next_pair {
     ($expr : expr) => (
@@ -254,12 +359,14 @@ macro_rules! try_result {
 }
 // implementation is in `entity.rs`
 impl Entity {
+    /// Creates a new `Entity` with the default common values.
     pub fn new(specific: EntityType) -> Self {
         Entity {
             common: EntityCommon::new(),
             specific: specific,
         }
     }
+    /// (INTERNAL USE ONLY) Reads the next `Entity`.
     pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<CodePair>>
     {
@@ -434,6 +541,7 @@ impl Entity {
 
         Ok(true)
     }
+    /// (INTERNAL USE ONLY) Writes the `Entity`.
     pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write {
         if self.specific.is_supported_on_version(version) {
@@ -482,20 +590,32 @@ fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64
     v3.clear();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                       Drawing
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// Represents a DXF drawing.
 pub struct Drawing {
+    /// The drawing's header.  Contains various drawing-specific values and settings.
     pub header: Header,
+    /// The entities contained by the drawing.
     pub entities: Vec<Entity>,
+    /// The AppIds contained by the drawing.
     pub app_ids: Vec<AppId>,
+    /// The block records contained by the drawing.
     pub block_records: Vec<BlockRecord>,
+    /// The dimension styles contained by the drawing.
     pub dim_styles: Vec<DimStyle>,
+    /// The layers contained by the drawing.
     pub layers: Vec<Layer>,
+    /// The line types contained by the drawing.
     pub line_types: Vec<LineType>,
+    /// The visual styles contained by the drawing.
     pub styles: Vec<Style>,
+    /// The user coordinate systems (UCS) contained by the drawing.
     pub ucs: Vec<Ucs>,
+    /// The views contained by the drawing.
     pub views: Vec<View>,
+    /// The view ports contained by the drawing.
     pub view_ports: Vec<ViewPort>,
 }
 
@@ -511,6 +631,7 @@ macro_rules! try_result {
 
 // public implementation
 impl Drawing {
+    /// Creates a new empty `Drawing`.
     pub fn new() -> Self {
         Drawing {
             header: Header::new(),
@@ -526,6 +647,7 @@ impl Drawing {
             view_ports: vec![],
         }
     }
+    /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: T) -> io::Result<Drawing>
         where T: Read {
         let reader = CodePairAsciiIter { reader: reader };
@@ -539,12 +661,14 @@ impl Drawing {
             None => Ok(drawing),
         }
     }
+    /// Loads a `Drawing` from disk, using a `BufReader`.
     pub fn load_file(file_name: &str) -> io::Result<Drawing> {
         let path = Path::new(file_name);
         let file = try!(File::open(&path));
         let buf_reader = BufReader::new(file);
         Drawing::load(buf_reader)
     }
+    /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> io::Result<()>
         where T: Write {
         let mut writer = CodePairAsciiWriter { writer: writer };
@@ -556,6 +680,7 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
+    /// Writes a `Drawing` to disk, using a `BufWriter`.
     pub fn save_file(&self, file_name: &str) -> io::Result<()> {
         let path = Path::new(file_name);
         let file = try!(File::create(&path));
@@ -709,6 +834,7 @@ impl Drawing {
 
         Ok(())
     }
+    /// (INTERNAL USE ONLY) Swallows the unsupported table.
     pub fn swallow_table<I>(iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
         loop {
@@ -733,9 +859,9 @@ impl Drawing {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                    EntityIter
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 struct EntityIter<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> {
     iter: &'a mut PutBack<I>,
 }
@@ -750,17 +876,22 @@ impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                         Point
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// Represents a simple point in Cartesian space.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Point {
+    /// The X value of the point.
     x: f64,
+    /// The Y value of the point.
     y: f64,
+    /// The Z value of the point.
     z: f64,
 }
 
 impl Point {
+    /// Creates a new `Point` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Point {
         Point{
             x: x,
@@ -768,9 +899,11 @@ impl Point {
             z: z,
         }
     }
+    /// Returns a point representing the origin of (0, 0, 0).
     pub fn origin() -> Point {
         Point::new(0.0, 0.0, 0.0)
     }
+    /// (INTERNAL USE ONLY) Sets a point's fields based on the given `CodePair`.
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
@@ -783,17 +916,22 @@ impl Point {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                        Vector
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// Represents a simple vector in Cartesian space.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector {
+    /// The X component of the vector.
     x: f64,
+    /// The Y component of the vector.
     y: f64,
+    /// The Z component of the vector.
     z: f64,
 }
 
 impl Vector {
+    /// Creates a new `Vector` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
         Vector {
             x: x,
@@ -801,18 +939,23 @@ impl Vector {
             z: z,
         }
     }
+    /// Returns a new zero vector representing (0, 0, 0).
     pub fn zero() -> Vector {
         Vector::new(0.0, 0.0, 0.0)
     }
+    /// Returns a new vector representing the X axis.
     pub fn x_axis() -> Vector {
         Vector::new(1.0, 0.0, 0.0)
     }
+    /// Returns a new vector representing the Y axis.
     pub fn y_axis() -> Vector {
         Vector::new(0.0, 1.0, 0.0)
     }
+    /// Returns a new vector representing the Z axis.
     pub fn z_axis() -> Vector {
         Vector::new(0.0, 0.0, 1.0)
     }
+    // (INTERNAL USE ONLY) Sets a vector's fields based on the given `CodePair`.
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
@@ -825,42 +968,53 @@ impl Vector {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                         Color
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// Represents an indexed color.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Color {
     raw_value: i16,
 }
 
 impl Color {
+    /// Returns `true` if the color defaults back to the item's layer's color.
     pub fn is_by_layer(&self) -> bool {
         self.raw_value == 256
     }
+    /// Returns `true` if the color defaults back to the entity's color.
     pub fn is_by_entity(&self) -> bool {
         self.raw_value == 257
     }
+    /// Returns `true` if the color defaults back to the containing block's color.
     pub fn is_by_block(&self) -> bool {
         self.raw_value == 0
     }
+    /// Returns `true` if the color represents a `Layer` that is turned off.
     pub fn is_turned_off(&self) -> bool {
         self.raw_value < 0
     }
+    /// Sets the color to default back to the item's layer's color.
     pub fn set_by_layer(&mut self) {
         self.raw_value = 256
     }
+    /// Sets the color to default back to the containing block's color.
     pub fn set_by_block(&mut self) {
         self.raw_value = 0
     }
+    /// Sets the color to default back to the containing entity's color.
     pub fn set_by_entity(&mut self) {
         self.raw_value = 257
     }
+    /// Sets the color to represent a `Layer` that is turned off.
     pub fn turn_off(&mut self) {
         self.raw_value = -1
     }
+    /// Returns `true` if the color represents a proper color index.
     pub fn is_index(&self) -> bool {
         self.raw_value >= 1 && self.raw_value <= 255
     }
+    /// Gets an `Option<u8>` of the indexable value of the color.
     pub fn index(&self) -> Option<u8> {
         if self.is_index() {
             Some(self.raw_value as u8)
@@ -869,24 +1023,31 @@ impl Color {
             None
         }
     }
+    /// (INTERNAL USE ONLY) Gets the raw `i16` value of the color.
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
+    /// (INTERNAL USE ONLY) Creates a new `Color` from the raw `i16` value.
     pub fn from_raw_value(val: i16) -> Color {
         Color { raw_value: val }
     }
+    /// Creates a `Color` that defaults to the item's layer's color.
     pub fn by_layer() -> Color {
         Color { raw_value: 256 }
     }
+    /// Creates a `Color` that defaults back to the containing block's color.
     pub fn by_block() -> Color {
         Color { raw_value: 0 }
     }
+    /// Creates a `Color` that defaults back to the containing entity's color.
     pub fn by_entity() -> Color {
         Color { raw_value: 257 }
     }
+    /// Creates a `Color` from the specified index.
     pub fn from_index(i: u8) -> Color {
         Color { raw_value: i as i16 }
     }
+    /// (INTERNAL USE ONLY) Gets a color value for a `Layer` that is suitable to be written to a file.
     pub fn get_writable_color_value(&self, layer: &Layer) -> i16 {
        let value = match self.get_raw_value().abs() {
             0 | 256 => 7i16, // BYLAYER and BYBLOCK aren't valid
@@ -901,26 +1062,32 @@ impl Color {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                                                    LineWeight
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+/// Represents a line weight.
 pub struct LineWeight {
     raw_value: i16,
 }
 
 impl LineWeight {
+    /// Creates a new `LineWeight`.
     pub fn new() -> LineWeight {
         LineWeight::from_raw_value(0)
     }
+    /// (INTERNAL USE ONLY) Creates a new `LineWeight` from a raw `i16` value.
     pub fn from_raw_value(v: i16) -> LineWeight {
         LineWeight { raw_value: v }
     }
+    /// Creates a new `LineWeight` that defaults back to the containing block's line weight.
     pub fn by_block() -> LineWeight {
         LineWeight::from_raw_value(-1)
     }
+    /// Creates a new `LineWeight` that defaults back to the item's layer's line weight.
     pub fn by_layer() -> LineWeight {
         LineWeight::from_raw_value(-2)
     }
+    /// (INTERNAL USE ONLY) Gets the raw `i16` value representing the line weight.
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
