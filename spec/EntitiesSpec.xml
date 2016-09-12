@@ -494,6 +494,7 @@
     <Field Name="column_spacing" Code="44" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="attributes" Code="10" Type="Attribute" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
   </Entity>
   <!--
 

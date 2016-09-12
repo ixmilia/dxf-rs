@@ -987,6 +987,29 @@ impl Drawing {
         let mut iter = PutBack::new(EntityIter { iter: iter });
         loop {
             match iter.next() {
+                Some(Ok(Entity { ref common, specific: EntityType::Insert(ref ins) })) if ins.has_attributes => {
+                    let mut ins = ins.clone(); // 12 fields
+                    loop {
+                        match iter.next() {
+                            Some(Ok(Entity { specific: EntityType::Attribute(att), .. })) => ins.attributes.push(att),
+                            Some(Ok(ent)) => {
+                                // stop gathering on any non-ATTRIBUTE
+                                iter.put_back(Ok(ent));
+                                break;
+                            },
+                            Some(Err(e)) => return Err(e),
+                            None => break,
+                        }
+                    }
+
+                    try!(Drawing::swallow_seqend(&mut iter));
+
+                    // and finally keep the INSERT
+                    self.entities.push(Entity {
+                        common: common.clone(), // 18 fields
+                        specific: EntityType::Insert(ins),
+                    })
+                },
                 Some(Ok(Entity { common, specific: EntityType::Polyline(poly) })) => {
                     let mut poly = poly.clone(); // 13 fields
                     loop {
@@ -1002,23 +1025,29 @@ impl Drawing {
                         }
                     }
 
-                    // swallow the following SEQEND if it's present
-                    match iter.next() {
-                        Some(Ok(Entity { specific: EntityType::Seqend(_), .. })) => (),
-                        Some(Ok(ent)) => iter.put_back(Ok(ent)),
-                        _ => (),
-                    }
+                    try!(Drawing::swallow_seqend(&mut iter));
 
                     // and finally keep the POLYLINE
                     self.entities.push(Entity {
                         common: common.clone(), // 18 fields
-                        specific: EntityType::Polyline(poly)
+                        specific: EntityType::Polyline(poly),
                     });
                 },
                 Some(Ok(entity)) => self.entities.push(entity),
                 Some(Err(e)) => return Err(e),
                 None => break,
             }
+        }
+
+        Ok(())
+    }
+    fn swallow_seqend<I>(iter: &mut PutBack<I>) -> io::Result<()>
+        where I: Iterator<Item = io::Result<Entity>> {
+        match iter.next() {
+            Some(Ok(Entity { specific: EntityType::Seqend(_), .. })) => (),
+            Some(Ok(ent)) => iter.put_back(Ok(ent)),
+            Some(Err(e)) => return Err(e),
+            None => (),
         }
 
         Ok(())
