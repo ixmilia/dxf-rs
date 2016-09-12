@@ -13,6 +13,7 @@ use std::iter::Iterator;
 pub fn generate_header() {
     let variables = gather_variables();
     let mut fun = String::new();
+    // should probably be a raw string #""""foo"""#
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
@@ -54,7 +55,7 @@ macro_rules! try_result {
     generate_add_code_pairs(&mut fun, &variables);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/header.rs").ok().unwrap();
+    let mut file = File::create("src/generated/header.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 
@@ -269,6 +270,7 @@ fn gather_variables() -> Vec<HeaderVariable> {
     let parser = EventReader::new(file);
     let mut header_variables: Vec<HeaderVariable> = vec![];
     for e in parser {
+        // unwrap here?  Looks like you're just panicing on error anyway.
         match e {
             Ok(XmlEvent::StartElement { name, attributes, .. }) => {
                 match &*name.local_name {

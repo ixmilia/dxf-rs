@@ -46,7 +46,7 @@ macro_rules! try_result {
     generate_table_reader(&mut fun, &element);
     generate_table_writer(&mut fun, &element);
 
-    let mut file = File::create("src/tables.rs").ok().unwrap();
+    let mut file = File::create("src/generated/tables.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

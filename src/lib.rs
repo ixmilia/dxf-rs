@@ -130,6 +130,9 @@ pub enum CodePairValue {
     Str(String),
 }
 
+// All of these INTERNAL USE ONLY structs and methods should probably
+// have pub(crate) visibility
+
 //------------------------------------------------------------------------------
 //                                                                      CodePair
 //------------------------------------------------------------------------------
@@ -186,6 +189,7 @@ struct CodePairAsciiIter<T>
     reader: T,
 }
 
+// this name is really generic.  I can't think of a better one though :(
 // Used to turn Result into Option<io::Result<T>>
 macro_rules! try_option {
     ($expr : expr) => (
@@ -196,6 +200,7 @@ macro_rules! try_option {
     )
 }
 
+// you probably do want to depend on bufread.
 // because I don't want to depend on BufRead here
 fn read_line<T>(reader: &mut T, result: &mut String) -> io::Result<()>
     where T: Read {
@@ -260,6 +265,8 @@ impl<T: Write> CodePairAsciiWriter<T> {
     /// (INTERNAL USE ONLY) Writes the specified code pair.
     pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
+        // Creating new strings here and then writing them into a writer is smelly.
+        // you can use the write! macro to do formatting into a T:Write.
         let str_val = match &pair.value {
             &CodePairValue::Boolean(b) => String::from(if b { "1" } else { "0" }),
             &CodePairValue::Integer(i) => format!("{}", i),
@@ -366,6 +373,9 @@ impl Entity {
             specific: specific,
         }
     }
+
+    // this code goes really deep in nesting.  If I were you, I'd break some of these match arms out
+    // into new functions.  These new functions can be nested inside this function though.
     /// (INTERNAL USE ONLY) Reads the next `Entity`.
     pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<CodePair>>
@@ -573,15 +583,21 @@ impl Entity {
 
 fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
+    // for (a, b) in v1.drain().zip(v2.drain()) {
+    //     result.push(comb(a, b));
+    // }
     for i in 0..min(v1.len(), v2.len()) {
         result.push(comb(v1[i], v2[i], 0.0));
     }
+    // you might still need these lines.  Look into passing the
+    // vectors by value though so you can do .into_iter() on them
     v1.clear();
     v2.clear();
 }
 
 fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
+    // same basic thing as above
     for i in 0..min(v1.len(), min(v2.len(), v3.len())) {
         result.push(comb(v1[i], v2[i], v3[i]));
     }
@@ -619,6 +635,7 @@ pub struct Drawing {
     pub view_ports: Vec<ViewPort>,
 }
 
+// BAD
 // Used to turn Result<T> into io::Result<T>
 macro_rules! try_result {
     ($expr : expr) => (
@@ -712,6 +729,11 @@ impl Drawing {
     }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
+        // Why is this not a simple for loop?
+        // You could get rid of 2 levels of nesting if you did:
+        // for pair in iter {
+        //     let pair = try!(pair);
+        //}
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
@@ -757,19 +779,18 @@ impl Drawing {
                 Some(Ok(pair)) => {
                     if pair.code == 0 && string_value(&pair.value) == "ENDSEC" {
                         iter.put_back(Ok(pair));
-                        break;
+                        return Ok(());
                     }
                 },
                 Some(Err(e)) => return Err(e),
-                None => break,
+                None => return Ok(()),
             }
         }
-
-        Ok(())
     }
     fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
         let mut iter = PutBack::new(EntityIter { iter: iter });
+        // Simple for loop?
         loop {
             match iter.next() {
                 Some(Ok(Entity { common, specific: EntityType::Polyline(poly) })) => {
@@ -810,6 +831,7 @@ impl Drawing {
     }
     fn read_tables<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
+        // Simple for loop?
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -837,6 +859,7 @@ impl Drawing {
     /// (INTERNAL USE ONLY) Swallows the unsupported table.
     pub fn swallow_table<I>(iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
+        //simple for loop?
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -872,6 +895,9 @@ impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<
         match Entity::read(self.iter) {
             Ok(Some(e)) => Some(Ok(e)),
             Ok(None) | Err(_) => None,
+            // Are you intending to eat this error?
+            // I feel like you could just as easily be returning Item=Entity if you
+            // disregard the Err(_) case
         }
     }
 }
