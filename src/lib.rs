@@ -7,10 +7,11 @@
 //! Open a DXF file from disk:
 //!
 //! ``` rust
-//! # use dxf::*;
-//! # use dxf::entities::*;
 //! # fn main() { }
 //! # fn ex() -> std::io::Result<()> {
+//! use dxf::Drawing;
+//! use dxf::entities::*;
+//!
 //! let drawing = try!(Drawing::load_file("path/to/file.dxf"));
 //! for e in drawing.entities {
 //!     println!("found entity on layer {}", e.common.layer);
@@ -31,10 +32,11 @@
 //! Saving a DXF file to disk:
 //!
 //! ``` rust
-//! # use dxf::*;
-//! # use dxf::entities::*;
 //! # fn main() { }
 //! # fn ex() -> std::io::Result<()> {
+//! use dxf::Drawing;
+//! use dxf::entities::*;
+//!
 //! let mut drawing = Drawing::new();
 //! drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
 //! try!(drawing.save_file("path/to/file.dxf"));
