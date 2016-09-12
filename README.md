@@ -8,6 +8,9 @@ A rust crate for reading and writing DXF CAD files.
 Open a DXF file from disk:
 
 ``` rust
+use dxf::Drawing;
+use dxf::entities::*;
+
 let drawing = try!(Drawing::load_file("path/to/file.dxf"));
 for e in drawing.entities {
     println!("found entity on layer {}", e.common.layer);
@@ -25,6 +28,9 @@ for e in drawing.entities {
 
 Saving a DXF file to disk:
 ``` rust
+use dxf::Drawing;
+use dxf::entities::*;
+
 let mut drawing = Drawing::new();
 drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
 try!(drawing.save_file("path/to/file.dxf"));
