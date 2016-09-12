@@ -455,9 +455,6 @@ impl Entity {
                 combine_points_3(&mut spline._control_point_x, &mut spline._control_point_y, &mut spline._control_point_z, &mut spline.control_points, Point::new);
                 combine_points_3(&mut spline._fit_point_x, &mut spline._fit_point_y, &mut spline._fit_point_z, &mut spline.fit_points, Point::new);
             },
-            EntityType::Underlay(ref mut underlay) => {
-                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
-            },
             EntityType::DgnUnderlay(ref mut underlay) => {
                 combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
             },
@@ -479,6 +476,201 @@ impl Entity {
         where I: Iterator<Item = io::Result<CodePair>>
     {
         match self.specific {
+            EntityType::Attribute(ref mut att) => {
+                let xrecord_text = "AcDbXrecord";
+                let mut last_subclass_marker = String::new();
+                let mut is_version_set = false;
+                let mut xrec_code_70_count = 0;
+                loop {
+                    let pair = next_pair!(iter);
+                    match pair.code {
+                        100 => { last_subclass_marker = string_value(&pair.value); },
+                        1 => { att.value = string_value(&pair.value); },
+                        2 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.x_record_tag = string_value(&pair.value);
+                            }
+                            else {
+                                att.attribute_tag = string_value(&pair.value);
+                            }
+                        },
+                        7 => { att.text_style_name = string_value(&pair.value); },
+                        10 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.x = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.x = double_value(&pair.value);
+                            }
+                        },
+                        20 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.y = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.y = double_value(&pair.value);
+                            }
+                        },
+                        30 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.z = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.z = double_value(&pair.value);
+                            }
+                        },
+                        11 => { att.second_alignment_point.x = double_value(&pair.value); },
+                        21 => { att.second_alignment_point.y = double_value(&pair.value); },
+                        31 => { att.second_alignment_point.z = double_value(&pair.value); },
+                        39 => { att.thickness = double_value(&pair.value); },
+                        40 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.annotation_scale = double_value(&pair.value);
+                            }
+                            else {
+                                att.text_height = double_value(&pair.value);
+                            }
+                        },
+                        41 => { att.relative_x_scale_factor = double_value(&pair.value); },
+                        50 => { att.rotation = double_value(&pair.value); },
+                        51 => { att.oblique_angle = double_value(&pair.value); },
+                        70 => {
+                            if last_subclass_marker == xrecord_text {
+                                match xrec_code_70_count {
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(short_value(&pair.value))),
+                                    1 => att.is_really_locked = as_bool(short_value(&pair.value)),
+                                    2 => att._secondary_attribute_count = short_value(&pair.value) as i32,
+                                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
+                                }
+                                xrec_code_70_count += 1;
+                            }
+                            else {
+                                att.flags = short_value(&pair.value) as i32;
+                            }
+                        },
+                        71 => { att.text_generation_flags = short_value(&pair.value) as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(short_value(&pair.value))); },
+                        73 => { att.field_length = short_value(&pair.value); },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(short_value(&pair.value))); },
+                        210 => { att.normal.x = double_value(&pair.value); },
+                        220 => { att.normal.y = double_value(&pair.value); },
+                        230 => { att.normal.z = double_value(&pair.value); },
+                        280 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.keep_duplicate_records = as_bool(short_value(&pair.value));
+                            }
+                            else if !is_version_set {
+                                att.version = try_result!(Version::from_i16(short_value(&pair.value)));
+                                is_version_set = true;
+                            }
+                            else {
+                                att.is_locked_in_block = as_bool(short_value(&pair.value));
+                            }
+                        },
+                        340 => { att.secondary_attributes.push(try!(as_u32(string_value(&pair.value)))); },
+                        -1 => { att.m_text = try!(as_u32(string_value(&pair.value))); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
+            EntityType::AttributeDefinition(ref mut att) => {
+                let xrecord_text = "AcDbXrecord";
+                let mut last_subclass_marker = String::new();
+                let mut is_version_set = false;
+                let mut xrec_code_70_count = 0;
+                loop {
+                    let pair = next_pair!(iter);
+                    match pair.code {
+                        100 => { last_subclass_marker = string_value(&pair.value); },
+                        1 => { att.value = string_value(&pair.value); },
+                        2 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.x_record_tag = string_value(&pair.value);
+                            }
+                            else {
+                                att.text_tag = string_value(&pair.value);
+                            }
+                        },
+                        3 => { att.prompt = string_value(&pair.value); },
+                        7 => { att.text_style_name = string_value(&pair.value); },
+                        10 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.x = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.x = double_value(&pair.value);
+                            }
+                        },
+                        20 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.y = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.y = double_value(&pair.value);
+                            }
+                        },
+                        30 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.alignment_point.z = double_value(&pair.value);
+                            }
+                            else {
+                                att.location.z = double_value(&pair.value);
+                            }
+                        },
+                        11 => { att.second_alignment_point.x = double_value(&pair.value); },
+                        21 => { att.second_alignment_point.y = double_value(&pair.value); },
+                        31 => { att.second_alignment_point.z = double_value(&pair.value); },
+                        39 => { att.thickness = double_value(&pair.value); },
+                        40 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.annotation_scale = double_value(&pair.value);
+                            }
+                            else {
+                                att.text_height = double_value(&pair.value);
+                            }
+                        },
+                        41 => { att.relative_x_scale_factor = double_value(&pair.value); },
+                        50 => { att.rotation = double_value(&pair.value); },
+                        51 => { att.oblique_angle = double_value(&pair.value); },
+                        70 => {
+                            if last_subclass_marker == xrecord_text {
+                                match xrec_code_70_count {
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(short_value(&pair.value))),
+                                    1 => att.is_really_locked = as_bool(short_value(&pair.value)),
+                                    2 => att._secondary_attribute_count = short_value(&pair.value) as i32,
+                                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
+                                }
+                                xrec_code_70_count += 1;
+                            }
+                            else {
+                                att.flags = short_value(&pair.value) as i32;
+                            }
+                        },
+                        71 => { att.text_generation_flags = short_value(&pair.value) as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(short_value(&pair.value))); },
+                        73 => { att.field_length = short_value(&pair.value); },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(short_value(&pair.value))); },
+                        210 => { att.normal.x = double_value(&pair.value); },
+                        220 => { att.normal.y = double_value(&pair.value); },
+                        230 => { att.normal.z = double_value(&pair.value); },
+                        280 => {
+                            if last_subclass_marker == xrecord_text {
+                                att.keep_duplicate_records = as_bool(short_value(&pair.value));
+                            }
+                            else if !is_version_set {
+                                att.version = try_result!(Version::from_i16(short_value(&pair.value)));
+                                is_version_set = true;
+                            }
+                            else {
+                                att.is_locked_in_block = as_bool(short_value(&pair.value));
+                            }
+                        },
+                        340 => { att.secondary_attributes.push(try!(as_u32(string_value(&pair.value)))); },
+                        -1 => { att.m_text = try!(as_u32(string_value(&pair.value))); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
             EntityType::MText(ref mut mtext) => {
                 let mut reading_column_data = false;
                 let mut read_column_count = false;
@@ -558,6 +750,7 @@ impl Entity {
     fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write {
         match self.specific {
+            // TODO: write trailing MText on Attribute and AttributeDefinition
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
                     let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
@@ -590,6 +783,26 @@ fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64
     v1.clear();
     v2.clear();
     v3.clear();
+}
+
+//------------------------------------------------------------------------------
+//                                                  ProxyEntity-specific methods
+//------------------------------------------------------------------------------
+impl ProxyEntity {
+    // lower word
+    pub fn get_object_drawing_format_version(&self) -> i32 {
+        (self._object_drawing_format & 0xFFFF) as i32
+    }
+    pub fn set_object_drawing_format_version(&mut self, version: i32) {
+        self._object_drawing_format |= version as u32 & 0xFFFF;
+    }
+    // upper word
+    pub fn get_object_maintenance_release_version(&self) -> i32 {
+        self._object_drawing_format as i32 >> 4
+    }
+    pub fn set_object_mainenance_release_version(&mut self, version: i32) {
+        self._object_drawing_format = (version << 4) as u32 + (self._object_drawing_format & 0xFFFF);
+    }
 }
 
 //------------------------------------------------------------------------------

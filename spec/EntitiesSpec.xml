@@ -101,7 +101,7 @@
     <Field Name="object_id_3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_id_4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
-    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" Accessibility="private" MinVersion="R2000" />
+    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" MinVersion="R2000" />
     <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2000" />
   </Entity>
   <!--
@@ -156,7 +156,7 @@
     ATTDEF
 
     -->
-  <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF">
+  <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF" GenerateReaderFunction="false">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
@@ -187,7 +187,7 @@
     <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="try_result!(MTextFlag::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
     <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
@@ -232,7 +232,7 @@
     ATTRIB
 
     -->
-  <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB">
+  <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB" GenerateReaderFunction="false">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_height" Code="40" Type="f64" DefaultValue="1.0" />
@@ -262,7 +262,7 @@
     <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="(MTextFlag)" WriteConverter="{} as i16" MinVersion="R2007" />
     <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" MinVersion="R2007" />
+    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
@@ -1113,44 +1113,6 @@
     UNDERLAY
 
     -->
-  <Entity Name="Underlay" SubclassMarker="AcDbUnderlayReference" TypeString="UNDERLAY" MinVersion="R2007">
-    <Pointer Name="object" Code="340" Type="IItem" />
-    <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
-    <Field Name="x_scale" Code="41" Type="f64" DefaultValue="1.0" />
-    <Field Name="y_scale" Code="42" Type="f64" DefaultValue="1.0" />
-    <Field Name="z_scale" Code="43" Type="f64" DefaultValue="1.0" />
-    <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
-    <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="flags" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
-      <Flag Name="is_clipping_on" Mask="1" />
-      <Flag Name="is_underlay_on" Mask="2" />
-      <Flag Name="is_monochrome" Mask="4" />
-      <Flag Name="adjust_for_background" Mask="8" />
-      <Flag Name="is_clip_inside_mode" Mask="16" />
-    </Field>
-    <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
-    <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
-    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <WriteOrder>
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
-      <WriteField Field="object" />
-      <WriteField Field="insertion_point" />
-      <WriteField Field="x_scale" />
-      <WriteField Field="y_scale" />
-      <WriteField Field="z_scale" />
-      <WriteField Field="rotation_angle" />
-      <WriteField Field="normal" />
-      <WriteField Field="flags" />
-      <WriteField Field="contrast" />
-      <WriteField Field="fade" />
-      <Foreach Field="ent.points">
-        <WriteSpecificValue Code="11" Value="item.x" />
-        <WriteSpecificValue Code="12" Value="item.y" />
-      </Foreach>
-    </WriteOrder>
-  </Entity>
   <Entity Name="DgnUnderlay" SubclassMarker="null" TypeString="DGNUNDERLAY" Tag="DGN" MinVersion="R2007">
     <Pointer Name="object" Code="340" Type="IItem" />
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
