@@ -105,6 +105,8 @@ use self::tables::*;
 use self::enums::*;
 use enum_primitive::FromPrimitive;
 
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter, Read, Write};
@@ -121,7 +123,6 @@ use helper_functions::*;
 //                                                                 CodePairValue
 //------------------------------------------------------------------------------
 #[doc(hidden)]
-#[derive(Debug)]
 pub enum CodePairValue {
     Boolean(bool),
     Integer(i32),
@@ -170,6 +171,19 @@ impl CodePairValue {
     }
 }
 
+impl Debug for CodePairValue {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        match self {
+            &CodePairValue::Boolean(b) => write!(formatter, "{}", if b { 1 } else { 0 }),
+            &CodePairValue::Integer(i) => write!(formatter, "{}", i),
+            &CodePairValue::Long(l) => write!(formatter, "{}", l),
+            &CodePairValue::Short(s) => write!(formatter, "{}", s),
+            &CodePairValue::Double(d) => write!(formatter, "{:.12}", d),
+            &CodePairValue::Str(ref s) => write!(formatter, "{}", s),
+        }
+    }
+}
+
 //------------------------------------------------------------------------------
 //                                                                      CodePair
 //------------------------------------------------------------------------------
@@ -203,6 +217,12 @@ impl CodePair {
     }
     pub fn new_bool(code: i32, val: bool) -> CodePair {
         CodePair::new(code, CodePairValue::Boolean(val))
+    }
+}
+
+impl Debug for CodePair {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        write!(formatter, "{}/{:?}", self.code, &self.value)
     }
 }
 
@@ -288,15 +308,7 @@ pub struct CodePairAsciiWriter<T>
 impl<T: Write> CodePairAsciiWriter<T> {
     pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
-        let str_val = match &pair.value {
-            &CodePairValue::Boolean(b) => String::from(if b { "1" } else { "0" }),
-            &CodePairValue::Integer(i) => format!("{}", i),
-            &CodePairValue::Long(l) => format!("{}", l),
-            &CodePairValue::Short(s) => format!("{}", s),
-            &CodePairValue::Double(d) => format!("{:.12}", d), // TODO: use proper precision
-            &CodePairValue::Str(ref s) => s.clone(), // TODO: escape
-        };
-        try!(self.writer.write_fmt(format_args!("{}\r\n", &str_val)));
+        try!(self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value)));
         Ok(())
     }
 }
