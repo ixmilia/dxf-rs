@@ -126,7 +126,7 @@ pub fn as_uuid(s: String) -> io::Result<Uuid> {
 }
 
 #[doc(hidden)]
-pub fn as_short(b: bool) -> i16 {
+pub fn as_i16(b: bool) -> i16 {
     if b { 1 } else { 0 }
 }
 
@@ -245,7 +245,7 @@ pub fn string_from_version(v: &AcadVersion) -> String {
 
 #[doc(hidden)]
 pub fn parse_bool(s: String) -> io::Result<bool> {
-    match parse_short(s) {
+    match parse_i16(s) {
         Ok(0) => Ok(false),
         Ok(_) => Ok(true),
         Err(x) => Err(io::Error::new(io::ErrorKind::InvalidData, x)),
@@ -253,7 +253,7 @@ pub fn parse_bool(s: String) -> io::Result<bool> {
 }
 
 #[doc(hidden)]
-pub fn parse_double(s: String) -> io::Result<f64> {
+pub fn parse_f64(s: String) -> io::Result<f64> {
     match s.parse::<f64>() {
         Ok(d) => Ok(d),
         Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
@@ -261,7 +261,7 @@ pub fn parse_double(s: String) -> io::Result<f64> {
 }
 
 #[doc(hidden)]
-pub fn parse_int(s: String) -> io::Result<i32> {
+pub fn parse_i32(s: String) -> io::Result<i32> {
     match s.parse::<i32>() {
         Ok(i) => Ok(i),
         Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
@@ -269,7 +269,7 @@ pub fn parse_int(s: String) -> io::Result<i32> {
 }
 
 #[doc(hidden)]
-pub fn parse_long(s: String) -> io::Result<i64> {
+pub fn parse_i64(s: String) -> io::Result<i64> {
     match s.parse::<i64>() {
         Ok(l) => Ok(l),
         Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
@@ -277,7 +277,7 @@ pub fn parse_long(s: String) -> io::Result<i64> {
 }
 
 #[doc(hidden)]
-pub fn parse_short(s: String) -> io::Result<i16> {
+pub fn parse_i16(s: String) -> io::Result<i16> {
     match s.parse::<i16>() {
         Ok(s) => Ok(s),
         Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),

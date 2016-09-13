@@ -9,7 +9,7 @@
   <Entity Name="Entity" SubclassMarker="" TypeString="">
     <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
     <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
-    <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter='&amp;default_if_empty(&amp;{}, "0")' />
     <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" />
     <Field Name="elevation" Code="38" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" MaxVersion="R12" />
@@ -17,7 +17,7 @@
     <Field Name="color" Code="62" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" DisableWritingDefault="true" />
     <Field Name="lineweight_enum_value" Code="370" Type="i16" DefaultValue="0" MinVersion="R2000" />
     <Field Name="linetype_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
-    <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_short(!{})" DisableWritingDefault="true" MinVersion="R13" />
+    <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_i16(!{})" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="image_byte_count" Code="92" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
     <Field Name="color_24_bit" Code="420" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2004" />
@@ -102,7 +102,7 @@
     <Field Name="object_id_4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
     <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" MinVersion="R2000" />
-    <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2000" />
+    <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2000" />
   </Entity>
   <!--
 
@@ -137,13 +137,13 @@
     <Field Name="left_offset" Code="46" Type="f64" DefaultValue="0.0" />
     <Field Name="start_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="end_angle" Code="51" Type="f64" DefaultValue="0.0" />
-    <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="direction_flag" Code="71" Type="i16" DefaultValue="0" />
     <Field Name="alignment_flag" Code="72" Type="i16" DefaultValue="0" />
     <Field Name="side_flag" Code="73" Type="i16" DefaultValue="0" />
-    <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
-    <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
-    <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="character_set_value" Code="77" Type="i16" DefaultValue="0" />
     <Field Name="pitch_and_family_value" Code="78" Type="i16" DefaultValue="0" />
     <Field Name="font_type" Code="79" Type="FontType" DefaultValue="FontType::TTF" ReadConverter="try_result!(FontType::from_i16({}))" WriteConverter="{} as i16" />
@@ -183,10 +183,10 @@
     </Field>
     <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
     <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
-    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
-    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="try_result!(MTextFlag::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
-    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
@@ -258,10 +258,10 @@
     <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="try_result!(VerticalTextJustification::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
-    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
+    <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="(MTextFlag)" WriteConverter="{} as i16" MinVersion="R2007" />
-    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" MinVersion="R2007" />
+    <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
@@ -442,7 +442,7 @@
       <Flag Name="use_clipping_boundary" Mask="4" />
       <Flag Name="use_transparency" Mask="8" />
     </Field>
-    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
@@ -482,7 +482,7 @@
 
     -->
   <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
-    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" DisableWritingDefault="true" />
+    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" DisableWritingDefault="true" />
     <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
@@ -503,11 +503,11 @@
     -->
   <Entity Name="Leader" SubclassMarker="AcDbLeader" TypeString="LEADER" MinVersion="R13" HasXData="true">
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
-    <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="path_type" Code="72" Type="LeaderPathType" DefaultValue="LeaderPathType::StraightLineSegments" ReadConverter="try_result!(LeaderPathType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="annotation_type" Code="73" Type="LeaderCreationAnnotationType" DefaultValue="LeaderCreationAnnotationType::NoAnnotation" ReadConverter="try_result!(LeaderCreationAnnotationType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="hookline_direction" Code="74" Type="LeaderHooklineDirection" DefaultValue="LeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="try_result!(LeaderHooklineDirection::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
     <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
@@ -722,8 +722,8 @@
     <Field Name="background_fill_color_transparency" Code="441" Type="i32" DefaultValue="0" />
     <Field Name="column_type" Code="75" Type="i16" DefaultValue="0" />
     <Field Name="column_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="is_column_flow_reversed" Code="78" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
-    <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="is_column_flow_reversed" Code="78" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="is_column_auto_height" Code="79" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="column_width" Code="48" Type="f64" DefaultValue="0.0" />
     <Field Name="column_gutter" Code="49" Type="f64" DefaultValue="0.0" />
     <Field Name="column_heights" Code="50" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -825,7 +825,7 @@
 
     -->
   <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true">
-    <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" MaxVersion="R13" />
+    <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R13" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true">
@@ -1278,7 +1278,7 @@
       <Flag Name="use_clipping_boundary" Mask="4" />
       <Flag Name="use_transparency" Mask="8" />
     </Field>
-    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_short({})" />
+    <Field Name="use_clipping" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="brightness" Code="281" Type="i16" DefaultValue="50" />
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />

@@ -260,10 +260,10 @@ impl<T: Read> Iterator for CodePairAsciiIter<T> {
             // construct the value pair
             let value = match try_option!(get_expected_type(code)) {
                 ExpectedType::Boolean => CodePairValue::Boolean(try_option!(parse_bool(value_line))),
-                ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_int(value_line))),
-                ExpectedType::Long => CodePairValue::Long(try_option!(parse_long(value_line))),
-                ExpectedType::Short => CodePairValue::Short(try_option!(parse_short(value_line))),
-                ExpectedType::Double => CodePairValue::Double(try_option!(parse_double(value_line))),
+                ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_i32(value_line))),
+                ExpectedType::Long => CodePairValue::Long(try_option!(parse_i64(value_line))),
+                ExpectedType::Short => CodePairValue::Short(try_option!(parse_i16(value_line))),
+                ExpectedType::Double => CodePairValue::Double(try_option!(parse_f64(value_line))),
                 ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
             };
 
