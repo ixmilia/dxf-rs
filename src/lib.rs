@@ -105,7 +105,6 @@ use self::tables::*;
 use self::enums::*;
 use enum_primitive::FromPrimitive;
 
-use std::cmp::min;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter, Read, Write};
@@ -830,8 +829,8 @@ impl Entity {
 
 fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
-    for i in 0..min(v1.len(), v2.len()) {
-        result.push(comb(v1[i], v2[i], 0.0));
+    for (x, y) in v1.drain(..).zip(v2.drain(..)) {
+        result.push(comb(x, y, 0.0));
     }
     v1.clear();
     v2.clear();
@@ -839,8 +838,8 @@ fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec
 
 fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
-    for i in 0..min(v1.len(), min(v2.len(), v3.len())) {
-        result.push(comb(v1[i], v2[i], v3[i]));
+    for (x, (y, z)) in v1.drain(..).zip(v2.drain(..).zip(v3.drain(..))) {
+        result.push(comb(x, y, z))
     }
     v1.clear();
     v2.clear();
@@ -1049,17 +1048,16 @@ impl Drawing {
         let mut iter = PutBack::new(EntityIter { iter: iter });
         loop {
             match iter.next() {
-                Some(Ok(Entity { ref common, specific: EntityType::Insert(ref ins) })) if ins.has_attributes => {
+                Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.has_attributes => {
                     let mut ins = ins.clone(); // 12 fields
                     loop {
                         match iter.next() {
-                            Some(Ok(Entity { specific: EntityType::Attribute(att), .. })) => ins.attributes.push(att),
-                            Some(Ok(ent)) => {
+                            Some(Entity { specific: EntityType::Attribute(att), .. }) => ins.attributes.push(att),
+                            Some(ent) => {
                                 // stop gathering on any non-ATTRIBUTE
-                                iter.put_back(Ok(ent));
+                                iter.put_back(ent);
                                 break;
                             },
-                            Some(Err(e)) => return Err(e),
                             None => break,
                         }
                     }
@@ -1072,17 +1070,16 @@ impl Drawing {
                         specific: EntityType::Insert(ins),
                     })
                 },
-                Some(Ok(Entity { common, specific: EntityType::Polyline(poly) })) => {
+                Some(Entity { common, specific: EntityType::Polyline(poly) }) => {
                     let mut poly = poly.clone(); // 13 fields
                     loop {
                         match iter.next() {
-                            Some(Ok(Entity { specific: EntityType::Vertex(vertex), .. })) => poly.vertices.push(vertex),
-                            Some(Ok(ent)) => {
+                            Some(Entity { specific: EntityType::Vertex(vertex), .. }) => poly.vertices.push(vertex),
+                            Some(ent) => {
                                 // stop gathering on any non-VERTEX
-                                iter.put_back(Ok(ent));
+                                iter.put_back(ent);
                                 break;
                             },
-                            Some(Err(e)) => return Err(e),
                             None => break,
                         }
                     }
@@ -1095,8 +1092,7 @@ impl Drawing {
                         specific: EntityType::Polyline(poly),
                     });
                 },
-                Some(Ok(entity)) => self.entities.push(entity),
-                Some(Err(e)) => return Err(e),
+                Some(entity) => self.entities.push(entity),
                 None => break,
             }
         }
@@ -1104,11 +1100,10 @@ impl Drawing {
         Ok(())
     }
     fn swallow_seqend<I>(iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<Entity>> {
+        where I: Iterator<Item = Entity> {
         match iter.next() {
-            Some(Ok(Entity { specific: EntityType::Seqend(_), .. })) => (),
-            Some(Ok(ent)) => iter.put_back(Ok(ent)),
-            Some(Err(e)) => return Err(e),
+            Some(Entity { specific: EntityType::Seqend(_), .. }) => (),
+            Some(ent) => iter.put_back(ent),
             None => (),
         }
 
@@ -1173,10 +1168,10 @@ struct EntityIter<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> {
 }
 
 impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<'a, I> {
-    type Item = io::Result<Entity>;
-    fn next(&mut self) -> Option<io::Result<Entity>> {
+    type Item = Entity;
+    fn next(&mut self) -> Option<Entity> {
         match Entity::read(self.iter) {
-            Ok(Some(e)) => Some(Ok(e)),
+            Ok(Some(e)) => Some(e),
             Ok(None) | Err(_) => None,
         }
     }
