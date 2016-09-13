@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Spec xmlns="http://IxMilia.com/Dxf/HeaderVariablesSpec">
-  <Variable Name="ACADVER" Code="1" Type="AcadVersion" Field="version" DefaultValue="AcadVersion::R12" ReadConverter="try!(version_from_string({}))" WriteConverter="&amp;string_from_version(&amp;{})" Comment="The AutoCAD drawing database version number." />
+  <Variable Name="ACADVER" Code="1" Type="AcadVersion" Field="version" DefaultValue="AcadVersion::R12" ReadConverter="try!(AcadVersion::from({}))" WriteConverter="&amp;{}.to_string()" Comment="The AutoCAD drawing database version number." />
   <Variable Name="ACADMAINTVER" Code="70" Type="i16" Field="maintenance_version" DefaultValue="0" MinVersion="R14" Comment="Maintenance version number (should be ignored)." />
   <Variable Name="DWGCODEPAGE" Code="3" Type="String" Field="drawing_code_page" DefaultValue="String::from(&quot;ANSI_1252&quot;)" ReadConverter="String::from({})" WriteConverter="&amp;{}" MinVersion="R13" Comment="Drawing code page; set to the system code page when a new drawing is created, but not otherwise maintained by AutoCAD." />
   <Variable Name="LASTSAVEDBY" Code="1" Type="String" Field="last_saved_by" DefaultValue="String::new()" ReadConverter="String::from({})" WriteConverter="&amp;{}" MinVersion="R2004" Comment="Name of the last user to modify the file." />

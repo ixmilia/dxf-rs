@@ -2,6 +2,8 @@
 
 extern crate num;
 
+use std::io;
+
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -38,6 +40,78 @@ pub enum AcadVersion {
     R2007,
     R2010,
     R2013,
+}
+
+impl AcadVersion {
+    pub fn from(val: String) -> io::Result<AcadVersion> {
+        match &*val {
+            "MC0.0" => Ok(AcadVersion::Version_1_0),
+            "AC1.2" => Ok(AcadVersion::Version_1_2),
+            "AC1.40" => Ok(AcadVersion::Version_1_40),
+            "AC1.50" => Ok(AcadVersion::Version_2_05),
+            "AC2.10" => Ok(AcadVersion::Version_2_10),
+            "AC2.21" => Ok(AcadVersion::Version_2_21),
+            "AC2.22" => Ok(AcadVersion::Version_2_22),
+            "AC1001" => Ok(AcadVersion::Version_2_22),
+            "AC1002" => Ok(AcadVersion::Version_2_5),
+            "AC1003" => Ok(AcadVersion::Version_2_6),
+            "AC1004" => Ok(AcadVersion::R9),
+            "AC1006" => Ok(AcadVersion::R10),
+            "AC1009" => Ok(AcadVersion::R12),
+            "AC1011" => Ok(AcadVersion::R13),
+            "AC1012" => Ok(AcadVersion::R13),
+            "AC1014" => Ok(AcadVersion::R14),
+            "14" => Ok(AcadVersion::R14),
+            "14.01" => Ok(AcadVersion::R14),
+            "AC1015" => Ok(AcadVersion::R2000),
+            "15.0" => Ok(AcadVersion::R2000),
+            "15.05" => Ok(AcadVersion::R2000),
+            "15.06" => Ok(AcadVersion::R2000),
+            "AC1018" => Ok(AcadVersion::R2004),
+            "16.0" => Ok(AcadVersion::R2004),
+            "16.1" => Ok(AcadVersion::R2004),
+            "16.2" => Ok(AcadVersion::R2004),
+            "AC1021" => Ok(AcadVersion::R2007),
+            "17.0" => Ok(AcadVersion::R2007),
+            "17.1" => Ok(AcadVersion::R2007),
+            "17.2" => Ok(AcadVersion::R2007),
+            "AC1024" => Ok(AcadVersion::R2010),
+            "18.0" => Ok(AcadVersion::R2010),
+            "18.1" => Ok(AcadVersion::R2010),
+            "18.2" => Ok(AcadVersion::R2010),
+            "AC1027" => Ok(AcadVersion::R2013),
+            "19.0" => Ok(AcadVersion::R2013),
+            "19.1" => Ok(AcadVersion::R2013),
+            "19.2" => Ok(AcadVersion::R2013),
+            "19.3" => Ok(AcadVersion::R2013),
+            _ => Err(io::Error::new(io::ErrorKind::InvalidData, format!("unsupported version {}", val))),
+        }
+    }
+    pub fn to_string(&self) -> String {
+        String::from(
+            match self {
+                &AcadVersion::Version_1_0 => "MC0.0",
+                &AcadVersion::Version_1_2 => "AC1.2",
+                &AcadVersion::Version_1_40 => "AC1.40",
+                &AcadVersion::Version_2_05 => "AC1.50",
+                &AcadVersion::Version_2_10 => "AC2.10",
+                &AcadVersion::Version_2_21 => "AC2.21",
+                &AcadVersion::Version_2_22 => "AC2.22",
+                &AcadVersion::Version_2_5 => "AC1002",
+                &AcadVersion::Version_2_6 => "AC1003",
+                &AcadVersion::R9 => "AC1004",
+                &AcadVersion::R10 => "AC1006",
+                &AcadVersion::R11 => "AC1009",
+                &AcadVersion::R12 => "AC1009",
+                &AcadVersion::R13 => "AC1012",
+                &AcadVersion::R14 => "AC1014",
+                &AcadVersion::R2000 => "AC1015",
+                &AcadVersion::R2004 => "AC1018",
+                &AcadVersion::R2007 => "AC1021",
+                &AcadVersion::R2010 => "AC1024",
+                &AcadVersion::R2013 => "AC1027",
+        })
+    }
 }
 
 enum_from_primitive! {
