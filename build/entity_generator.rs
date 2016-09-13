@@ -48,7 +48,7 @@ macro_rules! try_result {
     generate_write(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/entities.rs").ok().unwrap();
+    let mut file = File::create("src/generated/entities.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 
@@ -76,6 +76,14 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("}\n");
     fun.push_str("\n");
 
+// for large sections like this, you might look into using multiline strings
+// they look like this
+// fun.push_str(#"""
+//   foo bar baz
+//   foo bar baz
+//   foo bar baz
+// """#)
+//#
     fun.push_str("#[derive(Clone)]\n");
     fun.push_str("pub struct Entity {\n");
     fun.push_str("    pub common: EntityCommon,\n");
