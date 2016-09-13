@@ -6,20 +6,19 @@ use self::chrono::*;
 extern crate uuid;
 use self::uuid::Uuid;
 
-use std::io;
 use enum_primitive::FromPrimitive;
 
-use ::Color;
+use ::{Color, DxfError, DxfResult};
 use ::enums::*;
 use ::tables::Layer;
 
 #[doc(hidden)]
-pub fn verify_code(expected: i32, actual: i32) -> io::Result<()> {
+pub fn verify_code(expected: i32, actual: i32) -> DxfResult<()> {
     if expected == actual {
         Ok(())
     }
     else {
-        Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected code {} but got {}", expected, actual)))
+        Err(DxfError::UnexpectedCode(actual))
     }
 }
 
@@ -85,7 +84,7 @@ pub fn as_duration(d: f64) -> Duration {
 }
 
 #[doc(hidden)]
-pub fn as_u32(s: String) -> io::Result<u32> {
+pub fn as_u32(s: String) -> DxfResult<u32> {
     let mut result = 0;
     for c in s.chars() {
         match c {
@@ -105,7 +104,7 @@ pub fn as_u32(s: String) -> io::Result<u32> {
             'D' | 'd' => result = result * 16 + 13,
             'E' | 'e' => result = result * 16 + 14,
             'F' | 'f' => result = result * 16 + 15,
-            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "invalid hex character")),
+            _ => return Err(DxfError::ParseError),
         }
     }
 
@@ -118,10 +117,10 @@ pub fn as_handle(h: u32) -> String {
 }
 
 #[doc(hidden)]
-pub fn as_uuid(s: String) -> io::Result<Uuid> {
+pub fn as_uuid(s: String) -> DxfResult<Uuid> {
     match Uuid::parse_str(s.as_str()) {
         Ok(uuid) => Ok(uuid),
-        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        Err(_) => Err(DxfError::ParseError),
     }
 }
 
@@ -171,43 +170,43 @@ pub fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
 }
 
 #[doc(hidden)]
-pub fn parse_bool(s: String) -> io::Result<bool> {
+pub fn parse_bool(s: String) -> DxfResult<bool> {
     match parse_i16(s) {
         Ok(0) => Ok(false),
         Ok(_) => Ok(true),
-        Err(x) => Err(io::Error::new(io::ErrorKind::InvalidData, x)),
+        Err(x) => Err(x),
     }
 }
 
 #[doc(hidden)]
-pub fn parse_f64(s: String) -> io::Result<f64> {
+pub fn parse_f64(s: String) -> DxfResult<f64> {
     match s.parse::<f64>() {
         Ok(d) => Ok(d),
-        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        Err(e) => Err(DxfError::ParseFloatError(e)),
     }
 }
 
 #[doc(hidden)]
-pub fn parse_i32(s: String) -> io::Result<i32> {
+pub fn parse_i32(s: String) -> DxfResult<i32> {
     match s.parse::<i32>() {
         Ok(i) => Ok(i),
-        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        Err(e) => Err(DxfError::ParseIntError(e)),
     }
 }
 
 #[doc(hidden)]
-pub fn parse_i64(s: String) -> io::Result<i64> {
+pub fn parse_i64(s: String) -> DxfResult<i64> {
     match s.parse::<i64>() {
         Ok(l) => Ok(l),
-        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        Err(e) => Err(DxfError::ParseIntError(e)),
     }
 }
 
 #[doc(hidden)]
-pub fn parse_i16(s: String) -> io::Result<i16> {
+pub fn parse_i16(s: String) -> DxfResult<i16> {
     match s.parse::<i16>() {
         Ok(s) => Ok(s),
-        Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        Err(e) => Err(DxfError::ParseIntError(e)),
     }
 }
 

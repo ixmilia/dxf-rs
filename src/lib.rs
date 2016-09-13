@@ -8,7 +8,7 @@
 //!
 //! ``` rust
 //! # fn main() { }
-//! # fn ex() -> std::io::Result<()> {
+//! # fn ex() -> dxf::DxfResult<()> {
 //! use dxf::Drawing;
 //! use dxf::entities::*;
 //!
@@ -33,7 +33,7 @@
 //!
 //! ``` rust
 //! # fn main() { }
-//! # fn ex() -> std::io::Result<()> {
+//! # fn ex() -> dxf::DxfResult<()> {
 //! use dxf::Drawing;
 //! use dxf::entities::*;
 //!
@@ -106,10 +106,11 @@ use self::enums::*;
 use enum_primitive::FromPrimitive;
 
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter, Read, Write};
+use std::num;
 use std::path::Path;
 
 use itertools::PutBack;
@@ -171,6 +172,19 @@ impl CodePairValue {
     }
 }
 
+impl Clone for CodePairValue {
+    fn clone(&self) -> Self {
+        match self {
+            &CodePairValue::Boolean(b) => CodePairValue::Boolean(b),
+            &CodePairValue::Integer(i) => CodePairValue::Integer(i),
+            &CodePairValue::Long(l) => CodePairValue::Long(l),
+            &CodePairValue::Short(s) => CodePairValue::Short(s),
+            &CodePairValue::Double(d) => CodePairValue::Double(d),
+            &CodePairValue::Str(ref s) => CodePairValue::Str(String::from(s.as_str())),
+        }
+    }
+}
+
 impl Debug for CodePairValue {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
@@ -188,6 +202,7 @@ impl Debug for CodePairValue {
 //                                                                      CodePair
 //------------------------------------------------------------------------------
 #[doc(hidden)]
+#[derive(Clone)]
 pub struct CodePair {
     code: i32,
     value: CodePairValue,
@@ -227,6 +242,73 @@ impl Debug for CodePair {
 }
 
 //------------------------------------------------------------------------------
+//                                                                  DxfResult<T>
+//------------------------------------------------------------------------------
+pub type DxfResult<T> = Result<T, DxfError>;
+
+#[derive(Debug)]
+pub enum DxfError {
+    IoError(io::Error),
+    ParseFloatError(num::ParseFloatError),
+    ParseIntError(num::ParseIntError),
+    ParseError,
+    UnexpectedCode(i32),
+    UnexpectedCodePair(CodePair, String),
+    UnexpectedEndOfInput,
+    UnexpectedEnumValue,
+    UnexpectedEmptySet,
+    ExpectedTableType,
+}
+
+impl From<io::Error> for DxfError {
+    fn from(ioe: io::Error) -> DxfError {
+        DxfError::IoError(ioe)
+    }
+}
+
+impl Display for DxfError {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &DxfError::IoError(ref e) => write!(formatter, "{}", e),
+            &DxfError::ParseFloatError(ref e) => write!(formatter, "{}", e),
+            &DxfError::ParseIntError(ref e) => write!(formatter, "{}", e),
+            &DxfError::ParseError => write!(formatter, "there was a general parsing error"),
+            &DxfError::UnexpectedCode(c) => write!(formatter, "an unexpected code '{}' was encountered", c),
+            &DxfError::UnexpectedCodePair(ref cp, ref s) => write!(formatter, "the code pair '{:?}' was not expected at this time: {}", cp, s),
+            &DxfError::UnexpectedEndOfInput => write!(formatter, "the input unexpectedly ended before the drawing was completely loaded"),
+            &DxfError::UnexpectedEnumValue => write!(formatter, "the specified enum value does not fall into the expected range"),
+            &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
+            &DxfError::ExpectedTableType => write!(formatter, "a 2/<table-type> code pair was expected"),
+        }
+    }
+}
+
+impl std::error::Error for DxfError {
+    fn description(&self) -> &str {
+        match self {
+            &DxfError::IoError(ref e) => e.description(),
+            &DxfError::ParseFloatError(ref e) => e.description(),
+            &DxfError::ParseIntError(ref e) => e.description(),
+            &DxfError::ParseError => "there was a general parsing error",
+            &DxfError::UnexpectedCode(_) => "an unexpected code was encountered",
+            &DxfError::UnexpectedCodePair(_, _) => "an unexpected code pair was encountered",
+            &DxfError::UnexpectedEndOfInput => "the input unexpectedly ended before the drawing was completely loaded",
+            &DxfError::UnexpectedEnumValue => "the specified enum value does not fall into the expected range",
+            &DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
+            &DxfError::ExpectedTableType => "a 2/<table-type> code pair was expected",
+        }
+    }
+    fn cause(&self) -> Option<&std::error::Error> {
+        match self {
+            &DxfError::IoError(ref e) => Some(e),
+            &DxfError::ParseFloatError(ref e) => Some(e),
+            &DxfError::ParseIntError(ref e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                             CodePairAsciiIter
 //------------------------------------------------------------------------------
 struct CodePairAsciiIter<T>
@@ -235,18 +317,18 @@ struct CodePairAsciiIter<T>
     reader: T,
 }
 
-// Used to turn Result into Option<io::Result<T>>
-macro_rules! try_option {
+// Used to turn Result<T> into Option<Result<T>>.
+macro_rules! try_into_result {
     ($expr : expr) => (
         match $expr {
             Ok(v) => v,
-            Err(e) => return Some(Err(io::Error::new(io::ErrorKind::InvalidData, e))),
+            Err(e) => return Some(Err(e)),
         }
     )
 }
 
 // because I don't want to depend on BufRead here
-fn read_line<T>(reader: &mut T, result: &mut String) -> io::Result<()>
+fn read_line<T>(reader: &mut T, result: &mut String) -> DxfResult<()>
     where T: Read {
     for c in reader.bytes() { // .bytes() is OK since DXF files must be ASCII encoded
         let c = try!(c) as char;
@@ -258,8 +340,8 @@ fn read_line<T>(reader: &mut T, result: &mut String) -> io::Result<()>
 }
 
 impl<T: Read> Iterator for CodePairAsciiIter<T> {
-    type Item = io::Result<CodePair>;
-    fn next(&mut self) -> Option<io::Result<CodePair>> {
+    type Item = DxfResult<CodePair>;
+    fn next(&mut self) -> Option<DxfResult<CodePair>> {
         loop {
             // Read code.  If no line is available, fail gracefully.
             let mut code_line = String::new();
@@ -269,20 +351,24 @@ impl<T: Read> Iterator for CodePairAsciiIter<T> {
             }
             let code_line = code_line.trim();
             if code_line.is_empty() { return None; }
-            let code = try_option!(code_line.parse::<i32>());
+            let code = try_into_result!(parse_i32(String::from(code_line)));
 
             // Read value.  If no line is available die horribly.
             let mut value_line = String::new();
-            try_option!(read_line(&mut self.reader, &mut value_line));
+            try_into_result!(read_line(&mut self.reader, &mut value_line));
             trim_trailing_newline(&mut value_line);
 
             // construct the value pair
-            let value = match try_option!(get_expected_type(code)) {
-                ExpectedType::Boolean => CodePairValue::Boolean(try_option!(parse_bool(value_line))),
-                ExpectedType::Integer => CodePairValue::Integer(try_option!(parse_i32(value_line))),
-                ExpectedType::Long => CodePairValue::Long(try_option!(parse_i64(value_line))),
-                ExpectedType::Short => CodePairValue::Short(try_option!(parse_i16(value_line))),
-                ExpectedType::Double => CodePairValue::Double(try_option!(parse_f64(value_line))),
+            let expected_type = match get_expected_type(code) {
+                Some(t) => t,
+                None => return Some(Err(DxfError::UnexpectedEnumValue)),
+            };
+            let value = match expected_type {
+                ExpectedType::Boolean => CodePairValue::Boolean(try_into_result!(parse_bool(value_line))),
+                ExpectedType::Integer => CodePairValue::Integer(try_into_result!(parse_i32(value_line))),
+                ExpectedType::Long => CodePairValue::Long(try_into_result!(parse_i64(value_line))),
+                ExpectedType::Short => CodePairValue::Short(try_into_result!(parse_i16(value_line))),
+                ExpectedType::Double => CodePairValue::Double(try_into_result!(parse_f64(value_line))),
                 ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
             };
 
@@ -306,7 +392,7 @@ pub struct CodePairAsciiWriter<T>
 }
 
 impl<T: Write> CodePairAsciiWriter<T> {
-    pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
+    pub fn write_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
         try!(self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value)));
         Ok(())
@@ -319,8 +405,8 @@ impl<T: Write> CodePairAsciiWriter<T> {
 // implementation is in `header.rs`
 impl Header {
     #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Header>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         let mut header = Header::new();
         loop {
             match iter.next() {
@@ -344,15 +430,15 @@ impl Header {
                                             try!(header.set_header_value(&last_header_variable, &pair));
                                         }
                                     },
-                                    Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                                    Some(Err(e)) => return Err(e),
                                     None => break,
                                 }
                             }
                         },
-                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected code pair")),
+                        _ => return Err(DxfError::UnexpectedCodePair(pair, String::from(""))),
                     }
                 },
-                Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                Some(Err(e)) => return Err(e),
                 None => break,
             }
         }
@@ -360,7 +446,7 @@ impl Header {
         Ok(header)
     }
     #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+    pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
         where T: Write
     {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
@@ -388,12 +474,12 @@ macro_rules! next_pair {
         }
     )
 }
-// Used to turn Option<T> into io::Result<T>.
+// Used to turn Option<T> into DxfResult<T>.
 macro_rules! try_result {
     ($expr : expr) => (
         match $expr {
             Some(v) => v,
-            None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected enum value"))
+            None => return Err(DxfError::UnexpectedEnumValue)
         }
     )
 }
@@ -401,7 +487,7 @@ macro_rules! try_result {
 macro_rules! vec_last {
     ($expr : expr) => (
         match $expr.len() {
-            0 => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected at least one item")),
+            0 => return Err(DxfError::UnexpectedEmptySet),
             l => &mut $expr[l - 1],
         }
     )
@@ -416,9 +502,8 @@ impl Entity {
         }
     }
     #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Option<Entity>>
-        where I: Iterator<Item = io::Result<CodePair>>
-    {
+    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         loop {
             match iter.next() {
                 // first code pair must be 0/entity-type
@@ -442,8 +527,8 @@ impl Entity {
                                             break;
                                         },
                                         Some(Ok(pair)) => try!(entity.apply_code_pair(&pair)),
-                                        Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-                                        None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                                        Some(Err(e)) => return Err(e),
+                                        None => return Err(DxfError::UnexpectedEndOfInput),
                                     }
                                 }
 
@@ -462,26 +547,26 @@ impl Entity {
                                         break;
                                     },
                                     Some(Ok(_)) => (), // part of the unsupported entity
-                                    Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-                                    None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                                    Some(Err(e)) => return Err(e),
+                                    None => return Err(DxfError::UnexpectedEndOfInput),
                                 }
                             }
                         }
                     }
                 },
-                Some(Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/entity-type or 0/ENDSEC")),
-                Some(Err(e)) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/entity-type or 0/ENDSEC"))),
+                Some(Err(e)) => return Err(e),
+                None => return Err(DxfError::UnexpectedEndOfInput),
             }
         }
     }
-    fn apply_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
+    fn apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
         if !try!(self.specific.try_apply_code_pair(&pair)) {
             try!(self.common.apply_individual_pair(&pair));
         }
         Ok(())
     }
-    fn post_parse(&mut self) -> io::Result<()> {
+    fn post_parse(&mut self) -> DxfResult<()> {
         match self.specific {
             EntityType::Image(ref mut image) => {
                 combine_points_2(&mut image._clipping_vertices_x, &mut image._clipping_vertices_y, &mut image.clipping_vertices, Point::new);
@@ -519,8 +604,8 @@ impl Entity {
 
         Ok(())
     }
-    fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<bool>
-        where I: Iterator<Item = io::Result<CodePair>>
+    fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
+        where I: Iterator<Item = DxfResult<CodePair>>
     {
         match self.specific {
             EntityType::Attribute(ref mut att) => {
@@ -587,7 +672,7 @@ impl Entity {
                                     0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16())),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()),
                                     2 => att._secondary_attribute_count = pair.value.assert_i16() as i32,
-                                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
+                                    _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
@@ -685,7 +770,7 @@ impl Entity {
                                     0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16())),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()),
                                     2 => att._secondary_attribute_count = pair.value.assert_i16() as i32,
-                                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
+                                    _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
@@ -809,7 +894,7 @@ impl Entity {
         Ok(true)
     }
     #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
         where T: Write {
         if self.specific.is_supported_on_version(version) {
             try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
@@ -820,7 +905,7 @@ impl Entity {
 
         Ok(())
     }
-    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
         where T: Write {
         match self.specific {
             // TODO: write trailing MText on Attribute and AttributeDefinition
@@ -926,7 +1011,7 @@ impl Drawing {
         }
     }
     /// Loads a `Drawing` from anything that implements the `Read` trait.
-    pub fn load<T>(reader: T) -> io::Result<Drawing>
+    pub fn load<T>(reader: T) -> DxfResult<Drawing>
         where T: Read {
         let reader = CodePairAsciiIter { reader: reader };
         let mut drawing = Drawing::new();
@@ -934,20 +1019,20 @@ impl Drawing {
         try!(Drawing::read_sections(&mut drawing, &mut iter));
         match iter.next() {
             Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
-            Some(Ok(CodePair { code: c, value: v })) => Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/EOF but got {}/{:?}", c, v))),
-            Some(Err(e)) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+            Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
+            Some(Err(e)) => Err(e),
             None => Ok(drawing),
         }
     }
     /// Loads a `Drawing` from disk, using a `BufReader`.
-    pub fn load_file(file_name: &str) -> io::Result<Drawing> {
+    pub fn load_file(file_name: &str) -> DxfResult<Drawing> {
         let path = Path::new(file_name);
         let file = try!(File::open(&path));
         let buf_reader = BufReader::new(file);
         Drawing::load(buf_reader)
     }
     /// Writes a `Drawing` to anything that implements the `Write` trait.
-    pub fn save<T>(&self, writer: &mut T) -> io::Result<()>
+    pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
         where T: Write {
         let mut writer = CodePairAsciiWriter { writer: writer };
         try!(self.header.write(&mut writer));
@@ -959,7 +1044,7 @@ impl Drawing {
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
-    pub fn save_file(&self, file_name: &str) -> io::Result<()> {
+    pub fn save_file(&self, file_name: &str) -> DxfResult<()> {
         let path = Path::new(file_name);
         let file = try!(File::create(&path));
         let mut buf_writer = BufWriter::new(file);
@@ -969,7 +1054,7 @@ impl Drawing {
 
 // private implementation
 impl Drawing {
-    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "TABLES")));
@@ -977,7 +1062,7 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
-    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
+    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "ENTITIES")));
@@ -988,8 +1073,8 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
-    fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
@@ -1011,16 +1096,20 @@ impl Drawing {
 
                                     match iter.next() {
                                         Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => (),
-                                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "Expected 0/ENDSEC")),
+                                        Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/ENDSEC"))),
+                                        Some(Err(e)) => return Err(e),
+                                        None => return Err(DxfError::UnexpectedEndOfInput),
                                     }
                                 },
-                                _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected section name")),
+                                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/<section-name>"))),
+                                Some(Err(e)) => return Err(e),
+                                None => return Err(DxfError::UnexpectedEndOfInput),
                             }
                         },
-                        _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("expected 0/SECTION, got 0/{:?}", pair.value))),
+                        _ => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/SECTION"))),
                     }
                 },
-                Some(Ok(_)) => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected 0/SECTION or 0/EOF")),
+                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/SECTION or 0/EOF"))),
                 Some(Err(e)) => return Err(e),
                 None => break, // ideally should have been 0/EOF
             }
@@ -1028,8 +1117,8 @@ impl Drawing {
 
         Ok(())
     }
-    fn swallow_section<I>(iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    fn swallow_section<I>(iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -1045,8 +1134,8 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         let mut iter = PutBack::new(EntityIter { iter: iter });
         loop {
             match iter.next() {
@@ -1101,7 +1190,7 @@ impl Drawing {
 
         Ok(())
     }
-    fn swallow_seqend<I>(iter: &mut PutBack<I>) -> io::Result<()>
+    fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = Entity> {
         match iter.next() {
             Some(Entity { specific: EntityType::Seqend(_), .. }) => (),
@@ -1111,8 +1200,8 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_tables<I>(&mut self, iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    fn read_tables<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -1123,23 +1212,23 @@ impl Drawing {
                                 break;
                             },
                             "TABLE" => try!(read_specific_table(self, iter)),
-                            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected code pair")),
+                            _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                         }
                     }
                     else {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected value pair"));
+                        return Err(DxfError::UnexpectedCodePair(pair, String::new()));
                     }
                 },
                 Some(Err(e)) => return Err(e),
-                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                None => return Err(DxfError::UnexpectedEndOfInput),
             }
         }
 
         Ok(())
     }
     #[doc(hidden)]
-    pub fn swallow_table<I>(iter: &mut PutBack<I>) -> io::Result<()>
-        where I: Iterator<Item = io::Result<CodePair>> {
+    pub fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -1154,7 +1243,7 @@ impl Drawing {
                     }
                 }
                 Some(Err(e)) => return Err(e),
-                None => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected end of input")),
+                None => return Err(DxfError::UnexpectedEndOfInput),
             }
         }
 
@@ -1165,11 +1254,11 @@ impl Drawing {
 //------------------------------------------------------------------------------
 //                                                                    EntityIter
 //------------------------------------------------------------------------------
-struct EntityIter<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> {
+struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
     iter: &'a mut PutBack<I>,
 }
 
-impl<'a, I: 'a + Iterator<Item = io::Result<CodePair>>> Iterator for EntityIter<'a, I> {
+impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'a, I> {
     type Item = Entity;
     fn next(&mut self) -> Option<Entity> {
         match Entity::read(self.iter) {
@@ -1207,12 +1296,12 @@ impl Point {
         Point::new(0.0, 0.0, 0.0)
     }
     #[doc(hidden)]
-    pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
+    pub fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
         match pair.code {
             10 => self.x = pair.value.assert_f64(),
             20 => self.y = pair.value.assert_f64(),
             30 => self.z = pair.value.assert_f64(),
-            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Point: {}", pair.code))),
+            _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for point"))),
         }
 
         Ok(())
@@ -1259,12 +1348,12 @@ impl Vector {
         Vector::new(0.0, 0.0, 1.0)
     }
     #[doc(hidden)]
-    pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
+    pub fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
         match pair.code {
             10 => self.x = pair.value.assert_f64(),
             20 => self.y = pair.value.assert_f64(),
             30 => self.z = pair.value.assert_f64(),
-            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Vector: {}", pair.code))),
+            _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for vector"))),
         }
 
         Ok(())

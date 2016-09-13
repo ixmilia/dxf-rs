@@ -20,23 +20,22 @@ pub fn generate_tables() {
 
 extern crate itertools;
 
-use ::{CodePair, CodePairAsciiWriter, CodePairValue, Color, Drawing, LineWeight, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, CodePairValue, Color, Drawing, DxfError, DxfResult, LineWeight, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
 
-use std::io;
 use std::io::Write;
 
 use itertools::PutBack;
 
-// Used to turn Option<T> into io::Result.
+// Used to turn Option<T> into DxfResult<T>.
 macro_rules! try_result {
     ($expr : expr) => (
         match $expr {
             Some(v) => v,
-            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected enum value\"))
+            None => return Err(DxfError::UnexpectedEnumValue)
         }
     )
 }
@@ -102,12 +101,12 @@ fn generate_table_items(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_reader(fun: &mut String, element: &Element) {
-    fun.push_str("pub fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> io::Result<()>\n");
-    fun.push_str("    where I: Iterator<Item = io::Result<CodePair>> {\n");
+    fun.push_str("pub fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n");
+    fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
     fun.push_str("    match iter.next() {\n");
     fun.push_str("        Some(Ok(pair)) => {\n");
     fun.push_str("            if pair.code != 2 {\n");
-    fun.push_str("                return Err(io::Error::new(io::ErrorKind::InvalidData, \"expected table type\"));\n");
+    fun.push_str("                return Err(DxfError::ExpectedTableType);\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
     fun.push_str("            match &*pair.value.assert_string() {\n");
@@ -121,13 +120,13 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("\n");
     fun.push_str("            match iter.next() {\n");
     fun.push_str("                Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == \"ENDTAB\" => (),\n");
-    fun.push_str("                Some(Ok(CodePair { code, value })) => return Err(io::Error::new(io::ErrorKind::InvalidData, format!(\"expected 0/ENDTAB, got {}/{:?}\", code, value))),\n");
+    fun.push_str("                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from(\"expected 0/ENDTAB\"))),\n");
     fun.push_str("                Some(Err(e)) => return Err(e),\n");
-    fun.push_str("                None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+    fun.push_str("                None => return Err(DxfError::UnexpectedEndOfInput),\n");
     fun.push_str("            }\n");
     fun.push_str("        },\n");
     fun.push_str("        Some(Err(e)) => return Err(e),\n");
-    fun.push_str("        None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+    fun.push_str("        None => return Err(DxfError::UnexpectedEndOfInput),\n");
     fun.push_str("    }\n");
     fun.push_str("\n");
     fun.push_str("    Ok(())\n");
@@ -137,8 +136,8 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     for table in &element.children {
         let table_item = &table.children[0];
 
-        fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> io::Result<()>\n", collection=attr(&table, "Collection")));
-        fun.push_str("    where I: Iterator<Item = io::Result<CodePair>> {\n");
+        fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
         fun.push_str("    loop {\n");
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
@@ -194,7 +193,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                                }\n");
         fun.push_str("                            },\n");
         fun.push_str("                            Some(Err(e)) => return Err(e),\n");
-        fun.push_str("                            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+        fun.push_str("                            None => return Err(DxfError::UnexpectedEndOfInput),\n");
         fun.push_str("                        }\n");
         fun.push_str("                    }\n");
         fun.push_str("\n");
@@ -205,7 +204,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                }\n");
         fun.push_str("            },\n");
         fun.push_str("            Some(Err(e)) => return Err(e),\n");
-        fun.push_str("            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected end of input\")),\n");
+        fun.push_str("            None => return Err(DxfError::UnexpectedEndOfInput),\n");
         fun.push_str("        }\n");
         fun.push_str("    }\n");
         fun.push_str("\n");
@@ -216,7 +215,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
-    fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n");
+    fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
     fun.push_str("    where T: Write {\n");
     for table in &element.children {
         fun.push_str(&format!("    try!(write_{collection}(drawing, write_handles, writer));\n", collection=attr(&table, "Collection")));
@@ -228,7 +227,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
     for table in &element.children {
         let table_item = &table.children[0];
-        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
         fun.push_str(&format!("    if drawing.{collection}.len() == 0 {{\n", collection=attr(&table, "Collection")));
         fun.push_str("        return Ok(()) // nothing to write\n");

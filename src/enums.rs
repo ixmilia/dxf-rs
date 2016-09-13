@@ -2,7 +2,7 @@
 
 extern crate num;
 
-use std::io;
+use ::{DxfError, DxfResult};
 
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
@@ -43,7 +43,7 @@ pub enum AcadVersion {
 }
 
 impl AcadVersion {
-    pub fn from(val: String) -> io::Result<AcadVersion> {
+    pub fn from(val: String) -> DxfResult<AcadVersion> {
         match &*val {
             "MC0.0" => Ok(AcadVersion::Version_1_0),
             "AC1.2" => Ok(AcadVersion::Version_1_2),
@@ -84,7 +84,7 @@ impl AcadVersion {
             "19.1" => Ok(AcadVersion::R2013),
             "19.2" => Ok(AcadVersion::R2013),
             "19.3" => Ok(AcadVersion::R2013),
-            _ => Err(io::Error::new(io::ErrorKind::InvalidData, format!("unsupported version {}", val))),
+            _ => Err(DxfError::UnexpectedEnumValue),
         }
     }
     pub fn to_string(&self) -> String {

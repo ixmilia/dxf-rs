@@ -47,7 +47,7 @@ pub fn generate_writer(element: &Element) -> bool {
 }
 
 pub fn get_field_reader(element: &Element) -> String {
-    let expected_type = get_expected_type(code(&element)).ok().unwrap();
+    let expected_type = get_expected_type(code(&element)).unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let mut read_converter = attr(&element, "ReadConverter");
     if read_converter.is_empty() {

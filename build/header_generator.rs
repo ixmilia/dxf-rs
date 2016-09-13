@@ -17,12 +17,12 @@ pub fn generate_header() {
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 // types from `lib.rs`.
-use ::{CodePair, CodePairAsciiWriter, Color, LineWeight, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, Color, DxfError, DxfResult, LineWeight, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
-use std::io;
+
 use std::io::Write;
 
 extern crate chrono;
@@ -34,12 +34,12 @@ use self::time::Duration;
 extern crate uuid;
 use self::uuid::Uuid;
 
-// Used to turn Option<T> into io::Result.
+// Used to turn Option<T> into DxfResult<T>.
 macro_rules! try_result {
     ($expr : expr) => (
         match $expr {
             Some(v) => v,
-            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected enum value\"))
+            None => return Err(DxfError::UnexpectedEnumValue)
         }
     )
 }
@@ -148,7 +148,7 @@ fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
 fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
     fun.push_str("    /// Sets the header variable as specified by the `CodePair`.\n");
-    fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> io::Result<()> {\n");
+    fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
@@ -177,7 +177,7 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
                     let read_cmd = get_read_command(&v);
                     fun.push_str(&format!("                    {code} => self.{field} = {cmd},\n", code=v.code, field=v.field, cmd=read_cmd));
                 }
-                fun.push_str(&format!("                    _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!(\"expected code {:?}, got {{}}\", pair.code))),\n", expected_codes));
+                fun.push_str(&format!("                    _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from(\"expected code {:?}\"))),\n", expected_codes));
                 fun.push_str("                }\n");
                 fun.push_str("            ");
             }
@@ -193,7 +193,7 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
 }
 
 fn get_read_command(variable: &HeaderVariable) -> String {
-    let expected_type = get_expected_type(variable.code).ok().unwrap();
+    let expected_type = get_expected_type(variable.code).unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let converter = if variable.read_converter.is_empty() { "{}" } else { &variable.read_converter };
     converter.replace("{}", &format!("pair.value.{}()", reader_fun))
@@ -201,7 +201,7 @@ fn get_read_command(variable: &HeaderVariable) -> String {
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("    /// Writes the `CodePair`s representing the header to the specified writer.\n");
-    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()> where T: Write {\n");
+    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()> where T: Write {\n");
     for v in variables {
         // prepare writing predicate
         let mut parts = vec![];
@@ -227,7 +227,7 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
         fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_str(9, \"${name}\")));\n", name=v.name, indent=indent));
         let write_converter = if v.write_converter.is_empty() { "{}" } else { &v.write_converter };
         if v.code > 0 {
-            let expected_type = get_code_pair_type(get_expected_type(v.code).ok().unwrap());
+            let expected_type = get_code_pair_type(get_expected_type(v.code).unwrap());
             let value = write_converter.replace("{}", &format!("self.{}", v.field));
             fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
                 code=v.code,

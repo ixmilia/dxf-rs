@@ -18,21 +18,20 @@ pub fn generate_entities() {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-use ::{CodePair, CodePairAsciiWriter, Color, LwPolylineVertex, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, Color, DxfError, DxfResult, LwPolylineVertex, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
 
-use std::io;
 use std::io::Write;
 
-// Used to turn Option<T> into io::Result.
+// Used to turn Option<T> into DxfResult<T>.
 macro_rules! try_result {
     ($expr : expr) => (
         match $expr {
             Some(v) => v,
-            None => return Err(io::Error::new(io::ErrorKind::InvalidData, \"unexpected enum value\"))
+            None => return Err(DxfError::UnexpectedEnumValue)
         }
     )
 }
@@ -109,7 +108,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> io::Result<()> {\n");
+    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
         if c.name == "Field" {
@@ -133,7 +132,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n");
+    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("        let ent = self;\n");
     for line in generate_write_code_pairs(&entity) {
@@ -307,7 +306,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
 }
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
-    fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &CodePair) -> io::Result<bool> {\n");
+    fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
     fun.push_str("        match self {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
@@ -377,7 +376,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 }
 
 fn generate_write(fun: &mut String, element: &Element) {
-    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>\n");
+    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {
