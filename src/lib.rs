@@ -121,7 +121,7 @@ use helper_functions::*;
 //------------------------------------------------------------------------------
 //                                                                 CodePairValue
 //------------------------------------------------------------------------------
-/// (INTERNAL USE ONLY) Represents a single value in a `CodePair`
+#[doc(hidden)]
 #[derive(Debug)]
 pub enum CodePairValue {
     Boolean(bool),
@@ -135,45 +135,34 @@ pub enum CodePairValue {
 //------------------------------------------------------------------------------
 //                                                                      CodePair
 //------------------------------------------------------------------------------
-/// (INTERNAL USE ONLY) Represents a numeric code (a loose indicator of the type
-/// of `value`) and the actual value of a code pair.
+#[doc(hidden)]
 pub struct CodePair {
-    /// (INTERNAL USE ONLY) The numeric code of the pair.
     code: i32,
-    /// (INTERNAL USE ONLY) The value of the pair.
     value: CodePairValue,
 }
 
 impl CodePair {
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` with the specified code and value.
     pub fn new(code: i32, val: CodePairValue) -> CodePair {
         CodePair { code: code, value: val }
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `&str`.
     pub fn new_str(code: i32, val: &str) -> CodePair {
         CodePair::new(code, CodePairValue::Str(val.to_string()))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `String`.
     pub fn new_string(code: i32, val: &String) -> CodePair {
         CodePair::new(code, CodePairValue::Str(val.clone()))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i16`.
     pub fn new_short(code: i32, val: i16) -> CodePair {
         CodePair::new(code, CodePairValue::Short(val))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `f64`.
     pub fn new_double(code: i32, val: f64) -> CodePair {
         CodePair::new(code, CodePairValue::Double(val))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i64`.
     pub fn new_long(code: i32, val: i64) -> CodePair {
         CodePair::new(code, CodePairValue::Long(val))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `i32`.
     pub fn new_int(code: i32, val: i32) -> CodePair {
         CodePair::new(code, CodePairValue::Integer(val))
     }
-    /// (INTERNAL USE ONLY) Creates a new `CodePair` from a code and `bool`.
     pub fn new_bool(code: i32, val: bool) -> CodePair {
         CodePair::new(code, CodePairValue::Boolean(val))
     }
@@ -252,14 +241,13 @@ impl<T: Read> Iterator for CodePairAsciiIter<T> {
 //------------------------------------------------------------------------------
 //                                                           CodePairAsciiWriter
 //------------------------------------------------------------------------------
-/// (INTERNAL USE ONLY) Used for writing DXF files.
+#[doc(hidden)]
 pub struct CodePairAsciiWriter<T>
     where T: Write {
     writer: T,
 }
 
 impl<T: Write> CodePairAsciiWriter<T> {
-    /// (INTERNAL USE ONLY) Writes the specified code pair.
     pub fn write_code_pair(&mut self, pair: &CodePair) -> io::Result<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
         let str_val = match &pair.value {
@@ -280,7 +268,7 @@ impl<T: Write> CodePairAsciiWriter<T> {
 //------------------------------------------------------------------------------
 // implementation is in `header.rs`
 impl Header {
-    /// (INTERNAL USE ONLY) Reads in the header.
+    #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Header>
         where I: Iterator<Item = io::Result<CodePair>> {
         let mut header = Header::new();
@@ -321,7 +309,7 @@ impl Header {
 
         Ok(header)
     }
-    /// (INTERNAL USE ONLY) Writes the header.
+    #[doc(hidden)]
     pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write
     {
@@ -377,7 +365,7 @@ impl Entity {
             specific: specific,
         }
     }
-    /// (INTERNAL USE ONLY) Reads the next `Entity`.
+    #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> io::Result<Option<Entity>>
         where I: Iterator<Item = io::Result<CodePair>>
     {
@@ -770,7 +758,7 @@ impl Entity {
 
         Ok(true)
     }
-    /// (INTERNAL USE ONLY) Writes the `Entity`.
+    #[doc(hidden)]
     pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> io::Result<()>
         where T: Write {
         if self.specific.is_supported_on_version(version) {
@@ -1113,7 +1101,7 @@ impl Drawing {
 
         Ok(())
     }
-    /// (INTERNAL USE ONLY) Swallows the unsupported table.
+    #[doc(hidden)]
     pub fn swallow_table<I>(iter: &mut PutBack<I>) -> io::Result<()>
         where I: Iterator<Item = io::Result<CodePair>> {
         loop {
@@ -1182,7 +1170,7 @@ impl Point {
     pub fn origin() -> Point {
         Point::new(0.0, 0.0, 0.0)
     }
-    /// (INTERNAL USE ONLY) Sets a point's fields based on the given `CodePair`.
+    #[doc(hidden)]
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
@@ -1234,7 +1222,7 @@ impl Vector {
     pub fn z_axis() -> Vector {
         Vector::new(0.0, 0.0, 1.0)
     }
-    // (INTERNAL USE ONLY) Sets a vector's fields based on the given `CodePair`.
+    #[doc(hidden)]
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
             10 => self.x = double_value(&pair.value),
@@ -1322,11 +1310,11 @@ impl Color {
             None
         }
     }
-    /// (INTERNAL USE ONLY) Gets the raw `i16` value of the color.
+    #[doc(hidden)]
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
-    /// (INTERNAL USE ONLY) Creates a new `Color` from the raw `i16` value.
+    #[doc(hidden)]
     pub fn from_raw_value(val: i16) -> Color {
         Color { raw_value: val }
     }
@@ -1346,7 +1334,7 @@ impl Color {
     pub fn from_index(i: u8) -> Color {
         Color { raw_value: i as i16 }
     }
-    /// (INTERNAL USE ONLY) Gets a color value for a `Layer` that is suitable to be written to a file.
+    #[doc(hidden)]
     pub fn get_writable_color_value(&self, layer: &Layer) -> i16 {
        let value = match self.get_raw_value().abs() {
             0 | 256 => 7i16, // BYLAYER and BYBLOCK aren't valid
@@ -1374,7 +1362,7 @@ impl LineWeight {
     pub fn new() -> LineWeight {
         LineWeight::from_raw_value(0)
     }
-    /// (INTERNAL USE ONLY) Creates a new `LineWeight` from a raw `i16` value.
+    #[doc(hidden)]
     pub fn from_raw_value(v: i16) -> LineWeight {
         LineWeight { raw_value: v }
     }
@@ -1386,7 +1374,7 @@ impl LineWeight {
     pub fn by_layer() -> LineWeight {
         LineWeight::from_raw_value(-2)
     }
-    /// (INTERNAL USE ONLY) Gets the raw `i16` value representing the line weight.
+    #[doc(hidden)]
     pub fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
