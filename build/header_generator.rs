@@ -269,8 +269,8 @@ fn gather_variables() -> Vec<HeaderVariable> {
     let parser = EventReader::new(file);
     let mut header_variables: Vec<HeaderVariable> = vec![];
     for e in parser {
-        match e {
-            Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+        match e.unwrap() {
+            XmlEvent::StartElement { name, attributes, .. } => {
                 match &*name.local_name {
                     "Variable" => {
                         let mut var = HeaderVariable::new();
@@ -312,12 +312,9 @@ fn gather_variables() -> Vec<HeaderVariable> {
                     _ => panic!("unexpected start element: {}", name)
                 }
             },
-            Ok(XmlEvent::EndElement { name: _ }) => {
+            XmlEvent::EndElement { name: _ } => {
 
             },
-            Err(e) => {
-                panic!("unable to read xml: {}", e);
-            }
             _ => (),
         }
     }
