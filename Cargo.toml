@@ -1,7 +1,7 @@
 [package]
 name = "dxf"
 version = "0.1.0"
-authors = ["brettfo"]
+authors = ["Brett V. Forsgren <brett.forsgren@outlook.com>"]
 build = "build/build.rs"
 
 [dependencies]
