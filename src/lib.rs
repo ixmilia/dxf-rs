@@ -895,16 +895,6 @@ pub struct Drawing {
     pub view_ports: Vec<ViewPort>,
 }
 
-// Used to turn Result<T> into io::Result<T>
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
-            Ok(v) => v,
-            Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-        }
-    )
-}
-
 // public implementation
 impl Drawing {
     /// Creates a new empty `Drawing`.
