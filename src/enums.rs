@@ -689,16 +689,9 @@ pub enum Units {
 }
 }
 
+#[derive(Clone, Copy, Default, PartialEq)]
 pub struct ViewMode {
     flags: i32,
-}
-
-impl Default for ViewMode {
-    fn default() -> Self {
-        ViewMode {
-            flags: 0,
-        }
-    }
 }
 
 impl ViewMode {

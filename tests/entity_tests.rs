@@ -608,3 +608,132 @@ fn write_polyline() {
         "  0", "SEQEND", // end sequence
     ].join("\r\n"));
 }
+
+#[test]
+fn read_lw_polyline_with_no_vertices() {
+    let drawing = from_section("ENTITIES", vec![
+        "0", "LWPOLYLINE",
+            "43", "43.0",
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match &drawing.entities[0].specific {
+        &EntityType::LwPolyline(ref poly) => {
+            assert_eq!(43.0, poly.constant_width);
+            assert_eq!(0, poly.vertices.len());
+        },
+        _ => panic!("expected an LWPOLYLINE"),
+    }
+}
+
+#[test]
+fn read_lw_polyline_with_one_vertex() {
+    let drawing = from_section("ENTITIES", vec![
+        "0", "LWPOLYLINE",
+            "43", "43.0",
+            // vertex 1
+            "10", "1.1",
+            "20", "2.1",
+            "40", "40.1",
+            "41", "41.1",
+            "42", "42.1",
+            "91", "91",
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match &drawing.entities[0].specific {
+        &EntityType::LwPolyline(ref poly) => {
+            assert_eq!(43.0, poly.constant_width);
+            assert_eq!(1, poly.vertices.len());
+            // vertex 1
+            assert_eq!(1.1, poly.vertices[0].x);
+            assert_eq!(2.1, poly.vertices[0].y);
+            assert_eq!(40.1, poly.vertices[0].starting_width);
+            assert_eq!(41.1, poly.vertices[0].ending_width);
+            assert_eq!(42.1, poly.vertices[0].bulge);
+            assert_eq!(91, poly.vertices[0].id);
+        },
+        _ => panic!("expected an LWPOLYLINE"),
+    }
+}
+
+#[test]
+fn read_lw_polyline_with_multiple_vertices() {
+    let drawing = from_section("ENTITIES", vec![
+        "0", "LWPOLYLINE",
+            "43", "43.0",
+            // vertex 1
+            "10", "1.1",
+            "20", "2.1",
+            "40", "40.1",
+            "41", "41.1",
+            "42", "42.1",
+            "91", "91",
+            // vertex 2
+            "10", "1.2",
+            "20", "2.2",
+            "40", "40.2",
+            "41", "41.2",
+            "42", "42.2",
+            "91", "92",
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match &drawing.entities[0].specific {
+        &EntityType::LwPolyline(ref poly) => {
+            assert_eq!(43.0, poly.constant_width);
+            assert_eq!(2, poly.vertices.len());
+            // vertex 1
+            assert_eq!(1.1, poly.vertices[0].x);
+            assert_eq!(2.1, poly.vertices[0].y);
+            assert_eq!(40.1, poly.vertices[0].starting_width);
+            assert_eq!(41.1, poly.vertices[0].ending_width);
+            assert_eq!(42.1, poly.vertices[0].bulge);
+            assert_eq!(91, poly.vertices[0].id);
+            // vertex 2
+            assert_eq!(1.2, poly.vertices[1].x);
+            assert_eq!(2.2, poly.vertices[1].y);
+            assert_eq!(40.2, poly.vertices[1].starting_width);
+            assert_eq!(41.2, poly.vertices[1].ending_width);
+            assert_eq!(42.2, poly.vertices[1].bulge);
+            assert_eq!(92, poly.vertices[1].id);
+        },
+        _ => panic!("expected an LWPOLYLINE"),
+    }
+}
+
+#[test]
+fn write_lw_polyline() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R2013;
+    let mut poly = LwPolyline::new();
+    poly.constant_width = 43.0;
+    poly.vertices.push(LwPolylineVertex {
+        x: 1.1,
+        y: 2.1,
+        .. Default::default()
+    });
+    poly.vertices.push(LwPolylineVertex {
+        x: 1.2,
+        y: 2.2,
+        starting_width: 40.2,
+        ending_width: 41.2,
+        bulge: 42.2,
+        id: 92,
+    });
+    drawing.entities.push(Entity::new(EntityType::LwPolyline(poly)));
+    assert_contains(&drawing, vec![
+        "100", "AcDbPolyline",
+        " 90", "2",
+        " 70", "0",
+        " 43", "43.000000000000",
+        // vertex 1
+        " 10", "1.100000000000",
+        " 20", "2.100000000000",
+        " 91", "0",
+        // vertex 2
+        " 10", "1.200000000000",
+        " 20", "2.200000000000",
+        " 91", "92",
+        " 40", "40.200000000000",
+        " 41", "41.200000000000",
+        " 42", "42.200000000000",
+    ].join("\r\n"));
+}

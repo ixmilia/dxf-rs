@@ -586,30 +586,30 @@
     LWPOLYLINE
 
     -->
-  <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14">
+  <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14" GenerateReaderFunction="false">
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_closed" Mask="1" />
       <Flag Name="is_pline_gen" Mask="128" />
     </Field>
     <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <!-- <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="vec![]" AllowMultiples="true" /> -->
+    <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbPolyline")' />
-      <!-- <WriteSpecificValue Code="90" Value="ent.vertices.len() as i32" /> -->
+      <WriteSpecificValue Code="90" Value="ent.vertices.len() as i32" />
       <WriteField Field="flags" />
       <WriteField Field="constant_width" />
       <WriteSpecificValue Code="38" Value="common.elevation" DontWriteIfValueIs="0.0" />
       <WriteField Field="thickness" />
-      <!-- <Foreach Field="ent.vertices">
+      <Foreach Field="ent.vertices">
         <WriteSpecificValue Code="10" Value="item.x" />
         <WriteSpecificValue Code="20" Value="item.y" />
-        <WriteSpecificValue Code="91" Value="item.Identifier" MinVersion="R2013" />
-        <WriteSpecificValue Code="40" Value="item.StartingWidth" DontWriteIfValueIs="0.0" />
-        <WriteSpecificValue Code="41" Value="item.EndingWidth" DontWriteIfValueIs="0.0" />
-        <WriteSpecificValue Code="42" Value="item.Bulge" DontWriteIfValueIs="0.0" />
-      </Foreach> -->
+        <WriteSpecificValue Code="91" Value="item.id" MinVersion="R2013" />
+        <WriteSpecificValue Code="40" Value="item.starting_width" DontWriteIfValueIs="0.0" />
+        <WriteSpecificValue Code="41" Value="item.ending_width" DontWriteIfValueIs="0.0" />
+        <WriteSpecificValue Code="42" Value="item.bulge" DontWriteIfValueIs="0.0" />
+      </Foreach>
       <WriteField Field="extrusion_direction" />
     </WriteOrder>
   </Entity>

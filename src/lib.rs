@@ -359,6 +359,15 @@ macro_rules! try_result {
         }
     )
 }
+// Used to safely access the last element in a Vec<T>
+macro_rules! vec_last {
+    ($expr : expr) => (
+        match $expr.len() {
+            0 => return Err(io::Error::new(io::ErrorKind::InvalidData, "expected at least one item")),
+            l => &mut $expr[l - 1],
+        }
+    )
+}
 // implementation is in `entity.rs`
 impl Entity {
     /// Creates a new `Entity` with the default common values.
@@ -667,6 +676,32 @@ impl Entity {
                         },
                         340 => { att.secondary_attributes.push(try!(as_u32(string_value(&pair.value)))); },
                         -1 => { att.m_text = try!(as_u32(string_value(&pair.value))); },
+                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                    }
+                }
+            },
+            EntityType::LwPolyline(ref mut poly) => {
+                loop {
+                    let pair = next_pair!(iter);
+                    match pair.code {
+                        // vertex-specific pairs
+                        10 => {
+                            // start a new vertex
+                            poly.vertices.push(LwPolylineVertex::new());
+                            vec_last!(poly.vertices).x = double_value(&pair.value);
+                        },
+                        20 => { vec_last!(poly.vertices).y = double_value(&pair.value); },
+                        40 => { vec_last!(poly.vertices).starting_width = double_value(&pair.value); },
+                        41 => { vec_last!(poly.vertices).ending_width = double_value(&pair.value); },
+                        42 => { vec_last!(poly.vertices).bulge = double_value(&pair.value); },
+                        91 => { vec_last!(poly.vertices).id = int_value(&pair.value); },
+                        // other pairs
+                        39 => { poly.thickness = double_value(&pair.value); },
+                        43 => { poly.constant_width = double_value(&pair.value); },
+                        70 => { poly.flags = short_value(&pair.value) as i32; },
+                        210 => { poly.extrusion_direction.x = double_value(&pair.value); },
+                        220 => { poly.extrusion_direction.y = double_value(&pair.value); },
+                        230 => { poly.extrusion_direction.z = double_value(&pair.value); },
                         _ => { try!(self.common.apply_individual_pair(&pair)); },
                     }
                 }
@@ -1209,6 +1244,26 @@ impl Vector {
         }
 
         Ok(())
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                              LwPolylineVertex
+//------------------------------------------------------------------------------
+/// Represents a single vertex of a `LwPolyline`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct LwPolylineVertex {
+    pub x: f64,
+    pub y: f64,
+    pub id: i32,
+    pub starting_width: f64,
+    pub ending_width: f64,
+    pub bulge: f64,
+}
+
+impl LwPolylineVertex {
+    pub fn new() -> Self {
+        Default::default()
     }
 }
 

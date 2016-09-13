@@ -18,7 +18,7 @@ pub fn generate_entities() {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-use ::{CodePair, CodePairAsciiWriter, Color, Point, Vector};
+use ::{CodePair, CodePairAsciiWriter, Color, LwPolylineVertex, Point, Vector};
 use ::helper_functions::*;
 
 use enums::*;
@@ -463,6 +463,9 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
             }
             if !max_version(&write_command).is_empty() {
                 predicates.push(format!("*version <= AcadVersion::{}", max_version(&write_command)));
+            }
+            if !attr(&write_command, "DontWriteIfValueIs").is_empty() {
+                predicates.push(format!("{} != {}", attr(&write_command, "Value"), attr(&write_command, "DontWriteIfValueIs")));
             }
             let code = code(&write_command);
             let expected_type = get_expected_type(code).unwrap();
