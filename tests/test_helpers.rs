@@ -9,7 +9,10 @@ pub mod helpers {
     use ::std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
     pub fn parse_drawing(s: &str) -> Drawing {
-        Drawing::load(s.as_bytes()).ok().unwrap()
+        match Drawing::load(s.as_bytes()) {
+            Ok(drawing) => drawing,
+            Err(e) => panic!("unable to parse drawing: {:?}: {}", e, e),
+        }
     }
 
     pub fn from_section(section: &str, body: &str) -> Drawing {

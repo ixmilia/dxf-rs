@@ -180,7 +180,7 @@ pub fn parse_bool(s: String) -> DxfResult<bool> {
 
 #[doc(hidden)]
 pub fn parse_f64(s: String) -> DxfResult<f64> {
-    match s.parse::<f64>() {
+    match s.trim().parse::<f64>() {
         Ok(d) => Ok(d),
         Err(e) => Err(DxfError::ParseFloatError(e)),
     }
@@ -188,7 +188,7 @@ pub fn parse_f64(s: String) -> DxfResult<f64> {
 
 #[doc(hidden)]
 pub fn parse_i32(s: String) -> DxfResult<i32> {
-    match s.parse::<i32>() {
+    match s.trim().parse::<i32>() {
         Ok(i) => Ok(i),
         Err(e) => Err(DxfError::ParseIntError(e)),
     }
@@ -196,7 +196,7 @@ pub fn parse_i32(s: String) -> DxfResult<i32> {
 
 #[doc(hidden)]
 pub fn parse_i64(s: String) -> DxfResult<i64> {
-    match s.parse::<i64>() {
+    match s.trim().parse::<i64>() {
         Ok(l) => Ok(l),
         Err(e) => Err(DxfError::ParseIntError(e)),
     }
@@ -204,7 +204,7 @@ pub fn parse_i64(s: String) -> DxfResult<i64> {
 
 #[doc(hidden)]
 pub fn parse_i16(s: String) -> DxfResult<i16> {
-    match s.parse::<i16>() {
+    match s.trim().parse::<i16>() {
         Ok(s) => Ok(s),
         Err(e) => Err(DxfError::ParseIntError(e)),
     }

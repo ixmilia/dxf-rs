@@ -80,3 +80,16 @@ fn round_trip() {
     assert_eq!(1, drawing.entities.len());
     assert_eq!(1, drawing.layers.len());
 }
+
+#[test]
+fn trim_whitespace_when_parsing_numbers() {
+    let drawing = parse_drawing(vec![
+        "0", "SECTION",
+        "2", "HEADER",
+        "9", "$OSMODE",
+        "70", "    13    ",
+        "0", "ENDSEC",
+        "0", "EOF",
+    ].join("\r\n").as_str());
+    assert_eq!(13, drawing.header.object_snap_flags);
+}
