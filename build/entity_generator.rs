@@ -123,7 +123,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         }
         else if c.name == "Pointer" {
             // TODO: proper handling of pointers
-            fun.push_str(&format!("            {code} => {{ self.{field} = try!(as_u32(string_value(&pair.value))) }},\n", code=code(&c), field=name(c)));
+            fun.push_str(&format!("            {code} => {{ self.{field} = try!(as_u32(pair.value.assert_string())) }},\n", code=code(&c), field=name(c)));
         }
     }
 
@@ -353,10 +353,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     else if f.name == "Pointer" {
                         // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(try!(as_u32(string_value(&pair.value)))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(try!(as_u32(pair.value.assert_string()))); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field} = try!(as_u32(string_value(&pair.value))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.{field} = try!(as_u32(pair.value.assert_string())); }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }

@@ -9,51 +9,9 @@ use self::uuid::Uuid;
 use std::io;
 use enum_primitive::FromPrimitive;
 
-use ::{CodePairValue, Color};
+use ::Color;
 use ::enums::*;
 use ::tables::Layer;
-
-pub fn bool_value(value: &CodePairValue) -> bool {
-    match value {
-        &CodePairValue::Boolean(b) => b,
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
-
-pub fn long_value(value: &CodePairValue) -> i64 {
-    match value {
-        &CodePairValue::Long(l) => l,
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
-
-pub fn int_value(value: &CodePairValue) -> i32 {
-    match value {
-        &CodePairValue::Integer(i) => i,
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
-
-pub fn double_value(value: &CodePairValue) -> f64 {
-    match value {
-        &CodePairValue::Double(f) => f,
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
-
-pub fn string_value(value: &CodePairValue) -> String {
-    match value {
-        &CodePairValue::Str(ref s) => s.clone(),
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
-
-pub fn short_value(value: &CodePairValue) -> i16 {
-    match value {
-        &CodePairValue::Short(s) => s,
-        _ => panic!("this should never have happened, please file a bug"),
-    }
-}
 
 pub fn verify_code(expected: i32, actual: i32) -> io::Result<()> {
     if expected == actual {

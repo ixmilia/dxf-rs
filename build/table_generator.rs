@@ -110,7 +110,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("                return Err(io::Error::new(io::ErrorKind::InvalidData, \"expected table type\"));\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
-    fun.push_str("            match &*string_value(&pair.value) {\n");
+    fun.push_str("            match &*pair.value.assert_string() {\n");
 
     for table in &element.children {
         fun.push_str(&format!("                \"{table_name}\" => try!(read_{collection}(drawing, iter)),\n", table_name=attr(&table, "TypeString"), collection=attr(&table, "Collection")));
@@ -143,7 +143,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
         fun.push_str("                if pair.code == 0 {\n");
-         fun.push_str(&format!("                    if string_value(&pair.value) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
+         fun.push_str(&format!("                    if pair.value.assert_string() != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
         fun.push_str("                        iter.put_back(Ok(pair));\n");
         fun.push_str("                        break;\n");
         fun.push_str("                    }\n");
@@ -157,9 +157,9 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                            },\n");
         fun.push_str("                            Some(Ok(pair)) => {\n");
         fun.push_str("                                match pair.code {\n");
-        fun.push_str("                                    2 => item.name = string_value(&pair.value),\n");
-        fun.push_str("                                    5 => item.handle = try!(as_u32(string_value(&pair.value))),\n");
-        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(string_value(&pair.value))),\n");
+        fun.push_str("                                    2 => item.name = pair.value.assert_string(),\n");
+        fun.push_str("                                    5 => item.handle = try!(as_u32(pair.value.assert_string())),\n");
+        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(pair.value.assert_string())),\n");
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {
@@ -244,7 +244,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         // fun.push_str("\n");
 
         fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\")));\n");
-        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_short(70, 0)));\n");
+        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_i16(70, 0)));\n");
         fun.push_str(&format!("    for item in &drawing.{collection} {{\n", collection=attr(&table, "Collection")));
         fun.push_str(&format!("        try!(writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")));
         fun.push_str("        if write_handles {\n");
@@ -254,7 +254,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\")));\n");
         fun.push_str(&format!("        try!(writer.write_code_pair(&CodePair::new_str(100, \"{class_name}\")));\n", class_name=attr(&table_item, "ClassName")));
         fun.push_str("        try!(writer.write_code_pair(&CodePair::new_string(2, &item.name)));\n");
-        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_short(70, 0)));\n"); // TODO: flags
+        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_i16(70, 0)));\n"); // TODO: flags
         for field in &table_item.children {
             if generate_writer(&field) {
                 let mut predicates = vec![];
@@ -305,7 +305,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 2 => "z",
                                 _ => panic!("impossible"),
                             };
-                            fun.push_str(&format!("{indent}        try!(writer.write_code_pair(&CodePair::new_double({code}, item.{field}.{suffix})));\n",
+                            fun.push_str(&format!("{indent}        try!(writer.write_code_pair(&CodePair::new_f64({code}, item.{field}.{suffix})));\n",
                                 indent=indent, code=code, field=name(&field), suffix=suffix));
                         }
                     }

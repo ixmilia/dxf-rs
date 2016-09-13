@@ -53,7 +53,7 @@ pub fn get_field_reader(element: &Element) -> String {
     if read_converter.is_empty() {
         read_converter = String::from("{}");
     }
-    let read_cmd = format!("{reader}(&pair.value)", reader=reader_fun);
+    let read_cmd = format!("pair.value.{}()", reader_fun);
     read_converter.replace("{}", &read_cmd)
 }
 

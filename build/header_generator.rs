@@ -196,7 +196,7 @@ fn get_read_command(variable: &HeaderVariable) -> String {
     let expected_type = get_expected_type(variable.code).ok().unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let converter = if variable.read_converter.is_empty() { "{}" } else { &variable.read_converter };
-    converter.replace("{}", &format!("{}(&pair.value)", reader_fun))
+    converter.replace("{}", &format!("pair.value.{}()", reader_fun))
 }
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
@@ -245,7 +245,7 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
                     _ => panic!("unexpected number of values"),
                 };
                 let value = write_converter.replace("{}", &format!("self.{}.{}", v.field, field));
-                fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_double({code}, {value})));\n",
+                fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_f64({code}, {value})));\n",
                     code=code,
                     value=value,
                     indent=indent));

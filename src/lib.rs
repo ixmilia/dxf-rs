@@ -132,6 +132,45 @@ pub enum CodePairValue {
     Str(String),
 }
 
+impl CodePairValue {
+    pub fn assert_bool(&self) -> bool {
+        match self {
+            &CodePairValue::Boolean(b) => b,
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+    pub fn assert_i64(&self) -> i64 {
+        match self {
+            &CodePairValue::Long(l) => l,
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+    pub fn assert_i32(&self) -> i32 {
+        match self {
+            &CodePairValue::Integer(i) => i,
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+    pub fn assert_f64(&self) -> f64 {
+        match self {
+            &CodePairValue::Double(f) => f,
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+    pub fn assert_string(&self) -> String {
+        match self {
+            &CodePairValue::Str(ref s) => s.clone(),
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+    pub fn assert_i16(&self) -> i16 {
+        match self {
+            &CodePairValue::Short(s) => s,
+            _ => panic!("this should never have happened, please file a bug"),
+        }
+    }
+}
+
 //------------------------------------------------------------------------------
 //                                                                      CodePair
 //------------------------------------------------------------------------------
@@ -151,16 +190,16 @@ impl CodePair {
     pub fn new_string(code: i32, val: &String) -> CodePair {
         CodePair::new(code, CodePairValue::Str(val.clone()))
     }
-    pub fn new_short(code: i32, val: i16) -> CodePair {
+    pub fn new_i16(code: i32, val: i16) -> CodePair {
         CodePair::new(code, CodePairValue::Short(val))
     }
-    pub fn new_double(code: i32, val: f64) -> CodePair {
+    pub fn new_f64(code: i32, val: f64) -> CodePair {
         CodePair::new(code, CodePairValue::Double(val))
     }
-    pub fn new_long(code: i32, val: i64) -> CodePair {
+    pub fn new_i64(code: i32, val: i64) -> CodePair {
         CodePair::new(code, CodePairValue::Long(val))
     }
-    pub fn new_int(code: i32, val: i32) -> CodePair {
+    pub fn new_i32(code: i32, val: i32) -> CodePair {
         CodePair::new(code, CodePairValue::Integer(val))
     }
     pub fn new_bool(code: i32, val: bool) -> CodePair {
@@ -281,7 +320,7 @@ impl Header {
                             break;
                         },
                         9 => {
-                            let last_header_variable = string_value(&pair.value);
+                            let last_header_variable = pair.value.assert_string();
                             loop {
                                 match iter.next() {
                                     Some(Ok(pair)) => {
@@ -373,7 +412,7 @@ impl Entity {
             match iter.next() {
                 // first code pair must be 0/entity-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    let type_string = string_value(&pair.value);
+                    let type_string = pair.value.assert_string();
                     if type_string == "ENDSEC" {
                         iter.put_back(Ok(pair));
                         return Ok(None);
@@ -481,91 +520,91 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = string_value(&pair.value); },
-                        1 => { att.value = string_value(&pair.value); },
+                        100 => { last_subclass_marker = pair.value.assert_string(); },
+                        1 => { att.value = pair.value.assert_string(); },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = string_value(&pair.value);
+                                att.x_record_tag = pair.value.assert_string();
                             }
                             else {
-                                att.attribute_tag = string_value(&pair.value);
+                                att.attribute_tag = pair.value.assert_string();
                             }
                         },
-                        7 => { att.text_style_name = string_value(&pair.value); },
+                        7 => { att.text_style_name = pair.value.assert_string(); },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = double_value(&pair.value);
+                                att.alignment_point.x = pair.value.assert_f64();
                             }
                             else {
-                                att.location.x = double_value(&pair.value);
+                                att.location.x = pair.value.assert_f64();
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = double_value(&pair.value);
+                                att.alignment_point.y = pair.value.assert_f64();
                             }
                             else {
-                                att.location.y = double_value(&pair.value);
+                                att.location.y = pair.value.assert_f64();
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = double_value(&pair.value);
+                                att.alignment_point.z = pair.value.assert_f64();
                             }
                             else {
-                                att.location.z = double_value(&pair.value);
+                                att.location.z = pair.value.assert_f64();
                             }
                         },
-                        11 => { att.second_alignment_point.x = double_value(&pair.value); },
-                        21 => { att.second_alignment_point.y = double_value(&pair.value); },
-                        31 => { att.second_alignment_point.z = double_value(&pair.value); },
-                        39 => { att.thickness = double_value(&pair.value); },
+                        11 => { att.second_alignment_point.x = pair.value.assert_f64(); },
+                        21 => { att.second_alignment_point.y = pair.value.assert_f64(); },
+                        31 => { att.second_alignment_point.z = pair.value.assert_f64(); },
+                        39 => { att.thickness = pair.value.assert_f64(); },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = double_value(&pair.value);
+                                att.annotation_scale = pair.value.assert_f64();
                             }
                             else {
-                                att.text_height = double_value(&pair.value);
+                                att.text_height = pair.value.assert_f64();
                             }
                         },
-                        41 => { att.relative_x_scale_factor = double_value(&pair.value); },
-                        50 => { att.rotation = double_value(&pair.value); },
-                        51 => { att.oblique_angle = double_value(&pair.value); },
+                        41 => { att.relative_x_scale_factor = pair.value.assert_f64(); },
+                        50 => { att.rotation = pair.value.assert_f64(); },
+                        51 => { att.oblique_angle = pair.value.assert_f64(); },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(short_value(&pair.value))),
-                                    1 => att.is_really_locked = as_bool(short_value(&pair.value)),
-                                    2 => att._secondary_attribute_count = short_value(&pair.value) as i32,
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16())),
+                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()),
+                                    2 => att._secondary_attribute_count = pair.value.assert_i16() as i32,
                                     _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = short_value(&pair.value) as i32;
+                                att.flags = pair.value.assert_i16() as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = short_value(&pair.value) as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(short_value(&pair.value))); },
-                        73 => { att.field_length = short_value(&pair.value); },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(short_value(&pair.value))); },
-                        210 => { att.normal.x = double_value(&pair.value); },
-                        220 => { att.normal.y = double_value(&pair.value); },
-                        230 => { att.normal.z = double_value(&pair.value); },
+                        71 => { att.text_generation_flags = pair.value.assert_i16() as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16())); },
+                        73 => { att.field_length = pair.value.assert_i16(); },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16())); },
+                        210 => { att.normal.x = pair.value.assert_f64(); },
+                        220 => { att.normal.y = pair.value.assert_f64(); },
+                        230 => { att.normal.z = pair.value.assert_f64(); },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(short_value(&pair.value));
+                                att.keep_duplicate_records = as_bool(pair.value.assert_i16());
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(short_value(&pair.value)));
+                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()));
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(short_value(&pair.value));
+                                att.is_locked_in_block = as_bool(pair.value.assert_i16());
                             }
                         },
-                        340 => { att.secondary_attributes.push(try!(as_u32(string_value(&pair.value)))); },
-                        -1 => { att.m_text = try!(as_u32(string_value(&pair.value))); },
+                        340 => { att.secondary_attributes.push(try!(as_u32(pair.value.assert_string()))); },
+                        -1 => { att.m_text = try!(as_u32(pair.value.assert_string())); },
                         _ => { try!(self.common.apply_individual_pair(&pair)); },
                     }
                 }
@@ -578,92 +617,92 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = string_value(&pair.value); },
-                        1 => { att.value = string_value(&pair.value); },
+                        100 => { last_subclass_marker = pair.value.assert_string(); },
+                        1 => { att.value = pair.value.assert_string(); },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = string_value(&pair.value);
+                                att.x_record_tag = pair.value.assert_string();
                             }
                             else {
-                                att.text_tag = string_value(&pair.value);
+                                att.text_tag = pair.value.assert_string();
                             }
                         },
-                        3 => { att.prompt = string_value(&pair.value); },
-                        7 => { att.text_style_name = string_value(&pair.value); },
+                        3 => { att.prompt = pair.value.assert_string(); },
+                        7 => { att.text_style_name = pair.value.assert_string(); },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = double_value(&pair.value);
+                                att.alignment_point.x = pair.value.assert_f64();
                             }
                             else {
-                                att.location.x = double_value(&pair.value);
+                                att.location.x = pair.value.assert_f64();
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = double_value(&pair.value);
+                                att.alignment_point.y = pair.value.assert_f64();
                             }
                             else {
-                                att.location.y = double_value(&pair.value);
+                                att.location.y = pair.value.assert_f64();
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = double_value(&pair.value);
+                                att.alignment_point.z = pair.value.assert_f64();
                             }
                             else {
-                                att.location.z = double_value(&pair.value);
+                                att.location.z = pair.value.assert_f64();
                             }
                         },
-                        11 => { att.second_alignment_point.x = double_value(&pair.value); },
-                        21 => { att.second_alignment_point.y = double_value(&pair.value); },
-                        31 => { att.second_alignment_point.z = double_value(&pair.value); },
-                        39 => { att.thickness = double_value(&pair.value); },
+                        11 => { att.second_alignment_point.x = pair.value.assert_f64(); },
+                        21 => { att.second_alignment_point.y = pair.value.assert_f64(); },
+                        31 => { att.second_alignment_point.z = pair.value.assert_f64(); },
+                        39 => { att.thickness = pair.value.assert_f64(); },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = double_value(&pair.value);
+                                att.annotation_scale = pair.value.assert_f64();
                             }
                             else {
-                                att.text_height = double_value(&pair.value);
+                                att.text_height = pair.value.assert_f64();
                             }
                         },
-                        41 => { att.relative_x_scale_factor = double_value(&pair.value); },
-                        50 => { att.rotation = double_value(&pair.value); },
-                        51 => { att.oblique_angle = double_value(&pair.value); },
+                        41 => { att.relative_x_scale_factor = pair.value.assert_f64(); },
+                        50 => { att.rotation = pair.value.assert_f64(); },
+                        51 => { att.oblique_angle = pair.value.assert_f64(); },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(short_value(&pair.value))),
-                                    1 => att.is_really_locked = as_bool(short_value(&pair.value)),
-                                    2 => att._secondary_attribute_count = short_value(&pair.value) as i32,
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16())),
+                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()),
+                                    2 => att._secondary_attribute_count = pair.value.assert_i16() as i32,
                                     _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "unexpected extra value")),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = short_value(&pair.value) as i32;
+                                att.flags = pair.value.assert_i16() as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = short_value(&pair.value) as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(short_value(&pair.value))); },
-                        73 => { att.field_length = short_value(&pair.value); },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(short_value(&pair.value))); },
-                        210 => { att.normal.x = double_value(&pair.value); },
-                        220 => { att.normal.y = double_value(&pair.value); },
-                        230 => { att.normal.z = double_value(&pair.value); },
+                        71 => { att.text_generation_flags = pair.value.assert_i16() as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16())); },
+                        73 => { att.field_length = pair.value.assert_i16(); },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16())); },
+                        210 => { att.normal.x = pair.value.assert_f64(); },
+                        220 => { att.normal.y = pair.value.assert_f64(); },
+                        230 => { att.normal.z = pair.value.assert_f64(); },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(short_value(&pair.value));
+                                att.keep_duplicate_records = as_bool(pair.value.assert_i16());
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(short_value(&pair.value)));
+                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()));
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(short_value(&pair.value));
+                                att.is_locked_in_block = as_bool(pair.value.assert_i16());
                             }
                         },
-                        340 => { att.secondary_attributes.push(try!(as_u32(string_value(&pair.value)))); },
-                        -1 => { att.m_text = try!(as_u32(string_value(&pair.value))); },
+                        340 => { att.secondary_attributes.push(try!(as_u32(pair.value.assert_string()))); },
+                        -1 => { att.m_text = try!(as_u32(pair.value.assert_string())); },
                         _ => { try!(self.common.apply_individual_pair(&pair)); },
                     }
                 }
@@ -676,20 +715,20 @@ impl Entity {
                         10 => {
                             // start a new vertex
                             poly.vertices.push(LwPolylineVertex::new());
-                            vec_last!(poly.vertices).x = double_value(&pair.value);
+                            vec_last!(poly.vertices).x = pair.value.assert_f64();
                         },
-                        20 => { vec_last!(poly.vertices).y = double_value(&pair.value); },
-                        40 => { vec_last!(poly.vertices).starting_width = double_value(&pair.value); },
-                        41 => { vec_last!(poly.vertices).ending_width = double_value(&pair.value); },
-                        42 => { vec_last!(poly.vertices).bulge = double_value(&pair.value); },
-                        91 => { vec_last!(poly.vertices).id = int_value(&pair.value); },
+                        20 => { vec_last!(poly.vertices).y = pair.value.assert_f64(); },
+                        40 => { vec_last!(poly.vertices).starting_width = pair.value.assert_f64(); },
+                        41 => { vec_last!(poly.vertices).ending_width = pair.value.assert_f64(); },
+                        42 => { vec_last!(poly.vertices).bulge = pair.value.assert_f64(); },
+                        91 => { vec_last!(poly.vertices).id = pair.value.assert_i32(); },
                         // other pairs
-                        39 => { poly.thickness = double_value(&pair.value); },
-                        43 => { poly.constant_width = double_value(&pair.value); },
-                        70 => { poly.flags = short_value(&pair.value) as i32; },
-                        210 => { poly.extrusion_direction.x = double_value(&pair.value); },
-                        220 => { poly.extrusion_direction.y = double_value(&pair.value); },
-                        230 => { poly.extrusion_direction.z = double_value(&pair.value); },
+                        39 => { poly.thickness = pair.value.assert_f64(); },
+                        43 => { poly.constant_width = pair.value.assert_f64(); },
+                        70 => { poly.flags = pair.value.assert_i16() as i32; },
+                        210 => { poly.extrusion_direction.x = pair.value.assert_f64(); },
+                        220 => { poly.extrusion_direction.y = pair.value.assert_f64(); },
+                        230 => { poly.extrusion_direction.z = pair.value.assert_f64(); },
                         _ => { try!(self.common.apply_individual_pair(&pair)); },
                     }
                 }
@@ -700,55 +739,55 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        10 => { mtext.insertion_point.x = double_value(&pair.value); },
-                        20 => { mtext.insertion_point.y = double_value(&pair.value); },
-                        30 => { mtext.insertion_point.z = double_value(&pair.value); },
-                        40 => { mtext.initial_text_height = double_value(&pair.value); },
-                        41 => { mtext.reference_rectangle_width = double_value(&pair.value); },
-                        71 => { mtext.attachment_point = try_result!(AttachmentPoint::from_i16(short_value(&pair.value))); },
-                        72 => { mtext.drawing_direction = try_result!(DrawingDirection::from_i16(short_value(&pair.value))); },
-                        3 => { mtext.extended_text.push(string_value(&pair.value)); },
-                        1 => { mtext.text = string_value(&pair.value); },
-                        7 => { mtext.text_style_name = string_value(&pair.value); },
-                        210 => { mtext.extrusion_direction.x = double_value(&pair.value); },
-                        220 => { mtext.extrusion_direction.y = double_value(&pair.value); },
-                        230 => { mtext.extrusion_direction.z = double_value(&pair.value); },
-                        11 => { mtext.x_axis_direction.x = double_value(&pair.value); },
-                        21 => { mtext.x_axis_direction.y = double_value(&pair.value); },
-                        31 => { mtext.x_axis_direction.z = double_value(&pair.value); },
-                        42 => { mtext.horizontal_width = double_value(&pair.value); },
-                        43 => { mtext.vertical_height = double_value(&pair.value); },
+                        10 => { mtext.insertion_point.x = pair.value.assert_f64(); },
+                        20 => { mtext.insertion_point.y = pair.value.assert_f64(); },
+                        30 => { mtext.insertion_point.z = pair.value.assert_f64(); },
+                        40 => { mtext.initial_text_height = pair.value.assert_f64(); },
+                        41 => { mtext.reference_rectangle_width = pair.value.assert_f64(); },
+                        71 => { mtext.attachment_point = try_result!(AttachmentPoint::from_i16(pair.value.assert_i16())); },
+                        72 => { mtext.drawing_direction = try_result!(DrawingDirection::from_i16(pair.value.assert_i16())); },
+                        3 => { mtext.extended_text.push(pair.value.assert_string()); },
+                        1 => { mtext.text = pair.value.assert_string(); },
+                        7 => { mtext.text_style_name = pair.value.assert_string(); },
+                        210 => { mtext.extrusion_direction.x = pair.value.assert_f64(); },
+                        220 => { mtext.extrusion_direction.y = pair.value.assert_f64(); },
+                        230 => { mtext.extrusion_direction.z = pair.value.assert_f64(); },
+                        11 => { mtext.x_axis_direction.x = pair.value.assert_f64(); },
+                        21 => { mtext.x_axis_direction.y = pair.value.assert_f64(); },
+                        31 => { mtext.x_axis_direction.z = pair.value.assert_f64(); },
+                        42 => { mtext.horizontal_width = pair.value.assert_f64(); },
+                        43 => { mtext.vertical_height = pair.value.assert_f64(); },
                         50 => {
                             if reading_column_data {
                                 if read_column_count {
-                                    mtext.column_heights.push(double_value(&pair.value));
+                                    mtext.column_heights.push(pair.value.assert_f64());
                                 }
                                 else {
-                                    mtext.column_count = double_value(&pair.value) as i32;
+                                    mtext.column_count = pair.value.assert_f64() as i32;
                                     read_column_count = true;
                                 }
                             }
                             else {
-                                mtext.rotation_angle = double_value(&pair.value);
+                                mtext.rotation_angle = pair.value.assert_f64();
                             }
                         },
-                        73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(short_value(&pair.value))); },
-                        44 => { mtext.line_spacing_factor = double_value(&pair.value); },
-                        90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(int_value(&pair.value))); },
-                        420 => { mtext.background_color_rgb = int_value(&pair.value); },
-                        430 => { mtext.background_color_name = string_value(&pair.value); },
-                        45 => { mtext.fill_box_scale = double_value(&pair.value); },
-                        63 => { mtext.background_fill_color = Color::from_raw_value(short_value(&pair.value)); },
-                        441 => { mtext.background_fill_color_transparency = int_value(&pair.value); },
+                        73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(pair.value.assert_i16())); },
+                        44 => { mtext.line_spacing_factor = pair.value.assert_f64(); },
+                        90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(pair.value.assert_i32())); },
+                        420 => { mtext.background_color_rgb = pair.value.assert_i32(); },
+                        430 => { mtext.background_color_name = pair.value.assert_string(); },
+                        45 => { mtext.fill_box_scale = pair.value.assert_f64(); },
+                        63 => { mtext.background_fill_color = Color::from_raw_value(pair.value.assert_i16()); },
+                        441 => { mtext.background_fill_color_transparency = pair.value.assert_i32(); },
                         75 => {
-                            mtext.column_type = short_value(&pair.value);
+                            mtext.column_type = pair.value.assert_i16();
                             reading_column_data = true;
                         },
-                        76 => { mtext.column_count = short_value(&pair.value) as i32; },
-                        78 => { mtext.is_column_flow_reversed = as_bool(short_value(&pair.value)); },
-                        79 => { mtext.is_column_auto_height = as_bool(short_value(&pair.value)); },
-                        48 => { mtext.column_width = double_value(&pair.value); },
-                        49 => { mtext.column_gutter = double_value(&pair.value); },
+                        76 => { mtext.column_count = pair.value.assert_i16() as i32; },
+                        78 => { mtext.is_column_flow_reversed = as_bool(pair.value.assert_i16()); },
+                        79 => { mtext.is_column_auto_height = as_bool(pair.value.assert_i16()); },
+                        48 => { mtext.column_width = pair.value.assert_f64(); },
+                        49 => { mtext.column_gutter = pair.value.assert_f64(); },
                         _ => { try!(self.common.apply_individual_pair(&pair)); },
                     }
                 }
@@ -953,7 +992,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match &*string_value(&pair.value) {
+                    match &*pair.value.assert_string() {
                         "EOF" => {
                             iter.put_back(Ok(pair));
                             break;
@@ -993,7 +1032,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
-                    if pair.code == 0 && string_value(&pair.value) == "ENDSEC" {
+                    if pair.code == 0 && pair.value.assert_string() == "ENDSEC" {
                         iter.put_back(Ok(pair));
                         break;
                     }
@@ -1081,7 +1120,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*string_value(&pair.value) {
+                        match &*pair.value.assert_string() {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -1108,7 +1147,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*string_value(&pair.value) {
+                        match &*pair.value.assert_string() {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -1173,9 +1212,9 @@ impl Point {
     #[doc(hidden)]
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
-            10 => self.x = double_value(&pair.value),
-            20 => self.y = double_value(&pair.value),
-            30 => self.z = double_value(&pair.value),
+            10 => self.x = pair.value.assert_f64(),
+            20 => self.y = pair.value.assert_f64(),
+            30 => self.z = pair.value.assert_f64(),
             _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Point: {}", pair.code))),
         }
 
@@ -1225,9 +1264,9 @@ impl Vector {
     #[doc(hidden)]
     pub fn set(&mut self, pair: &CodePair) -> io::Result<()> {
         match pair.code {
-            10 => self.x = double_value(&pair.value),
-            20 => self.y = double_value(&pair.value),
-            30 => self.z = double_value(&pair.value),
+            10 => self.x = pair.value.assert_f64(),
+            20 => self.y = pair.value.assert_f64(),
+            30 => self.z = pair.value.assert_f64(),
             _ => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("unexpected code for Vector: {}", pair.code))),
         }
 
