@@ -3,41 +3,11 @@
 
 A rust crate for reading and writing DXF CAD files.
 
-# Usage
+# Documentation
 
-Open a DXF file from disk:
+See the documentation [here](https://docs.rs/dxf/0.1.0/dxf/) on docs.rs.
 
-``` rust
-use dxf::Drawing;
-use dxf::entities::*;
-
-let drawing = try!(Drawing::load_file("path/to/file.dxf"));
-for e in drawing.entities {
-    println!("found entity on layer {}", e.common.layer);
-    match e.specific {
-        EntityType::Circle(ref circle) => {
-            // do something with the circle
-        },
-        EntityType::Line(ref line) => {
-            // do something with the line
-        },
-        _ => (),
-    }
-}
-```
-
-Saving a DXF file to disk:
-
-``` rust
-use dxf::Drawing;
-use dxf::entities::*;
-
-let mut drawing = Drawing::new();
-drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
-try!(drawing.save_file("path/to/file.dxf"));
-```
-
-# Reference
+# DXF Reference
 
 Since I don't want to fall afoul of Autodesk's lawyers, this repo can't include the actual DXF documentation.  It can,
 however contain links to the official documents that I've been able to scrape together.  For most scenarios the 2014
