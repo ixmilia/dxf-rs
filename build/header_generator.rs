@@ -54,7 +54,7 @@ macro_rules! try_result {
     generate_add_code_pairs(&mut fun, &variables);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/header.rs").ok().unwrap();
+    let mut file = File::create("src/generated/header.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

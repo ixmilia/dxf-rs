@@ -5,9 +5,22 @@ mod entity_generator;
 mod header_generator;
 mod table_generator;
 
+use std::fs::File;
+use std::io::Write;
+
 include!("../src/expected_type.rs");
 
 fn main() {
+    let _ = std::fs::create_dir("src/generated/"); // might fail if it's already there
+
+    let mut file = File::create("src/generated/mod.rs").ok().unwrap();
+    file.write_all("// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
+
+pub mod entities;
+pub mod header;
+pub mod tables;
+".as_bytes()).ok().unwrap();
+
     entity_generator::generate_entities();
     header_generator::generate_header();
     table_generator::generate_tables();

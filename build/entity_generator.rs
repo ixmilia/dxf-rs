@@ -47,7 +47,7 @@ macro_rules! try_result {
     generate_write(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/entities.rs").ok().unwrap();
+    let mut file = File::create("src/generated/entities.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

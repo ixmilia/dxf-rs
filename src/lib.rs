@@ -94,13 +94,21 @@
 extern crate itertools;
 
 pub mod enums;
-pub mod header;
-pub mod entities;
-pub mod tables;
 
-use self::header::*;
-use self::entities::*;
-use self::tables::*;
+mod generated;
+pub mod entities {
+    pub use generated::entities::*;
+}
+pub mod header {
+    pub use generated::header::*;
+}
+pub mod tables {
+    pub use generated::tables::*;
+}
+
+use entities::*;
+use header::*;
+use tables::*;
 
 use self::enums::*;
 use enum_primitive::FromPrimitive;
