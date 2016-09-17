@@ -1,11 +1,11 @@
 ﻿dxf-rs
 ======
 
-A rust crate for reading and writing DXF CAD files.
+A rust [crate](https://crates.io/crates/dxf) for reading and writing DXF CAD files.
 
 # Documentation
 
-See the documentation [here](https://docs.rs/dxf/0.1.0/dxf/) on docs.rs.
+See the documentation [here](https://docs.rs/dxf/) on docs.rs.
 
 # DXF Reference
 
