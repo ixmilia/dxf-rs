@@ -996,11 +996,11 @@ impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'
 #[derive(Clone, Debug, PartialEq)]
 pub struct Point {
     /// The X value of the point.
-    x: f64,
+    pub x: f64,
     /// The Y value of the point.
-    y: f64,
+    pub y: f64,
     /// The Z value of the point.
-    z: f64,
+    pub z: f64,
 }
 
 impl Point {
@@ -1036,11 +1036,11 @@ impl Point {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector {
     /// The X component of the vector.
-    x: f64,
+    pub x: f64,
     /// The Y component of the vector.
-    y: f64,
+    pub y: f64,
     /// The Z component of the vector.
-    z: f64,
+    pub z: f64,
 }
 
 impl Vector {
