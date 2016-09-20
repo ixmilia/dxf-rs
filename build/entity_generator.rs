@@ -58,6 +58,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("pub struct EntityCommon {\n");
     for c in &entity.children {
         let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
+        if !comment(&c).is_empty() {
+            fun.push_str(&format!("    /// {}\n", comment(&c)));
+        }
         match &*c.name {
             "Field" => {
                 fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=t));
@@ -174,6 +177,9 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
                 let acc = if attr(&f, "Accessibility") == "private" { "" } else { "pub " };
+                if !comment(&f).is_empty() {
+                    fun.push_str(&format!("    /// {}\n", comment(&f)));
+                }
                 match &*f.name {
                     "Field" => {
                         fun.push_str(&format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t));

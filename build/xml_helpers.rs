@@ -16,6 +16,10 @@ pub fn allow_multiples(element: &Element) -> bool {
     attr(element, "AllowMultiples") == "true"
 }
 
+pub fn comment(element: &Element) -> String {
+    attr(element, "Comment")
+}
+
 pub fn code(element: &Element) -> i32 {
     attr(element, "Code").parse::<i32>().unwrap()
 }
