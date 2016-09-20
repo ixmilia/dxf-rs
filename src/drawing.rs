@@ -160,7 +160,7 @@ impl Drawing {
                                         None => return Err(DxfError::UnexpectedEndOfInput),
                                     }
                                 },
-                                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/<section-name>"))),
+                                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 2/<section-name>"))),
                                 Some(Err(e)) => return Err(e),
                                 None => return Err(DxfError::UnexpectedEndOfInput),
                             }
