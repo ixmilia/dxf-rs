@@ -1,6 +1,7 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
+
 use self::dxf::*;
 use self::dxf::enums::*;
 use self::dxf::entities::*;
@@ -79,4 +80,15 @@ fn round_trip() {
     let drawing = parse_drawing(&to_test_string(&drawing));
     assert_eq!(1, drawing.entities.len());
     assert_eq!(1, drawing.layers.len());
+}
+
+#[test]
+fn parse_with_leading_bom() {
+    let buf = vec![
+        0xFEu8, 0xFF, // UTF-8 representation of BOM
+        '0' as u8,
+        '\n' as u8,
+        'E' as u8, 'O' as u8, 'F' as u8,
+    ];
+    let _drawing = Drawing::load(buf.as_slice());
 }

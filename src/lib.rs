@@ -339,10 +339,16 @@ macro_rules! try_into_result {
 // because I don't want to depend on BufRead here
 fn read_line<T>(reader: &mut T, result: &mut String) -> DxfResult<()>
     where T: Read {
-    for c in reader.bytes() { // .bytes() is OK since DXF files must be ASCII encoded
-        let c = try!(c) as char;
-        result.push(c);
-        if c == '\n' { break; }
+    for (i, c) in reader.bytes().enumerate() { // .bytes() is OK since DXF files must be ASCII encoded
+        let c = try!(c);
+        match (i, c) {
+            (0, 0xFE) | (1, 0xFF) => (),
+            _ => {
+                let c = c as char;
+                result.push(c);
+                if c == '\n' { break; }
+            }
+        }
     }
 
     Ok(())
