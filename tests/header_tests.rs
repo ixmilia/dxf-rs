@@ -71,21 +71,6 @@ $LUPREC
 }
 
 #[test]
-fn date_conversion_read() {
-    // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
-    let file = from_section("HEADER", vec!["  9", "$TDCREATE", " 40", "2451544.91568287"].join("\r\n").as_str());
-    assert_eq!(Local.ymd(1999, 12, 31).and_hms(21, 58, 35), file.header.creation_date);
-}
-
-#[test]
-fn date_conversion_write() {
-    // from AutoDesk spec: 2451544.91568287[0429] = 31 December 1999, 9:58:35PM
-    let mut file = Drawing::new();
-    file.header.creation_date = Local.ymd(1999, 12, 31).and_hms(21, 58, 35);
-    assert!(to_test_string(&file).contains(vec!["  9", "$TDCREATE", " 40", "2451544.915682870429"].join("\r\n").as_str()));
-}
-
-#[test]
 fn read_alternate_version() {
     let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "15.05"].join("\r\n").as_str());
     assert_eq!(AcadVersion::R2000, file.header.version);

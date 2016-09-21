@@ -37,40 +37,56 @@ fn f64_to_adjusted_duration(f: f64) -> Duration {
         + Duration::seconds(1)
 }
 
+fn get_epoch<T>(timezone: &T) -> DateTime<T>
+    where T: TimeZone {
+    timezone.ymd(1900, 1, 1).and_hms(0, 0, 0)
+}
+
+fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
+    where T: TimeZone {
+    // dates are represented as the fractional number of days elapsed since December 31, 1899.
+    let epoch = get_epoch(timezone);
+    let duration = if date == 0.0 { Duration::seconds(0) } else { f64_to_adjusted_duration(date) };
+    epoch + duration
+}
+
 #[doc(hidden)]
 pub fn as_datetime_local(date: f64) -> DateTime<Local> {
-    // dates are represented as the fractional number of days elapsed since December 31, 1899.
-    if date == 0.0 {
-        Local.ymd(1900, 1, 1).and_hms(0, 0, 0)
-    }
-    else {
-        Local.ymd(1900, 1, 1).and_hms(0, 0, 0) + f64_to_adjusted_duration(date)
-    }
+    as_datetime(&Local, date)
 }
 
 #[doc(hidden)]
 pub fn as_datetime_utc(date: f64) -> DateTime<UTC> {
-    // dates are represented as the fractional number of days elapsed since December 31, 1899.
-    if date == 0.0 {
-        UTC.ymd(1900, 1, 1).and_hms(0, 0, 0)
-    }
-    else {
-        UTC.ymd(1900, 1, 1).and_hms(0, 0, 0) + f64_to_adjusted_duration(date)
-    }
+    as_datetime(&UTC, date)
+}
+
+#[test]
+fn as_datetime_conversion_test() {
+    // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
+    assert_eq!(Local.ymd(1999, 12, 31).and_hms(21, 58, 35), as_datetime_local(2451544.91568287));
+}
+
+fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
+    where T: TimeZone {
+    let epoch = get_epoch(timezone);
+    let duration = date - epoch;
+    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
 }
 
 #[doc(hidden)]
 pub fn as_double_local(date: DateTime<Local>) -> f64 {
-    let epoch = Local.ymd(1900, 1, 1).and_hms(0, 0, 0);
-    let duration = date - epoch;
-    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
+    as_double(&Local, date)
 }
 
 #[doc(hidden)]
 pub fn as_double_utc(date: DateTime<UTC>) -> f64 {
-    let epoch = UTC.ymd(1900, 1, 1).and_hms(0, 0, 0);
-    let duration = date - epoch;
-    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
+    as_double(&UTC, date)
+}
+
+#[test]
+fn as_double_conversion_test() {
+    // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
+    assert_eq!(2451544.9156828704, as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35)));
 }
 
 #[doc(hidden)]
