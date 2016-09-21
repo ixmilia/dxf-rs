@@ -194,12 +194,22 @@ pub fn parse_bool(s: String) -> DxfResult<bool> {
     }
 }
 
+#[test]
+fn parse_bool_test() {
+    assert_eq!(true, parse_bool("  2 ".to_string()).unwrap());
+}
+
 #[doc(hidden)]
 pub fn parse_f64(s: String) -> DxfResult<f64> {
     match s.trim().parse::<f64>() {
         Ok(d) => Ok(d),
         Err(e) => Err(DxfError::ParseFloatError(e)),
     }
+}
+
+#[test]
+fn parse_f64_test() {
+    assert_eq!(3.14, parse_f64("  3.14 ".to_string()).unwrap());
 }
 
 #[doc(hidden)]
@@ -210,6 +220,11 @@ pub fn parse_i32(s: String) -> DxfResult<i32> {
     }
 }
 
+#[test]
+fn parse_i32_test() {
+    assert_eq!(2, parse_i32("  2 ".to_string()).unwrap());
+}
+
 #[doc(hidden)]
 pub fn parse_i64(s: String) -> DxfResult<i64> {
     match s.trim().parse::<i64>() {
@@ -218,12 +233,22 @@ pub fn parse_i64(s: String) -> DxfResult<i64> {
     }
 }
 
+#[test]
+fn parse_i64_test() {
+    assert_eq!(2, parse_i64("  2 ".to_string()).unwrap());
+}
+
 #[doc(hidden)]
 pub fn parse_i16(s: String) -> DxfResult<i16> {
     match s.trim().parse::<i16>() {
         Ok(s) => Ok(s),
         Err(e) => Err(DxfError::ParseIntError(e)),
     }
+}
+
+#[test]
+fn parse_i16_test() {
+    assert_eq!(2, parse_i16("  2 ".to_string()).unwrap());
 }
 
 #[doc(hidden)]
