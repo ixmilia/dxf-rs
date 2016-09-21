@@ -240,15 +240,18 @@ fn parse_i64_test() {
 
 #[doc(hidden)]
 pub fn parse_i16(s: String) -> DxfResult<i16> {
-    match s.trim().parse::<i16>() {
-        Ok(s) => Ok(s),
-        Err(e) => Err(DxfError::ParseIntError(e)),
+    match s.trim().parse::<f64>() {
+        Ok(s) => Ok(s as i16),
+        Err(e) => Err(DxfError::ParseFloatError(e)),
     }
 }
 
 #[test]
 fn parse_i16_test() {
     assert_eq!(2, parse_i16("  2 ".to_string()).unwrap());
+
+    // some files write shorts as a double
+    assert_eq!(2, parse_i16(" 2.0 ".to_string()).unwrap());
 }
 
 #[doc(hidden)]
