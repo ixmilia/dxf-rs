@@ -8,11 +8,15 @@ pub mod helpers {
     use dxf::*;
     use ::std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
-    pub fn parse_drawing(s: &str) -> Drawing {
-        match Drawing::load(s.as_bytes()) {
+    pub fn unwrap_drawing(result: DxfResult<Drawing>) -> Drawing {
+        match result {
             Ok(drawing) => drawing,
-            Err(e) => panic!("unable to parse drawing: {:?}: {}", e, e),
+            Err(e) => panic!("unable to load drawing: {:?}: {}", e, e),
         }
+    }
+
+    pub fn parse_drawing(s: &str) -> Drawing {
+        unwrap_drawing(Drawing::load(s.as_bytes()))
     }
 
     pub fn from_section(section: &str, body: &str) -> Drawing {

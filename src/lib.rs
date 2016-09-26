@@ -91,6 +91,7 @@
 //! (https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853)
 
 #[macro_use] extern crate enum_primitive;
+
 extern crate itertools;
 
 mod drawing;
@@ -119,13 +120,14 @@ use enum_primitive::FromPrimitive;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::io;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::num;
 
 use itertools::PutBack;
 
 include!("expected_type.rs");
 
+mod code_pair_iter;
 mod helper_functions;
 use helper_functions::*;
 
@@ -263,6 +265,7 @@ pub enum DxfError {
     ParseError,
     UnexpectedCode(i32),
     UnexpectedCodePair(CodePair, String),
+    UnexpectedByte(u8),
     UnexpectedEndOfInput,
     UnexpectedEnumValue,
     UnexpectedEmptySet,
@@ -284,6 +287,7 @@ impl Display for DxfError {
             &DxfError::ParseError => write!(formatter, "there was a general parsing error"),
             &DxfError::UnexpectedCode(c) => write!(formatter, "an unexpected code '{}' was encountered", c),
             &DxfError::UnexpectedCodePair(ref cp, ref s) => write!(formatter, "the code pair '{:?}' was not expected at this time: {}", cp, s),
+            &DxfError::UnexpectedByte(ref b) => write!(formatter, "the byte '{:x}' was not expected at this time", b),
             &DxfError::UnexpectedEndOfInput => write!(formatter, "the input unexpectedly ended before the drawing was completely loaded"),
             &DxfError::UnexpectedEnumValue => write!(formatter, "the specified enum value does not fall into the expected range"),
             &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
@@ -301,6 +305,7 @@ impl std::error::Error for DxfError {
             &DxfError::ParseError => "there was a general parsing error",
             &DxfError::UnexpectedCode(_) => "an unexpected code was encountered",
             &DxfError::UnexpectedCodePair(_, _) => "an unexpected code pair was encountered",
+            &DxfError::UnexpectedByte(_) => "an unexpected byte was encountered",
             &DxfError::UnexpectedEndOfInput => "the input unexpectedly ended before the drawing was completely loaded",
             &DxfError::UnexpectedEnumValue => "the specified enum value does not fall into the expected range",
             &DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
@@ -313,86 +318,6 @@ impl std::error::Error for DxfError {
             &DxfError::ParseFloatError(ref e) => Some(e),
             &DxfError::ParseIntError(ref e) => Some(e),
             _ => None,
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-//                                                             CodePairAsciiIter
-//------------------------------------------------------------------------------
-struct CodePairAsciiIter<T>
-    where T: Read
-{
-    reader: T,
-}
-
-// Used to turn Result<T> into Option<Result<T>>.
-macro_rules! try_into_result {
-    ($expr : expr) => (
-        match $expr {
-            Ok(v) => v,
-            Err(e) => return Some(Err(e)),
-        }
-    )
-}
-
-// because I don't want to depend on BufRead here
-fn read_line<T>(reader: &mut T, result: &mut String) -> DxfResult<()>
-    where T: Read {
-    for (i, c) in reader.bytes().enumerate() { // .bytes() is OK since DXF files must be ASCII encoded
-        let c = try!(c);
-        match (i, c) {
-            (0, 0xFE) | (1, 0xFF) => (),
-            _ => {
-                let c = c as char;
-                result.push(c);
-                if c == '\n' { break; }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-impl<T: Read> Iterator for CodePairAsciiIter<T> {
-    type Item = DxfResult<CodePair>;
-    fn next(&mut self) -> Option<DxfResult<CodePair>> {
-        loop {
-            // Read code.  If no line is available, fail gracefully.
-            let mut code_line = String::new();
-            match read_line(&mut self.reader, &mut code_line) {
-                Ok(_) => (),
-                Err(_) => return None,
-            }
-            let code_line = code_line.trim();
-            if code_line.is_empty() { return None; }
-            let code = try_into_result!(parse_i32(String::from(code_line)));
-
-            // Read value.  If no line is available die horribly.
-            let mut value_line = String::new();
-            try_into_result!(read_line(&mut self.reader, &mut value_line));
-            trim_trailing_newline(&mut value_line);
-
-            // construct the value pair
-            let expected_type = match get_expected_type(code) {
-                Some(t) => t,
-                None => return Some(Err(DxfError::UnexpectedEnumValue)),
-            };
-            let value = match expected_type {
-                ExpectedType::Boolean => CodePairValue::Boolean(try_into_result!(parse_bool(value_line))),
-                ExpectedType::Integer => CodePairValue::Integer(try_into_result!(parse_i32(value_line))),
-                ExpectedType::Long => CodePairValue::Long(try_into_result!(parse_i64(value_line))),
-                ExpectedType::Short => CodePairValue::Short(try_into_result!(parse_i16(value_line))),
-                ExpectedType::Double => CodePairValue::Double(try_into_result!(parse_f64(value_line))),
-                ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
-            };
-
-            if code != 999 {
-                return Some(Ok(CodePair {
-                    code: code,
-                    value: value,
-                }));
-            }
         }
     }
 }

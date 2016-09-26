@@ -92,3 +92,16 @@ fn parse_with_leading_bom() {
     ];
     let _drawing = Drawing::load(buf.as_slice());
 }
+
+#[test]
+fn read_binary_file() {
+    let drawing = unwrap_drawing(Drawing::load_file("./tests/diamond-bin.dxf"));
+    assert_eq!(12, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(45.0, 45.0, 0.0), line.p1);
+            assert_eq!(Point::new(45.0, -45.0, 0.0), line.p2);
+        },
+        _ => panic!("expected a line"),
+    }
+}

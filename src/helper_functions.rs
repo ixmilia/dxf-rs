@@ -255,16 +255,6 @@ fn parse_i16_test() {
 }
 
 #[doc(hidden)]
-pub fn trim_trailing_newline(s: &mut String) {
-    if s.ends_with('\n') {
-        s.pop();
-        if s.ends_with('\r') {
-            s.pop();
-        }
-    }
-}
-
-#[doc(hidden)]
 pub fn read_color_value(layer: &mut Layer, color: i16) -> Color {
     layer.is_layer_on = color >= 0;
     Color::from_raw_value(color.abs())

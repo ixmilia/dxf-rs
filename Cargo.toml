@@ -11,6 +11,7 @@ keywords = ["AutoCAD", "CAD", "DXF"]
 license = "Apache-2.0"
 
 [dependencies]
+byteorder = "0.5.3"
 chrono = "0.2.25"
 enum_primitive = "0.1.0"
 itertools = "0.4.18"

@@ -7,13 +7,14 @@ use tables::*;
 
 use ::{
     CodePair,
-    CodePairAsciiIter,
     CodePairAsciiWriter,
     CodePairValue,
     DxfError,
     DxfResult,
     EntityIter,
 };
+
+use code_pair_iter::CodePairIter;
 
 use std::fs::File;
 use std::io::{
@@ -72,7 +73,8 @@ impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: T) -> DxfResult<Drawing>
         where T: Read {
-        let reader = CodePairAsciiIter { reader: reader };
+
+        let reader = CodePairIter::new(reader);
         let mut drawing = Drawing::new();
         let mut iter = PutBack::new(reader);
         try!(Drawing::read_sections(&mut drawing, &mut iter));
