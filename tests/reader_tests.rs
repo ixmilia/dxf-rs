@@ -2,6 +2,13 @@
 
 extern crate dxf;
 
+use ::std::io::{
+    BufReader,
+    Cursor,
+    Seek,
+    SeekFrom,
+};
+
 use self::dxf::*;
 use self::dxf::enums::*;
 use self::dxf::entities::*;
@@ -101,6 +108,30 @@ fn read_binary_file() {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(45.0, 45.0, 0.0), line.p1);
             assert_eq!(Point::new(45.0, -45.0, 0.0), line.p2);
+        },
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
+fn read_binary_file_after_writing() {
+    let mut drawing = Drawing::new();
+    let line = Line {
+        p1: Point::new(1.1, 2.2, 3.3),
+        p2: Point::new(4.4, 5.5, 6.6),
+        .. Default::default()
+    };
+    drawing.entities.push(Entity::new(EntityType::Line(line)));
+    let mut buf = Cursor::new(vec![]);
+    drawing.save_binary(&mut buf).ok().unwrap();
+    buf.seek(SeekFrom::Start(0)).ok().unwrap();
+    let reader = BufReader::new(&mut buf);
+    let drawing = unwrap_drawing(Drawing::load(reader));
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(1.1, 2.2, 3.3), line.p1);
+            assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
         },
         _ => panic!("expected a line"),
     }

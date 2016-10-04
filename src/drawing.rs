@@ -7,7 +7,6 @@ use tables::*;
 
 use ::{
     CodePair,
-    CodePairAsciiWriter,
     CodePairValue,
     DxfError,
     DxfResult,
@@ -15,6 +14,7 @@ use ::{
 };
 
 use code_pair_iter::CodePairIter;
+use code_pair_writer::CodePairWriter;
 
 use std::fs::File;
 use std::io::{
@@ -95,27 +95,52 @@ impl Drawing {
     /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
         where T: Write {
-        let mut writer = CodePairAsciiWriter { writer: writer };
-        try!(self.header.write(&mut writer));
+
+        let mut writer = CodePairWriter::new_ascii_writer(writer);
+        self.save_internal(&mut writer)
+    }
+    /// Writes a `Drawing` as binary to anything that implements the `Write` trait.
+    pub fn save_binary<T>(&self, writer: &mut T) -> DxfResult<()>
+        where T: Write {
+
+        let mut writer = CodePairWriter::new_binary_writer(writer);
+        self.save_internal(&mut writer)
+    }
+    fn save_internal<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        try!(writer.write_prelude());
+        try!(self.header.write(writer));
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
-        try!(self.write_tables(write_handles, &mut writer));
-        try!(self.write_entities(write_handles, &mut writer));
+        try!(self.write_tables(write_handles, writer));
+        try!(self.write_entities(write_handles, writer));
         // TODO: write other sections
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
     pub fn save_file(&self, file_name: &str) -> DxfResult<()> {
+        self.save_file_internal(file_name, true)
+    }
+    /// Writes a `Drawing` as binary to disk, using a `BufWriter`.
+    pub fn save_file_binary(&self, file_name: &str) -> DxfResult<()> {
+        self.save_file_internal(file_name, false)
+    }
+    fn save_file_internal(&self, file_name: &str, as_ascii: bool) -> DxfResult<()> {
         let path = Path::new(file_name);
         let file = try!(File::create(&path));
-        let mut buf_writer = BufWriter::new(file);
-        self.save(&mut buf_writer)
+        let buf_writer = BufWriter::new(file);
+        let mut writer = match as_ascii {
+            true => CodePairWriter::new_ascii_writer(buf_writer),
+            false => CodePairWriter::new_binary_writer(buf_writer),
+        };
+        self.save_internal(&mut writer)
     }
 }
 
 // private implementation
 impl Drawing {
-    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
+    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "TABLES")));
@@ -123,7 +148,7 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
-    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
+    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "ENTITIES")));

@@ -18,7 +18,16 @@ pub fn generate_entities() {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-use ::{CodePair, CodePairAsciiWriter, Color, DxfError, DxfResult, LwPolylineVertex, Point, Vector};
+use ::{
+    CodePair,
+    Color,
+    DxfError,
+    DxfResult,
+    LwPolylineVertex,
+    Point,
+    Vector,
+};
+use ::code_pair_writer::CodePairWriter;
 use ::helper_functions::*;
 
 use enums::*;
@@ -135,7 +144,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("        let ent = self;\n");
     for line in generate_write_code_pairs(&entity) {
@@ -382,7 +391,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 }
 
 fn generate_write(fun: &mut String, element: &Element) {
-    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {

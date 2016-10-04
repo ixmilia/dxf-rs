@@ -17,7 +17,16 @@ pub fn generate_header() {
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 // types from `lib.rs`.
-use ::{CodePair, CodePairAsciiWriter, Color, DxfError, DxfResult, LineWeight, Point, Vector};
+use ::{
+    CodePair,
+    Color,
+    DxfError,
+    DxfResult,
+    LineWeight,
+    Point,
+    Vector,
+};
+use ::code_pair_writer::CodePairWriter;
 use ::helper_functions::*;
 
 use enums::*;
@@ -201,7 +210,7 @@ fn get_read_command(variable: &HeaderVariable) -> String {
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("    /// Writes the `CodePair`s representing the header to the specified writer.\n");
-    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()> where T: Write {\n");
+    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()> where T: Write {\n");
     for v in variables {
         // prepare writing predicate
         let mut parts = vec![];

@@ -20,7 +20,18 @@ pub fn generate_tables() {
 
 extern crate itertools;
 
-use ::{CodePair, CodePairAsciiWriter, CodePairValue, Color, Drawing, DxfError, DxfResult, LineWeight, Point, Vector};
+use ::{
+    CodePair,
+    CodePairValue,
+    Color,
+    Drawing,
+    DxfError,
+    DxfResult,
+    LineWeight,
+    Point,
+    Vector,
+};
+use ::code_pair_writer::CodePairWriter;
 use ::helper_functions::*;
 
 use enums::*;
@@ -215,7 +226,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
-    fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("    where T: Write {\n");
     for table in &element.children {
         fun.push_str(&format!("    try!(write_{collection}(drawing, write_handles, writer));\n", collection=attr(&table, "Collection")));
@@ -227,7 +238,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
     for table in &element.children {
         let table_item = &table.children[0];
-        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
         fun.push_str(&format!("    if drawing.{collection}.len() == 0 {{\n", collection=attr(&table, "Collection")));
         fun.push_str("        return Ok(()) // nothing to write\n");

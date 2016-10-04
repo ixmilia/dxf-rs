@@ -128,6 +128,9 @@ use itertools::PutBack;
 include!("expected_type.rs");
 
 mod code_pair_iter;
+mod code_pair_writer;
+use code_pair_writer::CodePairWriter;
+
 mod helper_functions;
 use helper_functions::*;
 
@@ -323,23 +326,6 @@ impl std::error::Error for DxfError {
 }
 
 //------------------------------------------------------------------------------
-//                                                           CodePairAsciiWriter
-//------------------------------------------------------------------------------
-#[doc(hidden)]
-pub struct CodePairAsciiWriter<T>
-    where T: Write {
-    writer: T,
-}
-
-impl<T: Write> CodePairAsciiWriter<T> {
-    pub fn write_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
-        try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
-        try!(self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value)));
-        Ok(())
-    }
-}
-
-//------------------------------------------------------------------------------
 //                                                                        Header
 //------------------------------------------------------------------------------
 // implementation is in `header.rs`
@@ -386,7 +372,7 @@ impl Header {
         Ok(header)
     }
     #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
+    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write
     {
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
@@ -834,7 +820,7 @@ impl Entity {
         Ok(true)
     }
     #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
+    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
         if self.specific.is_supported_on_version(version) {
             try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
@@ -845,7 +831,7 @@ impl Entity {
 
         Ok(())
     }
-    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairAsciiWriter<T>) -> DxfResult<()>
+    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
         match self.specific {
             // TODO: write trailing MText on Attribute and AttributeDefinition
