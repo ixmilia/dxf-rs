@@ -131,6 +131,9 @@ mod code_pair_iter;
 mod code_pair_writer;
 use code_pair_writer::CodePairWriter;
 
+mod block;
+pub use block::Block;
+
 mod helper_functions;
 use helper_functions::*;
 
@@ -430,12 +433,13 @@ impl Entity {
     #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
         where I: Iterator<Item = DxfResult<CodePair>> {
+
         loop {
             match iter.next() {
                 // first code pair must be 0/entity-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
                     let type_string = pair.value.assert_string();
-                    if type_string == "ENDSEC" {
+                    if type_string == "ENDSEC" || type_string == "ENDBLK" {
                         iter.put_back(Ok(pair));
                         return Ok(None);
                     }

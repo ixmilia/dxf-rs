@@ -13,6 +13,8 @@ use ::{
     EntityIter,
 };
 
+use block::Block;
+
 use code_pair_iter::CodePairIter;
 use code_pair_writer::CodePairWriter;
 
@@ -23,6 +25,7 @@ use std::io::{
     Read,
     Write,
 };
+
 use std::path::Path;
 use itertools::PutBack;
 
@@ -30,8 +33,6 @@ use itertools::PutBack;
 pub struct Drawing {
     /// The drawing's header.  Contains various drawing-specific values and settings.
     pub header: Header,
-    /// The entities contained by the drawing.
-    pub entities: Vec<Entity>,
     /// The AppIds contained by the drawing.
     pub app_ids: Vec<AppId>,
     /// The block records contained by the drawing.
@@ -50,6 +51,10 @@ pub struct Drawing {
     pub views: Vec<View>,
     /// The view ports contained by the drawing.
     pub view_ports: Vec<ViewPort>,
+    /// The blocks contained by the drawing.
+    pub blocks: Vec<Block>,
+    /// The entities contained by the drawing.
+    pub entities: Vec<Entity>,
 }
 
 // public implementation
@@ -58,7 +63,6 @@ impl Drawing {
     pub fn new() -> Self {
         Drawing {
             header: Header::new(),
-            entities: vec![],
             app_ids: vec![],
             block_records: vec![],
             dim_styles: vec![],
@@ -68,6 +72,8 @@ impl Drawing {
             ucs: vec![],
             views: vec![],
             view_ports: vec![],
+            blocks: vec![],
+            entities: vec![],
         }
     }
     /// Loads a `Drawing` from anything that implements the `Read` trait.
@@ -174,8 +180,9 @@ impl Drawing {
                                Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
                                     match &*s {
                                         "HEADER" => drawing.header = try!(Header::read(iter)),
+                                        "TABLES" => try!(drawing.read_section_item(iter, "TABLE", read_specific_table)),
+                                        "BLOCKS" => try!(drawing.read_section_item(iter, "BLOCK", Block::read_block)),
                                         "ENTITIES" => try!(drawing.read_entities(iter)),
-                                        "TABLES" => try!(drawing.read_tables(iter)),
                                         // TODO: read other sections
                                         _ => try!(Drawing::swallow_section(iter)),
                                     }
@@ -286,8 +293,10 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_tables<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
+    fn read_section_item<I, F>(&mut self, iter: &mut PutBack<I>, item_type: &str, callback: F) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>>,
+              F: Fn(&mut Drawing, &mut PutBack<I>) -> DxfResult<()> {
+
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -297,8 +306,14 @@ impl Drawing {
                                 iter.put_back(Ok(pair));
                                 break;
                             },
-                            "TABLE" => try!(read_specific_table(self, iter)),
-                            _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
+                            val => {
+                                if val == item_type {
+                                    try!(callback(self, iter));
+                                }
+                                else {
+                                    return Err(DxfError::UnexpectedCodePair(pair, String::new()));
+                                }
+                            },
                         }
                     }
                     else {
