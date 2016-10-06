@@ -2,6 +2,7 @@
 
 extern crate dxf;
 use self::dxf::*;
+use self::dxf::enums::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -116,4 +117,68 @@ fn read_multiple_classes_r14() {
         "0", "EOF",
     ].join("\n").as_str());
     assert_eq!(2, drawing.classes.len());
+}
+
+#[test]
+fn dont_write_classes_section_if_no_classes() {
+    let drawing = Drawing::new();
+    let contents = to_test_string(&drawing);
+    assert!(!contents.contains("CLASSES"));
+}
+
+#[test]
+fn write_class_r13() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R13;
+    let class = Class {
+        record_name: "record-name".to_string(),
+        class_name: "class-name".to_string(),
+        application_name: "application-name".to_string(),
+        version_number: 42,
+        proxy_capability_flags: 43,
+        instance_count: 44,
+        was_class_loaded_with_file: false,
+        is_entity: true,
+    };
+    drawing.classes.push(class);
+    assert_contains(&drawing, vec![
+        "  0", "SECTION",
+        "  2", "CLASSES",
+        "  0", "record-name",
+        "  1", "class-name",
+        "  2", "application-name",
+        " 90", "42",
+        "280", "1",
+        "281", "1",
+        "  0", "ENDSEC",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_class_r14() {
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R14;
+    let class = Class {
+        record_name: "record-name".to_string(),
+        class_name: "class-name".to_string(),
+        application_name: "application-name".to_string(),
+        version_number: 42,
+        proxy_capability_flags: 43,
+        instance_count: 44,
+        was_class_loaded_with_file: false,
+        is_entity: true,
+    };
+    drawing.classes.push(class);
+    assert_contains(&drawing, vec![
+        "  0", "SECTION",
+        "  2", "CLASSES",
+        "  0", "CLASS",
+        "  1", "record-name",
+        "  2", "class-name",
+        "  3", "application-name",
+        " 90", "43",
+        "280", "1",
+        "281", "1",
+        "  0", "ENDSEC",
+    ].join("\r\n"));
 }

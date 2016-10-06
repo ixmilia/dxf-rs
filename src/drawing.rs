@@ -122,6 +122,7 @@ impl Drawing {
         try!(writer.write_prelude());
         try!(self.header.write(writer));
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        try!(self.write_classes(writer));
         try!(self.write_tables(write_handles, writer));
         try!(self.write_blocks(write_handles, writer));
         try!(self.write_entities(write_handles, writer));
@@ -151,6 +152,22 @@ impl Drawing {
 
 // private implementation
 impl Drawing {
+    fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        if self.classes.len() == 0 {
+            return Ok(());
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "CLASSES")));
+        for c in &self.classes {
+            try!(c.write(&self.header.version, writer));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        Ok(())
+    }
     fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
