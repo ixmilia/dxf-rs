@@ -170,3 +170,44 @@ fn read_block_with_unsupported_entity_in_the_middle() {
         _ => panic!("expected a circle"),
     }
 }
+
+#[test]
+fn dont_write_blocks_section_if_no_blocks() {
+    let drawing = Drawing::new();
+    let contents = to_test_string(&drawing);
+    assert!(!contents.contains("BLOCKS"));
+}
+
+#[test]
+fn round_trip_blocks() {
+    let mut drawing = Drawing::new();
+    let mut b1 = Block::default();
+    b1.entities.push(
+        Entity {
+            common: EntityCommon::new(),
+            specific: EntityType::Line(Default::default()),
+        }
+    );
+    drawing.blocks.push(b1);
+    let mut b2 = Block::default();
+    b2.entities.push(
+        Entity {
+            common: EntityCommon::new(),
+            specific: EntityType::Circle(Default::default()),
+        }
+    );
+    drawing.blocks.push(b2);
+    let written = to_test_string(&drawing);
+    let reparsed = unwrap_drawing(Drawing::load(written.as_bytes()));
+    assert_eq!(2, reparsed.blocks.len());
+    assert_eq!(1, reparsed.blocks[0].entities.len());
+    match reparsed.blocks[0].entities[0].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+    assert_eq!(1, reparsed.blocks[1].entities.len());
+    match reparsed.blocks[1].entities[0].specific {
+        EntityType::Circle(_) => (),
+        _ => panic!("expected a circle"),
+    }
+}

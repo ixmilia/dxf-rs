@@ -1,5 +1,7 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use std::io::Write;
+
 use ::{
     CodePair,
     CodePairValue,
@@ -9,7 +11,9 @@ use ::{
     Point,
 };
 
+use code_pair_writer::CodePairWriter;
 use entities::Entity;
+use enums::*;
 use helper_functions::*;
 
 use itertools::PutBack;
@@ -33,6 +37,8 @@ pub struct Block {
     pub xref_path_name: String,
     /// The block's description.
     pub description: String,
+    /// If the block is in PAPERSPACE or not.
+    pub is_in_paperspace: bool,
     /// The entities contained by the block.
     pub entities: Vec<Entity>,
 }
@@ -94,6 +100,7 @@ impl Default for Block {
             base_point: Point::origin(),
             xref_path_name: String::new(),
             description: String::new(),
+            is_in_paperspace: false,
             entities: vec![],
         }
     }
@@ -159,6 +166,7 @@ impl Block {
                                 10 => current.base_point.x = pair.value.assert_f64(),
                                 20 => current.base_point.y = pair.value.assert_f64(),
                                 30 => current.base_point.z = pair.value.assert_f64(),
+                                67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()),
                                 70 => current.flags = pair.value.assert_i16() as i32,
                                 330 => current.owner_handle = try!(as_u32(pair.value.assert_string())),
                                 _ => (), // unsupported code pair
@@ -169,6 +177,77 @@ impl Block {
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
+        }
+
+        Ok(())
+    }
+    #[doc(hidden)]
+    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "BLOCK")));
+        if write_handles && self.handle != 0 {
+            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
+        }
+
+        // TODO: XData
+        if version >= &AcadVersion::R13 {
+            if self.owner_handle != 0 {
+                try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
+            }
+
+            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity")));
+        }
+
+        if self.is_in_paperspace {
+            try!(writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace))));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer)));
+        if version >= &AcadVersion::R13 {
+            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockBegin")));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_string(2, &self.name)));
+        try!(writer.write_code_pair(&CodePair::new_i16(70, self.flags as i16)));
+        try!(writer.write_code_pair(&CodePair::new_f64(10, self.base_point.x)));
+        try!(writer.write_code_pair(&CodePair::new_f64(20, self.base_point.y)));
+        try!(writer.write_code_pair(&CodePair::new_f64(30, self.base_point.z)));
+        if version >= &AcadVersion::R12 {
+            try!(writer.write_code_pair(&CodePair::new_string(3, &self.name)));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_string(1, &self.xref_path_name)));
+        if !self.description.is_empty() {
+            try!(writer.write_code_pair(&CodePair::new_string(4, &self.description)));
+        }
+
+        for e in &self.entities {
+            try!(e.write(version, false, writer)); // entities in blocks never have handles
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDBLK")));
+        if write_handles && self.handle != 0 {
+            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
+        }
+
+        // TODO: XData
+        // TODO: extension data groups
+        if version >= &AcadVersion::R2000 && self.owner_handle != 0 {
+            try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
+        }
+
+        if version >= &AcadVersion::R13 {
+            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity")));
+        }
+
+        if self.is_in_paperspace {
+            try!(writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace))));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer)));
+        if version >= &AcadVersion::R13 {
+            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd")));
         }
 
         Ok(())

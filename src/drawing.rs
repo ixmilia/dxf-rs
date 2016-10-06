@@ -119,6 +119,7 @@ impl Drawing {
         try!(self.header.write(writer));
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
         try!(self.write_tables(write_handles, writer));
+        try!(self.write_blocks(write_handles, writer));
         try!(self.write_entities(write_handles, writer));
         // TODO: write other sections
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
@@ -148,14 +149,32 @@ impl Drawing {
 impl Drawing {
     fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
+
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "TABLES")));
         try!(write_tables(&self, write_handles, writer));
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
+    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        if self.blocks.len() == 0 {
+            return Ok(());
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "BLOCKS")));
+        for b in &self.blocks {
+            try!(b.write(&self.header.version, write_handles, writer));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        Ok(())
+    }
     fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
+
         try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
         try!(writer.write_code_pair(&CodePair::new_str(2, "ENTITIES")));
         for e in &self.entities {
@@ -167,6 +186,7 @@ impl Drawing {
     }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
+
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
@@ -212,6 +232,7 @@ impl Drawing {
     }
     fn swallow_section<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
+
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -229,6 +250,7 @@ impl Drawing {
     }
     fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
+
         let mut iter = PutBack::new(EntityIter { iter: iter });
         loop {
             match iter.next() {
@@ -285,6 +307,7 @@ impl Drawing {
     }
     fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = Entity> {
+
         match iter.next() {
             Some(Entity { specific: EntityType::Seqend(_), .. }) => (),
             Some(ent) => iter.put_back(ent),
@@ -330,6 +353,7 @@ impl Drawing {
     #[doc(hidden)]
     pub fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
+
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
