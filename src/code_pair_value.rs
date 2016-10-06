@@ -72,9 +72,9 @@ impl Debug for CodePairValue {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
             &CodePairValue::Boolean(b) => write!(formatter, "{}", if b { 1 } else { 0 }),
-            &CodePairValue::Integer(i) => write!(formatter, "{}", i),
+            &CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
             &CodePairValue::Long(l) => write!(formatter, "{}", l),
-            &CodePairValue::Short(s) => write!(formatter, "{}", s),
+            &CodePairValue::Short(s) => write!(formatter, "{: >6}", s),
             &CodePairValue::Double(d) => write!(formatter, "{:.12}", d),
             &CodePairValue::Str(ref s) => write!(formatter, "{}", s),
         }

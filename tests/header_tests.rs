@@ -142,7 +142,7 @@ fn write_header_flags() {
     file.header.set_apparent_intersection_snap(false);
     file.header.set_extension_snap(false);
     file.header.set_parallel_snap(false);
-    assert_contains(&file, vec!["  9", "$OSMODE", " 70", "12"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$OSMODE", " 70", "    12"].join("\r\n"));
 }
 
 #[test]

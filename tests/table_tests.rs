@@ -131,14 +131,14 @@ fn write_layer() {
         "  0", "TABLE",
         "  2", "LAYER",
         "100", "AcDbSymbolTable",
-        " 70", "0",
+        " 70", "     0",
             "  0", "LAYER",
             "  5", "0",
             "100", "AcDbSymbolTableRecord",
             "100", "AcDbLayerTableRecord",
             "  2", "layer-name",
-            " 70", "0",
-            " 62", "3",
+            " 70", "     0",
+            " 62", "     3",
             "  6", "CONTINUOUS",
     ].join("\r\n"));
 }
@@ -153,8 +153,8 @@ fn write_layer_with_invalid_values() {
     drawing.layers.push(layer);
     assert_contains(&drawing, vec![
         "  2", "layer-name",
-        " 70", "0",
-        " 62", "7",
+        " 70", "     0",
+        " 62", "     7",
         "  6", "CONTINUOUS",
     ].join("\r\n"));
 }
@@ -170,7 +170,7 @@ fn write_view_with_invalid_values() {
     drawing.views.push(view);
     assert_contains(&drawing, vec![
         "  2", "view-name",
-        " 70", "0",
+        " 70", "     0",
         " 40", "1.000000000000",
         " 10", "0.000000000000",
         " 20", "0.000000000000",

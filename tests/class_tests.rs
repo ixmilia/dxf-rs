@@ -147,9 +147,9 @@ fn write_class_r13() {
         "  0", "record-name",
         "  1", "class-name",
         "  2", "application-name",
-        " 90", "42",
-        "280", "1",
-        "281", "1",
+        " 90", "       42",
+        "280", "     1",
+        "281", "     1",
         "  0", "ENDSEC",
     ].join("\r\n"));
 }
@@ -176,9 +176,9 @@ fn write_class_r14() {
         "  1", "record-name",
         "  2", "class-name",
         "  3", "application-name",
-        " 90", "43",
-        "280", "1",
-        "281", "1",
+        " 90", "       43",
+        "280", "     1",
+        "281", "     1",
         "  0", "ENDSEC",
     ].join("\r\n"));
 }
