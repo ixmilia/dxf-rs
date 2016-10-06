@@ -14,6 +14,7 @@ use ::{
 };
 
 use block::Block;
+use class::Class;
 
 use code_pair_iter::CodePairIter;
 use code_pair_writer::CodePairWriter;
@@ -33,6 +34,8 @@ use itertools::PutBack;
 pub struct Drawing {
     /// The drawing's header.  Contains various drawing-specific values and settings.
     pub header: Header,
+    /// The classes contained by the drawing.
+    pub classes: Vec<Class>,
     /// The AppIds contained by the drawing.
     pub app_ids: Vec<AppId>,
     /// The block records contained by the drawing.
@@ -63,6 +66,7 @@ impl Drawing {
     pub fn new() -> Self {
         Drawing {
             header: Header::new(),
+            classes: vec![],
             app_ids: vec![],
             block_records: vec![],
             dim_styles: vec![],
@@ -200,6 +204,7 @@ impl Drawing {
                                Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
                                     match &*s {
                                         "HEADER" => drawing.header = try!(Header::read(iter)),
+                                        "CLASSES" => try!(Class::read_classes(drawing, iter)),
                                         "TABLES" => try!(drawing.read_section_item(iter, "TABLE", read_specific_table)),
                                         "BLOCKS" => try!(drawing.read_section_item(iter, "BLOCK", Block::read_block)),
                                         "ENTITIES" => try!(drawing.read_entities(iter)),

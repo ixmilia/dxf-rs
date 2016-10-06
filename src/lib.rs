@@ -134,6 +134,9 @@ use code_pair_writer::CodePairWriter;
 mod block;
 pub use block::Block;
 
+mod class;
+pub use class::Class;
+
 mod helper_functions;
 use helper_functions::*;
 
