@@ -112,8 +112,10 @@ fn generate_table_items(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_reader(fun: &mut String, element: &Element) {
+    fun.push_str("#[doc(hidden)]\n");
     fun.push_str("pub fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n");
     fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
+    fun.push_str("\n");
     fun.push_str("    match iter.next() {\n");
     fun.push_str("        Some(Ok(pair)) => {\n");
     fun.push_str("            if pair.code != 2 {\n");
@@ -149,6 +151,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 
         fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
+        fun.push_str("\n");
         fun.push_str("    loop {\n");
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
@@ -226,8 +229,10 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
+    fun.push_str("#[doc(hidden)]\n");
     fun.push_str("pub fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("    where T: Write {\n");
+    fun.push_str("\n");
     for table in &element.children {
         fun.push_str(&format!("    try!(write_{collection}(drawing, write_handles, writer));\n", collection=attr(&table, "Collection")));
     }
@@ -240,6 +245,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         let table_item = &table.children[0];
         fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
+        fun.push_str("\n");
         fun.push_str(&format!("    if drawing.{collection}.len() == 0 {{\n", collection=attr(&table, "Collection")));
         fun.push_str("        return Ok(()) // nothing to write\n");
         fun.push_str("    }\n");

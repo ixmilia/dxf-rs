@@ -156,7 +156,7 @@ fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
 fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
-    fun.push_str("    /// Sets the header variable as specified by the `CodePair`.\n");
+    fun.push_str("    #[doc(hidden)]\n");
     fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
     for v in variables {
@@ -209,8 +209,10 @@ fn get_read_command(variable: &HeaderVariable) -> String {
 }
 
 fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
-    fun.push_str("    /// Writes the `CodePair`s representing the header to the specified writer.\n");
-    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()> where T: Write {\n");
+    fun.push_str("    #[doc(hidden)]\n");
+    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("        where T: Write {\n");
+    fun.push_str("\n");
     for v in variables {
         // prepare writing predicate
         let mut parts = vec![];
