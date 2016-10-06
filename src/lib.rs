@@ -94,6 +94,18 @@
 
 extern crate itertools;
 
+use std::fmt;
+use std::fmt::Display;
+use std::io;
+use std::io::Write;
+use std::num;
+
+mod code_pair;
+pub use code_pair::CodePair;
+
+mod code_pair_value;
+pub use code_pair_value::CodePairValue;
+
 mod drawing;
 pub use drawing::Drawing;
 
@@ -117,12 +129,6 @@ use tables::*;
 use self::enums::*;
 use enum_primitive::FromPrimitive;
 
-use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
-use std::io;
-use std::io::Write;
-use std::num;
-
 use itertools::PutBack;
 
 include!("expected_type.rs");
@@ -139,127 +145,6 @@ pub use class::Class;
 
 mod helper_functions;
 use helper_functions::*;
-
-//------------------------------------------------------------------------------
-//                                                                 CodePairValue
-//------------------------------------------------------------------------------
-#[doc(hidden)]
-pub enum CodePairValue {
-    Boolean(bool),
-    Integer(i32),
-    Long(i64),
-    Short(i16),
-    Double(f64),
-    Str(String),
-}
-
-impl CodePairValue {
-    pub fn assert_bool(&self) -> bool {
-        match self {
-            &CodePairValue::Boolean(b) => b,
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-    pub fn assert_i64(&self) -> i64 {
-        match self {
-            &CodePairValue::Long(l) => l,
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-    pub fn assert_i32(&self) -> i32 {
-        match self {
-            &CodePairValue::Integer(i) => i,
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-    pub fn assert_f64(&self) -> f64 {
-        match self {
-            &CodePairValue::Double(f) => f,
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-    pub fn assert_string(&self) -> String {
-        match self {
-            &CodePairValue::Str(ref s) => s.clone(),
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-    pub fn assert_i16(&self) -> i16 {
-        match self {
-            &CodePairValue::Short(s) => s,
-            _ => panic!("this should never have happened, please file a bug"),
-        }
-    }
-}
-
-impl Clone for CodePairValue {
-    fn clone(&self) -> Self {
-        match self {
-            &CodePairValue::Boolean(b) => CodePairValue::Boolean(b),
-            &CodePairValue::Integer(i) => CodePairValue::Integer(i),
-            &CodePairValue::Long(l) => CodePairValue::Long(l),
-            &CodePairValue::Short(s) => CodePairValue::Short(s),
-            &CodePairValue::Double(d) => CodePairValue::Double(d),
-            &CodePairValue::Str(ref s) => CodePairValue::Str(String::from(s.as_str())),
-        }
-    }
-}
-
-impl Debug for CodePairValue {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        match self {
-            &CodePairValue::Boolean(b) => write!(formatter, "{}", if b { 1 } else { 0 }),
-            &CodePairValue::Integer(i) => write!(formatter, "{}", i),
-            &CodePairValue::Long(l) => write!(formatter, "{}", l),
-            &CodePairValue::Short(s) => write!(formatter, "{}", s),
-            &CodePairValue::Double(d) => write!(formatter, "{:.12}", d),
-            &CodePairValue::Str(ref s) => write!(formatter, "{}", s),
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-//                                                                      CodePair
-//------------------------------------------------------------------------------
-#[doc(hidden)]
-#[derive(Clone)]
-pub struct CodePair {
-    code: i32,
-    value: CodePairValue,
-}
-
-impl CodePair {
-    pub fn new(code: i32, val: CodePairValue) -> CodePair {
-        CodePair { code: code, value: val }
-    }
-    pub fn new_str(code: i32, val: &str) -> CodePair {
-        CodePair::new(code, CodePairValue::Str(val.to_string()))
-    }
-    pub fn new_string(code: i32, val: &String) -> CodePair {
-        CodePair::new(code, CodePairValue::Str(val.clone()))
-    }
-    pub fn new_i16(code: i32, val: i16) -> CodePair {
-        CodePair::new(code, CodePairValue::Short(val))
-    }
-    pub fn new_f64(code: i32, val: f64) -> CodePair {
-        CodePair::new(code, CodePairValue::Double(val))
-    }
-    pub fn new_i64(code: i32, val: i64) -> CodePair {
-        CodePair::new(code, CodePairValue::Long(val))
-    }
-    pub fn new_i32(code: i32, val: i32) -> CodePair {
-        CodePair::new(code, CodePairValue::Integer(val))
-    }
-    pub fn new_bool(code: i32, val: bool) -> CodePair {
-        CodePair::new(code, CodePairValue::Boolean(val))
-    }
-}
-
-impl Debug for CodePair {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        write!(formatter, "{}/{:?}", self.code, &self.value)
-    }
-}
 
 //------------------------------------------------------------------------------
 //                                                                  DxfResult<T>
