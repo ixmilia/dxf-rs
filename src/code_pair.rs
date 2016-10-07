@@ -8,8 +8,7 @@ use std::fmt::{
 
 use ::CodePairValue;
 
-#[doc(hidden)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct CodePair {
     pub code: i32,
     pub value: CodePairValue,

@@ -3,16 +3,23 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::{ExpectedType, get_code_pair_type, get_expected_type};
+use ::{
+    ExpectedType,
+    get_code_pair_type,
+    get_expected_type,
+};
 
 use xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{BufReader, Write};
+use std::io::{
+    BufReader,
+    Write,
+};
 use std::iter::Iterator;
 
-pub fn generate_entities() {
+pub fn generate_objects() {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
@@ -21,10 +28,15 @@ pub fn generate_entities() {
 use ::{
     CodePair,
     Color,
+    DataTableValue,
     DxfError,
     DxfResult,
-    LwPolylineVertex,
+    GeoMeshPoint,
+    MLineStyleElement,
     Point,
+    SectionTypeSettings,
+    TableCellStyle,
+    TransformationMatrix,
     Vector,
 };
 use ::code_pair_writer::CodePairWriter;
@@ -33,7 +45,11 @@ use ::helper_functions::*;
 use enums::*;
 use enum_primitive::FromPrimitive;
 
+use std::collections::HashMap;
 use std::io::Write;
+
+extern crate chrono;
+use self::chrono::{DateTime, Local};
 
 // Used to turn Option<T> into DxfResult<T>.
 macro_rules! try_result {
@@ -46,26 +62,26 @@ macro_rules! try_result {
 }
 ".trim_left());
     fun.push_str("\n");
-    generate_base_entity(&mut fun, &element);
-    generate_entity_types(&mut fun, &element);
+    generate_base_object(&mut fun, &element);
+    generate_object_types(&mut fun, &element);
 
-    fun.push_str("impl EntityType {\n");
+    fun.push_str("impl ObjectType {\n");
     generate_is_supported_on_version(&mut fun, &element);
     generate_type_string(&mut fun, &element);
     generate_try_apply_code_pair(&mut fun, &element);
     generate_write(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/generated/entities.rs").ok().unwrap();
+    let mut file = File::create("src/generated/objects.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 
-fn generate_base_entity(fun: &mut String, element: &Element) {
-    let entity = &element.children[0];
-    if name(&entity) != "Entity" { panic!("Expected first entity to be 'Entity'."); }
+fn generate_base_object(fun: &mut String, element: &Element) {
+    let object = &element.children[0];
+    if name(&object) != "Object" { panic!("Expected first object to be 'Object'."); }
     fun.push_str("#[derive(Clone)]\n");
-    fun.push_str("pub struct EntityCommon {\n");
-    for c in &entity.children {
+    fun.push_str("pub struct ObjectCommon {\n");
+    for c in &object.children {
         let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
         if !comment(&c).is_empty() {
             fun.push_str(&format!("    /// {}\n", comment(&c)));
@@ -80,7 +96,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
                 fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=typ));
             },
             "WriteOrder" => (),
-            _ => panic!("unexpected element under Entity: {}", c.name),
+            _ => panic!("unexpected element under Object: {}", c.name),
         }
     }
 
@@ -88,16 +104,16 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("\n");
 
     fun.push_str("#[derive(Clone)]\n");
-    fun.push_str("pub struct Entity {\n");
-    fun.push_str("    pub common: EntityCommon,\n");
-    fun.push_str("    pub specific: EntityType,\n");
+    fun.push_str("pub struct Object {\n");
+    fun.push_str("    pub common: ObjectCommon,\n");
+    fun.push_str("    pub specific: ObjectType,\n");
     fun.push_str("}\n");
     fun.push_str("\n");
 
-    fun.push_str("impl Default for EntityCommon {\n");
-    fun.push_str("    fn default() -> EntityCommon {\n");
-    fun.push_str("        EntityCommon {\n");
-    for c in &entity.children {
+    fun.push_str("impl Default for ObjectCommon {\n");
+    fun.push_str("    fn default() -> ObjectCommon {\n");
+    fun.push_str("        ObjectCommon {\n");
+    for c in &object.children {
         match &*c.name {
             "Field" | "Pointer" => {
                 // TODO: proper handling of pointers
@@ -105,7 +121,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
                 fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value));
             },
             "WriteOrder" => (),
-            _ => panic!("unexpected element under Entity: {}", c.name),
+            _ => panic!("unexpected element under Object: {}", c.name),
         }
     }
 
@@ -114,16 +130,16 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("}\n");
     fun.push_str("\n");
 
-    fun.push_str("impl EntityCommon {\n");
+    fun.push_str("impl ObjectCommon {\n");
     fun.push_str("    pub fn new() -> Self {\n");
     fun.push_str("        Default::default()\n");
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////// apply_individual_pair
     fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> DxfResult<()> {\n");
+    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
     fun.push_str("        match pair.code {\n");
-    for c in &entity.children {
+    for c in &object.children {
         if c.name == "Field" {
             let read_fun = if allow_multiples(&c) {
                 format!(".push({})", get_field_reader(&c))
@@ -139,18 +155,18 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         }
     }
 
-    fun.push_str("            _ => (), // unknown code, just ignore\n");
+    fun.push_str("            _ => return Ok(false), // unknown code\n");
     fun.push_str("        }\n");
-    fun.push_str("        Ok(())\n");
+    fun.push_str("        Ok(true)\n");
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
     fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
-    fun.push_str("        let ent = self;\n");
-    for line in generate_write_code_pairs(&entity) {
+    fun.push_str("        let obj = self;\n");
+    for line in generate_write_code_pairs(&object) {
         fun.push_str(&format!("        {}\n", line));
     }
 
@@ -161,14 +177,12 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("\n");
 }
 
-fn generate_entity_types(fun: &mut String, element: &Element) {
+fn generate_object_types(fun: &mut String, element: &Element) {
     fun.push_str("#[derive(Clone)]\n");
-    fun.push_str("pub enum EntityType {\n");
+    fun.push_str("pub enum ObjectType {\n");
     for c in &element.children {
-        if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
-            // TODO: handle dimensions
-            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
+        if c.name != "Object" { panic!("expected top level object"); }
+        if name(c) != "Object" {
             fun.push_str(&format!("    {typ}({typ}),\n", typ=name(c)));
         }
     }
@@ -178,11 +192,8 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
     // individual structs
     for c in &element.children {
-        if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
-            // TODO: handle dimensions
-            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-
+        if c.name != "Object" { panic!("expected top level object"); }
+        if name(c) != "Object" {
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
             fun.push_str(&format!("pub struct {typ} {{\n", typ=name(c)));
@@ -206,7 +217,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=typ));
                     },
                     "WriteOrder" => (),
-                    _ => panic!("unexpected element {} under Entity", f.name),
+                    _ => panic!("unexpected element {} under Object", f.name),
                 }
             }
 
@@ -228,7 +239,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=val));
                     },
                     "WriteOrder" => (),
-                    _ => panic!("unexpected element {} under Entity", f.name),
+                    _ => panic!("unexpected element {} under Object", f.name),
                 }
             }
 
@@ -279,18 +290,17 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
     fun.push_str("    #[doc(hidden)]\n");
     fun.push_str("    pub fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n");
     fun.push_str("        match self {\n");
-    for entity in &element.children {
-        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
-            // TODO: support dimensions
+    for object in &element.children {
+        if name(&object) != "Object" {
             let mut predicates = vec![];
-            if !min_version(&entity).is_empty() {
-                predicates.push(format!("*version >= AcadVersion::{}", min_version(&entity)));
+            if !min_version(&object).is_empty() {
+                predicates.push(format!("*version >= AcadVersion::{}", min_version(&object)));
             }
-            if !max_version(&entity).is_empty() {
-                predicates.push(format!("*version <= AcadVersion::{}", max_version(&entity)));
+            if !max_version(&object).is_empty() {
+                predicates.push(format!("*version <= AcadVersion::{}", max_version(&object)));
             }
             let predicate = if predicates.len() == 0 { String::from("true") } else { predicates.join(" && ") };
-            fun.push_str(&format!("            &EntityType::{typ}(_) => {{ {predicate} }},\n", typ=name(&entity), predicate=predicate));
+            fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ {predicate} }},\n", typ=name(&object), predicate=predicate));
         }
     }
     fun.push_str("        }\n");
@@ -299,14 +309,14 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
 
 fn generate_type_string(fun: &mut String, element: &Element) {
     fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn from_type_string(type_string: &str) -> Option<EntityType> {\n");
+    fun.push_str("    pub fn from_type_string(type_string: &str) -> Option<ObjectType> {\n");
     fun.push_str("        match type_string {\n");
     for c in &element.children {
-        if name(c) != "Entity" && name(c) != "DimensionBase" && !attr(&c, "TypeString").is_empty() {
+        if name(c) != "Object" && !attr(&c, "TypeString").is_empty() {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
-                fun.push_str(&format!("            \"{type_string}\" => Some(EntityType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)));
+                fun.push_str(&format!("            \"{type_string}\" => Some(ObjectType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)));
             }
         }
     }
@@ -322,8 +332,8 @@ fn generate_type_string(fun: &mut String, element: &Element) {
         // only write the first type string given
         let type_string = attr(&c, "TypeString");
         let type_strings = type_string.split(',').collect::<Vec<_>>();
-        if name(c) != "Entity" && name(c) != "DimensionBase" && !type_string.is_empty() {
-            fun.push_str(&format!("            &EntityType::{typ}(_) => {{ \"{type_string}\" }},\n", typ=name(c), type_string=type_strings[0]));
+        if name(c) != "Object" && !type_string.is_empty() {
+            fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ \"{type_string}\" }},\n", typ=name(c), type_string=type_strings[0]));
         }
     }
     fun.push_str("        }\n");
@@ -331,17 +341,16 @@ fn generate_type_string(fun: &mut String, element: &Element) {
 }
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
+    let mut unused_readers = vec![];
     fun.push_str("    #[doc(hidden)]\n");
     fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
     fun.push_str("        match self {\n");
     for c in &element.children {
-        if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
+        if c.name != "Object" { panic!("expected top level object"); }
+        if name(c) != "Object" {
             if generate_reader_function(&c) {
-                // TODO: handle dimensions
-                // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-                let ent = if name(&c) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
-                fun.push_str(&format!("            &mut EntityType::{typ}(ref mut {ent}) => {{\n", typ=name(c), ent=ent));
+                let obj = if name(&c) == "PlaceHolder" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER doesn't use this variable
+                fun.push_str(&format!("            &mut ObjectType::{typ}(ref mut {obj}) => {{\n", typ=name(c), obj=obj));
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
@@ -359,7 +368,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                         else {
                                             format!(" = {}", reader)
                                         };
-                                        format!("ent.{field}{read_fun}", field=name(&f), read_fun=read_fun)
+                                        format!("obj.{field}{read_fun}", field=name(&f), read_fun=read_fun)
                                     },
                                     _ => {
                                         let suffix = match i {
@@ -368,7 +377,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                             2 => "z",
                                             _ => panic!("impossible"),
                                         };
-                                        format!("ent.{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
+                                        format!("obj.{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
                                     }
                                 };
                                 fun.push_str(&format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd));
@@ -378,10 +387,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     else if f.name == "Pointer" {
                         // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(try!(as_u32(try!(pair.value.assert_string())))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ obj.{field}.push(try!(as_u32(try!(pair.value.assert_string())))); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field} = try!(as_u32(try!(pair.value.assert_string()))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ obj.{field} = try!(as_u32(try!(pair.value.assert_string()))); }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }
@@ -391,7 +400,13 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("            },\n");
             }
             else {
-                fun.push_str(&format!("            &mut EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)));
+                // ensure no read converters were specified (because they won't be used)
+                for f in &c.children {
+                    if f.name == "Field" && !attr(&f, "ReadConverter").is_empty() {
+                        unused_readers.push(format!("{}.{}", name(c), name(f)));
+                    }
+                }
+                fun.push_str(&format!("            &mut ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)));
             }
         }
     }
@@ -399,33 +414,53 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     fun.push_str("        }\n");
     fun.push_str("        return Ok(true);\n");
     fun.push_str("    }\n");
+
+    if unused_readers.len() > 0 {
+        panic!("There were unused reader functions: {:?}", unused_readers);
+    }
 }
 
 fn generate_write(fun: &mut String, element: &Element) {
+    let mut unused_writers = vec![];
     fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        match self {\n");
-    for entity in &element.children {
-        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
-            let ent = if name(&entity) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
-            fun.push_str(&format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent));
-            for line in generate_write_code_pairs(&entity) {
-                fun.push_str(&format!("                {}\n", line));
-            }
+    for object in &element.children {
+        if name(&object) != "Object" {
+            if generate_writer_function(&object) {
+                let obj = if name(&object) == "PlaceHolder" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER doesn't use this variable
+                fun.push_str(&format!("            &ObjectType::{typ}(ref {obj}) => {{\n", typ=name(&object), obj=obj));
+                for line in generate_write_code_pairs(&object) {
+                    fun.push_str(&format!("                {}\n", line));
+                }
 
-            fun.push_str("            },\n");
+                fun.push_str("            },\n");
+            }
+            else {
+                // ensure no write converters were specified (because they won't be used)
+                for f in &element.children {
+                    if f.name == "Field" && !attr(&f, "WriteConverter").is_empty() {
+                        unused_writers.push(format!("{}.{}", name(element), name(f)));
+                    }
+                }
+                fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(&object)));
+            }
         }
     }
     fun.push_str("        }\n");
     fun.push_str("\n");
     fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
+
+    if unused_writers.len() > 0 {
+        panic!("There were unused writer functions: {:?}", unused_writers);
+    }
 }
 
-fn get_field_with_name<'a>(entity: &'a Element, field_name: &String) -> &'a Element {
-    for field in &entity.children {
+fn get_field_with_name<'a>(object: &'a Element, field_name: &String) -> &'a Element {
+    for field in &object.children {
         if name(&field) == *field_name {
             return field;
         }
@@ -434,13 +469,13 @@ fn get_field_with_name<'a>(entity: &'a Element, field_name: &String) -> &'a Elem
     panic!("unable to find field {}", field_name);
 }
 
-fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
+fn generate_write_code_pairs(object: &Element) -> Vec<String> {
     let mut commands = vec![];
-    for f in &entity.children {
+    for f in &object.children {
         if f.name == "WriteOrder" {
             // order was specifically given to us
             for write_command in &f.children {
-                for line in generate_write_code_pairs_for_write_order(&entity, &write_command) {
+                for line in generate_write_code_pairs_for_write_order(&object, &write_command) {
                     commands.push(line);
                 }
             }
@@ -449,35 +484,34 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
     }
 
     // no order given, use declaration order
-    let subclass = attr(&entity, "SubclassMarker");
+    let subclass = attr(&object, "SubclassMarker");
     if !subclass.is_empty() {
         commands.push(format!("try!(writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\")));", subclass=subclass));
     }
-    for field in &entity.children {
+    for field in &object.children {
         if generate_writer(&field) {
             match &*field.name {
-                "Field" => {
+                "Field" | "Pointer" => {
                     for line in get_write_lines_for_field(&field, vec![]) {
                         commands.push(line);
                     }
                 },
-                "Pointer" => { panic!("not used"); },
-                _ => panic!("unexpected item {} in entity", field.name),
+                _ => panic!("unexpected item {} in object", field.name),
             }
         }
     }
     return commands;
 }
 
-fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &Element) -> Vec<String> {
+fn generate_write_code_pairs_for_write_order(object: &Element, write_command: &Element) -> Vec<String> {
     let mut commands = vec![];
     match &*write_command.name {
         "WriteField" => {
             let field_name = write_command.attributes.get("Field").unwrap();
-            let field = get_field_with_name(&entity, &field_name);
+            let field = get_field_with_name(&object, &field_name);
             let mut write_conditions = vec![attr(&write_command, "WriteCondition")];
             if !attr(&write_command, "DontWriteIfValueIs").is_empty() {
-                write_conditions.push(format!("ent.{} != {}", field_name, attr(&write_command, "DontWriteIfValueIs")));
+                write_conditions.push(format!("obj.{} != {}", field_name, attr(&write_command, "DontWriteIfValueIs")));
             }
             for line in get_write_lines_for_field(&field, write_conditions) {
                 commands.push(line);
@@ -509,7 +543,7 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
         "Foreach" => {
             commands.push(format!("for item in &{} {{", attr(&write_command, "Field")));
             for write_command in &write_command.children {
-                for line in generate_write_code_pairs_for_write_order(&entity, &write_command) {
+                for line in generate_write_code_pairs_for_write_order(&object, &write_command) {
                     commands.push(format!("    {}", line));
                 }
             }
@@ -534,7 +568,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         predicates.push(format!("*version <= AcadVersion::{}", max_version(&field)));
     }
     if disable_writing_default(&field) {
-        predicates.push(format!("ent.{field} != {default}", field=name(&field), default=default_value(&field)));
+        predicates.push(format!("obj.{field} != {default}", field=name(&field), default=default_value(&field)));
     }
     for wc in write_conditions {
         if !wc.is_empty() {
@@ -548,20 +582,16 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
 
     if allow_multiples(&field) {
         let expected_type = get_expected_type(codes(&field)[0]).unwrap();
-        let val = if field.name == "Pointer" {
-            "&as_handle(*v)"
-        }
-        else {
-            if expected_type == ExpectedType::Str {
-                "&v"
-            }
-            else {
-                "*v"
-            }
+        let val = match (&*field.name, &expected_type) {
+            ("Pointer", _) => "*v",
+            (_, &ExpectedType::Str) => "&v",
+            _ => "*v",
         };
+        let write_converter = get_write_converter(&field);
+        let to_write = write_converter.replace("{}", val);
         let typ = get_code_pair_type(expected_type);
-        commands.push(format!("{indent}for v in &ent.{field} {{", indent=indent, field=name(&field)));
-        commands.push(format!("{indent}    try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {val})));", indent=indent, typ=typ, code=codes(&field)[0], val=val));
+        commands.push(format!("{indent}for v in &obj.{field} {{", indent=indent, field=name(&field)));
+        commands.push(format!("{indent}    try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {to_write})));", indent=indent, typ=typ, code=codes(&field)[0], to_write=to_write));
         commands.push(format!("{indent}}}", indent=indent));
     }
     else {
@@ -599,7 +629,12 @@ fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
     }
 }
 
-fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
+fn get_write_converter(field: &Element) -> String {
+    let code = codes(&field)[0];
+    get_write_converter_with_code(code, &field)
+}
+
+fn get_write_converter_with_code(code: i32, field: &Element) -> String {
     let expected_type = get_expected_type(code).unwrap();
     let typ = get_code_pair_type(expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
@@ -614,7 +649,15 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
             write_converter = String::from("{}");
         }
     }
-    let mut field_access = format!("ent.{field}", field=name(&field));
+
+    write_converter
+}
+
+fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
+    let expected_type = get_expected_type(code).unwrap();
+    let typ = get_code_pair_type(expected_type);
+    let write_converter = get_write_converter_with_code(code, &field);
+    let mut field_access = format!("obj.{field}", field=name(&field));
     if let Some(suffix) = suffix {
         field_access = format!("{}.{}", field_access, suffix);
     }
@@ -623,7 +666,7 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
 }
 
 fn load_xml() -> Element {
-    let file = File::open("spec/EntitiesSpec.xml").unwrap();
+    let file = File::open("spec/ObjectsSpec.xml").unwrap();
     let file = BufReader::new(file);
     Element::parse(file).unwrap()
 }
@@ -634,4 +677,8 @@ fn typ(element: &Element) -> String {
 
 fn generate_reader_function(element: &Element) -> bool {
     attr(&element, "GenerateReaderFunction") != "false"
+}
+
+fn generate_writer_function(element: &Element) -> bool {
+    attr(&element, "GenerateWriterFunction") != "false"
 }

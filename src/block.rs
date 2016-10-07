@@ -157,18 +157,18 @@ impl Block {
                         _ => {
                             // specific to the BLOCK
                             match pair.code {
-                                1 => current.xref_path_name = pair.value.assert_string(),
-                                2 => current.name = pair.value.assert_string(),
+                                1 => current.xref_path_name = try!(pair.value.assert_string()),
+                                2 => current.name = try!(pair.value.assert_string()),
                                 3 => (), // another instance of the name
-                                4 => current.description = pair.value.assert_string(),
-                                5 => current.handle = try!(as_u32(pair.value.assert_string())),
-                                8 => current.layer = pair.value.assert_string(),
-                                10 => current.base_point.x = pair.value.assert_f64(),
-                                20 => current.base_point.y = pair.value.assert_f64(),
-                                30 => current.base_point.z = pair.value.assert_f64(),
-                                67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()),
-                                70 => current.flags = pair.value.assert_i16() as i32,
-                                330 => current.owner_handle = try!(as_u32(pair.value.assert_string())),
+                                4 => current.description = try!(pair.value.assert_string()),
+                                5 => current.handle = try!(as_u32(try!(pair.value.assert_string()))),
+                                8 => current.layer = try!(pair.value.assert_string()),
+                                10 => current.base_point.x = try!(pair.value.assert_f64()),
+                                20 => current.base_point.y = try!(pair.value.assert_f64()),
+                                30 => current.base_point.z = try!(pair.value.assert_f64()),
+                                67 => current.is_in_paperspace = as_bool(try!(pair.value.assert_i16())),
+                                70 => current.flags = try!(pair.value.assert_i16()) as i32,
+                                330 => current.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),
                                 _ => (), // unsupported code pair
                             }
                         },

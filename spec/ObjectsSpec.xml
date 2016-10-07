@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<Spec xmlns="http://IxMilia.com/Dxf/ObjectsSpec">
+  <!--
+
+  OBJECT - the abstract base of all of the following types
+
+  -->
+  <Object Name="Object" SubclassMarker="" TypeString="">
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <WriteOrder>
+      <WriteField Field="handle" />
+      <WriteExtensionData />
+      <WriteField Field="owner_handle" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  ACAD_PROXY_OBJECT
+
+  -->
+  <Object Name="AcadProxyObject" SubclassMarker="AcDbProxyObject" TypeString="ACAD_PROXY_OBJECT" MinVersion="R2000">
+    <Field Name="proxy_object_class_id" Code="90" Type="i32" DefaultValue="499" />
+    <Field Name="application_object_class_id" Code="91" Type="i32" DefaultValue="500" />
+    <Field Name="size_in_bits" Code="93" Type="i32" DefaultValue="0" />
+    <Field Name="binary_object_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="object_ids" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
+    <Field Name="_object_ids_a" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_object_ids_b" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_object_ids_c" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_object_ids_d" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <!-- a 94/0 code pair is usually read here to indicate the end of the object ids, but the generated reader doesn't depend on this to be present -->
+    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" Accessibility="private" />
+    <Field Name="is_original_object_format" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbProxyObject")' MinVersion="R13" />
+      <WriteField Field="proxy_object_class_id" />
+      <WriteField Field="application_object_class_id" />
+      <WriteField Field="size_in_bits" />
+      <WriteField Field="binary_object_data" />
+      <Foreach Field="obj.object_ids">
+        <WriteSpecificValue Code="330" Value="item" />
+      </Foreach>
+      <WriteSpecificValue Code="94" Value="0" />
+      <WriteField Field="_object_drawing_format" />
+      <WriteField Field="is_original_object_format" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  ACDBDICTIONARYWDFLT
+
+  -->
+  <Object Name="DictionaryWithDefault" SubclassMarker="AcDbDictionaryWithDefault" TypeString="ACDBDICTIONARYWDFLT" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2000">
+    <Field Name="duplicate_record_handling" Code="281" Type="DictionaryDuplicateRecordHandling" DefaultValue="DictionaryDuplicateRecordHandling::NotApplicable" />
+    <Field Name="default_handle" Code="340" Type="u32" DefaultValue="0" />
+    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, u32&gt;" DefaultValue="HashMap::new()" />
+  </Object>
+  <!--
+
+  ACDBPLACEHOLDER
+
+  -->
+  <Object Name="PlaceHolder" SubclassMarker="[none]" TypeString="ACDBPLACEHOLDER" MinVersion="R2000">
+    <!-- this object has no properties and writes nothing, including the 100-code subclass marker -->
+    <WriteOrder />
+  </Object>
+  <!--
+
+  DATATABLE
+
+  -->
+  <Object Name="DataTable" SubclassMarker="AcDbDataTable" TypeString="DATATABLE" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2007">
+    <Field Name="field" Code="70" Type="i16" DefaultValue="0" />
+    <Field Name="column_count" Code="90" Type="usize" DefaultValue="0" ProtectedSet="true" />
+    <Field Name="row_count" Code="91" Type="usize" DefaultValue="0" ProtectedSet="true" />
+    <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="column_names" Code="2" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="values" Code="0" Type="Vec&lt;Option&lt;DataTableValue&gt;&gt;" DefaultValue="vec![]" AllowMultiples="true" />
+  </Object>
+  <!--
+
+  DICTIONARY
+
+  -->
+  <Object Name="Dictionary" SubclassMarker="AcDbDictionary" TypeString="DICTIONARY" GenerateReaderFunction="false" GenerateWriterFunction="false">
+    <Field Name="is_hard_owner" Code="280" Type="bool" DefaultValue="false" />
+    <Field Name="duplicate_record_handling" Code="281" Type="DictionaryDuplicateRecordHandling" DefaultValue="DictionaryDuplicateRecordHandling::NotApplicable" />
+    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, u32&gt;" DefaultValue="HashMap::new()" />
+  </Object>
+  <!--
+
+  DICTIONARYVAR
+
+  -->
+  <Object Name="DictionaryVariable" SubclassMarker="DictionaryVariables" TypeString="DICTIONARYVAR" Accessibility="internal">
+    <Field Name="object_schema_number" Code="280" Type="i16" DefaultValue="0" />
+    <Field Name="value" Code="1" Type="String" DefaultValue="String::new()" />
+  </Object>
+  <!--
+
+  DIMASSOC
+
+  -->
+  <Object Name="DimensionAssoc" SubclassMarker="AcDbDimAssoc" TypeString="DIMASSOC" MinVersion="R2004">
+    <Pointer Name="dimension" Code="330" Type="DimensionBase" />
+    <Field Name="associativity_flags" Code="90" Type="i32" DefaultValue="0">
+      <Flag Name="is_first_point_reference" Mask="1" />
+      <Flag Name="is_second_point_reference" Mask="2" />
+      <Flag Name="is_third_point_reference" Mask="4" />
+      <Flag Name="is_fourth_point_reference" Mask="8" />
+    </Field>
+    <Field Name="is_trans_space" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="rotated_dimension_type" Code="71" Type="RotatedDimensionType" DefaultValue="RotatedDimensionType::Parallel" ReadConverter="try_result!(RotatedDimensionType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="class_name" Code="1" Type="String" DefaultValue='String::from("AcDbOsnapPointRef")' />
+    <Field Name="object_osnap_type" Code="72" Type="ObjectOsnapType" DefaultValue="ObjectOsnapType::None" ReadConverter="try_result!(ObjectOsnapType::from_i16({}))" WriteConverter="{} as i16" />
+    <Pointer Name="main_object" Code="331" Type="IItem" />
+    <Field Name="main_object_subentity_type" Code="73" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="main_object_gs_marker_index" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="main_object_xref_handle" Code="301" Type="String" DefaultValue="String::new()" />
+    <Field Name="near_osnap_geometry_parameter" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="osnap_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Pointer Name="intersection_object" Code="332" Type="IItem" />
+    <Field Name="intersection_subentity_type" Code="74" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="intersection_object_gs_marker_index" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="intersection_object_xref_handle" Code="302" Type="String" DefaultValue="String::new()" />
+    <Field Name="has_last_point_reference" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+  </Object>
+  <!--
+
+  FIELD
+
+  -->
+  <Object Name="Field" SubclassMarker="[none]" TypeString="FIELD" MinVersion="R2004">
+    <Field Name="evaluator_id" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="field_code_string" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="field_code_string_overflow" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="format_string" Code="4" Type="String" DefaultValue="String::new()" Accessibility="private" />
+    <Field Name="evaluation_error_message" Code="300" Type="String" DefaultValue="String::new()" MaxVersion="R2007" />
+    <Field Name="_child_field_count" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Pointer Name="child_fields" Code="360" Type="Field" AllowMultiples="true" />
+    <Field Name="evaluation_option" Code="91" Type="i32" DefaultValue="0" MaxVersion="R2007" />
+    <Field Name="filling_option" Code="92" Type="i32" DefaultValue="0" MaxVersion="R2007" />
+    <Field Name="field_state" Code="94" Type="i32" DefaultValue="0" MaxVersion="R2007" />
+    <Field Name="evaluation_status" Code="95" Type="i32" DefaultValue="0" MaxVersion="R2007" />
+    <Field Name="evaluation_error_code" Code="96" Type="i32" DefaultValue="0" MaxVersion="R2007" />
+    <Field Name="_object_id_count" Code="97" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Pointer Name="objects" Code="331" Type="Object" AllowMultiples="true" />
+    <Field Name="_data_set_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="field_data_keys" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="evaluated_cache_key" Code="7" Type="String" DefaultValue='String::from("ACFD_FIELD_VALUE")' ProtectedSet="true" />
+    <Field Name="_value_type_code" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <!-- internal properties -->
+    <Field Name="_long_value" Code="91" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_double_value" Code="140" Type="f64" DefaultValue="0.0" Accessibility="private" />
+    <Field Name="_id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" Accessibility="private" />
+    <Field Name="_binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_binary_data" Code="310" Type="String" DefaultValue="String::new()" Accessibility="private" />
+    <Field Name="_format_string_code301" Code="301" Type="String" DefaultValue="String::new()" Accessibility="private" />
+    <Field Name="_format_string_overflow" Code="9" Type="String" DefaultValue="String::new()" Accessibility="private" />
+    <Field Name="_format_string_length" Code="98" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_child_field_count_value_type_code" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <WriteOrder>
+      <WriteField Field="evaluator_id" />
+      <WriteField Field="field_code_string" />
+      <WriteField Field="field_code_string_overflow" />
+      <WriteSpecificValue Code="4" Value="&amp;obj.format_string" MaxVersion="R2007" />
+      <WriteField Field="evaluation_error_message" />
+      <WriteSpecificValue Code="90" Value="obj.child_fields.len() as i32" />
+      <WriteField Field="child_fields" />
+      <WriteField Field="evaluation_option" />
+      <WriteField Field="filling_option" />
+      <WriteField Field="field_state" />
+      <WriteField Field="evaluation_status" />
+      <WriteField Field="evaluation_error_code" />
+      <WriteSpecificValue Code="97" Value="obj.objects.len() as i32" />
+      <!--
+
+      pointers NYI
+
+      <Foreach Field="objects_pointers._pointers">
+        <WriteSpecificValue Code="330" Value="&amp;as_handle(item.handle)" MaxVersion="R2007" />
+        <WriteSpecificValue Code="331" Value="&amp;as_handle(item.Handle)" MinVersion="R2010" />
+      </Foreach>
+      -->
+      <WriteSpecificValue Code="93" Value="obj.field_data_keys.len() as i32" />
+      <WriteField Field="field_data_keys" />
+      <WriteField Field="evaluated_cache_key" />
+      <WriteSpecificValue Code="90" Value="obj._value_type_code" />
+      <!--<WriteSpecificValue Code="_valueTypeCode" Value="Value" />-->
+      <WriteSpecificValue Code="301" Value="&amp;obj.format_string" MinVersion="R2010" />
+      <WriteField Field="_format_string_overflow" />
+      <WriteSpecificValue Code="98" Value="obj.format_string.len() as i32" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  GEODATA
+
+  -->
+  <Object Name="GeoData" SubclassMarker="[none]" TypeString="GEODATA" MinVersion="R2010">
+    <Field Name="version" Code="90" Type="GeoDataVersion" DefaultValue="GeoDataVersion::R2009" ReadConverter="try_result!(GeoDataVersion::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="coordinate_type" Code="70" Type="DesignCoordinateType" DefaultValue="DesignCoordinateType::Unknown" ReadConverter="try_result!(DesignCoordinateType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="design_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="reference_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
+    <Field Name="north_vector" Code="12" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="12,22" />
+    <Field Name="horizontal_unit_scale" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="vertical_unit_scale" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="horizontal_units" Code="91" Type="Units" DefaultValue="Units::Unitless" ReadConverter="try_result!(Units::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="vertical_units" Code="92" Type="Units" DefaultValue="Units::Unitless" ReadConverter="try_result!(Units::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="up_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="scale_estimation_method" Code="95" Type="ScaleEstimationMethod" DefaultValue="ScaleEstimationMethod::None" ReadConverter="try_result!(ScaleEstimationMethod::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="use_sea_level_correction" Code="294" Type="bool" DefaultValue="false" />
+    <Field Name="user_specified_scale_factor" Code="141" Type="f64" DefaultValue="1.0" />
+    <Field Name="sea_level_elevation" Code="142" Type="f64" DefaultValue="0.0" />
+    <Field Name="coordinate_projection_radius" Code="143" Type="f64" DefaultValue="0.0" />
+    <Field Name="coordinate_system_definition" Code="301" Type="String" DefaultValue="String::new()" />
+    <Field Name="geo_rss_tag" Code="302" Type="String" DefaultValue="String::new()" />
+    <Field Name="observation_from_tag" Code="305" Type="String" DefaultValue="String::new()" />
+    <Field Name="observation_to_tag" Code="306" Type="String" DefaultValue="String::new()" />
+    <Field Name="observation_coverage_tag" Code="307" Type="String" DefaultValue="String::new()" />
+    <Field Name="geo_mesh_points" Code="13" Type="GeoMeshPoint" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
+    <Field Name="_geo_mesh_point_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_source_mesh_x_points" Code="13" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_source_mesh_y_points" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_destination_mesh_x_points" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_destination_mesh_y_points" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="face_indices" Code="97" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
+    <Field Name="_faces_count" Code="96" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_face_point_index_x" Code="97" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
+    <Field Name="_face_point_index_y" Code="98" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
+    <Field Name="_face_point_index_z" Code="99" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
+    <WriteOrder>
+      <WriteField Field="version" />
+      <WriteField Field="coordinate_type" />
+      <WriteField Field="design_point" />
+      <WriteField Field="reference_point" />
+      <WriteField Field="north_vector" />
+      <WriteField Field="horizontal_unit_scale" />
+      <WriteField Field="vertical_unit_scale" />
+      <WriteField Field="horizontal_units" />
+      <WriteField Field="vertical_units" />
+      <WriteField Field="up_direction" />
+      <WriteField Field="scale_estimation_method" />
+      <WriteField Field="use_sea_level_correction" />
+      <WriteField Field="user_specified_scale_factor" />
+      <WriteField Field="sea_level_elevation" />
+      <WriteField Field="coordinate_projection_radius" />
+      <WriteField Field="coordinate_system_definition" />
+      <WriteField Field="geo_rss_tag" />
+      <WriteField Field="observation_from_tag" />
+      <WriteField Field="observation_to_tag" />
+      <WriteField Field="observation_coverage_tag" />
+      <WriteSpecificValue Code="93" Value="obj.geo_mesh_points.len() as i32" />
+      <Foreach Field="obj.geo_mesh_points">
+        <WriteSpecificValue Code="13" Value="item.source.x" />
+        <WriteSpecificValue Code="23" Value="item.source.y" />
+        <WriteSpecificValue Code="14" Value="item.destination.x" />
+        <WriteSpecificValue Code="24" Value="item.destination.y" />
+      </Foreach>
+      <WriteSpecificValue Code="96" Value="obj.face_indices.len() as i32" />
+      <Foreach Field="obj.face_indices">
+        <WriteSpecificValue Code="97" Value="item.x as i32" />
+        <WriteSpecificValue Code="98" Value="item.y as i32" />
+        <WriteSpecificValue Code="99" Value="item.z as i32" />
+      </Foreach>
+    </WriteOrder>
+  </Object>
+  <!--
+
+  GROUP
+
+  -->
+  <Object Name="Group" SubclassMarker="AcDbGroup" TypeString="GROUP">
+    <Field Name="description" Code="300" Type="String" DefaultValue="String::new()" />
+    <Field Name="is_named" Code="70" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_i16(!{})" />
+    <Field Name="is_selectable" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Pointer Name="entities" Code="340" Type="Entity" AllowMultiples="true" />
+  </Object>
+  <!--
+
+  IDBUFFER
+
+  -->
+  <Object Name="IdBuffer" SubclassMarker="AcDbIdBuffer" TypeString="IDBUFFER" HasXData="false" MinVersion="R14">
+    <Pointer Name="entities" Code="330" Type="Entity" AllowMultiples="true" />
+  </Object>
+  <!--
+
+  IMAGEDEF
+
+  -->
+  <Object Name="ImageDefinition" SubclassMarker="AcDbRasterImageDef" TypeString="IMAGEDEF" MinVersion="R14">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="file_path" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="image_width" Code="10" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as f64" />
+    <Field Name="image_height" Code="20" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as f64" />
+    <Field Name="pixel_width" Code="11" Type="f64" DefaultValue="0.0" />
+    <Field Name="pixel_height" Code="12" Type="f64" DefaultValue="0.0" />
+    <Field Name="is_image_loaded" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="resolution_units" Code="281" Type="ImageResolutionUnits" DefaultValue="ImageResolutionUnits::NoUnits" ReadConverter="try_result!(ImageResolutionUnits::from_i16({}))" WriteConverter="{} as i16" />
+  </Object>
+  <!--
+
+  IMAGEDEF_REACTOR
+
+  -->
+  <Object Name="ImageDefinitionReactor" SubclassMarker="AcDbRasterImageDefReactor" TypeString="IMAGEDEF_REACTOR" MaxVersion="R14">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+  </Object>
+  <!--
+
+  LAYER_FILTER
+
+  -->
+  <Object Name="LayerFilter" SubclassMarker="AcDbLayerFilter" TypeString="LAYER_FILTER" MaxVersion="R2004">
+    <Field Name="layer_names" Code="8" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbFilter")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbLayerFilter")' />
+      <WriteField Field="layer_names" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  LAYER_INDEX
+
+  -->
+  <Object Name="LayerIndex" SubclassMarker="AcDbLayerIndex" TypeString="LAYER_INDEX" MaxVersion="R14">
+    <Field Name="time_stamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
+    <Field Name="layer_names" Code="8" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Pointer Name="id_buffers" Code="360" Type="IItem" AllowMultiples="true" />
+    <Field Name="id_buffer_counts" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbIndex")' />
+      <WriteField Field="time_stamp" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbLayerIndex")' />
+      <WriteField Field="layer_names" />
+      <WriteField Field="id_buffers" />
+      <WriteField Field="id_buffer_counts" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  LAYOUT
+
+  -->
+  <Object Name="Layout" SubclassMarker="AcDbLayout" TypeString="LAYOUT" BaseClass="PlotSettings" GenerateReaderFunction="false" MaxVersion="R2000">
+    <Field Name="layout_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="layout_flags" Code="70" Type="i32" DefaultValue="0" WriteConverter="{} as i16">
+      <Flag Name="is_ps_lt_scale" Mask="1" />
+      <Flag Name="is_lim_check" Mask="2" />
+    </Field>
+    <Field Name="tab_order" Code="71" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="minimum_limits" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20" />
+    <Field Name="maximum_limits" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21" />
+    <Field Name="insertion_base_point" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
+    <Field Name="minimum_extents" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
+    <Field Name="maximum_extents" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
+    <Field Name="elevation" Code="146" Type="f64" DefaultValue="0.0" />
+    <Field Name="ucs_origin" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
+    <Field Name="ucs_x_axis" Code="16" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="16,26,36" />
+    <Field Name="ucs_y_axis" Code="17" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="17,27,37" />
+    <Field Name="ucs_orthographic_type" Code="76" Type="UcsOrthographicType" DefaultValue="UcsOrthographicType::NotOrthographic" WriteConverter="{} as i16" />
+    <Pointer Name="viewport" Code="330" Type="IItem" />
+    <Pointer Name="table_record" Code="345" Type="IItem" />
+    <Pointer Name="table_record_base" Code="346" Type="IItem" />
+  </Object>
+  <!--
+
+  LIGHTLIST
+
+  -->
+  <Object Name="LightList" SubclassMarker="AcDbLightList" TypeString="LIGHTLIST" GenerateReaderFunction="false" GenerateWriterFunction="false" MaxVersion="R2007">
+    <Field Name="version" Code="90" Type="i32" DefaultValue="0" />
+    <Pointer Name="lights" Code="5" Type="Light" AllowMultiples="true" />
+  </Object>
+  <!--
+
+  MATERIAL
+
+  -->
+  <Object Name="Material" SubclassMarker="AcDbMaterial" TypeString="MATERIAL" GenerateReaderFunction="false" MaxVersion="R2004">
+    <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="description" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="override_ambient_color" Code="70" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="ambient_color_factor" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="ambient_color_value" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="override_diffuse_color" Code="71" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="diffuse_color_factor" Code="41" Type="f64" DefaultValue="1.0" />
+    <Field Name="diffuse_color_value" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="diffuse_map_blend_factor" Code="42" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_diffuse_map" Code="72" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="diffuse_map_file_name" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="diffuse_map_projection_method" Code="73" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="diffuse_map_tiling_method" Code="74" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="diffuse_map_auto_transform_method" Code="75" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="diffuse_map_transformation_matrix" Code="43" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_diffuse_map_transformation_matrix_values" Code="43" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="specular_gloss_factor" Code="44" Type="f64" DefaultValue="0.5" />
+    <Field Name="override_specular_color" Code="76" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="specular_color_factor" Code="45" Type="f64" DefaultValue="1.0" />
+    <Field Name="specular_color_value" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="specular_map_blend_factor" Code="46" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_specular_map" Code="77" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="specular_map_file_name" Code="4" Type="String" DefaultValue="String::new()" />
+    <Field Name="specular_map_projection_method" Code="78" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="specular_map_tiling_method" Code="79" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="specular_map_auto_transform_method" Code="170" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="specular_map_transformation_matrix" Code="47" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_specular_map_transformation_matrix_values" Code="47" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="reflection_map_blend_factor" Code="48" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_reflection_map" Code="171" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="reflection_map_file_name" Code="6" Type="String" DefaultValue="String::new()" />
+    <Field Name="reflection_map_projection_method" Code="172" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="reflection_map_tiling_method" Code="173" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="reflection_map_auto_transform_method" Code="174" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="reflection_map_transformation_matrix" Code="49" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_reflection_map_transformation_matrix_values" Code="49" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="opacity_factor" Code="140" Type="f64" DefaultValue="1.0" />
+    <Field Name="opacity_map_blend_factor" Code="141" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_opacity_map" Code="175" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="opacity_map_file_name" Code="7" Type="String" DefaultValue="String::new()" />
+    <Field Name="opacity_map_projection_method" Code="176" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="opacity_map_tiling_method" Code="177" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="opacity_map_auto_transform_method" Code="178" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="opacity_map_transformation_matrix" Code="142" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_opacity_map_transformation_matrix_values" Code="142" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="bump_map_blend_factor" Code="143" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_bump_map" Code="179" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="bump_map_file_name" Code="8" Type="String" DefaultValue="String::new()" />
+    <Field Name="bump_map_projection_method" Code="270" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="bump_map_tiling_method" Code="271" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="bump_map_auto_transform_method" Code="272" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="bump_map_transformation_matrix" Code="144" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_bump_map_transformation_matrix_values" Code="144" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="refraction_index" Code="145" Type="f64" DefaultValue="1.0" />
+    <Field Name="refraction_map_blend_factor" Code="146" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_image_file_for_refraction_map" Code="273" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="refraction_map_file_name" Code="9" Type="String" DefaultValue="String::new()" />
+    <Field Name="refraction_map_projection_method" Code="274" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" />
+    <Field Name="refraction_map_tiling_method" Code="275" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" />
+    <Field Name="refraction_map_auto_transform_method" Code="276" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" />
+    <Field Name="refraction_map_transformation_matrix" Code="147" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_refraction_map_transformation_matrix_values" Code="147" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="color_bleed_scale" Code="460" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="indirect_dump_scale" Code="461" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="reflectance_scale" Code="462" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="transmittance_scale" Code="463" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="is_two_sided" Code="290" Type="bool" DefaultValue="false" MinVersion="R2007" />
+    <Field Name="luminance" Code="464" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="luminance_mode" Code="270" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="normal_map_method" Code="271" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="normal_map_strength" Code="465" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
+    <Field Name="normal_map_blend_factor" Code="42" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
+    <Field Name="use_image_file_for_normal_map" Code="72" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" MinVersion="R2007" />
+    <Field Name="normal_map_file_name" Code="3" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Field Name="normal_map_projection_method" Code="73" Type="MapProjectionMethod" DefaultValue="MapProjectionMethod::Planar" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="normal_map_tiling_method" Code="74" Type="MapTilingMethod" DefaultValue="MapTilingMethod::Tile" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="normal_map_auto_transform_method" Code="75" Type="MapAutoTransformMethod" DefaultValue="MapAutoTransformMethod::NoAutoTransform" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="normal_map_transformation_matrix" Code="43" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="_normal_map_transformation_matrix_values" Code="43" Type="f64" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2007" />
+    <Field Name="is_anonymous" Code="293" Type="bool" DefaultValue="false" MinVersion="R2007" />
+    <Field Name="global_illumination_mode" Code="272" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="final_gather_mode" Code="273" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="gen_proc_name" Code="300" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Field Name="gen_proc_boolean_value" Code="291" Type="bool" DefaultValue="false" MinVersion="R2007" />
+    <Field Name="gen_proc_integer_value" Code="271" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="gen_proc_real_value" Code="469" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
+    <Field Name="gen_proc_text_value" Code="301" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Field Name="gen_proc_table_end" Code="292" Type="bool" DefaultValue="false" MinVersion="R2007" />
+    <Field Name="gen_proc_color_index_value" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.get_raw_value()" MinVersion="R2007" />
+    <Field Name="gen_proc_color_rgb_value" Code="420" Type="i32" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="gen_proc_color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
+    <Field Name="map_u_tile" Code="270" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="map_v_tile" Code="271" Type="i16" DefaultValue="0" MinVersion="R2007" />
+    <Field Name="translucence" Code="148" Type="f64" DefaultValue="0.0" MinVersion="R2010" />
+    <Field Name="self_illumination" Code="90" Type="i32" DefaultValue="0" MinVersion="R2010" />
+    <Field Name="reflectivity" Code="468" Type="f64" DefaultValue="0.0" MinVersion="R2010" />
+    <Field Name="illumination_model" Code="93" Type="i32" DefaultValue="0" MinVersion="R2010" />
+    <Field Name="channel_flags" Code="94" Type="i32" DefaultValue="0" MinVersion="R2010" />
+    <WriteOrder>
+      <WriteField Field="name" />
+      <WriteField Field="description" />
+      <WriteField Field="override_ambient_color" />
+      <WriteField Field="ambient_color_factor" />
+      <WriteField Field="ambient_color_value" />
+      <WriteField Field="override_diffuse_color" />
+      <WriteField Field="diffuse_color_factor" />
+      <WriteField Field="diffuse_color_value" />
+      <WriteField Field="diffuse_map_blend_factor" />
+      <WriteField Field="use_image_file_for_diffuse_map" />
+      <WriteField Field="diffuse_map_file_name" />
+      <WriteField Field="diffuse_map_projection_method" />
+      <WriteField Field="diffuse_map_tiling_method" />
+      <WriteField Field="diffuse_map_auto_transform_method" />
+      <Foreach Field="obj.diffuse_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="43" Value="*item" />
+      </Foreach>
+      <WriteField Field="specular_color_factor" />
+      <WriteField Field="override_specular_color" />
+      <WriteField Field="specular_color_factor" />
+      <WriteField Field="specular_color_value" />
+      <WriteField Field="specular_map_blend_factor" />
+      <WriteField Field="use_image_file_for_specular_map" />
+      <WriteField Field="specular_map_file_name" />
+      <WriteField Field="specular_map_projection_method" />
+      <WriteField Field="specular_map_tiling_method" />
+      <WriteField Field="specular_map_auto_transform_method" />
+      <Foreach Field="obj.specular_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="47" Value="*item" />
+      </Foreach>
+      <WriteField Field="reflection_map_blend_factor" />
+      <WriteField Field="use_image_file_for_reflection_map" />
+      <WriteField Field="reflection_map_file_name" />
+      <WriteField Field="reflection_map_projection_method" />
+      <WriteField Field="reflection_map_tiling_method" />
+      <WriteField Field="reflection_map_auto_transform_method" />
+      <Foreach Field="obj.reflection_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="49" Value="*item" />
+      </Foreach>
+      <WriteField Field="opacity_factor" />
+      <WriteField Field="opacity_map_blend_factor" />
+      <WriteField Field="use_image_file_for_opacity_map" />
+      <WriteField Field="opacity_map_file_name" />
+      <WriteField Field="opacity_map_projection_method" />
+      <WriteField Field="opacity_map_tiling_method" />
+      <WriteField Field="opacity_map_auto_transform_method" />
+      <Foreach Field="obj.opacity_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="142" Value="*item" />
+      </Foreach>
+      <WriteField Field="bump_map_blend_factor" />
+      <WriteField Field="use_image_file_for_bump_map" />
+      <WriteField Field="bump_map_file_name" />
+      <WriteField Field="bump_map_projection_method" />
+      <WriteField Field="bump_map_tiling_method" />
+      <WriteField Field="bump_map_auto_transform_method" />
+      <Foreach Field="obj.bump_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="144" Value="*item" />
+      </Foreach>
+      <WriteField Field="refraction_index" />
+      <WriteField Field="refraction_map_blend_factor" />
+      <WriteField Field="use_image_file_for_refraction_map" />
+      <WriteField Field="refraction_map_file_name" />
+      <WriteField Field="refraction_map_projection_method" />
+      <WriteField Field="refraction_map_tiling_method" />
+      <WriteField Field="refraction_map_auto_transform_method" />
+      <Foreach Field="obj.refraction_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="147" Value="*item" />
+      </Foreach>
+      <WriteField Field="color_bleed_scale" />
+      <WriteField Field="indirect_dump_scale" />
+      <WriteField Field="reflectance_scale" />
+      <WriteField Field="transmittance_scale" />
+      <WriteField Field="is_two_sided" />
+      <WriteField Field="luminance" />
+      <WriteField Field="luminance_mode" />
+      <WriteField Field="normal_map_method" />
+      <WriteField Field="normal_map_strength" />
+      <WriteField Field="normal_map_blend_factor" />
+      <WriteField Field="use_image_file_for_normal_map" />
+      <WriteField Field="normal_map_file_name" />
+      <WriteField Field="normal_map_projection_method" />
+      <WriteField Field="normal_map_tiling_method" />
+      <WriteField Field="normal_map_auto_transform_method" />
+      <Foreach Field="obj.normal_map_transformation_matrix.get_values()">
+        <WriteSpecificValue Code="43" Value="*item" />
+      </Foreach>
+      <WriteField Field="is_anonymous" />
+      <WriteField Field="global_illumination_mode" />
+      <WriteField Field="final_gather_mode" />
+      <WriteField Field="gen_proc_name" />
+      <WriteField Field="gen_proc_boolean_value" />
+      <WriteField Field="gen_proc_integer_value" />
+      <WriteField Field="gen_proc_real_value" />
+      <WriteField Field="gen_proc_text_value" />
+      <WriteField Field="gen_proc_table_end" />
+      <WriteField Field="gen_proc_color_index_value" />
+      <WriteField Field="gen_proc_color_rgb_value" />
+      <WriteField Field="gen_proc_color_name" />
+      <WriteField Field="map_u_tile" />
+      <WriteField Field="translucence" />
+      <WriteField Field="self_illumination" />
+      <WriteField Field="reflectivity" />
+      <WriteField Field="illumination_model" />
+      <WriteField Field="channel_flags" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  MLEADERSTYLE
+
+  -->
+  <Object Name="MLeaderStyle" SubclassMarker="AcDbMLeaderStyle" TypeString="MLEADERSTYLE" MinVersion="R2007">
+    <Field Name="content_type" Code="170" Type="i16" DefaultValue="0" />
+    <Field Name="draw_m_leader_order_type" Code="171" Type="i16" DefaultValue="0" />
+    <Field Name="draw_leader_order_type" Code="172" Type="i16" DefaultValue="0" />
+    <Field Name="max_leader_segment_count" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="first_segment_angle_constraint" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="second_segment_angle_constraint" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="leader_line_type" Code="173" Type="i16" DefaultValue="0" />
+    <Field Name="leader_line_color" Code="91" Type="i32" DefaultValue="0" />
+    <Pointer Name="line_leader_type" Code="340" Type="IItem" />
+    <Field Name="leader_line_weight" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="enable_landing" Code="290" Type="bool" DefaultValue="true" />
+    <Field Name="landing_gap" Code="42" Type="f64" DefaultValue="0.0" />
+    <Field Name="enable_dogleg" Code="291" Type="bool" DefaultValue="true" />
+    <Field Name="dogleg_length" Code="43" Type="f64" DefaultValue="0.0" />
+    <Field Name="m_leader_style_description" Code="3" Type="String" DefaultValue="String::new()" />
+    <Pointer Name="arrowhead" Code="341" Type="IItem" />
+    <Field Name="arrowhead_size" Code="44" Type="f64" DefaultValue="0.0" />
+    <Field Name="default_m_text_contents" Code="300" Type="String" DefaultValue="String::new()" />
+    <Pointer Name="m_text_style" Code="342" Type="IItem" />
+    <Field Name="text_left_attachment_type" Code="174" Type="i16" DefaultValue="0" />
+    <Field Name="text_angle_type" Code="175" Type="i16" DefaultValue="0" />
+    <Field Name="text_alignment_type" Code="176" Type="i16" DefaultValue="0" />
+    <Field Name="text_right_attachment_type" Code="178" Type="i16" DefaultValue="0" />
+    <Field Name="text_color" Code="93" Type="i32" DefaultValue="0" />
+    <Field Name="text_height" Code="45" Type="f64" DefaultValue="0.0" />
+    <Field Name="enable_frame_text" Code="292" Type="bool" DefaultValue="true" />
+    <Field Name="always_align_text_left" Code="297" Type="bool" DefaultValue="true" />
+    <Field Name="align_gap" Code="46" Type="f64" DefaultValue="0.0" />
+    <Pointer Name="block_content" Code="343" Type="IItem" />
+    <Field Name="block_content_color" Code="94" Type="i32" DefaultValue="0" />
+    <Field Name="block_content_x_scale" Code="47" Type="f64" DefaultValue="1.0" />
+    <Field Name="block_content_y_scale" Code="49" Type="f64" DefaultValue="1.0" />
+    <Field Name="block_content_z_scale" Code="140" Type="f64" DefaultValue="1.0" />
+    <Field Name="enable_block_content_scale" Code="293" Type="bool" DefaultValue="true" />
+    <Field Name="block_content_rotation" Code="141" Type="f64" DefaultValue="0.0" />
+    <Field Name="enable_block_content_rotation" Code="294" Type="bool" DefaultValue="true" />
+    <Field Name="block_content_connection_type" Code="177" Type="i16" DefaultValue="0" />
+    <Field Name="scale" Code="142" Type="f64" DefaultValue="1.0" />
+    <Field Name="overwrite_field_value" Code="295" Type="bool" DefaultValue="false" />
+    <Field Name="is_annotative" Code="296" Type="bool" DefaultValue="true" />
+    <Field Name="break_gap_size" Code="143" Type="f64" DefaultValue="0.0" />
+    <Field Name="text_attachment_direction" Code="271" Type="TextAttachmentDirection" DefaultValue="TextAttachmentDirection::Horizontal" ReadConverter="try_result!(TextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="bottom_text_attachment_direction" Code="272" Type="BottomTextAttachmentDirection" DefaultValue="BottomTextAttachmentDirection::Center" ReadConverter="try_result!(BottomTextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="top_text_attachment_direction" Code="273" Type="TopTextAttachmentDirection" DefaultValue="TopTextAttachmentDirection::Center" ReadConverter="try_result!(TopTextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
+  </Object>
+  <!--
+
+  MLINESTYLE
+
+  -->
+  <Object Name="MLineStyle" SubclassMarker="AcDbMlineStyle" TypeString="MLINESTYLE" GenerateReaderFunction="false">
+    <Field Name="style_name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="_flags" Code="70" Type="i32" DefaultValue="0" WriteConverter="{} as i16">
+      <Flag Name="fill_on" Mask="1" />
+      <Flag Name="display_miters" Mask="2" />
+      <Flag Name="start_square_end_cap" Mask="16" />
+      <Flag Name="start_inner_arcs_cap" Mask="32" />
+      <Flag Name="start_round_cap" Mask="64" />
+      <Flag Name="end_square_cap" Mask="256" />
+      <Flag Name="end_inner_arcs_cap" Mask="512" />
+      <Flag Name="end_round_cap" Mask="1024" />
+    </Field>
+    <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="fill_color" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.get_raw_value()" />
+    <Field Name="start_angle" Code="51" Type="f64" DefaultValue="90.0" />
+    <Field Name="end_angle" Code="52" Type="f64" DefaultValue="90.0" />
+    <Field Name="elements" Code="49" Type="MLineStyleElement" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
+    <Field Name="_element_count" Code="71" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="_element_offsets" Code="49" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_element_colors" Code="62" Type="Color" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{}.get_raw_value()" />
+    <Field Name="_element_linetypes" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMlineStyle")' />
+      <WriteField Field="style_name" />
+      <WriteField Field="_flags" />
+      <WriteField Field="description" />
+      <WriteField Field="fill_color" />
+      <WriteField Field="start_angle" />
+      <WriteField Field="end_angle" />
+      <WriteSpecificValue Code="71" Value="obj.elements.len() as i16" />
+      <Foreach Field="obj.elements">
+        <WriteSpecificValue Code="49" Value="item.offset" />
+        <WriteSpecificValue Code="62" Value="item.color.get_raw_value()" />
+        <WriteSpecificValue Code="6" Value="&amp;item.linetype" />
+      </Foreach>
+    </WriteOrder>
+  </Object>
+  <!--
+
+  OBJECT_PTR
+
+  -->
+  <Object Name="ObjectPointer" SubclassMarker="null" TypeString="OBJECT_PTR" MaxVersion="R14">
+    <Field Name="ase_x_data" Code="1001" Type="String" DefaultValue="String::new()" />
+    <WriteOrder>
+      <WriteField Field="ase_x_data" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  PLOTSETTINGS
+
+  -->
+  <Object Name="PlotSettings" SubclassMarker="AcDbPlotSettings" TypeString="PLOTSETTINGS" MaxVersion="R2000">
+    <Field Name="page_setup_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="printer_name" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="paper_size" Code="4" Type="String" DefaultValue="String::new()" />
+    <Field Name="plot_view_name" Code="6" Type="String" DefaultValue="String::new()" />
+    <Field Name="unprintable_left_margin_size" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="unprintable_bottom_margin_size" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="unprintable_right_margin_size" Code="42" Type="f64" DefaultValue="0.0" />
+    <Field Name="unprintable_top_margin_size" Code="43" Type="f64" DefaultValue="0.0" />
+    <Field Name="paper_width" Code="44" Type="f64" DefaultValue="0.0" />
+    <Field Name="paper_height" Code="45" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_origin_x_value" Code="46" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_origin_y_value" Code="47" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_window_lower_left_x_value" Code="48" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_window_lower_left_y_value" Code="49" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_window_upper_right_x_value" Code="140" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_window_upper_right_y_value" Code="141" Type="f64" DefaultValue="0.0" />
+    <Field Name="custom_print_scale_numerator" Code="142" Type="f64" DefaultValue="0.0" />
+    <Field Name="custom_print_scale_denominator" Code="143" Type="f64" DefaultValue="0.0" />
+    <Field Name="plot_layout_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
+      <Flag Name="plot_viewport_borders" Mask="1" />
+      <Flag Name="show_plot_styles" Mask="2" />
+      <Flag Name="plot_centered" Mask="4" />
+      <Flag Name="plot_hidden" Mask="8" />
+      <Flag Name="use_standard_scale" Mask="16" />
+      <Flag Name="plot_plot_styles" Mask="32" />
+      <Flag Name="scale_line_weights" Mask="64" />
+      <Flag Name="print_line_weights" Mask="128" />
+      <Flag Name="draw_viewports_first" Mask="512" />
+      <Flag Name="model_type" Mask="1024" />
+      <Flag Name="update_paper" Mask="2048" />
+      <Flag Name="zoom_to_paper_on_update" Mask="4096" />
+      <Flag Name="initializing" Mask="8192" />
+      <Flag Name="prev_plot_init" Mask="16384" />
+    </Field>
+    <Field Name="plot_paper_units" Code="72" Type="PlotPaperUnits" DefaultValue="PlotPaperUnits::Inches" ReadConverter="try_result!(PlotPaperUnits::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="plot_rotation" Code="73" Type="PlotRotation" DefaultValue="PlotRotation::NoRotation" ReadConverter="try_result!(PlotRotation::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="plot_type" Code="74" Type="PlotType" DefaultValue="PlotType::DrawingExtents" ReadConverter="try_result!(PlotType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="current_style_sheet" Code="7" Type="String" DefaultValue="String::new()" />
+    <Field Name="standard_scale" Code="75" Type="StandardScale" DefaultValue="StandardScale::ScaledToFit" ReadConverter="try_result!(StandardScale::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="shade_plot_mode" Code="76" Type="ShadePlotMode" DefaultValue="ShadePlotMode::AsDisplayed" ReadConverter="try_result!(ShadePlotMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="shade_plot_resolution_level" Code="77" Type="ShadePlotResolutionLevel" DefaultValue="ShadePlotResolutionLevel::Normal" ReadConverter="try_result!(ShadePlotResolutionLevel::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="shade_plot_custom_dpi" Code="78" Type="i32" DefaultValue="100" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="standard_scale_value" Code="147" Type="f64" DefaultValue="1.0" />
+    <Field Name="paper_image_origin_x" Code="148" Type="f64" DefaultValue="0.0" />
+    <Field Name="paper_image_origin_y" Code="149" Type="f64" DefaultValue="0.0" />
+    <Pointer Name="shade_plot_object" Code="333" Type="IItem" />
+  </Object>
+  <!--
+
+  RASTERVARIABLES
+
+  -->
+  <Object Name="RasterVariables" SubclassMarker="AcDbRasterVariables" TypeString="RASTERVARIABLES" MaxVersion="R14">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="is_display_frame_image" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="is_high_display_quality" Code="71" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="image_units" Code="72" Type="RasterImageUnits" DefaultValue="RasterImageUnits::None" ReadConverter="try_result!(RasterImageUnits::from_i16({}))" WriteConverter="{} as i16" />
+  </Object>
+  <!--
+
+  MENTALRAYRENDERSETTINGS
+
+  -->
+  <Object Name="MentalRayRenderSettings" SubclassMarker="AcDbRenderSettings" TypeString="MENTALRAYRENDERSETTINGS" MaxVersion="R2007">
+    <Field Name="class_version_1" Code="90" Type="i32" DefaultValue="1" />
+    <Field Name="preset_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="render_materials" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="texture_sampling_quality" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="render_back_faces" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="render_shadows" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="preview_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="class_version_2" Code="90" Type="i32" DefaultValue="1" />
+    <Field Name="minimum_sampling_rate" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="maximum_sampling_rate" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="sampling_filter_type" Code="70" Type="SamplingFilterType" DefaultValue="SamplingFilterType::Box" ReadConverter="try_result!(SamplingFilterType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="filter_width" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="filter_height" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="sampling_contrast_color_red" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="sampling_contrast_color_green" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="sampling_contrast_color_blue" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="sampling_contrast_color_alpha" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="shadow_mode" Code="70" Type="RenderShadowMode" DefaultValue="RenderShadowMode::Simple" ReadConverter="try_result!(RenderShadowMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="map_shadows" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="ray_tracing" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="ray_tracing_depth_reflections" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="ray_tracing_depth_refractions" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="ray_tracing_depth_maximum" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="use_global_illumination" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="sample_count" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="use_global_illumination_radius" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="global_illumination_radius" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="photons_per_light" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="global_illumination_depth_reflections" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="global_illumination_depth_refractions" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="global_illumination_depth_maximum" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="use_final_gather" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="final_gather_ray_count" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="use_final_gather_minimum_radius" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="use_final_gather_maximum_radius" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="use_final_gather_pixels" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="final_gather_sample_radius_minimum" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="final_gather_sample_radius_maximum" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="luminance_scale" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="diagnostic_mode" Code="70" Type="RenderDiagnosticMode" DefaultValue="RenderDiagnosticMode::Off" ReadConverter="try_result!(RenderDiagnosticMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_grid_mode" Code="70" Type="RenderDiagnosticGridMode" DefaultValue="RenderDiagnosticGridMode::Object" ReadConverter="try_result!(RenderDiagnosticGridMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="grid_size" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="diagnostic_photon_mode" Code="70" Type="DiagnosticPhotonMode" DefaultValue="DiagnosticPhotonMode::Density" ReadConverter="try_result!(DiagnosticPhotonMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_bsp_mode" Code="70" Type="DiagnosticBSPMode" DefaultValue="DiagnosticBSPMode::Depth" ReadConverter="try_result!(DiagnosticBSPMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="export_mi_statistics" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="mi_statistics_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="tile_size" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="tile_order" Code="70" Type="TileOrder" DefaultValue="TileOrder::Hilbert" ReadConverter="try_result!(TileOrder::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="memory_limit" Code="90" Type="i32" DefaultValue="0" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRenderSettings")' />
+      <WriteField Field="class_version_1" />
+      <WriteField Field="preset_name" />
+      <WriteField Field="render_materials" />
+      <WriteField Field="texture_sampling_quality" />
+      <WriteField Field="render_back_faces" />
+      <WriteField Field="render_shadows" />
+      <WriteField Field="preview_file_name" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMentalRayRenderSettings")' />
+      <WriteField Field="class_version_2" />
+      <WriteField Field="minimum_sampling_rate" />
+      <WriteField Field="maximum_sampling_rate" />
+      <WriteField Field="sampling_filter_type" />
+      <WriteField Field="filter_width" />
+      <WriteField Field="filter_height" />
+      <WriteField Field="sampling_contrast_color_red" />
+      <WriteField Field="sampling_contrast_color_green" />
+      <WriteField Field="sampling_contrast_color_blue" />
+      <WriteField Field="sampling_contrast_color_alpha" />
+      <WriteField Field="shadow_mode" />
+      <WriteField Field="map_shadows" />
+      <WriteField Field="ray_tracing" />
+      <WriteField Field="ray_tracing_depth_reflections" />
+      <WriteField Field="ray_tracing_depth_refractions" />
+      <WriteField Field="ray_tracing_depth_maximum" />
+      <WriteField Field="use_global_illumination" />
+      <WriteField Field="sample_count" />
+      <WriteField Field="use_global_illumination_radius" />
+      <WriteField Field="global_illumination_radius" />
+      <WriteField Field="photons_per_light" />
+      <WriteField Field="global_illumination_depth_reflections" />
+      <WriteField Field="global_illumination_depth_refractions" />
+      <WriteField Field="global_illumination_depth_maximum" />
+      <WriteField Field="use_final_gather" />
+      <WriteField Field="final_gather_ray_count" />
+      <WriteField Field="use_final_gather_minimum_radius" />
+      <WriteField Field="use_final_gather_maximum_radius" />
+      <WriteField Field="use_final_gather_pixels" />
+      <WriteField Field="final_gather_sample_radius_minimum" />
+      <WriteField Field="final_gather_sample_radius_maximum" />
+      <WriteField Field="luminance_scale" />
+      <WriteField Field="diagnostic_mode" />
+      <WriteField Field="diagnostic_grid_mode" />
+      <WriteField Field="grid_size" />
+      <WriteField Field="diagnostic_photon_mode" />
+      <WriteField Field="diagnostic_bsp_mode" />
+      <WriteField Field="export_mi_statistics" />
+      <WriteField Field="mi_statistics_file_name" />
+      <WriteField Field="tile_size" />
+      <WriteField Field="tile_order" />
+      <WriteField Field="memory_limit" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  RENDERENVIRONMENT
+
+  -->
+  <Object Name="RenderEnvironment" SubclassMarker="AcDbRenderEnvironment" TypeString="RENDERENVIRONMENT" MaxVersion="R2007">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="1" />
+    <Field Name="is_fog_enabled" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="is_background_fog_enabled" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="fog_color_red" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="fog_color_green" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="fog_color_blue" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="near_fog_density_percent" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="far_fog_density_percent" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="near_clipping_plane_distance_percent" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="far_clipping_plane_distance_percent" Code="40" Type="f64" DefaultValue="1.0" />
+    <Field Name="use_environment_image" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="environment_image_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+  </Object>
+  <!--
+
+  RENDERGLOBAL
+
+  -->
+  <Object Name="RenderGlobal" SubclassMarker="AcDbRenderGlobal" TypeString="RENDERGLOBAL" MaxVersion="R2007">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="2" />
+    <Field Name="render_procedure" Code="90" Type="RenderProcedure" DefaultValue="RenderProcedure::View" ReadConverter="(RenderProcedure)" WriteConverter="{} as i32" />
+    <Field Name="render_destination" Code="90" Type="RenderDestination" DefaultValue="RenderDestination::RenderWindow" ReadConverter="(RenderDestination)" WriteConverter="{} as i32" />
+    <Field Name="save_to_file" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="save_to_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="image_width" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="image_height" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="use_predefined_presets_first" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="use_high_info_level" Code="290" Type="bool" DefaultValue="false" />
+  </Object>
+  <!--
+
+  SECTIONMANAGER
+
+  -->
+  <Object Name="SectionManager" SubclassMarker="AcDbSectionManager" TypeString="SECTIONMANAGER" MaxVersion="R2007">
+    <Field Name="requires_full_update" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+    <Field Name="_section_count" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Pointer Name="section_entities" Code="330" Type="Entity" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSectionManager")' />
+      <WriteField Field="requires_full_update" />
+      <WriteSpecificValue Code="90" Value="obj.section_entities.len() as i32" />
+      <WriteField Field="section_entities" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  SECTIONSETTINGS
+
+  -->
+  <Object Name="SectionSettings" SubclassMarker="AcDbSectionSettings" TypeString="SECTIONSETTINGS" GenerateReaderFunction="false" GenerateWriterFunction="false" MaxVersion="R2007">
+    <Field Name="section_type" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="is_generation_option" Code="91" Type="bool" DefaultValue="false" />
+    <Field Name="source_object_handles" Code="330" Type="u32" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="destination_object_handle" Code="331" Type="u32" DefaultValue="0" />
+    <Field Name="destination_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="geometry_settings" Code="90" Type="SectionTypeSettings" DefaultValue="vec![]" AllowMultiples="true" />  </Object>
+  <!--
+
+  SORTENTSTABLE
+
+  -->
+  <Object Name="SortentsTable" SubclassMarker="AcDbSortentsTable" TypeString="SORTENTSTABLE" GenerateReaderFunction="false" MaxVersion="R14">
+    <Pointer Name="entities" Code="331" Type="Entity" AllowMultiples="true" />
+    <Pointer Name="sort_items" Code="5" Type="IItem" AllowMultiples="true" />
+  </Object>
+  <!--
+
+  SPATIAL_FILTER
+
+  -->
+  <Object Name="SpatialFilter" SubclassMarker="AcDbSpatialFilter" TypeString="SPATIAL_FILTER" GenerateReaderFunction="false" MaxVersion="R14">
+    <Field Name="clip_boundary_definition_points" Code="10" Type="Point" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="clip_boundary_normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
+    <Field Name="clip_boundary_origin" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
+    <Field Name="is_clip_boundary_enabled" Code="71" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="is_front_clipping_plane" Code="72" Type="bool" DefaultValue="true" WriteConverter="as_i16({})" />
+    <Field Name="front_clipping_plane_distance" Code="40" Type="f64" DefaultValue="0.0" WriteCondition="IsFrontClippingPlane" />
+    <Field Name="is_back_clipping_plane" Code="73" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="back_clipping_plane_distance" Code="41" Type="f64" DefaultValue="0.0" WriteCondition="IsBackClippingPlane" />
+    <Field Name="inverse_transformation_matrix" Code="40" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <Field Name="transformation_matrix" Code="40" Type="TransformationMatrix" DefaultValue="TransformationMatrix::identity()" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbFilter")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSpatialFilter")' />
+      <WriteSpecificValue Code="70" Value="obj.clip_boundary_definition_points.len() as i16" />
+      <Foreach Field="obj.clip_boundary_definition_points">
+        <WriteSpecificValue Code="10" Value="item.x" />
+        <WriteSpecificValue Code="20" Value="item.y" />
+        <WriteSpecificValue Code="30" Value="item.z" />
+      </Foreach>
+      <WriteField Field="clip_boundary_normal" />
+      <WriteField Field="clip_boundary_origin" />
+      <WriteField Field="is_clip_boundary_enabled" />
+      <WriteField Field="is_front_clipping_plane" />
+      <WriteField Field="front_clipping_plane_distance" />
+      <WriteField Field="is_back_clipping_plane" />
+      <WriteField Field="back_clipping_plane_distance" />
+      <Foreach Field="obj.inverse_transformation_matrix.get_4x3_values_row_major()">
+        <WriteSpecificValue Code="40" Value="*item" />
+      </Foreach>
+      <Foreach Field="obj.transformation_matrix.get_4x3_values_row_major()">
+        <WriteSpecificValue Code="40" Value="*item" />
+      </Foreach>
+    </WriteOrder>
+  </Object>
+  <!--
+
+  SPATIAL_INDEX
+
+  -->
+  <Object Name="SpatialIndex" SubclassMarker="AcDbIndex" TypeString="SPATIAL_INDEX" MaxVersion="R2000">
+    <Field Name="timestamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbIndex")' />
+      <WriteField Field="timestamp" />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSpatialIndex")' />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  SUNSTUDY
+
+  -->
+  <Object Name="SunStudy" SubclassMarker="AcDbSunStudy" TypeString="SUNSTUDY" GenerateReaderFunction="false" MinVersion="R2013">
+    <Field Name="version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="sun_setup_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="description" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="output_type" Code="70" Type="i16" DefaultValue="0" />
+    <Field Name="sheet_set_name" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="use_subset" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="sheet_subset_name" Code="4" Type="String" DefaultValue="String::new()" />
+    <Field Name="select_dates_from_calendar" Code="291" Type="bool" DefaultValue="false" />
+    <Field Name="dates" Code="90" Type="DateTime&lt;Local&gt;" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="select_range_of_dates" Code="292" Type="bool" DefaultValue="false" />
+    <Field Name="start_time_seconds_past_midnight" Code="93" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
+    <Field Name="end_time_seconds_past_midnight" Code="94" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
+    <Field Name="interval_in_seconds" Code="95" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
+    <!-- the spec says this is code 290, but code 290 has to be a boolean value -->
+    <Field Name="hours" Code="280" Type="i32" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{} as i16" />
+    <Pointer Name="page_setup_wizard" Code="340" Type="IItem" />
+    <Pointer Name="view" Code="341" Type="IItem" />
+    <Pointer Name="visual_style" Code="342" Type="IItem" />
+    <Field Name="shade_plot_type" Code="74" Type="i16" DefaultValue="0" />
+    <Field Name="viewports_per_page" Code="75" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="viewport_distribution_row_count" Code="76" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="viewport_distribution_column_count" Code="77" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="spacing" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="lock_viewports" Code="293" Type="bool" DefaultValue="false" />
+    <Field Name="label_viewports" Code="294" Type="bool" DefaultValue="false" />
+    <Pointer Name="text_style" Code="343" Type="IItem" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSunStudy")' />
+      <WriteField Field="version" />
+      <WriteField Field="sun_setup_name" />
+      <WriteField Field="description" />
+      <WriteField Field="output_type" />
+      <WriteField Field="sheet_set_name" />
+      <WriteField Field="use_subset" />
+      <WriteField Field="sheet_subset_name" />
+      <WriteField Field="select_dates_from_calendar" />
+      <WriteSpecificValue Code="91" Value="obj.dates.len() as i32" />
+      <Foreach Field="obj.dates">
+        <WriteSpecificValue Code="90" Value="as_double_local(*item) as i32" />
+      </Foreach>
+      <WriteField Field="select_range_of_dates" />
+      <WriteField Field="start_time_seconds_past_midnight" />
+      <WriteField Field="end_time_seconds_past_midnight" />
+      <WriteField Field="interval_in_seconds" />
+      <WriteSpecificValue Code="73" Value="obj.hours.len() as i16" />
+      <WriteField Field="hours" />
+      <WriteField Field="page_setup_wizard" />
+      <WriteField Field="view" />
+      <WriteField Field="visual_style" />
+      <WriteField Field="shade_plot_type" />
+      <WriteField Field="viewports_per_page" />
+      <WriteField Field="viewport_distribution_row_count" />
+      <WriteField Field="viewport_distribution_column_count" />
+      <WriteField Field="spacing" />
+      <WriteField Field="lock_viewports" />
+      <WriteField Field="label_viewports" />
+      <WriteField Field="text_style" />
+    </WriteOrder>
+  </Object>
+  <!--
+
+  TABLESYLE
+
+  -->
+  <Object Name="TableStyle" SubclassMarker="AcDbTableStyle" TypeString="TABLESTYLE" GenerateReaderFunction="false" MaxVersion="R2004">
+    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" WriteConverter="{} as i16" MinVersion="R2010" />
+    <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
+    <Field Name="flow_direction" Code="70" Type="FlowDirection" DefaultValue="FlowDirection::Down" WriteConverter="{} as i16" />
+    <Field Name="flags" Code="71" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
+    <Field Name="horizontal_cell_margin" Code="40" Type="f64" DefaultValue="0.06" />
+    <Field Name="vertical_cell_margin" Code="41" Type="f64" DefaultValue="0.06" />
+    <Field Name="is_title_suppressed" Code="280" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="is_column_heading_suppressed" Code="281" Type="bool" DefaultValue="false" WriteConverter="as_i16({})" />
+    <Field Name="cell_styles" Code="0" Type="TableCellStyle" DefaultValue="vec![]" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbTableStyle")' />
+      <WriteField Field="version" />
+      <WriteField Field="description" />
+      <WriteField Field="flow_direction" />
+      <WriteField Field="flags" />
+      <WriteField Field="horizontal_cell_margin" />
+      <WriteField Field="vertical_cell_margin" />
+      <WriteField Field="is_title_suppressed" />
+      <WriteField Field="is_column_heading_suppressed" />
+      <Foreach Field="obj.cell_styles">
+        <WriteSpecificValue Code="7" Value="&amp;item.name" />
+        <WriteSpecificValue Code="140" Value="item.text_height" />
+        <WriteSpecificValue Code="170" Value="item.cell_alignment" />
+        <WriteSpecificValue Code="62" Value="item.text_color.get_raw_value()" />
+        <WriteSpecificValue Code="63" Value="item.cell_fill_color.get_raw_value()" />
+        <WriteSpecificValue Code="283" Value="as_i16(item.is_background_color_enabled)" />
+        <WriteSpecificValue Code="90" Value="item.cell_data_type" />
+        <WriteSpecificValue Code="91" Value="item.cell_unit_type" />
+        <WriteSpecificValue Code="274" Value="item.border_lineweight_1" />
+        <WriteSpecificValue Code="275" Value="item.border_lineweight_2" />
+        <WriteSpecificValue Code="276" Value="item.border_lineweight_3" />
+        <WriteSpecificValue Code="277" Value="item.border_lineweight_4" />
+        <WriteSpecificValue Code="278" Value="item.border_lineweight_5" />
+        <WriteSpecificValue Code="279" Value="item.border_lineweight_6" />
+        <WriteSpecificValue Code="284" Value="as_i16(item.is_border_1_visible)" />
+        <WriteSpecificValue Code="285" Value="as_i16(item.is_border_2_visible)" />
+        <WriteSpecificValue Code="286" Value="as_i16(item.is_border_3_visible)" />
+        <WriteSpecificValue Code="287" Value="as_i16(item.is_border_4_visible)" />
+        <WriteSpecificValue Code="288" Value="as_i16(item.is_border_5_visible)" />
+        <WriteSpecificValue Code="289" Value="as_i16(item.is_border_6_visible)" />
+        <WriteSpecificValue Code="64" Value="item.border_1_color.get_raw_value()" />
+        <WriteSpecificValue Code="65" Value="item.border_2_color.get_raw_value()" />
+        <WriteSpecificValue Code="66" Value="item.border_3_color.get_raw_value()" />
+        <WriteSpecificValue Code="67" Value="item.border_4_color.get_raw_value()" />
+        <WriteSpecificValue Code="68" Value="item.border_5_color.get_raw_value()" />
+        <WriteSpecificValue Code="69" Value="item.border_6_color.get_raw_value()" />
+      </Foreach>
+    </WriteOrder>
+  </Object>
+  <!--
+
+  UNDERLAYDEFINITION
+
+  -->
+  <Object Name="UnderlayDefinition" SubclassMarker="AcDbUnderlayDefinition" TypeString="UNDERLAYDEFINITION" MaxVersion="R2007">
+    <Field Name="file_name" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
+  </Object>
+  <!--
+
+  VBA_PROJECT
+
+  -->
+  <Object Name="VbaProject" SubclassMarker="AcDbVbaProject" TypeString="VBA_PROJECT" MaxVersion="R2000">
+    <Field Name="data" Code="310" Type="u8" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
+    <Field Name="_hex_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbVbaProject")' />
+      <WriteSpecificValue Code="90" Value="obj.data.len() as i32" />
+      <Foreach Field="try!(obj.get_hex_strings())">
+        <WriteSpecificValue Code="310" Value="item" />
+      </Foreach>
+    </WriteOrder>
+  </Object>
+  <!--
+
+  VISUALSTYLE
+
+  -->
+  <Object Name="VisualStyle" SubclassMarker="AcDbVisualStyle" TypeString="VISUALSTYLE" MaxVersion="R2007">
+    <Field Name="description" Code="2" Type="String" DefaultValue="String::new()" />
+    <Field Name="type_code" Code="70" Type="i16" DefaultValue="0" />
+    <Field Name="face_lighting_model" Code="71" Type="FaceLightingModel" DefaultValue="FaceLightingModel::Visible" ReadConverter="try_result!(FaceLightingModel::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="face_lighting_quality" Code="72" Type="FaceLightingQuality" DefaultValue="FaceLightingQuality::PerFace" ReadConverter="try_result!(FaceLightingQuality::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="face_color_mode" Code="73" Type="FaceColorMode" DefaultValue="FaceColorMode::ObjectColor" ReadConverter="try_result!(FaceColorMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="face_modifier" Code="90" Type="FaceModifier" DefaultValue="FaceModifier::None" ReadConverter="try_result!(FaceModifier:: from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="face_opacity_level" Code="40" Type="f64" DefaultValue="0.0" />
+    <Field Name="face_specular_level" Code="41" Type="f64" DefaultValue="0.0" />
+    <Field Name="color1" Code="62" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="color2" Code="63" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="face_style_mono_color" Code="421" Type="i32" DefaultValue="0" />
+    <Field Name="edge_style_model" Code="74" Type="EdgeStyleModel" DefaultValue="EdgeStyleModel::NoEdges" ReadConverter="try_result!(EdgeStyleModel::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="edge_style" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="edge_intersection_color" Code="64" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_obscured_color" Code="65" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_obscured_linetype" Code="75" Type="i16" DefaultValue="0" />
+    <Field Name="edge_intersection_linetype" Code="175" Type="i16" DefaultValue="0" />
+    <Field Name="edge_crease_angle" Code="42" Type="f64" DefaultValue="0.0" />
+    <Field Name="edge_modifiers" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="edge_color" Code="66" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_opacity_level" Code="43" Type="f64" DefaultValue="0.0" />
+    <Field Name="edge_width" Code="76" Type="i16" DefaultValue="0" />
+    <Field Name="edge_overhang" Code="77" Type="i16" DefaultValue="0" />
+    <Field Name="edge_jitter" Code="78" Type="i16" DefaultValue="0" />
+    <Field Name="edge_silhouette_color" Code="67" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_silhouette_width" Code="79" Type="i16" DefaultValue="0" />
+    <Field Name="edge_halo_gap" Code="170" Type="i16" DefaultValue="0" />
+    <Field Name="edge_iso_line_count" Code="171" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="hide_edge_line_precision" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="edge_style_apply_flags" Code="174" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="display_style_settings" Code="93" Type="i32" DefaultValue="0" />
+    <Field Name="brightness" Code="44" Type="f64" DefaultValue="0.0" />
+    <Field Name="shadow_type" Code="173" Type="i16" DefaultValue="0" />
+    <Field Name="internal_flag" Code="291" Type="bool" DefaultValue="false" />
+  </Object>
+  <!--
+
+  WIPEOUTVARIABLES
+
+  -->
+  <Object Name="WipeoutVariables" SubclassMarker="AcDbRasterVariables" TypeString="WIPEOUTVARIABLES" MaxVersion="R2004">
+    <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
+    <Field Name="display_image_frame" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
+  </Object>
+  <!--
+
+  XRECORD
+
+  -->
+  <Object Name="XRecordObject" SubclassMarker="AcDbXrecord" TypeString="XRECORD" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R14">
+    <Field Name="duplicate_record_handling" Code="280" Type="DictionaryDuplicateRecordHandling" DefaultValue="DictionaryDuplicateRecordHandling::NotApplicable" />
+    <Field Name="data_pairs" Code="1" Type="CodePair" DefaultValue="vec![]" AllowMultiples="true" />
+  </Object>
+</Spec>

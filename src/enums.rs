@@ -194,6 +194,48 @@ pub enum DefaultLightingType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DesignCoordinateType
+{
+    Unknown = 0,
+    LocalGrid = 1,
+    ProjectedGrid = 2,
+    Geographic = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DiagnosticBSPMode
+{
+    Depth = 0,
+    Size = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DiagnosticPhotonMode
+{
+    Density = 0,
+    Irradiance = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DictionaryDuplicateRecordHandling
+{
+    NotApplicable = 0,
+    KeepExisting = 1,
+    UseClone = 2,
+    UpdateXrefAndName = 3,
+    UpdateName = 4,
+    UnmangleName = 5,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DimensionArcSymbolDisplayMode {
     SymbolBeforeText = 0,
     SymbolAboveText = 1,
@@ -299,6 +341,16 @@ pub enum DrawingUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum EdgeStyleModel
+{
+    NoEdges = 0,
+    IsoLines = 1,
+    FacetEdges = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EndCapSetting {
     None = 0,
     Round = 1,
@@ -309,9 +361,72 @@ pub enum EndCapSetting {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FaceColorMode
+{
+    NoColor = 0,
+    ObjectColor = 1,
+    BackgroundColor = 2,
+    CustomColor = 3,
+    MonoColor = 4,
+    Tinted = 5,
+    Desaturated = 6,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FaceLightingModel
+{
+    Invisible = 0,
+    Visible = 1,
+    Phong = 2,
+    Gooch = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FaceLightingQuality
+{
+    None = 0,
+    PerFace = 1,
+    PerVertex = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FaceModifier
+{
+    None = 0,
+    Opacity = 1,
+    Specular = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FlowDirection
+{
+    Down = 0,
+    Up = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum FontType {
     TTF = 0,
     SHX = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum GeoDataVersion
+{
+    R2009 = 1,
+    R2010 = 2,
 }
 }
 
@@ -341,6 +456,16 @@ enum_from_primitive! {
 pub enum ImageClippingBoundaryType {
     Rectangular = 1,
     Polygonal = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ImageResolutionUnits
+{
+    NoUnits = 0,
+    Centimeters = 2,
+    Inches = 5,
 }
 }
 
@@ -450,6 +575,37 @@ pub enum LoftedObjectNormalMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MapAutoTransformMethod
+{
+    NoAutoTransform = 1,
+    ScaleToCurrentEntity = 2,
+    IncludeCurrentBlockTransform = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MapProjectionMethod
+{
+    Planar = 1,
+    Box = 2,
+    Cylinder = 3,
+    Sphere = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MapTilingMethod
+{
+    Tile = 1,
+    Crop = 2,
+    Clamp = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MTextFlag {
     MultilineAttribute = 2,
     ConstantMultilineAttributeDefinition = 4,
@@ -473,6 +629,27 @@ pub enum NonAngularUnits {
     Architectural = 4,
     Fractional = 5,
     WindowsDesktop = 6,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ObjectOsnapType
+{
+    None = 0,
+    Endpoint = 1,
+    Midpoint = 2,
+    Center = 3,
+    Node = 4,
+    Quadrant = 5,
+    Intersection = 6,
+    Insertion = 7,
+    Perpendicular = 8,
+    Tangent = 9,
+    Nearest = 10,
+    ApparentIntersection = 11,
+    Parallel = 12,
+    StartPoint = 13,
 }
 }
 
@@ -510,11 +687,45 @@ pub enum PickStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PlotPaperUnits
+{
+    Inches = 0,
+    Millimeters = 1,
+    Pixels = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PlotRotation
+{
+    NoRotation = 0,
+    CounterClockwise90Degrees = 1,
+    UpsideDown = 2,
+    Clockwise90Degrees = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PlotStyle {
     ByLayer = 0,
     ByBlock = 1,
     ByDictionaryDefault = 2,
     ByObjectId = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PlotType
+{
+    LastScreenDisplay = 0,
+    DrawingExtents = 1,
+    DrawingLimits = 2,
+    SpecificView = 3,
+    SpecificWindow = 4,
+    LayoutInformation = 5,
 }
 }
 
@@ -538,11 +749,133 @@ pub enum PolySketchMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RasterImageUnits
+{
+    None = 0,
+    Millimeter = 1,
+    Centimeter = 2,
+    Meter = 3,
+    Kilometer = 4,
+    Inch = 5,
+    Foot = 6,
+    Yard = 7,
+    Mile = 8,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RenderDestination
+{
+    RenderWindow = 0,
+    Viewport = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RenderDiagnosticGridMode
+{
+    Object = 0,
+    World = 1,
+    Camera = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RenderDiagnosticMode
+{
+    Off = 0,
+    Grid = 1,
+    Photon = 2,
+    BSP = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RenderProcedure
+{
+    View = 0,
+    Crop = 1,
+    Selection = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RenderShadowMode
+{
+    Simple = 0,
+    Sort = 1,
+    Segment = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RotatedDimensionType
+{
+    Parallel = 0,
+    Perpendicular = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SamplingFilterType
+{
+    Box = 0,
+    Triangle = 1,
+    Gauss = 2,
+    Mitchell = 3,
+    Lanczos = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ScaleEstimationMethod
+{
+    None = 1,
+    UserSpecified = 2,
+    GridAtReferencePoint = 3,
+    Prismoidal = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ShadeEdgeMode {
     FacesShadedEdgeNotHighlighted = 0,
     FacesShadedEdgesHighlightedInBlack = 1,
     FacesNotFilledEdgesInEntityColor = 2,
     FacesInEntityColorEdgesInBlack = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ShadePlotMode
+{
+    AsDisplayed = 0,
+    Wireframe = 1,
+    Hidden = 2,
+    Rendered = 3,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ShadePlotResolutionLevel
+{
+    Draft = 0,
+    Preview = 1,
+    Normal = 2,
+    Presentation = 3,
+    Maximum = 4,
+    Custom = 5,
 }
 }
 
@@ -592,6 +925,56 @@ pub enum SolidHistoryMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
+pub enum StandardScale
+{
+    ScaledToFit = 0,
+    Scale_1_128_inch_to_1_foot = 1,
+    Scale_1_64_inch_to_1_foot = 2,
+    Scale_1_32_inch_to_1_foot = 3,
+    Scale_1_16_inch_to_1_foot = 4,
+    Scale_3_32_inch_to_1_foot = 5,
+    Scale_1_8_inch_to_1_foot = 6,
+    Scale_3_16_inch_to_1_foot = 7,
+    Scale_1_4_inch_to_1_foot = 8,
+    Scale_3_8_inch_to_1_foot = 9,
+    Scale_1_2_inch_to_1_foot = 10,
+    Scale_3_4_inch_to_1_foot = 11,
+    Scale_1_inch_to_1_foot = 12,
+    Scale_3_inches_to_1_foot = 13,
+    Scale_6_inches_to_1_foot = 14,
+    Scale_1_foot_to_1_foot = 15,
+    Scale_1_to_1 = 16,
+    Scale_1_to_2 = 17,
+    Scale_1_to_4 = 18,
+    Scale_1_to_8 = 19,
+    Scale_1_to_10 = 20,
+    Scale_1_to_16 = 21,
+    Scale_1_to_20 = 22,
+    Scale_1_to_30 = 23,
+    Scale_1_to_40 = 24,
+    Scale_1_to_50 = 25,
+    Scale_1_to_100 = 26,
+    Scale_2_to_1 = 27,
+    Scale_4_to_1 = 28,
+    Scale_8_to_1 = 29,
+    Scale_10_to_1 = 30,
+    Scale_100_to_1 = 31,
+    Scale_1000_to_1 = 32,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SubentityType
+{
+    Edge = 1,
+    Face = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TextAttachmentDirection {
     Horizontal = 0,
     Vertical = 1,
@@ -619,6 +1002,33 @@ enum_from_primitive! {
 pub enum TileModeDescriptor {
     InTiledViewport = 0,
     InNonTiledViewport = 1,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TileOrder
+{
+    Hilbert = 0,
+    Spiral = 1,
+    LeftToRight = 2,
+    RightToLeft = 3,
+    TopToBottom = 4,
+    BottomToTop = 5,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum UcsOrthographicType
+{
+    NotOrthographic = 0,
+    Top = 1,
+    Bottom = 2,
+    Front = 3,
+    Back = 4,
+    Left = 5,
+    Right = 6,
 }
 }
 

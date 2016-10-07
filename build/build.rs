@@ -3,6 +3,7 @@
 mod xml_helpers;
 mod entity_generator;
 mod header_generator;
+mod object_generator;
 mod table_generator;
 
 use std::fs::File;
@@ -18,10 +19,12 @@ fn main() {
 
 pub mod entities;
 pub mod header;
+pub mod objects;
 pub mod tables;
 ".as_bytes()).ok().unwrap();
 
     entity_generator::generate_entities();
     header_generator::generate_header();
+    object_generator::generate_objects();
     table_generator::generate_tables();
 }

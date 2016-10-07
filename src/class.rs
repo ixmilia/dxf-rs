@@ -133,7 +133,7 @@ impl Class {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*pair.value.assert_string() {
+                        match &*try!(pair.value.assert_string()) {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -199,36 +199,36 @@ impl Class {
                         },
                         1 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.class_name = pair.value.assert_string();
+                                class.class_name = try!(pair.value.assert_string());
                             }
                             else {
-                                class.record_name = pair.value.assert_string();
+                                class.record_name = try!(pair.value.assert_string());
                             }
                         },
                         2 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.application_name = pair.value.assert_string();
+                                class.application_name = try!(pair.value.assert_string());
                             }
                             else {
-                                class.class_name = pair.value.assert_string();
+                                class.class_name = try!(pair.value.assert_string());
                             }
                         },
                         3 => {
                             if drawing.header.version >= AcadVersion::R14 {
-                                class.application_name = pair.value.assert_string();
+                                class.application_name = try!(pair.value.assert_string());
                             }
                         },
                         90 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.version_number = pair.value.assert_i32();
+                                class.version_number = try!(pair.value.assert_i32());
                             }
                             else {
-                                class.proxy_capability_flags = pair.value.assert_i32();
+                                class.proxy_capability_flags = try!(pair.value.assert_i32());
                             }
                         },
-                        91 => class.instance_count = pair.value.assert_i32() as usize,
-                        280 => class.was_class_loaded_with_file = !as_bool(pair.value.assert_i16()),
-                        281 => class.is_entity = as_bool(pair.value.assert_i16()),
+                        91 => class.instance_count = try!(pair.value.assert_i32()) as usize,
+                        280 => class.was_class_loaded_with_file = !as_bool(try!(pair.value.assert_i16())),
+                        281 => class.is_entity = as_bool(try!(pair.value.assert_i16())),
                         _ => (),
                     }
                 },

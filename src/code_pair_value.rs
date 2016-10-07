@@ -7,7 +7,12 @@ use std::fmt::{
     Formatter,
 };
 
-#[doc(hidden)]
+use ::{
+    DxfError,
+    DxfResult,
+};
+
+#[derive(PartialEq)]
 pub enum CodePairValue {
     Boolean(bool),
     Integer(i32),
@@ -18,40 +23,40 @@ pub enum CodePairValue {
 }
 
 impl CodePairValue {
-    pub fn assert_bool(&self) -> bool {
+    pub fn assert_bool(&self) -> DxfResult<bool> {
         match self {
-            &CodePairValue::Boolean(b) => b,
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Boolean(b) => Ok(b),
+            _ => Err(DxfError::WrongValueType),
         }
     }
-    pub fn assert_i64(&self) -> i64 {
+    pub fn assert_i64(&self) -> DxfResult<i64> {
         match self {
-            &CodePairValue::Long(l) => l,
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Long(l) => Ok(l),
+            _ => Err(DxfError::WrongValueType),
         }
     }
-    pub fn assert_i32(&self) -> i32 {
+    pub fn assert_i32(&self) -> DxfResult<i32> {
         match self {
-            &CodePairValue::Integer(i) => i,
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Integer(i) => Ok(i),
+            _ => Err(DxfError::WrongValueType),
         }
     }
-    pub fn assert_f64(&self) -> f64 {
+    pub fn assert_f64(&self) -> DxfResult<f64> {
         match self {
-            &CodePairValue::Double(f) => f,
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Double(f) => Ok(f),
+            _ => Err(DxfError::WrongValueType),
         }
     }
-    pub fn assert_string(&self) -> String {
+    pub fn assert_string(&self) -> DxfResult<String> {
         match self {
-            &CodePairValue::Str(ref s) => s.clone(),
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Str(ref s) => Ok(s.clone()),
+            _ => Err(DxfError::WrongValueType),
         }
     }
-    pub fn assert_i16(&self) -> i16 {
+    pub fn assert_i16(&self) -> DxfResult<i16> {
         match self {
-            &CodePairValue::Short(s) => s,
-            _ => panic!("this should never have happened, please file a bug"),
+            &CodePairValue::Short(s) => Ok(s),
+            _ => Err(DxfError::WrongValueType),
         }
     }
 }

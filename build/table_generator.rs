@@ -122,7 +122,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("                return Err(DxfError::ExpectedTableType);\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
-    fun.push_str("            match &*pair.value.assert_string() {\n");
+    fun.push_str("            match &*try!(pair.value.assert_string()) {\n");
 
     for table in &element.children {
         fun.push_str(&format!("                \"{table_name}\" => try!(read_{collection}(drawing, iter)),\n", table_name=attr(&table, "TypeString"), collection=attr(&table, "Collection")));
@@ -156,7 +156,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
         fun.push_str("                if pair.code == 0 {\n");
-         fun.push_str(&format!("                    if pair.value.assert_string() != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
+         fun.push_str(&format!("                    if try!(pair.value.assert_string()) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
         fun.push_str("                        iter.put_back(Ok(pair));\n");
         fun.push_str("                        break;\n");
         fun.push_str("                    }\n");
@@ -170,9 +170,9 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                            },\n");
         fun.push_str("                            Some(Ok(pair)) => {\n");
         fun.push_str("                                match pair.code {\n");
-        fun.push_str("                                    2 => item.name = pair.value.assert_string(),\n");
-        fun.push_str("                                    5 => item.handle = try!(as_u32(pair.value.assert_string())),\n");
-        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(pair.value.assert_string())),\n");
+        fun.push_str("                                    2 => item.name = try!(pair.value.assert_string()),\n");
+        fun.push_str("                                    5 => item.handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
+        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {

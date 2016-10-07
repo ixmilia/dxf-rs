@@ -3,6 +3,7 @@
 use entities::*;
 use enums::*;
 use header::*;
+use objects::*;
 use tables::*;
 
 use ::{
@@ -11,6 +12,7 @@ use ::{
     DxfError,
     DxfResult,
     EntityIter,
+    ObjectIter,
 };
 
 use block::Block;
@@ -58,6 +60,8 @@ pub struct Drawing {
     pub blocks: Vec<Block>,
     /// The entities contained by the drawing.
     pub entities: Vec<Entity>,
+    /// The objects contained by the drawing.
+    pub objects: Vec<Object>,
 }
 
 // public implementation
@@ -78,6 +82,7 @@ impl Drawing {
             view_ports: vec![],
             blocks: vec![],
             entities: vec![],
+            objects: vec![],
         }
     }
     /// Loads a `Drawing` from anything that implements the `Read` trait.
@@ -126,7 +131,8 @@ impl Drawing {
         try!(self.write_tables(write_handles, writer));
         try!(self.write_blocks(write_handles, writer));
         try!(self.write_entities(write_handles, writer));
-        // TODO: write other sections
+        try!(self.write_objects(writer));
+        // TODO: write THUMBNAILIMAGE section
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
@@ -205,13 +211,25 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
+    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+        try!(writer.write_code_pair(&CodePair::new_str(2, "OBJECTS")));
+        for o in &self.objects {
+            try!(o.write(&self.header.version, writer));
+        }
+
+        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        Ok(())
+    }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match &*pair.value.assert_string() {
+                    match &*try!(pair.value.assert_string()) {
                         "EOF" => {
                             iter.put_back(Ok(pair));
                             break;
@@ -225,7 +243,8 @@ impl Drawing {
                                         "TABLES" => try!(drawing.read_section_item(iter, "TABLE", read_specific_table)),
                                         "BLOCKS" => try!(drawing.read_section_item(iter, "BLOCK", Block::read_block)),
                                         "ENTITIES" => try!(drawing.read_entities(iter)),
-                                        // TODO: read other sections
+                                        "OBJECTS" => try!(drawing.read_objects(iter)),
+                                        "THUMBNAILIMAGE" => (), // TODO
                                         _ => try!(Drawing::swallow_section(iter)),
                                     }
 
@@ -258,7 +277,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
-                    if pair.code == 0 && pair.value.assert_string() == "ENDSEC" {
+                    if pair.code == 0 && try!(pair.value.assert_string()) == "ENDSEC" {
                         iter.put_back(Ok(pair));
                         break;
                     }
@@ -327,6 +346,19 @@ impl Drawing {
 
         Ok(())
     }
+    fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
+
+        let mut iter = PutBack::new(ObjectIter { iter: iter });
+        loop {
+            match iter.next() {
+                Some(obj) => self.objects.push(obj),
+                None => break,
+            }
+        }
+
+        Ok(())
+    }
     fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = Entity> {
 
@@ -346,7 +378,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*pair.value.assert_string() {
+                        match &*try!(pair.value.assert_string()) {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -380,7 +412,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*pair.value.assert_string() {
+                        match &*try!(pair.value.assert_string()) {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;
