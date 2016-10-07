@@ -156,7 +156,7 @@ impl<T: Read> CodePairIter<T> {
             ExpectedType::Long => CodePairValue::Long(try_into_option!(parse_i64(value_line))),
             ExpectedType::Short => CodePairValue::Short(try_into_option!(parse_i16(value_line))),
             ExpectedType::Double => CodePairValue::Double(try_into_option!(parse_f64(value_line))),
-            ExpectedType::Str => CodePairValue::Str(value_line), // TODO: un-escape
+            ExpectedType::Str => CodePairValue::Str(CodePairValue::un_escape_string(&value_line).into_owned()),
         };
 
         Some(Ok(CodePair::new(code, value)))
@@ -195,7 +195,7 @@ impl<T: Read> CodePairIter<T> {
                         None => return Some(Err(DxfError::UnexpectedEndOfInput)),
                     }
                 }
-                CodePairValue::Str(s) // TODO: un-escape
+                CodePairValue::Str(CodePairValue::un_escape_string(&s).into_owned())
             },
         };
 

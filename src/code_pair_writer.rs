@@ -1,5 +1,7 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use std::io::Write;
+
 extern crate byteorder;
 use self::byteorder::{
     LittleEndian,
@@ -11,8 +13,6 @@ use ::{
     CodePairValue,
     DxfResult,
 };
-
-use std::io::Write;
 
 #[doc(hidden)]
 pub struct CodePairWriter<T>
@@ -55,7 +55,7 @@ impl<T: Write> CodePairWriter<T> {
     }
     fn write_ascii_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
         try!(self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code)));
-        try!(self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value))); // TODO: escape string
+        try!(self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value)));
         Ok(())
     }
     fn write_binary_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
@@ -76,8 +76,7 @@ impl<T: Write> CodePairWriter<T> {
             &CodePairValue::Short(s) => try!(self.writer.write_i16::<LittleEndian>(s)),
             &CodePairValue::Double(d) => try!(self.writer.write_f64::<LittleEndian>(d)),
             &CodePairValue::Str(ref s) => {
-                // TODO: escape string
-                for &b in s.as_bytes() {
+                for &b in CodePairValue::escape_string(s).as_bytes() {
                     try!(self.writer.write_u8(b));
                 }
 
