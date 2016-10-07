@@ -86,7 +86,7 @@ fn read_multi_value_variable() {
 fn write_multiple_value_variable() {
     let mut file = Drawing::new();
     file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
-    assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.100000000000", " 20", "2.200000000000", " 30", "3.300000000000"].join("\r\n").as_str()));
+    assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"].join("\r\n").as_str()));
 }
 
 #[test]
@@ -99,8 +99,8 @@ fn write_header_with_invalid_values() {
     file.header.current_entity_linetype = String::new(); // $CELTYPE; normalized to "BYLAYER"
     file.header.dimension_style_name = String::new(); // $DIMSTYLE; normalized to "STANDARD"
     file.header.file_name = String::new(); // $MENU; normalized to "."
-    assert_contains(&file, vec!["  9", "$TEXTSIZE", " 40", "0.200000000000"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$TRACEWID", " 40", "0.050000000000"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$TEXTSIZE", " 40", "0.2"].join("\r\n"));
+    assert_contains(&file, vec!["  9", "$TRACEWID", " 40", "0.05"].join("\r\n"));
     assert_contains(&file, vec!["  9", "$TEXTSTYLE", "  7", "STANDARD"].join("\r\n"));
     assert_contains(&file, vec!["  9", "$CLAYER", "  8", "0"].join("\r\n"));
     assert_contains(&file, vec!["  9", "$CELTYPE", "  6", "BYLAYER"].join("\r\n"));

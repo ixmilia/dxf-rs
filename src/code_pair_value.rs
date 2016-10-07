@@ -75,8 +75,26 @@ impl Debug for CodePairValue {
             &CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
             &CodePairValue::Long(l) => write!(formatter, "{}", l),
             &CodePairValue::Short(s) => write!(formatter, "{: >6}", s),
-            &CodePairValue::Double(d) => write!(formatter, "{:.12}", d),
+            &CodePairValue::Double(d) => write!(formatter, "{}", format_f64(d)),
             &CodePairValue::Str(ref s) => write!(formatter, "{}", s),
         }
     }
+}
+
+/// Formats an `f64` value with up to 12 digits of precision, ensuring at least one trailing digit after the decimal.
+fn format_f64(val: f64) -> String {
+    // format with 12 digits of precision
+    let mut val = format!("{:.12}", val);
+
+    // trim trailing zeros
+    while val.ends_with('0') {
+        val.pop();
+    }
+
+    // ensure it doesn't end with a decimal
+    if val.ends_with('.') {
+        val.push('0');
+    }
+
+    val
 }
