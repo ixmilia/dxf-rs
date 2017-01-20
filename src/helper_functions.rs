@@ -151,6 +151,27 @@ pub fn uuid_string(u: &Uuid) -> String {
 }
 
 #[doc(hidden)]
+pub fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+    where F: Fn(f64, f64, f64) -> T {
+    for (x, y) in v1.drain(..).zip(v2.drain(..)) {
+        result.push(comb(x, y, 0.0));
+    }
+    v1.clear();
+    v2.clear();
+}
+
+#[doc(hidden)]
+pub fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+    where F: Fn(f64, f64, f64) -> T {
+    for (x, (y, z)) in v1.drain(..).zip(v2.drain(..).zip(v3.drain(..))) {
+        result.push(comb(x, y, z))
+    }
+    v1.clear();
+    v2.clear();
+    v3.clear();
+}
+
+#[doc(hidden)]
 pub fn default_if_empty(val: &String, default: &str) -> String {
     if val.is_empty() { String::from(default) } else { val.clone() }
 }
