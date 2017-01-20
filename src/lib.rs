@@ -119,8 +119,12 @@ mod transformation_matrix;
 pub use transformation_matrix::TransformationMatrix;
 
 pub mod enums;
+
 mod point;
 pub use point::Point;
+
+mod vector;
+pub use vector::Vector;
 
 mod generated;
 pub mod entities {
@@ -233,58 +237,6 @@ impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for ObjectIter<'
             Ok(Some(o)) => Some(o),
             Ok(None) | Err(_) => None,
         }
-    }
-}
-
-//------------------------------------------------------------------------------
-//                                                                        Vector
-//------------------------------------------------------------------------------
-/// Represents a simple vector in Cartesian space.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Vector {
-    /// The X component of the vector.
-    pub x: f64,
-    /// The Y component of the vector.
-    pub y: f64,
-    /// The Z component of the vector.
-    pub z: f64,
-}
-
-impl Vector {
-    /// Creates a new `Vector` with the specified values.
-    pub fn new(x: f64, y: f64, z: f64) -> Vector {
-        Vector {
-            x: x,
-            y: y,
-            z: z,
-        }
-    }
-    /// Returns a new zero vector representing (0, 0, 0).
-    pub fn zero() -> Vector {
-        Vector::new(0.0, 0.0, 0.0)
-    }
-    /// Returns a new vector representing the X axis.
-    pub fn x_axis() -> Vector {
-        Vector::new(1.0, 0.0, 0.0)
-    }
-    /// Returns a new vector representing the Y axis.
-    pub fn y_axis() -> Vector {
-        Vector::new(0.0, 1.0, 0.0)
-    }
-    /// Returns a new vector representing the Z axis.
-    pub fn z_axis() -> Vector {
-        Vector::new(0.0, 0.0, 1.0)
-    }
-    #[doc(hidden)]
-    pub fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
-        match pair.code {
-            10 => self.x = try!(pair.value.assert_f64()),
-            20 => self.y = try!(pair.value.assert_f64()),
-            30 => self.z = try!(pair.value.assert_f64()),
-            _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for vector"))),
-        }
-
-        Ok(())
     }
 }
 
