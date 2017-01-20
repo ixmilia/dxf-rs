@@ -140,11 +140,6 @@ pub mod objects {
     pub use generated::objects::*;
 }
 
-use entities::*;
-use objects::*;
-
-use itertools::PutBack;
-
 include!("expected_type.rs");
 
 mod code_pair_iter;
@@ -193,6 +188,9 @@ macro_rules! vec_last {
 
 mod header;
 
+mod line_weight;
+pub use line_weight::LineWeight;
+
 mod entity;
 pub use entity::LwPolylineVertex;
 
@@ -208,67 +206,5 @@ pub use dxf_error::DxfError;
 mod dxf_result;
 pub use dxf_result::DxfResult;
 
-//------------------------------------------------------------------------------
-//                                                                    EntityIter
-//------------------------------------------------------------------------------
-struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
-    iter: &'a mut PutBack<I>,
-}
-
-impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'a, I> {
-    type Item = Entity;
-    fn next(&mut self) -> Option<Entity> {
-        match Entity::read(self.iter) {
-            Ok(Some(e)) => Some(e),
-            Ok(None) | Err(_) => None,
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-//                                                                    ObjectIter
-//------------------------------------------------------------------------------
-struct ObjectIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
-    iter: &'a mut PutBack<I>,
-}
-
-impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for ObjectIter<'a, I> {
-    type Item = Object;
-    fn next(&mut self) -> Option<Object> {
-        match Object::read(self.iter) {
-            Ok(Some(o)) => Some(o),
-            Ok(None) | Err(_) => None,
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-//                                                                    LineWeight
-//------------------------------------------------------------------------------
-/// Represents a line weight.
-pub struct LineWeight {
-    raw_value: i16,
-}
-
-impl LineWeight {
-    /// Creates a new `LineWeight`.
-    pub fn new() -> LineWeight {
-        LineWeight::from_raw_value(0)
-    }
-    #[doc(hidden)]
-    pub fn from_raw_value(v: i16) -> LineWeight {
-        LineWeight { raw_value: v }
-    }
-    /// Creates a new `LineWeight` that defaults back to the containing block's line weight.
-    pub fn by_block() -> LineWeight {
-        LineWeight::from_raw_value(-1)
-    }
-    /// Creates a new `LineWeight` that defaults back to the item's layer's line weight.
-    pub fn by_layer() -> LineWeight {
-        LineWeight::from_raw_value(-2)
-    }
-    #[doc(hidden)]
-    pub fn get_raw_value(&self) -> i16 {
-        self.raw_value
-    }
-}
+mod entity_iter;
+mod object_iter;

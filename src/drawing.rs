@@ -11,9 +11,10 @@ use ::{
     CodePairValue,
     DxfError,
     DxfResult,
-    EntityIter,
-    ObjectIter,
 };
+
+use ::entity_iter::EntityIter;
+use ::object_iter::ObjectIter;
 
 use block::Block;
 use class::Class;
