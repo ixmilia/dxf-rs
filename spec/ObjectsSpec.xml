@@ -994,7 +994,7 @@
   SUNSTUDY
 
   -->
-  <Object Name="SunStudy" SubclassMarker="AcDbSunStudy" TypeString="SUNSTUDY" GenerateReaderFunction="false" MinVersion="R2013">
+  <Object Name="SunStudy" SubclassMarker="AcDbSunStudy" TypeString="SUNSTUDY" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2013">
     <Field Name="version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="sun_setup_name" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="description" Code="2" Type="String" DefaultValue="String::new()" />
@@ -1008,8 +1008,7 @@
     <Field Name="start_time_seconds_past_midnight" Code="93" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="end_time_seconds_past_midnight" Code="94" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="interval_in_seconds" Code="95" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
-    <!-- the spec says this is code 290, but code 290 has to be a boolean value -->
-    <Field Name="hours" Code="280" Type="i32" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{} as i16" />
+    <Field Name="hours" Code="290" Type="i32" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{} as i16" />
     <Pointer Name="page_setup_wizard" Code="340" Type="IItem" />
     <Pointer Name="view" Code="341" Type="IItem" />
     <Pointer Name="visual_style" Code="342" Type="IItem" />

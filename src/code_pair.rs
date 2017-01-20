@@ -37,7 +37,7 @@ impl CodePair {
         CodePair::new(code, CodePairValue::Integer(val))
     }
     pub fn new_bool(code: i32, val: bool) -> Self {
-        CodePair::new(code, CodePairValue::Boolean(val))
+        CodePair::new(code, CodePairValue::Boolean(if val { 1 } else { 0 }))
     }
 }
 

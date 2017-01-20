@@ -186,20 +186,6 @@ pub fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
 }
 
 #[doc(hidden)]
-pub fn parse_bool(s: String) -> DxfResult<bool> {
-    match parse_i16(s) {
-        Ok(0) => Ok(false),
-        Ok(_) => Ok(true),
-        Err(x) => Err(x),
-    }
-}
-
-#[test]
-fn parse_bool_test() {
-    assert_eq!(true, parse_bool("  2 ".to_string()).unwrap());
-}
-
-#[doc(hidden)]
 pub fn parse_f64(s: String) -> DxfResult<f64> {
     match s.trim().parse::<f64>() {
         Ok(d) => Ok(d),

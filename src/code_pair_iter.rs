@@ -151,7 +151,7 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue)),
         };
         let value = match expected_type {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_into_option!(parse_bool(value_line))),
+            ExpectedType::Boolean => CodePairValue::Boolean(try_into_option!(parse_i16(value_line))),
             ExpectedType::Integer => CodePairValue::Integer(try_into_option!(parse_i32(value_line))),
             ExpectedType::Long => CodePairValue::Long(try_into_option!(parse_i64(value_line))),
             ExpectedType::Short => CodePairValue::Short(try_into_option!(parse_i16(value_line))),
@@ -180,7 +180,7 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue)),
         };
         let value = match expected_type {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_from_option_dxf_result!(read_i16(&mut self.reader)) != 0),
+            ExpectedType::Boolean => CodePairValue::Boolean(try_from_option_dxf_result!(read_i16(&mut self.reader))),
             ExpectedType::Integer => CodePairValue::Integer(try_from_option_dxf_result!(read_i32(&mut self.reader))),
             ExpectedType::Long => CodePairValue::Long(try_from_option_dxf_result!(read_i64(&mut self.reader))),
             ExpectedType::Short => CodePairValue::Short(try_from_option_dxf_result!(read_i16(&mut self.reader))),

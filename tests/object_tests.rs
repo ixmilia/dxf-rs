@@ -298,6 +298,24 @@ fn write_dictionary() {
 }
 
 #[test]
+fn read_sunstudy() {
+    // validates that code 290 values (ideally boolean) can be read as integers, too
+    let ss = read_object("SUNSTUDY", vec![
+        "290", "1", // use_subset
+        "290", "3", // hours
+        "290", "4",
+        "290", "5",
+    ].join("\r\n"));
+    match ss.specific {
+        ObjectType::SunStudy(ref ss) => {
+            assert!(ss.use_subset);
+            assert_eq!(vec![3, 4, 5], ss.hours);
+        },
+        _ => panic!("expected a sunstudy"),
+    }
+}
+
+#[test]
 fn write_version_specific_object() {
     let mut drawing = Drawing::new();
     drawing.objects.push(Object {

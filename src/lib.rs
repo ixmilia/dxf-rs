@@ -1742,6 +1742,40 @@ impl Object {
                     try!(settings.write(writer));
                 }
             },
+            ObjectType::SunStudy(ref ss) => {
+                try!(writer.write_code_pair(&CodePair::new_string(100, &String::from("AcDbSunStudy"))));
+                try!(writer.write_code_pair(&CodePair::new_i32(90, ss.version)));
+                try!(writer.write_code_pair(&CodePair::new_string(1, &ss.sun_setup_name)));
+                try!(writer.write_code_pair(&CodePair::new_string(2, &ss.description)));
+                try!(writer.write_code_pair(&CodePair::new_i16(70, ss.output_type)));
+                try!(writer.write_code_pair(&CodePair::new_string(3, &ss.sheet_set_name)));
+                try!(writer.write_code_pair(&CodePair::new_bool(290, ss.use_subset)));
+                try!(writer.write_code_pair(&CodePair::new_string(4, &ss.sheet_subset_name)));
+                try!(writer.write_code_pair(&CodePair::new_bool(291, ss.select_dates_from_calendar)));
+                try!(writer.write_code_pair(&CodePair::new_i32(91, ss.dates.len() as i32)));
+                for item in &ss.dates {
+                    try!(writer.write_code_pair(&CodePair::new_i32(90, as_double_local(*item) as i32)));
+                }
+                try!(writer.write_code_pair(&CodePair::new_bool(292, ss.select_range_of_dates)));
+                try!(writer.write_code_pair(&CodePair::new_i32(93, ss.start_time_seconds_past_midnight)));
+                try!(writer.write_code_pair(&CodePair::new_i32(94, ss.end_time_seconds_past_midnight)));
+                try!(writer.write_code_pair(&CodePair::new_i32(95, ss.interval_in_seconds)));
+                try!(writer.write_code_pair(&CodePair::new_i16(73, ss.hours.len() as i16)));
+                for v in &ss.hours {
+                    try!(writer.write_code_pair(&CodePair::new_i16(290, *v as i16)));
+                }
+                try!(writer.write_code_pair(&CodePair::new_string(340, &as_handle(ss.page_setup_wizard))));
+                try!(writer.write_code_pair(&CodePair::new_string(341, &as_handle(ss.view))));
+                try!(writer.write_code_pair(&CodePair::new_string(342, &as_handle(ss.visual_style))));
+                try!(writer.write_code_pair(&CodePair::new_i16(74, ss.shade_plot_type)));
+                try!(writer.write_code_pair(&CodePair::new_i16(75, ss.viewports_per_page as i16)));
+                try!(writer.write_code_pair(&CodePair::new_i16(76, ss.viewport_distribution_row_count as i16)));
+                try!(writer.write_code_pair(&CodePair::new_i16(77, ss.viewport_distribution_column_count as i16)));
+                try!(writer.write_code_pair(&CodePair::new_f64(40, ss.spacing)));
+                try!(writer.write_code_pair(&CodePair::new_bool(293, ss.lock_viewports)));
+                try!(writer.write_code_pair(&CodePair::new_bool(294, ss.label_viewports)));
+                try!(writer.write_code_pair(&CodePair::new_string(343, &as_handle(ss.text_style))));
+            },
             ObjectType::XRecordObject(ref xr) => {
                 try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbXrecord")));
                 try!(writer.write_code_pair(&CodePair::new_i16(280, xr.duplicate_record_handling as i16)));

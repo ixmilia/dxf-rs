@@ -14,7 +14,7 @@ use ::{
 
 #[derive(PartialEq)]
 pub enum CodePairValue {
-    Boolean(bool),
+    Boolean(i16),
     Integer(i32),
     Long(i64),
     Short(i16),
@@ -25,7 +25,7 @@ pub enum CodePairValue {
 impl CodePairValue {
     pub fn assert_bool(&self) -> DxfResult<bool> {
         match self {
-            &CodePairValue::Boolean(b) => Ok(b),
+            &CodePairValue::Boolean(s) => Ok(s != 0),
             _ => Err(DxfError::WrongValueType),
         }
     }
@@ -55,6 +55,7 @@ impl CodePairValue {
     }
     pub fn assert_i16(&self) -> DxfResult<i16> {
         match self {
+            &CodePairValue::Boolean(s) => Ok(s),
             &CodePairValue::Short(s) => Ok(s),
             _ => Err(DxfError::WrongValueType),
         }
@@ -212,7 +213,7 @@ impl Clone for CodePairValue {
 impl Debug for CodePairValue {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
-            &CodePairValue::Boolean(b) => write!(formatter, "{}", if b { 1 } else { 0 }),
+            &CodePairValue::Boolean(s) => write!(formatter, "{}", s),
             &CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
             &CodePairValue::Long(l) => write!(formatter, "{}", l),
             &CodePairValue::Short(s) => write!(formatter, "{: >6}", s),

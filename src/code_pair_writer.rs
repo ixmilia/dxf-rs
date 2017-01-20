@@ -70,7 +70,7 @@ impl<T: Write> CodePairWriter<T> {
 
         // write value
         match &pair.value {
-            &CodePairValue::Boolean(b) => try!(self.writer.write_i16::<LittleEndian>(if b { 1 } else { 0 })),
+            &CodePairValue::Boolean(s) => try!(self.writer.write_i16::<LittleEndian>(s)),
             &CodePairValue::Integer(i) => try!(self.writer.write_i32::<LittleEndian>(i)),
             &CodePairValue::Long(l) => try!(self.writer.write_i64::<LittleEndian>(l)),
             &CodePairValue::Short(s) => try!(self.writer.write_i16::<LittleEndian>(s)),
