@@ -11,7 +11,6 @@ use ::{
     Color,
     DxfError,
     DxfResult,
-    LwPolylineVertex,
     Point,
     Vector,
 };
@@ -20,6 +19,26 @@ use code_pair_writer::CodePairWriter;
 use enums::*;
 use entities::*;
 use helper_functions::*;
+
+//------------------------------------------------------------------------------
+//                                                              LwPolylineVertex
+//------------------------------------------------------------------------------
+/// Represents a single vertex of a `LwPolyline`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct LwPolylineVertex {
+    pub x: f64,
+    pub y: f64,
+    pub id: i32,
+    pub starting_width: f64,
+    pub ending_width: f64,
+    pub bulge: f64,
+}
+
+impl LwPolylineVertex {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
 
 //------------------------------------------------------------------------------
 //                                                                   ProxyEntity
