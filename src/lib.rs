@@ -94,8 +94,6 @@
 
 extern crate itertools;
 
-use std::io::Write;
-
 mod code_pair;
 pub use code_pair::CodePair;
 
@@ -126,9 +124,6 @@ mod generated;
 pub mod entities {
     pub use generated::entities::*;
 }
-pub mod header {
-    pub use generated::header::*;
-}
 pub mod tables {
     pub use generated::tables::*;
 }
@@ -137,7 +132,6 @@ pub mod objects {
 }
 
 use entities::*;
-use header::*;
 use tables::*;
 use objects::*;
 
@@ -147,7 +141,6 @@ include!("expected_type.rs");
 
 mod code_pair_iter;
 mod code_pair_writer;
-use code_pair_writer::CodePairWriter;
 
 mod block;
 pub use block::Block;
@@ -190,6 +183,8 @@ macro_rules! vec_last {
     )
 }
 
+mod header;
+
 mod entity;
 pub use entity::LwPolylineVertex;
 
@@ -204,65 +199,6 @@ pub use dxf_error::DxfError;
 
 mod dxf_result;
 pub use dxf_result::DxfResult;
-
-//------------------------------------------------------------------------------
-//                                                                        Header
-//------------------------------------------------------------------------------
-// implementation is in `generated/header.rs`
-impl Header {
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
-        let mut header = Header::new();
-        loop {
-            match iter.next() {
-                Some(Ok(pair)) => {
-                    match pair.code {
-                        0 => {
-                            iter.put_back(Ok(pair));
-                            break;
-                        },
-                        9 => {
-                            let last_header_variable = try!(pair.value.assert_string());
-                            loop {
-                                match iter.next() {
-                                    Some(Ok(pair)) => {
-                                        if pair.code == 0 || pair.code == 9 {
-                                            // ENDSEC or a new header variable
-                                            iter.put_back(Ok(pair));
-                                            break;
-                                        }
-                                        else {
-                                            try!(header.set_header_value(&last_header_variable, &pair));
-                                        }
-                                    },
-                                    Some(Err(e)) => return Err(e),
-                                    None => break,
-                                }
-                            }
-                        },
-                        _ => return Err(DxfError::UnexpectedCodePair(pair, String::from(""))),
-                    }
-                },
-                Some(Err(e)) => return Err(e),
-                None => break,
-            }
-        }
-
-        Ok(header)
-    }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
-
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "HEADER")));
-        try!(self.write_code_pairs(writer));
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
-        Ok(())
-    }
-}
 
 //------------------------------------------------------------------------------
 //                                                                    EntityIter
