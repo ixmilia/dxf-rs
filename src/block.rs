@@ -13,6 +13,7 @@ use ::{
 
 use code_pair_writer::CodePairWriter;
 use entities::Entity;
+use entity_iter::EntityIter;
 use enums::*;
 use helper_functions::*;
 
@@ -121,9 +122,7 @@ impl Block {
             match iter.next() {
                 Some(Ok(pair)) => {
                     match pair {
-                        CodePair { code: 0, value: CodePairValue::Str(ref s) }
-                            if s == "ENDBLK" => {
-
+                        CodePair { code: 0, value: CodePairValue::Str(ref s) } if s == "ENDBLK" => {
                             // swallow all non-0 code pairs
                             loop {
                                 match iter.next() {
@@ -142,17 +141,10 @@ impl Block {
                             break;
                         },
                         CodePair { code: 0, .. } => {
-                            // probably an entity
+                            // should be an entity
                             iter.put_back(Ok(pair));
-                            loop {
-                                match Entity::read(iter) {
-                                    Ok(Some(e)) => {
-                                        current.entities.push(e);
-                                    },
-                                    Ok(None) => break,
-                                    Err(e) => return Err(e),
-                                }
-                            }
+                            let mut iter = EntityIter { iter: iter };
+                            try!(iter.read_entities_into_vec(&mut current.entities));
                         },
                         _ => {
                             // specific to the BLOCK

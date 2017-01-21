@@ -172,6 +172,80 @@ fn read_block_with_unsupported_entity_in_the_middle() {
 }
 
 #[test]
+fn read_block_with_polyline() {
+    let block = read_single_block(vec![
+        "0", "POLYLINE",
+            "0", "VERTEX",
+            "0", "VERTEX",
+            "0", "VERTEX",
+            "0", "SEQEND",
+    ]);
+    assert_eq!(1, block.entities.len());
+    match block.entities[0].specific {
+        EntityType::Polyline(ref p) => { assert_eq!(3, p.vertices.len()); },
+        _ => panic!("expected a polyline"),
+    }
+}
+
+#[test]
+fn read_block_with_polyline_and_another_entity() {
+    let block = read_single_block(vec![
+        "0", "POLYLINE",
+            "0", "VERTEX",
+            "0", "VERTEX",
+            "0", "VERTEX",
+            "0", "SEQEND",
+        "0", "LINE",
+    ]);
+    assert_eq!(2, block.entities.len());
+    match block.entities[0].specific {
+        EntityType::Polyline(ref p) => { assert_eq!(3, p.vertices.len()); },
+        _ => panic!("expected a polyline"),
+    }
+    match block.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
+fn read_block_with_polyline_without_seqend_and_another_entity() {
+    let block = read_single_block(vec![
+        "0", "POLYLINE",
+            "0", "VERTEX",
+            "0", "VERTEX",
+            "0", "VERTEX",
+        "0", "LINE",
+    ]);
+    assert_eq!(2, block.entities.len());
+    match block.entities[0].specific {
+        EntityType::Polyline(ref p) => { assert_eq!(3, p.vertices.len()); },
+        _ => panic!("expected a polyline"),
+    }
+    match block.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
+fn read_block_with_empty_polyline_without_seqend_and_another_entity() {
+    let block = read_single_block(vec![
+        "0", "POLYLINE",
+        "0", "LINE",
+    ]);
+    assert_eq!(2, block.entities.len());
+    match block.entities[0].specific {
+        EntityType::Polyline(ref p) => { assert_eq!(0, p.vertices.len()); },
+        _ => panic!("expected a polyline"),
+    }
+    match block.entities[1].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
 fn dont_write_blocks_section_if_no_blocks() {
     let drawing = Drawing::new();
     let contents = to_test_string(&drawing);

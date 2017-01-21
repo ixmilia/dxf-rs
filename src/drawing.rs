@@ -293,58 +293,8 @@ impl Drawing {
     fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        let mut iter = PutBack::new(EntityIter { iter: iter });
-        loop {
-            match iter.next() {
-                Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.has_attributes => {
-                    let mut ins = ins.clone(); // 12 fields
-                    loop {
-                        match iter.next() {
-                            Some(Entity { specific: EntityType::Attribute(att), .. }) => ins.attributes.push(att),
-                            Some(ent) => {
-                                // stop gathering on any non-ATTRIBUTE
-                                iter.put_back(ent);
-                                break;
-                            },
-                            None => break,
-                        }
-                    }
-
-                    try!(Drawing::swallow_seqend(&mut iter));
-
-                    // and finally keep the INSERT
-                    self.entities.push(Entity {
-                        common: common.clone(), // 18 fields
-                        specific: EntityType::Insert(ins),
-                    })
-                },
-                Some(Entity { common, specific: EntityType::Polyline(poly) }) => {
-                    let mut poly = poly.clone(); // 13 fields
-                    loop {
-                        match iter.next() {
-                            Some(Entity { specific: EntityType::Vertex(vertex), .. }) => poly.vertices.push(vertex),
-                            Some(ent) => {
-                                // stop gathering on any non-VERTEX
-                                iter.put_back(ent);
-                                break;
-                            },
-                            None => break,
-                        }
-                    }
-
-                    try!(Drawing::swallow_seqend(&mut iter));
-
-                    // and finally keep the POLYLINE
-                    self.entities.push(Entity {
-                        common: common.clone(), // 18 fields
-                        specific: EntityType::Polyline(poly),
-                    });
-                },
-                Some(entity) => self.entities.push(entity),
-                None => break,
-            }
-        }
-
+        let mut iter = EntityIter { iter: iter };
+        try!(iter.read_entities_into_vec(&mut self.entities));
         Ok(())
     }
     fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
@@ -356,17 +306,6 @@ impl Drawing {
                 Some(obj) => self.objects.push(obj),
                 None => break,
             }
-        }
-
-        Ok(())
-    }
-    fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = Entity> {
-
-        match iter.next() {
-            Some(Entity { specific: EntityType::Seqend(_), .. }) => (),
-            Some(ent) => iter.put_back(ent),
-            None => (),
         }
 
         Ok(())
