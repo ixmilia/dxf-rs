@@ -142,6 +142,9 @@ pub mod objects {
 
 include!("expected_type.rs");
 
+#[macro_use]
+mod helper_functions;
+
 mod code_pair_iter;
 mod code_pair_writer;
 
@@ -150,8 +153,6 @@ pub use block::Block;
 
 mod class;
 pub use class::Class;
-
-mod helper_functions;
 
 // returns the next CodePair that's not 0, or bails out early
 macro_rules! next_pair {

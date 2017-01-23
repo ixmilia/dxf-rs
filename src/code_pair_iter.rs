@@ -1,11 +1,5 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-extern crate byteorder;
-use self::byteorder::{
-    ByteOrder,
-    LittleEndian,
-};
-
 use ::{
     CodePair,
     CodePairValue,
@@ -16,7 +10,6 @@ use ::{
 };
 
 use helper_functions::*;
-use std::io;
 use std::io::Read;
 
 #[doc(hidden)]
@@ -26,59 +19,6 @@ pub struct CodePairIter<T: Read> {
     read_first_line: bool,
     read_as_ascii: bool,
     binary_detection_complete: bool,
-}
-
-// used to turn Result<T> into Option<Result<T>>.
-macro_rules! try_into_option {
-    ($expr : expr) => (
-        match $expr {
-            Ok(v) => v,
-            Err(e) => return Some(Err(e)),
-        }
-    )
-}
-
-// safely unwrap an Option<io::Result<T>>
-macro_rules! try_from_option_io_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(Ok(v)) => v,
-            Some(Err(e)) => return Some(Err(DxfError::IoError(e))),
-            None => return None,
-        }
-    )
-}
-
-// safely unwrap an Option<DxfResult<T>>
-macro_rules! try_from_option_dxf_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(Ok(v)) => v,
-            Some(Err(e)) => return Some(Err(e)),
-            None => return Some(Err(DxfError::UnexpectedEndOfInput)),
-        }
-    )
-}
-
-// safely unwrap an Option<io::Result<T>> into Err()
-macro_rules! try_option_io_result_into_err {
-    ($expr : expr) => (
-        match $expr {
-            Some(Ok(v)) => v,
-            Some(Err(e)) => return Err(DxfError::IoError(e)),
-            None => return Err(DxfError::UnexpectedEndOfInput),
-        }
-    )
-}
-
-// verifies that an actual value matches the expected value
-macro_rules! assert_or_err {
-    ($actual : expr, $expected : expr) => (
-        let actual = $actual;
-        if actual != $expected {
-            return Err(DxfError::UnexpectedByte($expected));
-        }
-    )
 }
 
 impl<T: Read> CodePairIter<T> {
@@ -227,81 +167,4 @@ impl<T: Read> Iterator for CodePairIter<T> {
             }
         }
     }
-}
-
-fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
-    where T: Read {
-
-    let mut result = String::new();
-    let bytes = reader.bytes();
-    for (i, c) in bytes.enumerate() {
-        let c = match c {
-            Ok(c) => c,
-            Err(e) => return Some(Err(DxfError::IoError(e))),
-        };
-        match (i, c) {
-            (0, 0xFE) | (1, 0xFF) => (),
-            _ => {
-                let c = c as char;
-                if c == '\n' { break; }
-                result.push(c);
-            }
-        }
-    }
-
-    if result.ends_with('\r') {
-        result.pop();
-    }
-
-    Some(Ok(result))
-}
-
-fn read_u8<T: Read>(reader: &mut T) -> Option<io::Result<u8>> {
-    let mut buf = [0];
-    let size = match reader.read(&mut buf) {
-        Ok(v) => v,
-        Err(e) => return Some(Err(e)),
-    };
-    match size {
-        0 => None,
-        _ => Some(Ok(buf[0]))
-    }
-}
-
-fn read_i16<T: Read>(reader: &mut T) -> Option<DxfResult<i16>> {
-    let a = try_from_option_io_result!(read_u8(reader));
-    let b = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i16(&[a, b])))
-}
-
-fn read_i32<T: Read>(reader: &mut T) -> Option<DxfResult<i32>> {
-    let a = try_from_option_io_result!(read_u8(reader));
-    let b = try_from_option_io_result!(read_u8(reader));
-    let c = try_from_option_io_result!(read_u8(reader));
-    let d = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i32(&[a, b, c, d])))
-}
-
-fn read_i64<T: Read>(reader: &mut T) -> Option<DxfResult<i64>> {
-    let a = try_from_option_io_result!(read_u8(reader));
-    let b = try_from_option_io_result!(read_u8(reader));
-    let c = try_from_option_io_result!(read_u8(reader));
-    let d = try_from_option_io_result!(read_u8(reader));
-    let e = try_from_option_io_result!(read_u8(reader));
-    let f = try_from_option_io_result!(read_u8(reader));
-    let g = try_from_option_io_result!(read_u8(reader));
-    let h = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i64(&[a, b, c, d, e, f, g, h])))
-}
-
-fn read_f64<T: Read>(reader: &mut T) -> Option<DxfResult<f64>> {
-    let a = try_from_option_io_result!(read_u8(reader));
-    let b = try_from_option_io_result!(read_u8(reader));
-    let c = try_from_option_io_result!(read_u8(reader));
-    let d = try_from_option_io_result!(read_u8(reader));
-    let e = try_from_option_io_result!(read_u8(reader));
-    let f = try_from_option_io_result!(read_u8(reader));
-    let g = try_from_option_io_result!(read_u8(reader));
-    let h = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h])))
 }
