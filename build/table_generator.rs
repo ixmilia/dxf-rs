@@ -36,20 +36,8 @@ use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
-
 use std::io::Write;
-
 use itertools::PutBack;
-
-// Used to turn Option<T> into DxfResult<T>.
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(v) => v,
-            None => return Err(DxfError::UnexpectedEnumValue)
-        }
-    )
-}
 ".trim_left());
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);

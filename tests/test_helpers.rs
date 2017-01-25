@@ -16,7 +16,7 @@ pub mod helpers {
     }
 
     pub fn parse_drawing(s: &str) -> Drawing {
-        unwrap_drawing(Drawing::load(s.as_bytes()))
+        unwrap_drawing(Drawing::load(&mut s.as_bytes()))
     }
 
     pub fn from_section(section: &str, body: &str) -> Drawing {

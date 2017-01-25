@@ -21,6 +21,62 @@ use entities::*;
 use helper_functions::*;
 
 //------------------------------------------------------------------------------
+//                                                                           Arc
+//------------------------------------------------------------------------------
+impl Arc {
+    pub fn new(center: Point, radius: f64, start: f64, end: f64) -> Self {
+        Arc {
+            center: center,
+            radius: radius,
+            start_angle: start,
+            end_angle: end,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                        Circle
+//------------------------------------------------------------------------------
+impl Circle {
+    pub fn new(center: Point, radius: f64) -> Self {
+        Circle {
+            center: center,
+            radius: radius,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                        Face3D
+//------------------------------------------------------------------------------
+impl Face3D {
+    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+        Face3D {
+            first_corner: first_corner,
+            second_corner: second_corner,
+            third_corner: third_corner,
+            fourth_corner: fourth_corner,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                          Line
+//------------------------------------------------------------------------------
+impl Line {
+    pub fn new(p1: Point, p2: Point) -> Self {
+        Line {
+            p1: p1,
+            p2: p2,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                              LwPolylineVertex
 //------------------------------------------------------------------------------
 /// Represents a single vertex of a `LwPolyline`.
@@ -32,6 +88,18 @@ pub struct LwPolylineVertex {
     pub starting_width: f64,
     pub ending_width: f64,
     pub bulge: f64,
+}
+
+//------------------------------------------------------------------------------
+//                                                                    ModelPoint
+//------------------------------------------------------------------------------
+impl ModelPoint {
+    pub fn new(p: Point) -> Self {
+        ModelPoint {
+            location: p,
+            .. Default::default()
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -51,6 +119,48 @@ impl ProxyEntity {
     }
     pub fn set_object_mainenance_release_version(&mut self, version: i32) {
         self._object_drawing_format = (version << 4) as u32 + (self._object_drawing_format & 0xFFFF);
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                         Solid
+//------------------------------------------------------------------------------
+impl Solid {
+    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+        Solid {
+            first_corner: first_corner,
+            second_corner: second_corner,
+            third_corner: third_corner,
+            fourth_corner: fourth_corner,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                         Trace
+//------------------------------------------------------------------------------
+impl Trace {
+    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+        Trace {
+            first_corner: first_corner,
+            second_corner: second_corner,
+            third_corner: third_corner,
+            fourth_corner: fourth_corner,
+            .. Default::default()
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                        Vertex
+//------------------------------------------------------------------------------
+impl Vertex {
+    pub fn new(location: Point) -> Self {
+        Vertex {
+            location: location,
+            .. Default::default()
+        }
     }
 }
 

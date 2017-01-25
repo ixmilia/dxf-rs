@@ -21,6 +21,7 @@ pub enum DxfError {
     UnexpectedEmptySet,
     ExpectedTableType,
     WrongValueType,
+    InvalidBinaryFile,
 }
 
 impl From<io::Error> for DxfError {
@@ -44,6 +45,7 @@ impl fmt::Display for DxfError {
             &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
             &DxfError::ExpectedTableType => write!(formatter, "a 2/<table-type> code pair was expected"),
             &DxfError::WrongValueType => write!(formatter, "the CodePairValue does not contain the requested type"),
+            &DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
         }
     }
 }
@@ -63,6 +65,7 @@ impl error::Error for DxfError {
             &DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
             &DxfError::ExpectedTableType => "a 2/<table-type> code pair was expected",
             &DxfError::WrongValueType => "the CodePairValue does not contain the requested type",
+            &DxfError::InvalidBinaryFile => "the binary file is invalid",
         }
     }
     fn cause(&self) -> Option<&error::Error> {

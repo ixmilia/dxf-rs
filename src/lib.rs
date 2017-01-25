@@ -1,6 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-//! This crate provides the ability to read and write DXF CAD files.
+//! This crate provides the ability to read and write DXF and DXB CAD files.
 //!
 //! # Examples
 //!
@@ -103,6 +103,12 @@ pub use code_pair_value::CodePairValue;
 mod data_table_value;
 pub use data_table_value::DataTableValue;
 
+#[macro_use]
+mod helper_functions;
+
+mod dxb_item_type;
+mod dxb_reader;
+
 mod drawing;
 pub use drawing::Drawing;
 
@@ -142,9 +148,6 @@ pub mod objects {
 
 include!("expected_type.rs");
 
-#[macro_use]
-mod helper_functions;
-
 mod code_pair_iter;
 mod code_pair_writer;
 
@@ -153,39 +156,6 @@ pub use block::Block;
 
 mod class;
 pub use class::Class;
-
-// returns the next CodePair that's not 0, or bails out early
-macro_rules! next_pair {
-    ($expr : expr) => (
-        match $expr.next() {
-            Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                $expr.put_back(Ok(pair));
-                return Ok(true);
-            },
-            Some(Ok(pair)) => pair,
-            Some(Err(e)) => return Err(e),
-            None => return Ok(true),
-        }
-    )
-}
-// Used to turn Option<T> into DxfResult<T>.
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(v) => v,
-            None => return Err(DxfError::UnexpectedEnumValue)
-        }
-    )
-}
-// Used to safely access the last element in a Vec<T>
-macro_rules! vec_last {
-    ($expr : expr) => (
-        match $expr.len() {
-            0 => return Err(DxfError::UnexpectedEmptySet),
-            l => &mut $expr[l - 1],
-        }
-    )
-}
 
 mod header;
 

@@ -42,16 +42,6 @@ use self::time::Duration;
 
 extern crate uuid;
 use self::uuid::Uuid;
-
-// Used to turn Option<T> into DxfResult<T>.
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(v) => v,
-            None => return Err(DxfError::UnexpectedEnumValue)
-        }
-    )
-}
 ".trim_left());
     generate_struct(&mut fun, &variables);
 

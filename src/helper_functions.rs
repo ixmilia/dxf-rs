@@ -369,6 +369,51 @@ macro_rules! assert_or_err {
     )
 }
 
+// Used to turn Option<T> into DxfResult<T>.
+macro_rules! try_result {
+    ($expr : expr) => (
+        match $expr {
+            Some(v) => v,
+            None => return Err(DxfError::UnexpectedEnumValue)
+        }
+    )
+}
+
+// returns the next CodePair that's not 0, or bails out early
+macro_rules! next_pair {
+    ($expr : expr) => (
+        match $expr.next() {
+            Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                $expr.put_back(Ok(pair));
+                return Ok(true);
+            },
+            Some(Ok(pair)) => pair,
+            Some(Err(e)) => return Err(e),
+            None => return Ok(true),
+        }
+    )
+}
+
+// Used to turn Option<T> into DxfResult<T>.
+macro_rules! try_result {
+    ($expr : expr) => (
+        match $expr {
+            Some(v) => v,
+            None => return Err(DxfError::UnexpectedEnumValue)
+        }
+    )
+}
+
+// Used to safely access the last element in a Vec<T>
+macro_rules! vec_last {
+    ($expr : expr) => (
+        match $expr.len() {
+            0 => return Err(DxfError::UnexpectedEmptySet),
+            l => &mut $expr[l - 1],
+        }
+    )
+}
+
 #[doc(hidden)]
 pub fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
     let a = try_from_option_io_result!(read_u8(reader));
@@ -396,6 +441,15 @@ pub fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
     let g = try_from_option_io_result!(read_u8(reader));
     let h = try_from_option_io_result!(read_u8(reader));
     Ok(LittleEndian::read_i64(&[a, b, c, d, e, f, g, h]))
+}
+
+#[doc(hidden)]
+pub fn read_f32<T: Read>(reader: &mut T) -> DxfResult<f32> {
+    let a = try_from_option_io_result!(read_u8(reader));
+    let b = try_from_option_io_result!(read_u8(reader));
+    let c = try_from_option_io_result!(read_u8(reader));
+    let d = try_from_option_io_result!(read_u8(reader));
+    Ok(LittleEndian::read_f32(&[a, b, c, d]))
 }
 
 #[doc(hidden)]

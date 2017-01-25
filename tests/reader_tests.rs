@@ -97,7 +97,7 @@ fn parse_with_leading_bom() {
         '\n' as u8,
         'E' as u8, 'O' as u8, 'F' as u8,
     ];
-    let _drawing = Drawing::load(buf.as_slice());
+    let _drawing = Drawing::load(&mut buf.as_slice());
 }
 
 #[test]
@@ -125,8 +125,8 @@ fn read_binary_file_after_writing() {
     let mut buf = Cursor::new(vec![]);
     drawing.save_binary(&mut buf).ok().unwrap();
     buf.seek(SeekFrom::Start(0)).ok().unwrap();
-    let reader = BufReader::new(&mut buf);
-    let drawing = unwrap_drawing(Drawing::load(reader));
+    let mut reader = BufReader::new(&mut buf);
+    let drawing = unwrap_drawing(Drawing::load(&mut reader));
     assert_eq!(1, drawing.entities.len());
     match drawing.entities[0].specific {
         EntityType::Line(ref line) => {
@@ -134,5 +134,73 @@ fn read_binary_file_after_writing() {
             assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
         },
         _ => panic!("expected a line"),
+    }
+}
+
+#[test]
+fn read_dxb_file() {
+    let data = vec![
+        // DXB sentinel "AutoCAD DXB 1.0\r\n"
+        'A' as u8, 'u' as u8, 't' as u8, 'o' as u8, 'C' as u8, 'A' as u8, 'D' as u8, ' ' as u8, 'D' as u8, 'X' as u8, 'B' as u8, ' ' as u8, '1' as u8, '.' as u8, '0' as u8,
+        '\r' as u8, '\n' as u8, 0x1A, 0x0,
+
+        // color
+        136, // type specifier for new color
+        0x01, 0x00, // color index 1
+
+        // line
+        0x01, // type specifier
+        0x01, 0x00, // p1.x = 0x0001
+        0x02, 0x00, // p1.y = 0x0002
+        0x03, 0x00, // p1.z = 0x0003
+        0x04, 0x00, // p2.x = 0x0004
+        0x05, 0x00, // p2.y = 0x0005
+        0x06, 0x00, // p2.z = 0x0006
+
+        0x0 // null terminator
+    ];
+    let drawing = Drawing::load(&mut data.as_slice()).unwrap();
+    assert_eq!(1, drawing.entities.len());
+    assert_eq!(1i16, drawing.entities[0].common.color.get_raw_value());
+    match drawing.entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(1.0, 2.0, 3.0), line.p1);
+            assert_eq!(Point::new(4.0, 5.0, 6.0), line.p2);
+        },
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
+fn read_dxb_file_with_polyline() {
+    let data = vec![
+        // DXB sentinel "AutoCAD DXB 1.0\r\n"
+        'A' as u8, 'u' as u8, 't' as u8, 'o' as u8, 'C' as u8, 'A' as u8, 'D' as u8, ' ' as u8, 'D' as u8, 'X' as u8, 'B' as u8, ' ' as u8, '1' as u8, '.' as u8, '0' as u8,
+        '\r' as u8, '\n' as u8, 0x1A, 0x0,
+
+        19, // polyline
+        0x00, 0x00, // is closed = false
+
+        20, // vertex
+        0x01, 0x00, // x
+        0x02, 0x00, // y
+
+        20, // vertex
+        0x03, 0x00, // x
+        0x04, 0x00, // y
+
+        17, // seqend
+
+        0x0 // null terminator
+    ];
+    let drawing = Drawing::load(&mut data.as_slice()).unwrap();
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Polyline(ref poly) => {
+            assert_eq!(2, poly.vertices.len());
+            assert_eq!(Point::new(1.0, 2.0, 0.0), poly.vertices[0].location);
+            assert_eq!(Point::new(3.0, 4.0, 0.0), poly.vertices[1].location);
+        },
+        _ => panic!("expected a polyline"),
     }
 }

@@ -272,7 +272,7 @@ fn round_trip_blocks() {
     );
     drawing.blocks.push(b2);
     let written = to_test_string(&drawing);
-    let reparsed = unwrap_drawing(Drawing::load(written.as_bytes()));
+    let reparsed = unwrap_drawing(Drawing::load(&mut written.as_bytes()));
     assert_eq!(2, reparsed.blocks.len());
     assert_eq!(1, reparsed.blocks[0].entities.len());
     match reparsed.blocks[0].entities[0].specific {

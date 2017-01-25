@@ -22,32 +22,26 @@ pub struct CodePairIter<T: Read> {
 }
 
 impl<T: Read> CodePairIter<T> {
-    pub fn new(reader: T) -> Self {
+    pub fn new(reader: T, first_line: String) -> Self {
         CodePairIter {
             reader: reader,
-            first_line: String::new(),
+            first_line: first_line,
             read_first_line: false,
             read_as_ascii: true,
             binary_detection_complete: false,
         }
     }
     fn detect_binary_or_ascii_file(&mut self) -> DxfResult<()> {
-        let first_line = read_line(&mut self.reader);
-        match first_line {
-            Some(Ok(line)) => {
-                if line == "AutoCAD Binary DXF" {
-                    // swallow the next two bytes
-                    assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A);
-                    assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00);
-                    self.read_as_ascii = false;
-                }
-                else {
-                    self.first_line = line;
-                    self.read_as_ascii = true;
-                }
+        match &*self.first_line {
+            "AutoCAD Binary DXF" => {
+                // swallow the next two bytes
+                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A);
+                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00);
+                self.read_as_ascii = false;
             },
-            Some(Err(e)) => return Err(e),
-            None => return Err(DxfError::UnexpectedEndOfInput),
+            _ => {
+                self.read_as_ascii = true;
+            },
         }
         self.binary_detection_complete = true;
         Ok(())

@@ -13,7 +13,9 @@ use ::{
     DxfResult,
 };
 
+use ::dxb_reader::DxbReader;
 use ::entity_iter::EntityIter;
+use ::helper_functions::*;
 use ::object_iter::ObjectIter;
 
 use block::Block;
@@ -89,26 +91,39 @@ impl Default for Drawing {
 // public implementation
 impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
-    pub fn load<T>(reader: T) -> DxfResult<Drawing>
+    pub fn load<T>(reader: &mut T) -> DxfResult<Drawing>
         where T: Read {
 
-        let reader = CodePairIter::new(reader);
-        let mut drawing = Drawing::default();
-        let mut iter = PutBack::new(reader);
-        try!(Drawing::read_sections(&mut drawing, &mut iter));
-        match iter.next() {
-            Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
-            Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
-            Some(Err(e)) => Err(e),
-            None => Ok(drawing),
+        let first_line = match read_line(reader) {
+            Some(Ok(line)) => line,
+            Some(Err(e)) => return Err(e),
+            None => return Err(DxfError::UnexpectedEndOfInput),
+        };
+        match &*first_line {
+            "AutoCAD DXB 1.0" => {
+                let mut reader = DxbReader::new(reader);
+                reader.load()
+            },
+            _ => {
+                let reader = CodePairIter::new(reader, first_line);
+                let mut drawing = Drawing::default();
+                let mut iter = PutBack::new(reader);
+                try!(Drawing::read_sections(&mut drawing, &mut iter));
+                match iter.next() {
+                    Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
+                    Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
+                    Some(Err(e)) => Err(e),
+                    None => Ok(drawing),
+                }
+            }
         }
     }
     /// Loads a `Drawing` from disk, using a `BufReader`.
     pub fn load_file(file_name: &str) -> DxfResult<Drawing> {
         let path = Path::new(file_name);
         let file = try!(File::open(&path));
-        let buf_reader = BufReader::new(file);
-        Drawing::load(buf_reader)
+        let mut buf_reader = BufReader::new(file);
+        Drawing::load(&mut buf_reader)
     }
     /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
