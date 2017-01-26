@@ -322,8 +322,8 @@ macro_rules! try_from_option_io_result {
     ($expr : expr) => (
         match $expr {
             Some(Ok(v)) => v,
-            Some(Err(e)) => return Some(Err(DxfError::IoError(e))),
-            None => return None,
+            Some(Err(e)) => return Err(DxfError::IoError(e)),
+            None => return Err(DxfError::UnexpectedEndOfInput),
         }
     )
 }
@@ -339,12 +339,11 @@ macro_rules! try_into_option {
 }
 
 // safely unwrap an Option<DxfResult<T>>
-macro_rules! try_from_option_dxf_result {
+macro_rules! try_from_dxf_result {
     ($expr : expr) => (
         match $expr {
-            Some(Ok(v)) => v,
-            Some(Err(e)) => return Some(Err(e)),
-            None => return Some(Err(DxfError::UnexpectedEndOfInput)),
+            Ok(v) => v,
+            Err(e) => return Some(Err(e)),
         }
     )
 }
@@ -371,36 +370,23 @@ macro_rules! assert_or_err {
 }
 
 #[doc(hidden)]
-pub fn read_i16<T: Read>(reader: &mut T) -> Option<DxfResult<i16>> {
+pub fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i16(&[a, b])))
+    Ok(LittleEndian::read_i16(&[a, b]))
 }
 
 #[doc(hidden)]
-pub fn read_i32<T: Read>(reader: &mut T) -> Option<DxfResult<i32>> {
-    let a = try_from_option_io_result!(read_u8(reader));
-    let b = try_from_option_io_result!(read_u8(reader));
-    let c = try_from_option_io_result!(read_u8(reader));
-    let d = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i32(&[a, b, c, d])))
-}
-
-#[doc(hidden)]
-pub fn read_i64<T: Read>(reader: &mut T) -> Option<DxfResult<i64>> {
+pub fn read_i32<T: Read>(reader: &mut T) -> DxfResult<i32> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
     let d = try_from_option_io_result!(read_u8(reader));
-    let e = try_from_option_io_result!(read_u8(reader));
-    let f = try_from_option_io_result!(read_u8(reader));
-    let g = try_from_option_io_result!(read_u8(reader));
-    let h = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_i64(&[a, b, c, d, e, f, g, h])))
+    Ok(LittleEndian::read_i32(&[a, b, c, d]))
 }
 
 #[doc(hidden)]
-pub fn read_f64<T: Read>(reader: &mut T) -> Option<DxfResult<f64>> {
+pub fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
@@ -409,5 +395,18 @@ pub fn read_f64<T: Read>(reader: &mut T) -> Option<DxfResult<f64>> {
     let f = try_from_option_io_result!(read_u8(reader));
     let g = try_from_option_io_result!(read_u8(reader));
     let h = try_from_option_io_result!(read_u8(reader));
-    Some(Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h])))
+    Ok(LittleEndian::read_i64(&[a, b, c, d, e, f, g, h]))
+}
+
+#[doc(hidden)]
+pub fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
+    let a = try_from_option_io_result!(read_u8(reader));
+    let b = try_from_option_io_result!(read_u8(reader));
+    let c = try_from_option_io_result!(read_u8(reader));
+    let d = try_from_option_io_result!(read_u8(reader));
+    let e = try_from_option_io_result!(read_u8(reader));
+    let f = try_from_option_io_result!(read_u8(reader));
+    let g = try_from_option_io_result!(read_u8(reader));
+    let h = try_from_option_io_result!(read_u8(reader));
+    Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h]))
 }

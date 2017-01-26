@@ -111,7 +111,7 @@ impl<T: Read> CodePairIter<T> {
 
         // If reading a larger code and no data is available, die horribly.
         if code == 255 {
-            code = try_from_option_dxf_result!(read_i16(&mut self.reader)) as i32;
+            code = try_from_dxf_result!(read_i16(&mut self.reader)) as i32;
         }
 
         // Read value.  If no data is available die horribly.
@@ -120,11 +120,11 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue)),
         };
         let value = match expected_type {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_from_option_dxf_result!(read_i16(&mut self.reader))),
-            ExpectedType::Integer => CodePairValue::Integer(try_from_option_dxf_result!(read_i32(&mut self.reader))),
-            ExpectedType::Long => CodePairValue::Long(try_from_option_dxf_result!(read_i64(&mut self.reader))),
-            ExpectedType::Short => CodePairValue::Short(try_from_option_dxf_result!(read_i16(&mut self.reader))),
-            ExpectedType::Double => CodePairValue::Double(try_from_option_dxf_result!(read_f64(&mut self.reader))),
+            ExpectedType::Boolean => CodePairValue::Boolean(try_from_dxf_result!(read_i16(&mut self.reader))),
+            ExpectedType::Integer => CodePairValue::Integer(try_from_dxf_result!(read_i32(&mut self.reader))),
+            ExpectedType::Long => CodePairValue::Long(try_from_dxf_result!(read_i64(&mut self.reader))),
+            ExpectedType::Short => CodePairValue::Short(try_from_dxf_result!(read_i16(&mut self.reader))),
+            ExpectedType::Double => CodePairValue::Double(try_from_dxf_result!(read_f64(&mut self.reader))),
             ExpectedType::Str => {
                 let mut s = String::new();
                 loop {
