@@ -247,18 +247,18 @@ fn read_block_with_empty_polyline_without_seqend_and_another_entity() {
 
 #[test]
 fn dont_write_blocks_section_if_no_blocks() {
-    let drawing = Drawing::new();
+    let drawing = Drawing::default();
     let contents = to_test_string(&drawing);
     assert!(!contents.contains("BLOCKS"));
 }
 
 #[test]
 fn round_trip_blocks() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     let mut b1 = Block::default();
     b1.entities.push(
         Entity {
-            common: EntityCommon::new(),
+            common: Default::default(),
             specific: EntityType::Line(Default::default()),
         }
     );
@@ -266,7 +266,7 @@ fn round_trip_blocks() {
     let mut b2 = Block::default();
     b2.entities.push(
         Entity {
-            common: EntityCommon::new(),
+            common: Default::default(),
             specific: EntityType::Circle(Default::default()),
         }
     );

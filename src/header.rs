@@ -19,7 +19,7 @@ impl Header {
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        let mut header = Header::new();
+        let mut header = Header::default();
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {

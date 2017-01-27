@@ -95,9 +95,9 @@ fn read_line() {
 
 #[test]
 fn write_common_entity_fields() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     let mut ent = Entity {
-        common: EntityCommon::new(),
+        common: Default::default(),
         specific: EntityType::Line(Default::default())
     };
     ent.common.layer = "some-layer".to_owned();
@@ -112,7 +112,7 @@ fn write_common_entity_fields() {
 
 #[test]
 fn write_specific_entity_fields() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     let line = Line {
         p1: Point::new(1.1, 2.2, 3.3),
         p2: Point::new(4.4, 5.5, 6.6),
@@ -174,7 +174,7 @@ fn read_field_with_multiples_common() {
 
 #[test]
 fn write_field_with_multiples_common() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2000;
     drawing.entities.push(Entity {
         common: EntityCommon { preview_image_data: vec![String::from("one"), String::from("two")], .. Default::default() },
@@ -197,7 +197,7 @@ fn read_field_with_multiples_specific() {
 
 #[test]
 fn write_field_with_multiples_specific() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R13; // 3DSOLID is only supported on R13+
     drawing.entities.push(Entity {
         common: Default::default(),
@@ -233,7 +233,7 @@ fn read_entity_with_post_parse() {
 
 #[test]
 fn write_entity_with_write_order() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
     drawing.entities.push(Entity {
         common: Default::default(),
@@ -291,7 +291,7 @@ fn read_entity_with_flags() {
 
 #[test]
 fn write_entity_with_flags() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
     let mut image = Image::default();
     assert_eq!(0, image.display_options_flags);
@@ -325,7 +325,7 @@ fn read_entity_with_handle_and_pointer() {
 
 #[test]
 fn write_entity_with_handle_and_pointer() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2000;
     drawing.entities.push(Entity {
         common: EntityCommon {
@@ -343,7 +343,7 @@ fn write_entity_with_handle_and_pointer() {
 
 #[test]
 fn write_version_specific_entity() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.entities.push(Entity {
         common: Default::default(),
         specific: EntityType::Solid3D(Default::default()),
@@ -552,7 +552,7 @@ fn read_empty_polyline_without_seqend_with_trailing_entity() {
 
 #[test]
 fn write_polyline() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     let poly = Polyline {
         vertices: vec![
             Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
@@ -562,7 +562,7 @@ fn write_polyline() {
         .. Default::default()
     };
     drawing.entities.push(Entity {
-        common: EntityCommon::new(),
+        common: Default::default(),
         specific: EntityType::Polyline(poly),
     });
     assert_contains(&drawing, vec![
@@ -701,9 +701,9 @@ fn read_lw_polyline_with_multiple_vertices() {
 
 #[test]
 fn write_lw_polyline() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2013;
-    let mut poly = LwPolyline::new();
+    let mut poly = LwPolyline::default();
     poly.constant_width = 43.0;
     poly.vertices.push(LwPolylineVertex {
         x: 1.1,

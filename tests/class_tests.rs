@@ -121,14 +121,14 @@ fn read_multiple_classes_r14() {
 
 #[test]
 fn dont_write_classes_section_if_no_classes() {
-    let drawing = Drawing::new();
+    let drawing = Drawing::default();
     let contents = to_test_string(&drawing);
     assert!(!contents.contains("CLASSES"));
 }
 
 #[test]
 fn write_class_r13() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R13;
     let class = Class {
         record_name: "record-name".to_string(),
@@ -156,7 +156,7 @@ fn write_class_r13() {
 
 #[test]
 fn write_class_r14() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R14;
     let class = Class {
         record_name: "record-name".to_string(),

@@ -34,12 +34,6 @@ pub struct LwPolylineVertex {
     pub bulge: f64,
 }
 
-impl LwPolylineVertex {
-    pub fn new() -> Self {
-        Default::default()
-    }
-}
-
 //------------------------------------------------------------------------------
 //                                                                   ProxyEntity
 //------------------------------------------------------------------------------
@@ -67,7 +61,7 @@ impl Entity {
     /// Creates a new `Entity` with the default common values.
     pub fn new(specific: EntityType) -> Self {
         Entity {
-            common: EntityCommon::new(),
+            common: Default::default(),
             specific: specific,
         }
     }
@@ -381,7 +375,7 @@ impl Entity {
                         // vertex-specific pairs
                         10 => {
                             // start a new vertex
-                            poly.vertices.push(LwPolylineVertex::new());
+                            poly.vertices.push(LwPolylineVertex::default());
                             vec_last!(poly.vertices).x = try!(pair.value.assert_f64());
                         },
                         20 => { vec_last!(poly.vertices).y = try!(pair.value.assert_f64()); },

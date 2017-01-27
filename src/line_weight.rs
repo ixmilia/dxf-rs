@@ -7,10 +7,6 @@ pub struct LineWeight {
 }
 
 impl LineWeight {
-    /// Creates a new `LineWeight`.
-    pub fn new() -> LineWeight {
-        LineWeight::from_raw_value(0)
-    }
     #[doc(hidden)]
     pub fn from_raw_value(v: i16) -> LineWeight {
         LineWeight { raw_value: v }

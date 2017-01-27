@@ -37,7 +37,7 @@
 //! use dxf::Drawing;
 //! use dxf::entities::*;
 //!
-//! let mut drawing = Drawing::new();
+//! let mut drawing = Drawing::default();
 //! drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
 //! try!(drawing.save_file("path/to/file.dxf"));
 //! # Ok(())

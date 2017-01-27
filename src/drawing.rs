@@ -65,12 +65,10 @@ pub struct Drawing {
     pub objects: Vec<Object>,
 }
 
-// public implementation
-impl Drawing {
-    /// Creates a new empty `Drawing`.
-    pub fn new() -> Self {
+impl Default for Drawing {
+    fn default() -> Self {
         Drawing {
-            header: Header::new(),
+            header: Header::default(),
             classes: vec![],
             app_ids: vec![],
             block_records: vec![],
@@ -86,12 +84,16 @@ impl Drawing {
             objects: vec![],
         }
     }
+}
+
+// public implementation
+impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: T) -> DxfResult<Drawing>
         where T: Read {
 
         let reader = CodePairIter::new(reader);
-        let mut drawing = Drawing::new();
+        let mut drawing = Drawing::default();
         let mut iter = PutBack::new(reader);
         try!(Drawing::read_sections(&mut drawing, &mut iter));
         match iter.next() {

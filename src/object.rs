@@ -107,7 +107,7 @@ impl Object {
     /// Creates a new `Object` with the default common values.
     pub fn new(specific: ObjectType) -> Self {
         Object {
-            common: ObjectCommon::new(),
+            common: Default::default(),
             specific: specific,
         }
     }

@@ -76,7 +76,7 @@ fn read_file_with_comments() {
 #[test]
 fn round_trip() {
     // drawing with one entity and one layer
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.entities.push(Entity {
         common: Default::default(),
         specific: EntityType::Line(Default::default()),
@@ -115,7 +115,7 @@ fn read_binary_file() {
 
 #[test]
 fn read_binary_file_after_writing() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     let line = Line {
         p1: Point::new(1.1, 2.2, 3.3),
         p2: Point::new(4.4, 5.5, 6.6),

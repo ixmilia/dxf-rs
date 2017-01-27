@@ -84,14 +84,14 @@ fn read_multi_value_variable() {
 
 #[test]
 fn write_multiple_value_variable() {
-    let mut file = Drawing::new();
+    let mut file = Drawing::default();
     file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
     assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"].join("\r\n").as_str()));
 }
 
 #[test]
 fn write_header_with_invalid_values() {
-    let mut file = Drawing::new();
+    let mut file = Drawing::default();
     file.header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
     file.header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
     file.header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
@@ -128,7 +128,7 @@ fn read_header_flags() {
 
 #[test]
 fn write_header_flags() {
-    let mut file = Drawing::new();
+    let mut file = Drawing::default();
     file.header.set_end_point_snap(false);
     file.header.set_mid_point_snap(false);
     file.header.set_center_snap(true);
@@ -159,13 +159,13 @@ fn read_variable_with_different_codes() {
 #[test]
 fn write_variable_with_different_codes() {
     // R13 writes $CMLSTYLE as a code 7
-    let mut file = Drawing::new();
+    let mut file = Drawing::default();
     file.header.version = AcadVersion::R13;
     file.header.current_multiline_style = String::from("cml-style-7");
     assert_contains(&file, vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"));
 
     // R14+ writes $CMLSTYLE as a code 2
-    let mut file = Drawing::new();
+    let mut file = Drawing::default();
     file.header.version = AcadVersion::R14;
     file.header.current_multiline_style = String::from("cml-style-2");
     assert_contains(&file, vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"));

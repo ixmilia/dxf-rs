@@ -78,10 +78,10 @@ fn read_image_def() {
 
 #[test]
 fn write_common_object_fields() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R14; // IMAGEDEF is only supported on R14+
     let obj = Object {
-        common: ObjectCommon::new(),
+        common: Default::default(),
         specific: ObjectType::ImageDefinition(Default::default())
     };
     drawing.objects.push(obj);
@@ -94,7 +94,7 @@ fn write_common_object_fields() {
 
 #[test]
 fn write_specific_object_fields() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R14; // IMAGEDEF is only supported on R14+
     let img = ImageDefinition {
         file_path: String::from("path/to/file"),
@@ -150,7 +150,7 @@ fn read_field_with_multiples_specific() {
 
 #[test]
 fn write_field_with_multiples_specific() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
     drawing.objects.push(Object {
         common: Default::default(),
@@ -179,7 +179,7 @@ fn read_object_with_post_parse() {
 
 #[test]
 fn write_object_with_write_order() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
     drawing.objects.push(Object {
         common: Default::default(),
@@ -211,7 +211,7 @@ fn read_object_with_flags() {
 
 #[test]
 fn write_object_with_flags() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2000; // LAYOUT is only supported up to R2000
     let mut layout = Layout::default();
     assert_eq!(0, layout.layout_flags);
@@ -244,7 +244,7 @@ fn read_object_with_handles() {
 
 #[test]
 fn write_object_with_handles() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2007; // LIGHTLIST only supported up to 2007
     drawing.objects.push(Object {
         common: ObjectCommon {
@@ -281,10 +281,10 @@ fn read_dictionary() {
 
 #[test]
 fn write_dictionary() {
-    let mut dict = Dictionary::new();
+    let mut dict = Dictionary::default();
     dict.value_handles.insert(String::from("key1"), 0xAAAA);
     dict.value_handles.insert(String::from("key2"), 0xBBBB);
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.objects.push(Object {
         common: Default::default(),
         specific: ObjectType::Dictionary(dict),
@@ -317,7 +317,7 @@ fn read_sunstudy() {
 
 #[test]
 fn write_version_specific_object() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.objects.push(Object {
         common: Default::default(),
         specific: ObjectType::AcadProxyObject(Default::default()),

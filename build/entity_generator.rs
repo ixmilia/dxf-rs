@@ -115,9 +115,6 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("\n");
 
     fun.push_str("impl EntityCommon {\n");
-    fun.push_str("    pub fn new() -> Self {\n");
-    fun.push_str("        Default::default()\n");
-    fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////// apply_individual_pair
     fun.push_str("    #[doc(hidden)]\n");
@@ -238,9 +235,6 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("\n");
 
             fun.push_str(&format!("impl {typ} {{\n", typ=name(c)));
-            fun.push_str("    pub fn new() -> Self {\n");
-            fun.push_str("        Default::default()\n");
-            fun.push_str("    }\n");
 
             // flags
             generate_flags_methods(fun, &c);
@@ -306,7 +300,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
-                fun.push_str(&format!("            \"{type_string}\" => Some(EntityType::{typ}({typ}::new())),\n", type_string=t, typ=name(c)));
+                fun.push_str(&format!("            \"{type_string}\" => Some(EntityType::{typ}(Default::default())),\n", type_string=t, typ=name(c)));
             }
         }
     }

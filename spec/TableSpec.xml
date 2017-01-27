@@ -86,8 +86,8 @@
             <Field Name="arrow_block_name" Code="342" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2000" />
             <Field Name="first_arrow_block_name" Code="343" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2000" />
             <Field Name="second_arrow_block_name" Code="344" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2000" />
-            <Field Name="dimension_line_weight" Code="371" Type="LineWeight" DefaultValue="LineWeight::new()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
-            <Field Name="dimension_extension_line_weight" Code="372" Type="LineWeight" DefaultValue="LineWeight::new()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
+            <Field Name="dimension_line_weight" Code="371" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
+            <Field Name="dimension_extension_line_weight" Code="372" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
         </TableItem>
     </Table>
     <Table Collection="layers" TypeString="LAYER">
@@ -95,7 +95,7 @@
             <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.get_writable_color_value(&amp;item)" />
             <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;String::from(get_writable_linetype_name(&amp;{}))" />
             <Field Name="is_layer_plotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
-            <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::new()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
+            <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
             <Field Name="plot_style_pointer" Code="390" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" MinVersion="R2000" />
             <Field Name="material_handle" Code="347" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" DisableWritingDefault="true" MinVersion="R2007" />
 

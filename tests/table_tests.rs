@@ -122,8 +122,8 @@ fn read_layer_color_and_layer_is_off() {
 
 #[test]
 fn write_layer() {
-    let mut drawing = Drawing::new();
-    let mut layer = Layer::new();
+    let mut drawing = Drawing::default();
+    let mut layer = Layer::default();
     layer.name = String::from("layer-name");
     layer.color = Color::from_index(3);
     drawing.layers.push(layer);
@@ -145,8 +145,8 @@ fn write_layer() {
 
 #[test]
 fn write_layer_with_invalid_values() {
-    let mut drawing = Drawing::new();
-    let mut layer = Layer::new();
+    let mut drawing = Drawing::default();
+    let mut layer = Layer::default();
     layer.name = String::from("layer-name");
     layer.color = Color::by_layer(); // code 62, value 256 not valid; normalized to 7
     layer.linetype_name = String::from(""); // code 6, empty string not valid; normalized to CONTINUOUS
@@ -161,8 +161,8 @@ fn write_layer_with_invalid_values() {
 
 #[test]
 fn write_view_with_invalid_values() {
-    let mut drawing = Drawing::new();
-    let mut view = View::new();
+    let mut drawing = Drawing::default();
+    let mut view = View::default();
     view.name = String::from("view-name");
     view.view_height = 0.0; // code 40, invalid; normalized to 1.0
     view.view_width = -1.0; // code 41, invalid; normalized to 1.0

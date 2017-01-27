@@ -82,13 +82,6 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("}\n");
         fun.push_str("\n");
 
-        fun.push_str(&format!("impl {name} {{\n", name=name(&table_item)));
-        fun.push_str("    pub fn new() -> Self {\n");
-        fun.push_str("        Default::default()\n");
-        fun.push_str("    }\n");
-        fun.push_str("}\n");
-        fun.push_str("\n");
-
         seen_fields.clear();
         fun.push_str(&format!("impl Default for {name} {{\n", name=name(&table_item)));
         fun.push_str("    fn default() -> Self {\n");
@@ -156,12 +149,12 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
         fun.push_str("                if pair.code == 0 {\n");
-         fun.push_str(&format!("                    if try!(pair.value.assert_string()) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
+        fun.push_str(&format!("                    if try!(pair.value.assert_string()) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
         fun.push_str("                        iter.put_back(Ok(pair));\n");
         fun.push_str("                        break;\n");
         fun.push_str("                    }\n");
         fun.push_str("\n");
-        fun.push_str(&format!("                    let mut item = {typ}::new();\n", typ=attr(&table_item, "Name")));
+        fun.push_str(&format!("                    let mut item = {typ}::default();\n", typ=attr(&table_item, "Name")));
         fun.push_str("                    loop {\n");
         fun.push_str("                        match iter.next() {\n");
         fun.push_str("                            Some(Ok(pair @ CodePair { code: 0, .. })) => {\n");

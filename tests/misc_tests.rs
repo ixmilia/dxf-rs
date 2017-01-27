@@ -22,7 +22,7 @@ fn read_string_with_control_characters() {
 
 #[test]
 fn write_string_with_control_characters() {
-    let mut drawing = Drawing::new();
+    let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2004;
     drawing.header.last_saved_by = String::from("a\u{7}^\u{1E} b");
     assert_contains(&drawing, String::from("a^G^ ^^ b"));

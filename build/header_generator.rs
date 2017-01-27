@@ -55,8 +55,9 @@ macro_rules! try_result {
 ".trim_left());
     generate_struct(&mut fun, &variables);
 
+    generate_default(&mut fun, &variables);
+
     fun.push_str("impl Header {\n");
-    generate_new(&mut fun, &variables);
     generate_flags(&mut fun, &variables);
     generate_set_defaults(&mut fun, &variables);
     generate_set_header_value(&mut fun, &variables);
@@ -90,10 +91,10 @@ fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("\n");
 }
 
-fn generate_new(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_default(fun: &mut String, variables: &Vec<HeaderVariable>) {
     let mut seen_fields = HashSet::new();
-    fun.push_str("/// Creates a new `Header`.\n");
-    fun.push_str("    pub fn new() -> Header {\n");
+    fun.push_str("impl Default for Header {\n");
+    fun.push_str("    fn default() -> Self {\n");
     fun.push_str("        Header {\n");
     for v in variables {
         if !seen_fields.contains(&v.field) {
@@ -104,6 +105,8 @@ fn generate_new(fun: &mut String, variables: &Vec<HeaderVariable>) {
 
     fun.push_str("        }\n");
     fun.push_str("    }\n");
+    fun.push_str("}\n");
+    fun.push_str("\n");
 }
 
 fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
