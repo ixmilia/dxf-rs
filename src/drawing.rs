@@ -14,6 +14,7 @@ use ::{
 };
 
 use ::dxb_reader::DxbReader;
+use ::dxb_writer::DxbWriter;
 use ::entity_iter::EntityIter;
 use ::helper_functions::*;
 use ::object_iter::ObjectIter;
@@ -171,6 +172,20 @@ impl Drawing {
             false => CodePairWriter::new_binary_writer(buf_writer),
         };
         self.save_internal(&mut writer)
+    }
+    /// Writes a `Drawing` as DXB to anything that implements the `Write` trait.
+    pub fn save_dxb<T>(&self, writer: &mut T) -> DxfResult<()>
+        where T: Write {
+
+        let mut writer = DxbWriter::new(writer);
+        writer.write(self)
+    }
+    /// Writes a `Drawing` as DXB to disk, using a `BufWriter`.
+    pub fn save_file_dxb(&self, file_name: &str) -> DxfResult<()> {
+        let path = Path::new(file_name);
+        let file = try!(File::create(&path));
+        let mut buf_writer = BufWriter::new(file);
+        self.save_dxb(&mut buf_writer)
     }
 }
 

@@ -204,3 +204,23 @@ fn read_dxb_file_with_polyline() {
         _ => panic!("expected a polyline"),
     }
 }
+
+#[test]
+fn read_dxb_after_writing() {
+    let mut drawing = Drawing::default();
+    let line = Line::new(Point::new(1.0, 2.0, 3.0), Point::new(4.0, 5.0, 6.0));
+    drawing.entities.push(Entity::new(EntityType::Line(line)));
+    let mut buf = Cursor::new(vec![]);
+    drawing.save_dxb(&mut buf).ok().unwrap();
+    buf.seek(SeekFrom::Start(0)).ok().unwrap();
+    let mut reader = BufReader::new(&mut buf);
+    let drawing = unwrap_drawing(Drawing::load(&mut reader));
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(1.0, 2.0, 3.0), line.p1);
+            assert_eq!(Point::new(4.0, 5.0, 6.0), line.p2);
+        },
+        _ => panic!("expected a line"),
+    }
+}

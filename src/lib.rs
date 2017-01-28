@@ -108,6 +108,7 @@ mod helper_functions;
 
 mod dxb_item_type;
 mod dxb_reader;
+mod dxb_writer;
 
 mod drawing;
 pub use drawing::Drawing;
