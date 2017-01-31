@@ -1,5 +1,11 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+extern crate byteorder;
+use self::byteorder::{
+    ByteOrder,
+    LittleEndian,
+};
+
 use entities::*;
 use enums::*;
 use header::*;
@@ -66,6 +72,8 @@ pub struct Drawing {
     pub entities: Vec<Entity>,
     /// The objects contained by the drawing.
     pub objects: Vec<Object>,
+    /// The thumbnail image preview of the drawing.
+    pub thumbnail: Option<Vec<u8>>,
 }
 
 impl Default for Drawing {
@@ -85,6 +93,7 @@ impl Default for Drawing {
             blocks: vec![],
             entities: vec![],
             objects: vec![],
+            thumbnail: None,
         }
     }
 }
@@ -151,7 +160,7 @@ impl Drawing {
         try!(self.write_blocks(write_handles, writer));
         try!(self.write_entities(write_handles, writer));
         try!(self.write_objects(writer));
-        // TODO: write THUMBNAILIMAGE section
+        try!(self.write_thumbnail(writer));
         try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
         Ok(())
     }
@@ -256,6 +265,30 @@ impl Drawing {
         try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
         Ok(())
     }
+    fn write_thumbnail<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+        where T: Write {
+
+        if &self.header.version >= &AcadVersion::R2000 {
+            match self.thumbnail {
+                Some(ref data) => {
+                    try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
+                    try!(writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE")));
+                    let length = data.len() - 14;
+                    try!(writer.write_code_pair(&CodePair::new_i32(90, length as i32)));
+                    for s in data[14..].chunks(128) {
+                        let mut line = String::new();
+                        for b in s {
+                            line.push_str(&format!("{:X}", b));
+                        }
+                        try!(writer.write_code_pair(&CodePair::new_string(310, &line)));
+                    }
+                    try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+                },
+                None => (), // nothing to write
+            }
+        }
+        Ok(())
+    }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
@@ -277,7 +310,7 @@ impl Drawing {
                                         "BLOCKS" => try!(drawing.read_section_item(iter, "BLOCK", Block::read_block)),
                                         "ENTITIES" => try!(drawing.read_entities(iter)),
                                         "OBJECTS" => try!(drawing.read_objects(iter)),
-                                        "THUMBNAILIMAGE" => (), // TODO
+                                        "THUMBNAILIMAGE" => { let _ = try!(drawing.read_thumbnail(iter)); },
                                         _ => try!(Drawing::swallow_section(iter)),
                                     }
 
@@ -341,6 +374,53 @@ impl Drawing {
         }
 
         Ok(())
+    }
+    fn read_thumbnail<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
+        where I: Iterator<Item = DxfResult<CodePair>> {
+
+        // get the length; we don't really care about this since we'll just read whatever's there
+        let length_pair = next_pair!(iter);
+        let _length = match length_pair.code {
+            90 => try!(length_pair.value.assert_i32()) as usize,
+            _ => return Err(DxfError::UnexpectedCode(length_pair.code)),
+        };
+
+        // prepend the BMP header that always seems to be missing from DXF files
+        let mut data = vec![
+            'B' as u8, 'M' as u8, // magic number
+            0x00, 0x00, 0x00, 0x00, // file length (calculated later)
+            0x00, 0x00, // reserved
+            0x00, 0x00, // reserved
+            0x36, 0x04, 0x00, 0x00 // bit offset; always 1078
+        ];
+        let header_length = data.len();
+
+        // read the hex data
+        loop {
+            match iter.next() {
+                Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                    // likely 0/ENDSEC
+                    iter.put_back(Ok(pair));
+                    break;
+                },
+                Some(Ok(pair @ CodePair { code: 310, .. })) => { try!(parse_hex_string(&try!(pair.value.assert_string()), &mut data)); },
+                Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code)); },
+                Some(Err(e)) => return Err(e),
+                None => break,
+            }
+        }
+
+        // set the length
+        let length = data.len() - header_length;
+        let mut length_bytes = vec![];
+        LittleEndian::write_i32(&mut length_bytes, length as i32);
+        data[2] = length_bytes[0];
+        data[3] = length_bytes[1];
+        data[4] = length_bytes[2];
+        data[5] = length_bytes[3];
+
+        self.thumbnail = Some(data);
+        Ok(true)
     }
     fn read_section_item<I, F>(&mut self, iter: &mut PutBack<I>, item_type: &str, callback: F) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>>,
