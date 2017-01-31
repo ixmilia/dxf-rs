@@ -5,6 +5,7 @@ use std::io::Read;
 
 extern crate byteorder;
 use self::byteorder::{
+    BigEndian,
     ByteOrder,
     LittleEndian,
 };
@@ -110,30 +111,19 @@ pub fn as_duration(d: f64) -> Duration {
 
 #[doc(hidden)]
 pub fn as_u32(s: String) -> DxfResult<u32> {
-    let mut result = 0;
-    for c in s.chars() {
-        match c {
-            '0' => result = result * 16,
-            '1' => result = result * 16 + 1,
-            '2' => result = result * 16 + 2,
-            '3' => result = result * 16 + 3,
-            '4' => result = result * 16 + 4,
-            '5' => result = result * 16 + 5,
-            '6' => result = result * 16 + 6,
-            '7' => result = result * 16 + 7,
-            '8' => result = result * 16 + 8,
-            '9' => result = result * 16 + 9,
-            'A' | 'a' => result = result * 16 + 10,
-            'B' | 'b' => result = result * 16 + 11,
-            'C' | 'c' => result = result * 16 + 12,
-            'D' | 'd' => result = result * 16 + 13,
-            'E' | 'e' => result = result * 16 + 14,
-            'F' | 'f' => result = result * 16 + 15,
-            _ => return Err(DxfError::ParseError),
-        }
+    let mut bytes = vec![];
+    try!(parse_hex_string(&s, &mut bytes));
+    while bytes.len() < 4 {
+        bytes.insert(0, 0);
     }
+    Ok(BigEndian::read_u32(&bytes))
+}
 
-    Ok(result)
+#[test]
+fn as_u32_test() {
+    assert_eq!(0x00, as_u32(String::from("0")).unwrap());
+    assert_eq!(0x01, as_u32(String::from("1")).unwrap());
+    assert_eq!(0xABCD, as_u32(String::from("ABCD")).unwrap());
 }
 
 #[doc(hidden)]
@@ -463,4 +453,53 @@ pub fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     let g = try_from_option_io_result!(read_u8(reader));
     let h = try_from_option_io_result!(read_u8(reader));
     Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h]))
+}
+
+#[doc(hidden)]
+pub fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<()> {
+    fn char_to_value(c: char) -> DxfResult<u8> {
+        let value = match c {
+            '0' => 0,
+            '1' => 1,
+            '2' => 2,
+            '3' => 3,
+            '4' => 4,
+            '5' => 5,
+            '6' => 6,
+            '7' => 7,
+            '8' => 8,
+            '9' => 9,
+            'A' | 'a' => 10,
+            'B' | 'b' => 11,
+            'C' | 'c' => 12,
+            'D' | 'd' => 13,
+            'E' | 'e' => 14,
+            'F' | 'f' => 15,
+            _ => return Err(DxfError::ParseError),
+        };
+        Ok(value)
+    }
+
+    let mut complete_byte = data.len() % 2 != 0; // handles strings with an odd number of bytes
+    let mut current_byte = 0u8;
+    for c in data.chars() {
+        let value = try!(char_to_value(c));
+        if complete_byte {
+            let x = current_byte * 16 + value;
+            bytes.push(x);
+        }
+        else {
+            current_byte = value;
+        }
+        complete_byte = !complete_byte;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn parse_hex_string_test() {
+    let mut bytes = vec![];
+    parse_hex_string(&String::from("012345"), &mut bytes).unwrap();
+    assert_eq!(vec![0x01u8, 0x23, 0x45], bytes);
 }

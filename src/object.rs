@@ -232,39 +232,10 @@ impl Object {
             ObjectType::VbaProject(ref mut vba) => {
                 // each char in each _hex_data should be added to `data` byte array
                 let mut result = vec![];
-                let mut complete_byte = false;
-                let mut current_byte = 0u8;
                 for s in &vba._hex_data {
-                    for c in s.chars() {
-                        let value = match c {
-                            '0' => 0,
-                            '1' => 1,
-                            '2' => 2,
-                            '3' => 3,
-                            '4' => 4,
-                            '5' => 5,
-                            '6' => 6,
-                            '7' => 7,
-                            '8' => 8,
-                            '9' => 9,
-                            'A' | 'a' => 10,
-                            'B' | 'b' => 11,
-                            'C' | 'c' => 12,
-                            'D' | 'd' => 13,
-                            'E' | 'e' => 14,
-                            'F' | 'f' => 15,
-                            _ => return Err(DxfError::ParseError),
-                        };
-                        if complete_byte {
-                            let x = current_byte * 16 + value;
-                            result.push(x);
-                        }
-                        else {
-                            current_byte = value;
-                        }
-                        complete_byte = !complete_byte;
-                    }
+                    try!(parse_hex_string(s, &mut result));
                 }
+
                 vba.data = result;
                 vba._hex_data.clear();
             },
