@@ -612,10 +612,6 @@ fn load_xml() -> Element {
     Element::parse(file).unwrap()
 }
 
-fn typ(element: &Element) -> String {
-    attr(element, "Type")
-}
-
 fn generate_reader_function(element: &Element) -> bool {
     attr(&element, "GenerateReaderFunction") != "false"
 }

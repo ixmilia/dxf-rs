@@ -20,5 +20,4 @@ time = "0.1"
 uuid = { version = "0.3.0", features = ["use_std", "v4"] }
 
 [build-dependencies]
-xml-rs = "0.3.4"
 xmltree = "0.3.2"

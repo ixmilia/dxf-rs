@@ -1,9 +1,11 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-extern crate xml;
-use self::xml::reader::{EventReader, XmlEvent};
+extern crate xmltree;
+use self::xmltree::Element;
 
 use ::{get_code_pair_type, get_expected_type, get_reader_function};
+
+use xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -11,7 +13,7 @@ use std::io::{BufReader, Write};
 use std::iter::Iterator;
 
 pub fn generate_header() {
-    let variables = gather_variables();
+    let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
@@ -43,37 +45,38 @@ use self::time::Duration;
 extern crate uuid;
 use self::uuid::Uuid;
 ".trim_left());
-    generate_struct(&mut fun, &variables);
+    generate_struct(&mut fun, &element);
 
-    generate_default(&mut fun, &variables);
+    generate_default(&mut fun, &element);
 
     fun.push_str("impl Header {\n");
-    generate_flags(&mut fun, &variables);
-    generate_set_defaults(&mut fun, &variables);
-    generate_set_header_value(&mut fun, &variables);
-    generate_add_code_pairs(&mut fun, &variables);
+    generate_flags(&mut fun, &element);
+    generate_set_defaults(&mut fun, &element);
+    generate_set_header_value(&mut fun, &element);
+    generate_add_code_pairs(&mut fun, &element);
     fun.push_str("}\n");
 
     let mut file = File::create("src/generated/header.rs").ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 
-fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_struct(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("/// Contains common properties for the DXF file.\n");
     fun.push_str("pub struct Header {\n");
-    for v in variables {
-        if !seen_fields.contains(&v.field) {
-            seen_fields.insert(&v.field);
-            let mut comment = format!("The ${} header variable.  {}", v.name, v.comment);
-            if !v.min_version.is_empty() {
-                comment.push_str(&format!("  Minimum AutoCAD version: {}.", v.min_version));
+    for v in &element.children {
+        let field_name = field(v);
+        if !seen_fields.contains(&field_name) {
+            seen_fields.insert(field_name.clone());
+            let mut comment = format!("The ${} header variable.  {}", name(&v), comment(&v));
+            if !min_version(&v).is_empty() {
+                comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(&v)));
             }
-            if !v.max_version.is_empty() {
-                comment.push_str(&format!("  Maximum AutoCAD version: {}.", v.max_version));
+            if !max_version(&v).is_empty() {
+                comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
             }
             fun.push_str(&format!("    /// {}\n", comment));
-            fun.push_str(&format!("    pub {field}: {typ},\n", field=v.field, typ=v.typ));
+            fun.push_str(&format!("    pub {field}: {typ},\n", field=field(&v), typ=typ(&v)));
         }
     }
 
@@ -81,15 +84,15 @@ fn generate_struct(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("\n");
 }
 
-fn generate_default(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_default(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("impl Default for Header {\n");
     fun.push_str("    fn default() -> Self {\n");
     fun.push_str("        Header {\n");
-    for v in variables {
-        if !seen_fields.contains(&v.field) {
-            seen_fields.insert(&v.field);
-            fun.push_str(&format!("            {field}: {default_value}, // ${name}\n", field=v.field, default_value=v.default_value, name=v.name));
+    for v in &element.children {
+        if !seen_fields.contains(&field(&v)) {
+            seen_fields.insert(field(&v));
+            fun.push_str(&format!("            {field}: {default_value}, // ${name}\n", field=field(&v), default_value=default_value(&v), name=name(&v)));
         }
     }
 
@@ -99,33 +102,33 @@ fn generate_default(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("\n");
 }
 
-fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_flags(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
-    for v in variables {
-        if !seen_fields.contains(&v.field) {
-            seen_fields.insert(&v.field);
-            if v.flags.len() > 0 {
-                fun.push_str(&format!("    // {} flags\n", v.field));
+    for v in &element.children {
+        if !seen_fields.contains(&field(&v)) {
+            seen_fields.insert(field(&v));
+            if v.children.len() > 0 {
+                fun.push_str(&format!("    // {} flags\n", field(&v)));
             }
-            for f in &v.flags {
-                let mut comment = format!("{}", f.comment);
-                if !v.min_version.is_empty() {
-                    comment.push_str(&format!("  Minimum AutoCAD version: {}.", v.min_version));
+            for f in &v.children {
+                let mut comment = format!("{}", comment(&f));
+                if !min_version(&v).is_empty() {
+                    comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(&v)));
                 }
-                if !v.max_version.is_empty() {
-                    comment.push_str(&format!("  Maximum AutoCAD version: {}.", v.max_version));
+                if !max_version(&v).is_empty() {
+                    comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
                 }
                 fun.push_str(&format!("    /// {}\n", comment));
-                fun.push_str(&format!("    pub fn get_{flag}(&self) -> bool {{\n", flag=f.name));
-                fun.push_str(&format!("        self.{field} & {mask} != 0\n", field=v.field, mask=f.mask));
+                fun.push_str(&format!("    pub fn get_{flag}(&self) -> bool {{\n", flag=name(&f)));
+                fun.push_str(&format!("        self.{field} & {mask} != 0\n", field=field(&v), mask=mask(&f)));
                 fun.push_str("    }\n");
                 fun.push_str(&format!("    /// {}\n", comment));
-                fun.push_str(&format!("    pub fn set_{flag}(&mut self, val: bool) {{\n", flag=f.name));
+                fun.push_str(&format!("    pub fn set_{flag}(&mut self, val: bool) {{\n", flag=name(&f)));
                 fun.push_str(&format!("        if val {{\n"));
-                fun.push_str(&format!("            self.{field} |= {mask};\n", field=v.field, mask=f.mask));
+                fun.push_str(&format!("            self.{field} |= {mask};\n", field=field(&v), mask=mask(&f)));
                 fun.push_str("        }\n");
                 fun.push_str("        else {\n");
-                fun.push_str(&format!("            self.{field} &= !{mask};\n", field=v.field, mask=f.mask));
+                fun.push_str(&format!("            self.{field} &= !{mask};\n", field=field(&v), mask=mask(&f)));
                 fun.push_str("        }\n");
                 fun.push_str("    }\n");
             }
@@ -133,39 +136,39 @@ fn generate_flags(fun: &mut String, variables: &Vec<HeaderVariable>) {
     }
 }
 
-fn generate_set_defaults(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_set_defaults(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("    /// Sets the default values on the header.\n");
     fun.push_str("    pub fn set_defaults(&mut self) {\n");
-    for v in variables {
-        if !seen_fields.contains(&v.field) {
-            seen_fields.insert(&v.field);
-            fun.push_str(&format!("        self.{field} = {default_value}; // ${name}\n", field=v.field, default_value=v.default_value, name=v.name));
+    for v in &element.children {
+        if !seen_fields.contains(&field(&v)) {
+            seen_fields.insert(field(&v));
+            fun.push_str(&format!("        self.{field} = {default_value}; // ${name}\n", field=field(&v), default_value=default_value(&v), name=name(&v)));
         }
     }
 
     fun.push_str("    }\n");
 }
 
-fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_set_header_value(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("    #[doc(hidden)]\n");
     fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
-    for v in variables {
-        if !seen_fields.contains(&v.field) {
-            seen_fields.insert(&v.field);
-            fun.push_str(&format!("            \"${name}\" => {{", name=v.name));
-            let variables_with_name: Vec<&HeaderVariable> = variables.iter().filter(|&vv| vv.name == v.name).collect();
+    for v in &element.children {
+        if !seen_fields.contains(&field(&v)) {
+            seen_fields.insert(field(&v));
+            fun.push_str(&format!("            \"${name}\" => {{", name=name(&v)));
+            let variables_with_name: Vec<&Element> = element.children.iter().filter(|&vv| name(&vv) == name(&v)).collect();
             if variables_with_name.len() == 1 {
                 // only one variable with that name
                 fun.push_str(" ");
-                if v.code < 0 {
-                    fun.push_str(&format!("try!(self.{field}.set(&pair));", field=v.field));
+                if code(&v) < 0 {
+                    fun.push_str(&format!("try!(self.{field}.set(&pair));", field=field(&v)));
                 }
                 else {
                     let read_cmd = get_read_command(&v);
-                    fun.push_str(&format!("try!(verify_code({code}, pair.code)); self.{field} = {cmd};", code=v.code, field=v.field, cmd=read_cmd));
+                    fun.push_str(&format!("try!(verify_code({code}, pair.code)); self.{field} = {cmd};", code=code(&v), field=field(&v), cmd=read_cmd));
                 }
 
                 fun.push_str(" ");
@@ -174,10 +177,10 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
                 // multiple variables with that name
                 fun.push_str("\n");
                 fun.push_str("                match pair.code {\n");
-                let expected_codes: Vec<i32> = variables_with_name.iter().map(|&vv| vv.code).collect();
-                for v in variables_with_name {
+                let expected_codes: Vec<i32> = variables_with_name.iter().map(|&vv| code(&vv)).collect();
+                for v in &variables_with_name {
                     let read_cmd = get_read_command(&v);
-                    fun.push_str(&format!("                    {code} => self.{field} = {cmd},\n", code=v.code, field=v.field, cmd=read_cmd));
+                    fun.push_str(&format!("                    {code} => self.{field} = {cmd},\n", code=code(&v), field=field(&v), cmd=read_cmd));
                 }
                 fun.push_str(&format!("                    _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from(\"expected code {:?}\"))),\n", expected_codes));
                 fun.push_str("                }\n");
@@ -194,29 +197,29 @@ fn generate_set_header_value(fun: &mut String, variables: &Vec<HeaderVariable>) 
     fun.push_str("    }\n");
 }
 
-fn get_read_command(variable: &HeaderVariable) -> String {
-    let expected_type = get_expected_type(variable.code).unwrap();
+fn get_read_command(element: &Element) -> String {
+    let expected_type = get_expected_type(code(element)).unwrap();
     let reader_fun = get_reader_function(&expected_type);
-    let converter = if variable.read_converter.is_empty() { "{}" } else { &variable.read_converter };
+    let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
     converter.replace("{}", &format!("try!(pair.value.{}())", reader_fun))
 }
 
-fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
+fn generate_add_code_pairs(fun: &mut String, element: &Element) {
     fun.push_str("    #[doc(hidden)]\n");
     fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
-    for v in variables {
+    for v in &element.children {
         // prepare writing predicate
         let mut parts = vec![];
-        if !v.min_version.is_empty() {
-            parts.push(format!("self.version >= AcadVersion::{}", v.min_version));
+        if !min_version(&v).is_empty() {
+            parts.push(format!("self.version >= AcadVersion::{}", min_version(&v)));
         }
-        if !v.max_version.is_empty() {
-            parts.push(format!("self.version <= AcadVersion::{}", v.max_version));
+        if !max_version(&v).is_empty() {
+            parts.push(format!("self.version <= AcadVersion::{}", max_version(&v)));
         }
-        if v.dont_write_default {
-            parts.push(format!("self.{} != {}", v.field, v.default_value));
+        if dont_write_default(&v) {
+            parts.push(format!("self.{} != {}", field(&v), default_value(&v)));
         }
         let indent = match parts.len() {
             0 => "",
@@ -224,31 +227,31 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
         };
 
         // write the value
-        fun.push_str(&format!("        // ${}\n", v.name));
+        fun.push_str(&format!("        // ${}\n", name(&v)));
         if parts.len() > 0 {
             fun.push_str(&format!("        if {} {{\n", parts.join(" && ")));
         }
-        fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_str(9, \"${name}\")));\n", name=v.name, indent=indent));
-        let write_converter = if v.write_converter.is_empty() { "{}" } else { &v.write_converter };
-        if v.code > 0 {
-            let expected_type = get_code_pair_type(get_expected_type(v.code).unwrap());
-            let value = write_converter.replace("{}", &format!("self.{}", v.field));
+        fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_str(9, \"${name}\")));\n", name=name(&v), indent=indent));
+        let write_converter = if write_converter(&v).is_empty() { String::from("{}") } else { write_converter(&v).clone() };
+        if code(&v) > 0 {
+            let expected_type = get_code_pair_type(get_expected_type(code(&v)).unwrap());
+            let value = write_converter.replace("{}", &format!("self.{}", field(&v)));
             fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
-                code=v.code,
+                code=code(&v),
                 value=value,
                 typ=expected_type,
                 indent=indent));
         }
         else {
             // write a point or vector as it's components
-            for i in 0..v.code.abs() {
-                let (code, field) = match i {
+            for i in 0..code(&v).abs() {
+                let (code, fld) = match i {
                     0 => (10, "x"),
                     1 => (20, "y"),
                     2 => (30, "z"),
                     _ => panic!("unexpected number of values"),
                 };
-                let value = write_converter.replace("{}", &format!("self.{}.{}", v.field, field));
+                let value = write_converter.replace("{}", &format!("self.{}.{}", field(&v), fld));
                 fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_f64({code}, {value})));\n",
                     code=code,
                     value=value,
@@ -267,113 +270,28 @@ fn generate_add_code_pairs(fun: &mut String, variables: &Vec<HeaderVariable>) {
     fun.push_str("    }\n");
 }
 
-fn gather_variables() -> Vec<HeaderVariable> {
+fn load_xml() -> Element {
     let file = File::open("spec/HeaderVariablesSpec.xml").unwrap();
     let file = BufReader::new(file);
-    let parser = EventReader::new(file);
-    let mut header_variables: Vec<HeaderVariable> = vec![];
-    for e in parser {
-        match e.unwrap() {
-            XmlEvent::StartElement { name, attributes, .. } => {
-                match &*name.local_name {
-                    "Variable" => {
-                        let mut var = HeaderVariable::new();
-                        for attr in attributes {
-                            match &*attr.name.local_name {
-                                "Name" => var.name = attr.value,
-                                "Code" => var.code = attr.value.parse::<i32>().unwrap(),
-                                "Type" => var.typ = attr.value,
-                                "Field" => var.field = attr.value,
-                                "DefaultValue" => var.default_value = attr.value,
-                                "ReadConverter" => var.read_converter = attr.value,
-                                "WriteConverter" => var.write_converter = attr.value,
-                                "Comment" => var.comment = attr.value,
-                                "MinVersion" => var.min_version = attr.value,
-                                "MaxVersion" => var.max_version = attr.value,
-                                "SuppressWriting" => var.suppress_writing = attr.value == "true",
-                                "DontWriteDefault" => var.dont_write_default = attr.value == "true",
-                                _ => panic!("unexpected attribute '{}' on Variable element", attr.name),
-                            }
-                        }
-
-                        header_variables.push(var);
-                    },
-                    "Flag" => {
-                        let mut flag = HeaderVariableFlag::new();
-                        for attr in attributes {
-                            match &*attr.name.local_name {
-                                "Name" => flag.name = attr.value,
-                                "Mask" => flag.mask = attr.value.parse::<i32>().unwrap(),
-                                "Comment" => flag.comment = attr.value,
-                                _ => panic!("unexpected attribute '{}' on Flag element", attr.name),
-                            }
-                        }
-
-                        let len = header_variables.len();
-                        header_variables[len - 1].flags.push(flag);
-                    },
-                    "Spec" => (),
-                    _ => panic!("unexpected start element: {}", name)
-                }
-            },
-            XmlEvent::EndElement { name: _ } => {
-
-            },
-            _ => (),
-        }
-    }
-
-    header_variables
+    Element::parse(file).unwrap()
 }
 
-struct HeaderVariable {
-    name: String,
-    code: i32,
-    typ: String,
-    field: String,
-    default_value: String,
-    read_converter: String,
-    write_converter: String,
-    comment: String,
-    min_version: String,
-    max_version: String,
-    suppress_writing: bool,
-    dont_write_default: bool,
-    flags: Vec<HeaderVariableFlag>,
+fn dont_write_default(element: &Element) -> bool {
+    attr(element, "DontWriteDefault") == "true"
 }
 
-impl HeaderVariable {
-    pub fn new() -> HeaderVariable {
-        HeaderVariable {
-            name: String::new(),
-            code: 0,
-            typ: String::new(),
-            field: String::new(),
-            default_value: String::new(),
-            read_converter: String::new(),
-            write_converter: String::new(),
-            comment: String::new(),
-            min_version: String::new(),
-            max_version: String::new(),
-            suppress_writing: false,
-            dont_write_default: false,
-            flags: vec![],
-        }
-    }
+fn field(element: &Element) -> String {
+    attr(element, "Field")
 }
 
-struct HeaderVariableFlag {
-    name: String,
-    mask: i32,
-    comment: String,
+fn mask(element: &Element) -> String {
+    attr(element, "Mask")
 }
 
-impl HeaderVariableFlag {
-    pub fn new() -> HeaderVariableFlag {
-        HeaderVariableFlag {
-            name: String::new(),
-            mask: 0,
-            comment: String::new(),
-        }
-    }
+fn read_converter(element: &Element) -> String {
+    attr(element, "ReadConverter")
+}
+
+fn write_converter(element: &Element) -> String {
+    attr(element, "WriteConverter")
 }

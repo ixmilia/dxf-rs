@@ -73,6 +73,10 @@ pub fn name(element: &Element) -> String {
     attr(element, "Name")
 }
 
+pub fn typ(element: &Element) -> String {
+    attr(element, "Type")
+}
+
 pub fn write_condition(element: &Element) -> String {
     attr(element, "WriteCondition")
 }
