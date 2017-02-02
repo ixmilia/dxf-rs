@@ -278,6 +278,23 @@ fn read_entity_with_custom_reader_mtext() {
 }
 
 #[test]
+fn read_entity_after_entity_with_custom_reader() {
+    let drawing = from_section("ENTITIES", vec![
+        "  0", "MTEXT", // has a custom reader
+        "  0", "LINE", // uses the auto-generated reader
+    ].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::MText(_) => {},
+        _ => panic!("expected an mtext"),
+    }
+    match drawing.entities[1].specific {
+        EntityType::Line(_) => {},
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
 fn read_entity_with_flags() {
     let ent = read_entity("IMAGE", vec!["70", "5"].join("\r\n"));
     match ent.specific {
