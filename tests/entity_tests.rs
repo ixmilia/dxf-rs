@@ -754,3 +754,42 @@ fn write_lw_polyline() {
         " 42", "42.2",
     ].join("\r\n"));
 }
+
+#[test]
+fn read_dimension() {
+    let ent = read_entity("DIMENSION", vec![
+        "1", "text",
+        "100", "AcDbOrdinateDimension",
+        "13", "1.1", // definition_point_2
+        "23", "2.2",
+        "33", "3.3",
+        "14", "4.4", // definition_point_3
+        "24", "5.5",
+        "34", "6.6"].join("\r\n"));
+    match ent.specific {
+        EntityType::OrdinateDimension(ref dim) => {
+            assert_eq!("text", dim.dimension_base.text);
+            assert_eq!(Point::new(1.1, 2.2, 3.3), dim.definition_point_2);
+            assert_eq!(Point::new(4.4, 5.5, 6.6), dim.definition_point_3);
+        },
+        _ => panic!("expected an ordinate dimension"),
+    }
+}
+
+#[test]
+fn read_entity_after_unsupported_dimension() {
+    let drawing = from_section("ENTITIES", vec![
+        "0", "DIMENSION",
+            "1", "text",
+            "100", "AcDbSomeUnsupportedDimensionType",
+            "10", "1.1",
+            "20", "2.2",
+            "30", "3.3",
+        "0", "LINE",
+    ].join("\r\n").as_str());
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(_) => {},
+        _ => panic!("expected a line"),
+    }
+}

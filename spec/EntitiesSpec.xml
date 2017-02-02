@@ -327,14 +327,14 @@
 
     -->
   <!-- the class from which all dimensions inherit -->
-  <Entity Name="DimensionBase" SubclassMarker="AcDbDimension" TypeString="DIMENSION" DefaultConstructor="Internal" CopyConstructor="Protected" HasXData="true">
-    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="try_result!(Version::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2010" />
+  <Entity Name="DimensionBase" SubclassMarker="AcDbDimension" TypeString="DIMENSION" HasXData="true">
+    <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" WriteConverter="{} as i16" MinVersion="R2010" />
     <Field Name="block_name" Code="2" Type="String" DefaultValue='String::from("*MODEL_SPACE")' />
-    <Field Name="definition_point1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="definition_point_1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_mid_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" ReadConverter="try_result!(DimensionType::from_i16({}))" WriteConverter="HandleDimensionType" />
-    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="try_result!(AttachmentPoint::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
-    <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" ReadConverter="try_result!(TextLineSpacingStyle::from_i16({}))" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="HandleDimensionType" />
+    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" WriteConverter="{} as i16" MinVersion="R2000" />
+    <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="actual_measurement" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" ProtectedSet="true" MinVersion="R2000" />
     <Field Name="text" Code="1" Type="String" DefaultValue='String::from("&lt;&gt;")' />
@@ -343,50 +343,44 @@
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue='String::from("STANDARD")' MinVersion="R12" />
   </Entity>
-  <!-- aligned -->
-  <Entity Name="AlignedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="Aligned">
-    <!--<Field Name="InsertionPoint" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />-->
-    <Field Name="definition_point2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="definition_point3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
-  </Entity>
   <!-- linear and rotated -->
-  <Entity Name="RotatedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="RotatedHorizontalOrVertical">
+  <Entity Name="RotatedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
     <Field Name="insertion_point" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
-    <Field Name="definition_point2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="definition_point3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
+    <Field Name="definition_point_2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point_3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="extension_line_angle" Code="52" Type="f64" DefaultValue="0.0" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAlignedDimension")' MinVersion="R13" />
       <WriteField Field="insertion_point" />
-      <WriteField Field="definition_point2" />
-      <WriteField Field="definition_point3" />
+      <WriteField Field="definition_point_2" />
+      <WriteField Field="definition_point_3" />
       <WriteField Field="rotation_angle" />
       <WriteField Field="extension_line_angle" />
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRotatedDimension")' MinVersion="R13" />
     </WriteOrder>
   </Entity>
   <!-- radial -->
-  <Entity Name="RadialDimension" SubclassMarker="AcDbRadialDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="Radius">
-    <Field Name="definition_point2" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
+  <Entity Name="RadialDimension" SubclassMarker="AcDbRadialDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
+    <Field Name="definition_point_2" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
     <Field Name="leader_length" Code="40" Type="f64" DefaultValue="0.0" />
   </Entity>
   <!-- diametric -->
-  <Entity Name="DiameterDimension" SubclassMarker="AcDbDiametricDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="Diameter">
-    <Field Name="definition_point2" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
+  <Entity Name="DiameterDimension" SubclassMarker="AcDbDiametricDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
+    <Field Name="definition_point_2" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
     <Field Name="leader_length" Code="40" Type="f64" DefaultValue="0.0" />
   </Entity>
   <!-- angular, 3 point -->
-  <Entity Name="AngularThreePointDimension" SubclassMarker="AcDb3PointAngularDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="AngularThreePoint">
-    <Field Name="definition_point2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="definition_point3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
-    <Field Name="definition_point4" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
-    <Field Name="definition_point5" Code="16" Type="Point" DefaultValue="Point::origin()" CodeOverrides="16,26,36" />
+  <Entity Name="AngularThreePointDimension" SubclassMarker="AcDb3PointAngularDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
+    <Field Name="definition_point_2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point_3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
+    <Field Name="definition_point_4" Code="15" Type="Point" DefaultValue="Point::origin()" CodeOverrides="15,25,35" />
+    <Field Name="definition_point_5" Code="16" Type="Point" DefaultValue="Point::origin()" CodeOverrides="16,26,36" />
   </Entity>
   <!-- ordinate -->
-  <Entity Name="OrdinateDimension" SubclassMarker="AcDbOrdinateDimension" TypeString="" BaseClass="DimensionBase" CopyConstructor="Inherited" Tag="Ordinate" MinVersion="R11">
-    <Field Name="definition_point2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
-    <Field Name="definition_point3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
+  <Entity Name="OrdinateDimension" SubclassMarker="AcDbOrdinateDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
+    <Field Name="definition_point_2" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
+    <Field Name="definition_point_3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
   </Entity>
   <!--
 

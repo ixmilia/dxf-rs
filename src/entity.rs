@@ -165,6 +165,80 @@ impl Vertex {
 }
 
 //------------------------------------------------------------------------------
+//                                                                    EntityType
+//------------------------------------------------------------------------------
+impl EntityType {
+    fn apply_dimension_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
+        match self {
+            &mut EntityType::RotatedDimension(ref mut dim) => {
+                match pair.code {
+                    12 => { dim.insertion_point.x = try!(pair.value.assert_f64()); },
+                    22 => { dim.insertion_point.y = try!(pair.value.assert_f64()); },
+                    32 => { dim.insertion_point.z = try!(pair.value.assert_f64()); },
+                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
+                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
+                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
+                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
+                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
+                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
+                    50 => { dim.rotation_angle = try!(pair.value.assert_f64()); },
+                    52 => { dim.extension_line_angle = try!(pair.value.assert_f64()); },
+                    _ => {},
+                }
+            },
+            &mut EntityType::RadialDimension(ref mut dim) => {
+                match pair.code {
+                    15 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
+                    25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
+                    35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
+                    40 => { dim.leader_length = try!(pair.value.assert_f64()); },
+                    _ => {},
+                }
+            },
+            &mut EntityType::DiameterDimension(ref mut dim) => {
+                match pair.code {
+                    15 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
+                    25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
+                    35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
+                    40 => { dim.leader_length = try!(pair.value.assert_f64()); },
+                    _ => {},
+                }
+            },
+            &mut EntityType::AngularThreePointDimension(ref mut dim) => {
+                match pair.code {
+                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
+                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
+                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
+                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
+                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
+                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
+                    15 => { dim.definition_point_4.x = try!(pair.value.assert_f64()); },
+                    25 => { dim.definition_point_4.y = try!(pair.value.assert_f64()); },
+                    35 => { dim.definition_point_4.z = try!(pair.value.assert_f64()); },
+                    16 => { dim.definition_point_5.x = try!(pair.value.assert_f64()); },
+                    26 => { dim.definition_point_5.y = try!(pair.value.assert_f64()); },
+                    36 => { dim.definition_point_5.z = try!(pair.value.assert_f64()); },
+                    _ => {},
+                }
+            },
+            &mut EntityType::OrdinateDimension(ref mut dim) => {
+                match pair.code {
+                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
+                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
+                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
+                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
+                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
+                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
+                    _ => {},
+                }
+            },
+            _ => { return Err(DxfError::UnexpectedEnumValue); },
+        }
+        Ok(())
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                                        Entity
 //------------------------------------------------------------------------------
 impl Entity {
@@ -179,7 +253,7 @@ impl Entity {
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        loop {
+        'new_entity: loop {
             match iter.next() {
                 // first code pair must be 0/entity-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
@@ -189,41 +263,107 @@ impl Entity {
                         return Ok(None);
                     }
 
-                    match EntityType::from_type_string(&type_string) {
-                        Some(e) => {
-                            let mut entity = Entity::new(e);
-                            if !try!(entity.apply_custom_reader(iter)) {
-                                // no custom reader, use the auto-generated one
-                                loop {
-                                    match iter.next() {
-                                        Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                                            // new entity or ENDSEC
-                                            iter.put_back(Ok(pair));
-                                            break;
-                                        },
-                                        Some(Ok(pair)) => try!(entity.apply_code_pair(&pair)),
-                                        Some(Err(e)) => return Err(e),
-                                        None => return Err(DxfError::UnexpectedEndOfInput),
-                                    }
-                                }
-
-                                try!(entity.post_parse());
-                            }
-
-                            return Ok(Some(entity));
-                        },
-                        None => {
-                            // swallow unsupported entity
+                    match &*type_string {
+                        "DIMENSION" => {
+                            // dimensions require special handling
+                            let mut common = EntityCommon::default();
+                            let mut dimension_entity: Option<EntityType> = None;
+                            let mut dimension_base = DimensionBase::default();
                             loop {
-                               match iter.next() {
+                                match iter.next() {
                                     Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                                        // found another entity or ENDSEC
+                                        // new entity or ENDSEC
                                         iter.put_back(Ok(pair));
                                         break;
                                     },
-                                    Some(Ok(_)) => (), // part of the unsupported entity
+                                    Some(Ok(pair)) => {
+                                        match dimension_entity {
+                                            Some(ref mut dim) => { try!(dim.apply_dimension_code_pair(&pair)); },
+                                            None => {
+                                                match pair.code {
+                                                    1 => { dimension_base.text = try!(pair.value.assert_string()); },
+                                                    2 => { dimension_base.block_name = try!(pair.value.assert_string()); },
+                                                    3 => { dimension_base.dimension_style_name = try!(pair.value.assert_string()); },
+                                                    10 => { dimension_base.definition_point_1.x = try!(pair.value.assert_f64()); },
+                                                    20 => { dimension_base.definition_point_1.y = try!(pair.value.assert_f64()); },
+                                                    30 => { dimension_base.definition_point_1.z = try!(pair.value.assert_f64()); },
+                                                    11 => { dimension_base.text_mid_point.x = try!(pair.value.assert_f64()); },
+                                                    21 => { dimension_base.text_mid_point.y = try!(pair.value.assert_f64()); },
+                                                    31 => { dimension_base.text_mid_point.z = try!(pair.value.assert_f64()); },
+                                                    41 => { dimension_base.text_line_spacing_factor = try!(pair.value.assert_f64()); },
+                                                    42 => { dimension_base.actual_measurement = try!(pair.value.assert_f64()); },
+                                                    51 => { dimension_base.horizontal_direction_angle = try!(pair.value.assert_f64()); },
+                                                    53 => { dimension_base.text_rotation_angle = try!(pair.value.assert_f64()); },
+                                                    70 => { dimension_base.dimension_type = try_result!(DimensionType::from_i16(try!(pair.value.assert_i16()))); },
+                                                    71 => { dimension_base.attachment_point = try_result!(AttachmentPoint::from_i16(try!(pair.value.assert_i16()))); },
+                                                    72 => { dimension_base.text_line_spacing_style = try_result!(TextLineSpacingStyle::from_i16(try!(pair.value.assert_i16()))); },
+                                                    210 => { dimension_base.normal.x = try!(pair.value.assert_f64()); },
+                                                    220 => { dimension_base.normal.y = try!(pair.value.assert_f64()); },
+                                                    230 => { dimension_base.normal.z = try!(pair.value.assert_f64()); },
+                                                    280 => { dimension_base.version = try_result!(Version::from_i16(try!(pair.value.assert_i16()))); },
+                                                    100 => {
+                                                        match &*try!(pair.value.assert_string()) {
+                                                            "AcDbAlignedDimension" => { dimension_entity = Some(EntityType::RotatedDimension(RotatedDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
+                                                            "AcDbRadialDimension" => { dimension_entity = Some(EntityType::RadialDimension(RadialDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
+                                                            "AcDbDiametricDimension" => { dimension_entity = Some(EntityType::DiameterDimension(DiameterDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
+                                                            "AcDb3PointAngularDimension" => { dimension_entity = Some(EntityType::AngularThreePointDimension(AngularThreePointDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
+                                                            "AcDbOrdinateDimension" => { dimension_entity = Some(EntityType::OrdinateDimension(OrdinateDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
+                                                            _ => {}, // unexpected dimension type
+                                                        }
+                                                    },
+                                                    _ => { try!(common.apply_individual_pair(&pair)); },
+                                                }
+                                            },
+                                        }
+                                    },
                                     Some(Err(e)) => return Err(e),
                                     None => return Err(DxfError::UnexpectedEndOfInput),
+                                }
+                            }
+
+                            match dimension_entity {
+                                Some(dim) => { return Ok(Some(Entity { common: common, specific: dim })); },
+                                None => { continue 'new_entity; }, // unsuccessful dimension match
+                            }
+                        },
+                        _ => {
+                            match EntityType::from_type_string(&type_string) {
+                                Some(e) => {
+                                    let mut entity = Entity::new(e);
+                                    if !try!(entity.apply_custom_reader(iter)) {
+                                        // no custom reader, use the auto-generated one
+                                        loop {
+                                            match iter.next() {
+                                                Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                                                    // new entity or ENDSEC
+                                                    iter.put_back(Ok(pair));
+                                                    break;
+                                                },
+                                                Some(Ok(pair)) => try!(entity.apply_code_pair(&pair)),
+                                                Some(Err(e)) => return Err(e),
+                                                None => return Err(DxfError::UnexpectedEndOfInput),
+                                            }
+                                        }
+
+                                        try!(entity.post_parse());
+                                    }
+
+                                    return Ok(Some(entity));
+                                },
+                                None => {
+                                    // swallow unsupported entity
+                                    loop {
+                                    match iter.next() {
+                                            Some(Ok(pair @ CodePair { code: 0, .. })) => {
+                                                // found another entity or ENDSEC
+                                                iter.put_back(Ok(pair));
+                                                break;
+                                            },
+                                            Some(Ok(_)) => (), // part of the unsupported entity
+                                            Some(Err(e)) => return Err(e),
+                                            None => return Err(DxfError::UnexpectedEndOfInput),
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -153,9 +153,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
     fun.push_str("pub enum EntityType {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
-            // TODO: handle dimensions
-            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
+        if name(c) != "Entity" && name(c) != "DimensionBase" {
             fun.push_str(&format!("    {typ}({typ}),\n", typ=name(c)));
         }
     }
@@ -166,13 +164,13 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
     // individual structs
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
-            // TODO: handle dimensions
-            // TODO: handle complex subtypes: e.g., lwpolyline has vertices
-
+        if name(c) != "Entity" {
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
             fun.push_str(&format!("pub struct {typ} {{\n", typ=name(c)));
+            if base_class(&c) == "DimensionBase" {
+                fun.push_str("    pub dimension_base: DimensionBase,\n");
+            }
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
                 let is_private = attr(&f, "Accessibility") == "private";
@@ -204,6 +202,9 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str(&format!("impl Default for {typ} {{\n", typ=name(c)));
             fun.push_str(&format!("    fn default() -> {typ} {{\n", typ=name(c)));
             fun.push_str(&format!("        {typ} {{\n", typ=name(c)));
+            if base_class(&c) == "DimensionBase" {
+                fun.push_str("            dimension_base: Default::default(),\n");
+            }
             for f in &c.children {
                 match &*f.name {
                     "Field" => {
@@ -264,8 +265,7 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
     fun.push_str("    pub fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {
-        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
-            // TODO: support dimensions
+        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" {
             let mut predicates = vec![];
             if !min_version(&entity).is_empty() {
                 predicates.push(format!("*version >= AcadVersion::{}", min_version(&entity)));
@@ -286,7 +286,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
     fun.push_str("    pub fn from_type_string(type_string: &str) -> Option<EntityType> {\n");
     fun.push_str("        match type_string {\n");
     for c in &element.children {
-        if name(c) != "Entity" && name(c) != "DimensionBase" && !attr(&c, "TypeString").is_empty() {
+        if name(c) != "Entity" && name(c) != "DimensionBase" && base_class(&c) != "DimensionBase" && !attr(&c, "TypeString").is_empty() {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             for t in type_strings {
@@ -320,10 +320,8 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     fun.push_str("        match self {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
-        if name(c) != "Entity" && name(c) != "DimensionBase" && attr(&c, "BaseClass") != "DimensionBase" {
+        if name(c) != "Entity" && name(c) != "DimensionBase" {
             if generate_reader_function(&c) {
-                // TODO: handle dimensions
-                // TODO: handle complex subtypes: e.g., lwpolyline has vertices
                 let ent = if name(&c) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
                 fun.push_str(&format!("            &mut EntityType::{typ}(ref mut {ent}) => {{\n", typ=name(c), ent=ent));
                 fun.push_str("                match pair.code {\n");
@@ -392,14 +390,19 @@ fn generate_write(fun: &mut String, element: &Element) {
     fun.push_str("\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {
-        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" && attr(&entity, "BaseClass") != "DimensionBase" {
-            let ent = if name(&entity) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
-            fun.push_str(&format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent));
-            for line in generate_write_code_pairs(&entity) {
-                fun.push_str(&format!("                {}\n", line));
-            }
+        if name(&entity) != "Entity" && name(&entity) != "DimensionBase" {
+            if generate_writer_function(&entity) {
+                let ent = if name(&entity) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
+                fun.push_str(&format!("            &EntityType::{typ}(ref {ent}) => {{\n", typ=name(&entity), ent=ent));
+                for line in generate_write_code_pairs(&entity) {
+                    fun.push_str(&format!("                {}\n", line));
+                }
 
-            fun.push_str("            },\n");
+                fun.push_str("            },\n");
+            }
+            else {
+                fun.push_str(&format!("            &EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(&entity)));
+            }
         }
     }
     fun.push_str("        }\n");
@@ -614,4 +617,12 @@ fn load_xml() -> Element {
 
 fn generate_reader_function(element: &Element) -> bool {
     attr(&element, "GenerateReaderFunction") != "false"
+}
+
+fn generate_writer_function(element: &Element) -> bool {
+    attr(&element, "GenerateWriterFunction") != "false"
+}
+
+fn base_class(element: &Element) -> String {
+    attr(&element, "BaseClass")
 }
