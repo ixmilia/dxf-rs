@@ -3,9 +3,9 @@
 <Spec xmlns="http://IxMilia.com/Dxf/EntitiesSpec">
   <!--
 
-    ENTITY - the abstract base of all of the following types
+  ENTITY - the abstract base of all of the following types
 
-    -->
+  -->
   <Entity Name="Entity" SubclassMarker="" TypeString="">
     <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
     <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
@@ -50,9 +50,9 @@
   </Entity>
   <!--
 
-    3DFACE
+  3DFACE
 
-    -->
+  -->
   <Entity Name="Face3D" SubclassMarker="AcDbFace" TypeString="3DFACE">
     <Field Name="first_corner" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="second_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
@@ -67,9 +67,9 @@
   </Entity>
   <!--
 
-    3DSOLID
+  3DSOLID
 
-    -->
+  -->
   <Entity Name="Solid3D" SubclassMarker="AcDbModelerGeometry" TypeString="3DSOLID" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
     <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
@@ -86,9 +86,9 @@
   </Entity>
   <!--
 
-    ACAD_PROXY_ENTITY
+  ACAD_PROXY_ENTITY
 
-    -->
+  -->
   <Entity Name="ProxyEntity" SubclassMarker="AcDbProxyEntity" TypeString="ACAD_PROXY_ENTITY" MinVersion="R14">
     <Field Name="proxy_entity_class_id" Code="90" Type="i32" DefaultValue="498" />
     <Field Name="application_entity_class_id" Code="91" Type="i32" DefaultValue="500" />
@@ -106,9 +106,9 @@
   </Entity>
   <!--
 
-    ARC
+  ARC
 
-    -->
+  -->
   <Entity Name="Arc" SubclassMarker="AcDbArc" TypeString="ARC">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="center" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -119,9 +119,9 @@
   </Entity>
   <!--
 
-    ARCALIGNEDTEXT
+  ARCALIGNEDTEXT
 
-    -->
+  -->
   <Entity Name="ArcAlignedText" SubclassMarker="AcDbArcAlignedText" TypeString="ARCALIGNEDTEXT" MinVersion="R2000" MaxVersion="R2000">
     <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="font_name" Code="2" Type="String" DefaultValue="String::new()" />
@@ -153,9 +153,9 @@
   </Entity>
   <!--
 
-    ATTDEF
+  ATTDEF
 
-    -->
+  -->
   <Entity Name="AttributeDefinition" SubclassMarker="null" TypeString="ATTDEF" GenerateReaderFunction="false">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -229,9 +229,9 @@
   </Entity>
   <!--
 
-    ATTRIB
+  ATTRIB
 
-    -->
+  -->
   <Entity Name="Attribute" SubclassMarker="null" TypeString="ATTRIB" GenerateReaderFunction="false">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -302,9 +302,9 @@
   </Entity>
   <!--
 
-    BODY
+  BODY
 
-    -->
+  -->
   <Entity Name="Body" SubclassMarker="AcDbModelerGeometry" TypeString="BODY" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
     <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
@@ -312,9 +312,9 @@
   </Entity>
   <!--
 
-    CIRCLE
+  CIRCLE
 
-    -->
+  -->
   <Entity Name="Circle" SubclassMarker="AcDbCircle" TypeString="CIRCLE">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="center" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -323,9 +323,9 @@
   </Entity>
   <!--
 
-    DIMENSION
+  DIMENSION
 
-    -->
+  -->
   <!-- the class from which all dimensions inherit -->
   <Entity Name="DimensionBase" SubclassMarker="AcDbDimension" TypeString="DIMENSION" HasXData="true">
     <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" WriteConverter="{} as i16" MinVersion="R2010" />
@@ -379,9 +379,9 @@
   </Entity>
   <!--
 
-    ELLIPSE
+  ELLIPSE
 
-    -->
+  -->
   <Entity Name="Ellipse" SubclassMarker="AcDbEllipse" TypeString="ELLIPSE" MinVersion="R13">
     <Field Name="center" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="major_axis" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
@@ -392,15 +392,15 @@
   </Entity>
   <!--
 
-    HATCH
+  HATCH
 
-    -->
+  -->
   <!-- TODO MinVersion="R14" -->
   <!--
 
-    HELIX
+  HELIX
 
-    -->
+  -->
   <Entity Name="Helix" SubclassMarker="AcDbHelix" TypeString="HELIX" MinVersion="R2007">
     <Field Name="major_release_number" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="maintainence_release_number" Code="91" Type="i32" DefaultValue="0" />
@@ -415,9 +415,9 @@
   </Entity>
   <!--
 
-    IMAGE
+  IMAGE
 
-    -->
+  -->
   <Entity Name="Image" SubclassMarker="AcDbRasterImage" TypeString="IMAGE" MinVersion="R14">
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -467,9 +467,9 @@
   </Entity>
   <!--
 
-    INSERT
+  INSERT
 
-    -->
+  -->
   <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
     <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" DisableWritingDefault="true" />
     <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
@@ -487,9 +487,9 @@
   </Entity>
   <!--
 
-    LEADER
+  LEADER
 
-    -->
+  -->
   <Entity Name="Leader" SubclassMarker="AcDbLeader" TypeString="LEADER" MinVersion="R13" HasXData="true">
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
@@ -536,9 +536,9 @@
   </Entity>
   <!--
 
-    LIGHT
+  LIGHT
 
-    -->
+  -->
   <Entity Name="Light" SubclassMarker="AcDbLight" TypeString="LIGHT" MinVersion="R2007">
     <Field Name="version_number" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="name" Code="1" Type="String" DefaultValue="String::new()" />
@@ -561,9 +561,9 @@
   </Entity>
   <!--
 
-    LINE
+  LINE
 
-    -->
+  -->
   <Entity Name="Line" SubclassMarker="AcDbLine" TypeString="LINE,3DLINE">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="p1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -572,9 +572,9 @@
   </Entity>
   <!--
 
-    LWPOLYLINE
+  LWPOLYLINE
 
-    -->
+  -->
   <Entity Name="LwPolyline" SubclassMarker="AcDbPolyline" TypeString="LWPOLYLINE" MinVersion="R14" GenerateReaderFunction="false">
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
       <Flag Name="is_closed" Mask="1" />
@@ -604,15 +604,15 @@
   </Entity>
   <!--
 
-    MESH
+  MESH
 
-    -->
+  -->
   <!-- TODO MinVersion=R2011 -->
   <!--
 
-    MLINE
+  MLINE
 
-    -->
+  -->
   <Entity Name="MLine" SubclassMarker="AcDbMline" TypeString="MLINE" MinVersion="R13">
     <Field Name="style_name" Code="2" Type="String" DefaultValue="String::new()" />
     <Pointer Name="style" Code="340" Type="IItem" />
@@ -678,15 +678,15 @@
   </Entity>
   <!--
 
-    MLEADER
+  MLEADER
 
-    -->
+  -->
   <!-- TODO MinVersion=R2007 -->
   <!--
 
-    MTEXT
+  MTEXT
 
-    -->
+  -->
   <Entity Name="MText" SubclassMarker="AcDbMText" TypeString="MTEXT" HasXData="true" GenerateReaderFunction="false" MinVersion="R13">
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="initial_text_height" Code="40" Type="f64" DefaultValue="1.0" />
@@ -751,9 +751,9 @@
   </Entity>
   <!--
 
-    OLEFRAME
+  OLEFRAME
 
-    -->
+  -->
   <Entity Name="OleFrame" SubclassMarker="AcDbOleFrame" TypeString="OLEFRAME" MinVersion="R13">
     <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
@@ -770,9 +770,9 @@
   </Entity>
   <!--
 
-    OLE2FRAME
+  OLE2FRAME
 
-    -->
+  -->
   <Entity Name="Ole2Frame" SubclassMarker="AcDbOle2Frame" TypeString="OLE2FRAME" MinVersion="R14">
     <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
@@ -799,9 +799,9 @@
   </Entity>
   <!--
 
-    POINT
+  POINT
 
-    -->
+  -->
   <Entity Name="ModelPoint" SubclassMarker="AcDbPoint" TypeString="POINT">
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -810,9 +810,9 @@
   </Entity>
   <!--
 
-    POLYLINE
+  POLYLINE
 
-    -->
+  -->
   <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true">
     <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R13" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
@@ -839,18 +839,18 @@
   </Entity>
   <!--
 
-    RAY
+  RAY
 
-    -->
+  -->
   <Entity Name="Ray" SubclassMarker="AcDbRay" TypeString="RAY" MinVersion="R13">
     <Field Name="start_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="unit_direction_vector" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
   </Entity>
   <!--
 
-    REGION
+  REGION
 
-    -->
+  -->
   <Entity Name="Region" SubclassMarker="AcDbModelerGeometry" TypeString="REGION" MinVersion="R13">
     <Field Name="format_version_number" Code="70" Type="i16" DefaultValue="1" />
     <Field Name="custom_data" Code="1" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
@@ -858,9 +858,9 @@
   </Entity>
   <!--
 
-    RTEXT
+  RTEXT
 
-    -->
+  -->
   <Entity Name="RText" SubclassMarker="RText" TypeString="RTEXT" MinVersion="R2000" MaxVersion="R2000">
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
@@ -875,9 +875,9 @@
   </Entity>
   <!--
 
-    SECTION
+  SECTION
 
-    -->
+  -->
   <Entity Name="Section" SubclassMarker="AcDbSection" TypeString="SECTION" MinVersion="R2007">
     <Field Name="state" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="flags" Code="91" Type="i32" DefaultValue="0" />
@@ -927,17 +927,17 @@
   </Entity>
   <!--
 
-    SEQEND
+  SEQEND
 
-    -->
+  -->
   <Entity Name="Seqend" SubclassMarker="" TypeString="SEQEND">
     <!-- empty entity -->
   </Entity>
   <!--
 
-    SHAPE
+  SHAPE
 
-    -->
+  -->
   <Entity Name="Shape" SubclassMarker="AcDbShape" TypeString="SHAPE">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -950,9 +950,9 @@
   </Entity>
   <!--
 
-    SOLID
+  SOLID
 
-    -->
+  -->
   <Entity Name="Solid" SubclassMarker="AcDbTrace" TypeString="SOLID">
     <Field Name="first_corner" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="second_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
@@ -963,9 +963,9 @@
   </Entity>
   <!--
 
-    SPLINE
+  SPLINE
 
-    -->
+  -->
   <Entity Name="Spline" SubclassMarker="AcDbSpline" TypeString="SPLINE" MinVersion="R13">
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
@@ -1023,21 +1023,21 @@
   </Entity>
   <!--
 
-    SURFACE
+  SURFACE
 
-    -->
+  -->
   <!-- TODO MinVersion=R2007 -->
   <!--
 
-    TABLE
+  TABLE
 
-    -->
+  -->
   <!-- TODO MinVersion=R2005 -->
   <!--
 
-    TEXT
+  TEXT
 
-    -->
+  -->
   <Entity Name="Text" SubclassMarker="AcDbText" TypeString="TEXT">
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -1075,9 +1075,9 @@
   </Entity>
   <!--
 
-    TOLERANCE
+  TOLERANCE
 
-    -->
+  -->
   <Entity Name="Tolerance" SubclassMarker="AcDbFcf" TypeString="TOLERANCE" MinVersion="R13">
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -1087,9 +1087,9 @@
   </Entity>
   <!--
 
-    TRACE
+  TRACE
 
-    -->
+  -->
   <Entity Name="Trace" SubclassMarker="AcDbTrace" TypeString="TRACE">
     <Field Name="first_corner" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="second_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
@@ -1100,9 +1100,9 @@
   </Entity>
   <!--
 
-    UNDERLAY
+  UNDERLAY
 
-    -->
+  -->
   <Entity Name="DgnUnderlay" SubclassMarker="null" TypeString="DGNUNDERLAY" Tag="DGN" MinVersion="R2007">
     <Pointer Name="object" Code="340" Type="IItem" />
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -1219,9 +1219,9 @@
   </Entity>
   <!--
 
-    VERTEX
+  VERTEX
 
-    -->
+  -->
   <Entity Name="Vertex" SubclassMarker="AcDbVertex" TypeString="VERTEX">
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -1245,15 +1245,15 @@
   </Entity>
   <!--
 
-    VIEWPORT
+  VIEWPORT
 
-    -->
+  -->
   <!-- TODO MinVersion="R12" -->
   <!--
 
-    WIPEOUT
+  WIPEOUT
 
-    -->
+  -->
   <Entity Name="Wipeout" SubclassMarker="AcDbWipeout" TypeString="WIPEOUT" MinVersion="R2000">
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -1303,9 +1303,9 @@
   </Entity>
   <!--
 
-    XLINE
+  XLINE
 
-    -->
+  -->
   <Entity Name="XLine" SubclassMarker="AcDbXline" TypeString="XLINE" MinVersion="R13">
     <Field Name="first_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="unit_direction_vector" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
