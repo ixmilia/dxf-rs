@@ -3,6 +3,7 @@
 extern crate dxf;
 use self::dxf::*;
 use self::dxf::entities::*;
+use self::dxf::enums::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -250,6 +251,67 @@ fn dont_write_blocks_section_if_no_blocks() {
     let drawing = Drawing::default();
     let contents = to_test_string(&drawing);
     assert!(!contents.contains("BLOCKS"));
+}
+
+#[test]
+fn read_extension_group_data() {
+    let block = read_single_block(vec![
+        "102", "{IXMILIA",
+            "  1", "some string",
+            "102", "{NESTED",
+                " 10", "1.1",
+            "102", "}",
+        "102", "}",
+    ]);
+    assert_eq!(1, block.extension_data_groups.len());
+    let x = &block.extension_data_groups[0];
+    assert_eq!("IXMILIA", x.application_name);
+    assert_eq!(2, x.items.len());
+    match x.items[0] {
+        ExtensionGroupItem::CodePair(ref p) => assert_eq!(&CodePair::new_str(1, "some string"), p),
+        _ => panic!("expected a code pair"),
+    }
+    match x.items[1] {
+        ExtensionGroupItem::Group(ref g) => {
+            assert_eq!("NESTED", g.application_name);
+            assert_eq!(1, g.items.len());
+            match g.items[0] {
+                ExtensionGroupItem::CodePair(ref p) => assert_eq!(&CodePair::new_f64(10, 1.1), p),
+                _ => panic!("expected a code pair"),
+            }
+        },
+        _ => panic!("expected a nested group"),
+    }
+}
+
+#[test]
+fn write_extension_group_data() {
+    let mut block = Block::default();
+    block.extension_data_groups.push(
+        ExtensionGroup {
+            application_name: String::from("IXMILIA"),
+            items: vec![
+                ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string")),
+                ExtensionGroupItem::Group(ExtensionGroup {
+                    application_name: String::from("NESTED"),
+                    items: vec![
+                        ExtensionGroupItem::CodePair(CodePair::new_f64(10, 1.1)),
+                    ]
+                })
+            ],
+        }
+    );
+    let mut drawing = Drawing::default();
+    drawing.header.version = AcadVersion::R14; // extension group data only written on >= R14
+    drawing.blocks.push(block);
+    assert_contains(&drawing, vec![
+         "102", "{IXMILIA",
+            "  1", "some string",
+            "102", "{NESTED",
+                " 10", "1.1",
+            "102", "}",
+        "102", "}",
+    ].join("\r\n"));
 }
 
 #[test]

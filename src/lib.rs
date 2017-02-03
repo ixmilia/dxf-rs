@@ -110,6 +110,9 @@ mod dxb_item_type;
 mod dxb_reader;
 mod dxb_writer;
 
+mod extended_data;
+pub use extended_data::*;
+
 mod drawing;
 pub use drawing::Drawing;
 

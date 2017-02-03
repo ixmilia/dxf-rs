@@ -8,6 +8,7 @@ use ::{
     Drawing,
     DxfError,
     DxfResult,
+    ExtensionGroup,
     Point,
 };
 
@@ -16,6 +17,7 @@ use entities::Entity;
 use entity_iter::EntityIter;
 use enums::*;
 use helper_functions::*;
+use extended_data;
 
 use itertools::PutBack;
 
@@ -42,6 +44,8 @@ pub struct Block {
     pub is_in_paperspace: bool,
     /// The entities contained by the block.
     pub entities: Vec<Entity>,
+    /// Extension data groups.
+    pub extension_data_groups: Vec<ExtensionGroup>,
 }
 
 // public implementation
@@ -103,6 +107,7 @@ impl Default for Block {
             description: String::new(),
             is_in_paperspace: false,
             entities: vec![],
+            extension_data_groups: vec![],
         }
     }
 }
@@ -161,6 +166,10 @@ impl Block {
                                 67 => current.is_in_paperspace = as_bool(try!(pair.value.assert_i16())),
                                 70 => current.flags = try!(pair.value.assert_i16()) as i32,
                                 330 => current.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),
+                                extended_data::EXTENDED_DATA_GROUP => {
+                                    let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));
+                                    current.extension_data_groups.push(group);
+                                },
                                 _ => (), // unsupported code pair
                             }
                         },
@@ -182,7 +191,12 @@ impl Block {
             try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
         }
 
-        // TODO: XData
+        if version >= &AcadVersion::R14 {
+            for group in &self.extension_data_groups {
+                try!(group.write(version, writer));
+            }
+        }
+
         if version >= &AcadVersion::R13 {
             if self.owner_handle != 0 {
                 try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
@@ -223,8 +237,12 @@ impl Block {
             try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
         }
 
-        // TODO: XData
-        // TODO: extension data groups
+        if version >= &AcadVersion::R14 {
+            for group in &self.extension_data_groups {
+                try!(group.write(version, writer));
+            }
+        }
+
         if version >= &AcadVersion::R2000 && self.owner_handle != 0 {
             try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
         }
