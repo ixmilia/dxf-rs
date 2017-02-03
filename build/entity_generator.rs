@@ -225,24 +225,40 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("}\n");
             fun.push_str("\n");
 
-            fun.push_str(&format!("impl {typ} {{\n", typ=name(c)));
-
             // flags
             generate_flags_methods(fun, &c);
 
-            fun.push_str("}\n");
-            fun.push_str("\n");
+            if name(&c) == "DimensionBase" {
+                fun.push_str("impl DimensionBase {\n");
+                fun.push_str("    #[doc(hidden)]\n");
+                fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+                fun.push_str("        where T: Write {\n");
+                fun.push_str("\n");
+                fun.push_str("        let ent = self;\n");
+                for line in generate_write_code_pairs(&c) {
+                    fun.push_str(&format!("        {}\n", line));
+                }
+                fun.push_str("        Ok(())\n");
+                fun.push_str("    }\n");
+                fun.push_str("}\n");
+                fun.push_str("\n");
+            }
         }
     }
 }
 
 fn generate_flags_methods(fun: &mut String, element: &Element) {
+    let mut impl_written = false;
     for field in &element.children {
         if field.name == "Field" {
             for flag in &field.children {
                 if flag.name == "Flag" {
                     let flag_name = name(&flag);
                     let mask = attr(&flag, "Mask");
+                    if !impl_written {
+                        fun.push_str(&format!("impl {typ} {{\n", typ=name(&element)));
+                        impl_written = true;
+                    }
                     fun.push_str(&format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name));
                     fun.push_str(&format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask));
                     fun.push_str("    }\n");
@@ -257,6 +273,11 @@ fn generate_flags_methods(fun: &mut String, element: &Element) {
                 }
             }
         }
+    }
+
+    if impl_written {
+        fun.push_str("}\n");
+        fun.push_str("\n");
     }
 }
 

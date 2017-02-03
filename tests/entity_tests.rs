@@ -793,3 +793,24 @@ fn read_entity_after_unsupported_dimension() {
         _ => panic!("expected a line"),
     }
 }
+
+#[test]
+fn write_dimension() {
+    let dim = RadialDimension {
+        dimension_base: DimensionBase { text: String::from("some-text"), .. Default::default() },
+        definition_point_2: Point::new(1.1, 2.2, 3.3),
+        .. Default::default()
+    };
+    let ent = Entity::new(EntityType::RadialDimension(dim));
+    let mut drawing = Drawing::default();
+    drawing.entities.push(ent);
+    assert_contains(&drawing, vec!["  0", "DIMENSION"].join("\r\n"));
+    assert_contains(&drawing, vec!["  1", "some-text"].join("\r\n"));
+    assert_contains(&drawing, vec![
+        "100", "AcDbRadialDimension",
+        " 15", "1.1", // definition_point_2
+        " 25", "2.2",
+        " 35", "3.3",
+        " 40", "0.0", // leader_length
+    ].join("\r\n"));
+}

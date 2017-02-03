@@ -49,6 +49,33 @@ impl Circle {
 }
 
 //------------------------------------------------------------------------------
+//                                                                 DimensionBase
+//------------------------------------------------------------------------------
+impl DimensionBase {
+    fn set_dimension_type(&mut self, val: i16) -> DxfResult<()> {
+        self.is_block_reference_referenced_by_this_block_only = (val & 32) == 32;
+        self.is_ordinate_x_type = (val & 64) == 64;
+        self.is_at_user_defined_location = (val & 128) == 128;
+        self.dimension_type = try_result!(DimensionType::from_i16(val & 0x0F)); // only take the lower 4 bits
+        Ok(())
+    }
+    #[doc(hidden)]
+    pub fn get_dimension_type(&self) -> i16 {
+        let mut val = self.dimension_type as i16;
+        if self.is_block_reference_referenced_by_this_block_only {
+            val |= 32;
+        }
+        if self.is_ordinate_x_type {
+            val |= 64;
+        }
+        if self.is_at_user_defined_location {
+            val |= 128;
+        }
+        val
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                                        Face3D
 //------------------------------------------------------------------------------
 impl Face3D {
@@ -294,7 +321,7 @@ impl Entity {
                                                     42 => { dimension_base.actual_measurement = try!(pair.value.assert_f64()); },
                                                     51 => { dimension_base.horizontal_direction_angle = try!(pair.value.assert_f64()); },
                                                     53 => { dimension_base.text_rotation_angle = try!(pair.value.assert_f64()); },
-                                                    70 => { dimension_base.dimension_type = try_result!(DimensionType::from_i16(try!(pair.value.assert_i16()))); },
+                                                    70 => { try!(dimension_base.set_dimension_type(try!(pair.value.assert_i16()))); },
                                                     71 => { dimension_base.attachment_point = try_result!(AttachmentPoint::from_i16(try!(pair.value.assert_i16()))); },
                                                     72 => { dimension_base.text_line_spacing_style = try_result!(TextLineSpacingStyle::from_i16(try!(pair.value.assert_i16()))); },
                                                     210 => { dimension_base.normal.x = try!(pair.value.assert_f64()); },
@@ -713,11 +740,84 @@ impl Entity {
         if self.specific.is_supported_on_version(version) {
             try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
             try!(self.common.write(version, write_handles, writer));
-            try!(self.specific.write(&self.common, version, writer));
-            try!(self.post_write(&version, write_handles, writer));
+            if !try!(self.apply_custom_writer(version, writer)) {
+                try!(self.specific.write(&self.common, version, writer));
+                try!(self.post_write(&version, write_handles, writer));
+            }
         }
 
         Ok(())
+    }
+    fn apply_custom_writer<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<bool>
+        where T: Write {
+
+        match self.specific {
+            EntityType::RotatedDimension(ref dim) => {
+                try!(dim.dimension_base.write(version, writer));
+                if version >= &AcadVersion::R13 {
+                    try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension")));
+                }
+                try!(writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle)));
+                try!(writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle)));
+                if version >= &AcadVersion::R13 {
+                    try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension")));
+                }
+            },
+            EntityType::RadialDimension(ref dim) => {
+                try!(dim.dimension_base.write(version, writer));
+                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension")));
+                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length)));
+            },
+            EntityType::DiameterDimension(ref dim) => {
+                try!(dim.dimension_base.write(version, writer));
+                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension")));
+                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length)));
+            },
+            EntityType::AngularThreePointDimension(ref dim) => {
+                try!(dim.dimension_base.write(version, writer));
+                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension")));
+                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z)));
+            },
+            EntityType::OrdinateDimension(ref dim) => {
+                try!(dim.dimension_base.write(version, writer));
+                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension")));
+                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
+                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
+                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
+                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
+            },
+            _ => return Ok(false), // no custom writer
+        }
+
+        Ok(true)
     }
     fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {

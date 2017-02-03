@@ -332,7 +332,7 @@
     <Field Name="block_name" Code="2" Type="String" DefaultValue='String::from("*MODEL_SPACE")' />
     <Field Name="definition_point_1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_mid_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="HandleDimensionType" />
+    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="self.get_dimension_type()" />
     <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" WriteConverter="{} as i16" MinVersion="R2000" />
     <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
@@ -342,6 +342,10 @@
     <Field Name="horizontal_direction_angle" Code="51" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue='String::from("STANDARD")' MinVersion="R12" />
+    <!-- manually applied flags -->
+    <Field Name="is_block_reference_referenced_by_this_block_only" Code="70" Type="bool" DefaultValue="false" GenerateWriter="false" />
+    <Field Name="is_ordinate_x_type" Code="70" Type="bool" DefaultValue="false" GenerateWriter="false" />
+    <Field Name="is_at_user_defined_location" Code="70" Type="bool" DefaultValue="false" GenerateWriter="false" />
   </Entity>
   <!-- linear and rotated -->
   <Entity Name="RotatedDimension" SubclassMarker="AcDbAlignedDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
@@ -350,15 +354,6 @@
     <Field Name="definition_point_3" Code="14" Type="Point" DefaultValue="Point::origin()" CodeOverrides="14,24,34" />
     <Field Name="rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="extension_line_angle" Code="52" Type="f64" DefaultValue="0.0" />
-    <WriteOrder>
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbAlignedDimension")' MinVersion="R13" />
-      <WriteField Field="insertion_point" />
-      <WriteField Field="definition_point_2" />
-      <WriteField Field="definition_point_3" />
-      <WriteField Field="rotation_angle" />
-      <WriteField Field="extension_line_angle" />
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRotatedDimension")' MinVersion="R13" />
-    </WriteOrder>
   </Entity>
   <!-- radial -->
   <Entity Name="RadialDimension" SubclassMarker="AcDbRadialDimension" TypeString="DIMENSION" BaseClass="DimensionBase" GenerateReaderFunction="false" GenerateWriterFunction="false">
