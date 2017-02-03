@@ -893,8 +893,6 @@ impl Object {
             },
             _ => return Ok(false), // no custom reader
         }
-
-        Ok(true)
     }
     #[doc(hidden)]
     pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>

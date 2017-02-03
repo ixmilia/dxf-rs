@@ -565,8 +565,6 @@ impl Entity {
             },
             _ => return Ok(false), // no custom reader
         }
-
-        Ok(true)
     }
     #[doc(hidden)]
     pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
