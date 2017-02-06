@@ -338,7 +338,7 @@ impl Entity {
                                                             _ => {}, // unexpected dimension type
                                                         }
                                                     },
-                                                    _ => { try!(common.apply_individual_pair(&pair)); },
+                                                    _ => { try!(common.apply_individual_pair(&pair, iter)); },
                                                 }
                                             },
                                         }
@@ -366,7 +366,7 @@ impl Entity {
                                                     iter.put_back(Ok(pair));
                                                     break;
                                                 },
-                                                Some(Ok(pair)) => try!(entity.apply_code_pair(&pair)),
+                                                Some(Ok(pair)) => try!(entity.apply_code_pair(&pair, iter)),
                                                 Some(Err(e)) => return Err(e),
                                                 None => return Err(DxfError::UnexpectedEndOfInput),
                                             }
@@ -402,9 +402,11 @@ impl Entity {
             }
         }
     }
-    fn apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
+    fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
+
         if !try!(self.specific.try_apply_code_pair(&pair)) {
-            try!(self.common.apply_individual_pair(&pair));
+            try!(self.common.apply_individual_pair(&pair, iter));
         }
         Ok(())
     }
@@ -543,7 +545,7 @@ impl Entity {
                         },
                         340 => { att.secondary_attributes.push(try!(as_u32(try!(pair.value.assert_string())))); },
                         -1 => { att.m_text = try!(as_u32(try!(pair.value.assert_string()))); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -641,7 +643,7 @@ impl Entity {
                         },
                         340 => { att.secondary_attributes.push(try!(as_u32(try!(pair.value.assert_string())))); },
                         -1 => { att.m_text = try!(as_u32(try!(pair.value.assert_string()))); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -667,7 +669,7 @@ impl Entity {
                         210 => { poly.extrusion_direction.x = try!(pair.value.assert_f64()); },
                         220 => { poly.extrusion_direction.y = try!(pair.value.assert_f64()); },
                         230 => { poly.extrusion_direction.z = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -726,7 +728,7 @@ impl Entity {
                         79 => { mtext.is_column_auto_height = as_bool(try!(pair.value.assert_i16())); },
                         48 => { mtext.column_width = try!(pair.value.assert_f64()); },
                         49 => { mtext.column_gutter = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },

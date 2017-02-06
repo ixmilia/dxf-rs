@@ -137,7 +137,7 @@ impl Object {
                                             iter.put_back(Ok(pair));
                                             break;
                                         },
-                                        Some(Ok(pair)) => try!(obj.apply_code_pair(&pair)),
+                                        Some(Ok(pair)) => try!(obj.apply_code_pair(&pair, iter)),
                                         Some(Err(e)) => return Err(e),
                                         None => return Err(DxfError::UnexpectedEndOfInput),
                                     }
@@ -171,9 +171,11 @@ impl Object {
             }
         }
     }
-    fn apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
+    fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
+        where I: Iterator<Item = DxfResult<CodePair>> {
+
         if !try!(self.specific.try_apply_code_pair(&pair)) {
-            try!(self.common.apply_individual_pair(&pair));
+            try!(self.common.apply_individual_pair(&pair, iter));
         }
         Ok(())
     }
@@ -304,11 +306,11 @@ impl Object {
                                 data.set_value(current_row, current_column, DataTableValue::Handle(try!(as_u32(try!(pair.value.assert_string())))));
                             }
                             else {
-                                try!(self.common.apply_individual_pair(&pair));
+                                try!(self.common.apply_individual_pair(&pair, iter));
                             }
                         }
 
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
 
                     if read_row_count && read_column_count && !created_table {
@@ -334,7 +336,7 @@ impl Object {
                             let handle = try!(as_u32(try!(pair.value.assert_string())));
                             dict.value_handles.insert(last_entry_name.clone(), handle);
                         },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -350,7 +352,7 @@ impl Object {
                             let handle = try!(as_u32(try!(pair.value.assert_string())));
                             dict.value_handles.insert(last_entry_name.clone(), handle);
                         },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -363,7 +365,7 @@ impl Object {
                             is_reading_plot_settings = false;
                         }
                         else {
-                            try!(self.common.apply_individual_pair(&pair));
+                            try!(self.common.apply_individual_pair(&pair, iter));
                         }
                     }
                     else {
@@ -398,7 +400,7 @@ impl Object {
                             330 => { layout.viewport = try!(as_u32(try!(pair.value.assert_string()))); },
                             345 => { layout.table_record = try!(as_u32(try!(pair.value.assert_string()))); },
                             346 => { layout.table_record_base = try!(as_u32(try!(pair.value.assert_string()))); },
-                            _ => { try!(self.common.apply_individual_pair(&pair)); },
+                            _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                         }
                     }
                 }
@@ -416,7 +418,7 @@ impl Object {
                             }
                             else {
                                 // might still be the handle
-                                try!(self.common.apply_individual_pair(&pair));;
+                                try!(self.common.apply_individual_pair(&pair, iter));;
                             }
                         },
                         90 => {
@@ -428,7 +430,7 @@ impl Object {
                                 read_version_number = false;
                             }
                         },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -637,7 +639,7 @@ impl Object {
                         },
                         468 => { mat.reflectivity = try!(pair.value.assert_f64()); },
                         469 => { mat.gen_proc_real_value = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -665,7 +667,7 @@ impl Object {
                             mline._element_count = try!(pair.value.assert_i16()) as i32;
                             read_element_count = true;
                         },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -684,7 +686,7 @@ impl Object {
                         },
                         90 => { ss.section_type = try!(pair.value.assert_i32()); }
                         91 => (), // generation settings count; we just read as many as we're given
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -711,7 +713,7 @@ impl Object {
                             sort.entities.push(try!(as_u32(try!(pair.value.assert_string()))));
                             is_ready_for_sort_handles = true;
                         },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -766,7 +768,7 @@ impl Object {
                         210 => { sf.clip_boundary_normal.x = try!(pair.value.assert_f64()); },
                         220 => { sf.clip_boundary_normal.y = try!(pair.value.assert_f64()); },
                         230 => { sf.clip_boundary_normal.z = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -828,7 +830,7 @@ impl Object {
                         341 => { ss.view = try!(as_u32(try!(pair.value.assert_string()))); },
                         342 => { ss.visual_style = try!(as_u32(try!(pair.value.assert_string()))); },
                         343 => { ss.text_style = try!(as_u32(try!(pair.value.assert_string()))); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -858,7 +860,7 @@ impl Object {
                             }
                         },
                         281 => { ts.is_column_heading_suppressed = as_bool(try!(pair.value.assert_i16())); },
-                        _ => { try!(self.common.apply_individual_pair(&pair)); },
+                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
                     }
                 }
             },
@@ -876,7 +878,7 @@ impl Object {
                             continue;
                         }
 
-                        if try!(self.common.apply_individual_pair(&pair)) {
+                        if try!(self.common.apply_individual_pair(&pair, iter)) {
                             continue;
                         }
 
@@ -900,7 +902,7 @@ impl Object {
 
         if self.specific.is_supported_on_version(version) {
             try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
-            try!(self.common.write(writer));
+            try!(self.common.write(version, writer));
             if !try!(self.apply_custom_writer(version, writer)) {
                 try!(self.specific.write(version, writer));
                 try!(self.post_write(&version, writer));

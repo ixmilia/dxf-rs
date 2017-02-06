@@ -814,3 +814,48 @@ fn write_dimension() {
         " 40", "0.0", // leader_length
     ].join("\r\n"));
 }
+
+#[test]
+fn read_extension_data() {
+    let ent = read_entity("LINE", vec![
+        "102", "{IXMILIA",
+        "  1", "some string",
+        "102", "}",
+    ].join("\r\n"));
+    assert_eq!(1, ent.common.extension_data_groups.len());
+    let group = &ent.common.extension_data_groups[0];
+    assert_eq!("IXMILIA", group.application_name);
+    match group.items[0] {
+        ExtensionGroupItem::CodePair(ref p) => assert_eq!(&CodePair::new_str(1, "some string"), p),
+        _ => panic!("expected a code pair"),
+    }
+}
+
+#[test]
+fn write_extension_data() {
+    let drawing = Drawing {
+        header: Header { version: AcadVersion::R14, .. Default::default() },
+        entities: vec![
+            Entity {
+                common: EntityCommon {
+                    extension_data_groups: vec![
+                        ExtensionGroup {
+                            application_name: String::from("IXMILIA"),
+                            items: vec![
+                                ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string")),
+                            ],
+                        }
+                    ],
+                    .. Default::default()
+                },
+                specific: EntityType::Line(Line::default()),
+            }
+        ],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec![
+        "102", "{IXMILIA",
+        "  1", "some string",
+        "102", "}",
+    ].join("\r\n"));
+}

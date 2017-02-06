@@ -8,6 +8,7 @@
   -->
   <Entity Name="Entity" SubclassMarker="" TypeString="">
     <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
     <Field Name="is_in_paper_space" Code="67" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="layer" Code="8" Type="String" DefaultValue='String::from("0")' WriteConverter='&amp;default_if_empty(&amp;{}, "0")' />

@@ -8,6 +8,7 @@
   -->
   <Object Name="Object" SubclassMarker="" TypeString="">
     <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
     <WriteOrder>
       <WriteField Field="handle" />

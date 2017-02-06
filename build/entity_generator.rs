@@ -23,6 +23,7 @@ use ::{
     Color,
     DxfError,
     DxfResult,
+    ExtensionGroup,
     LwPolylineVertex,
     Point,
     Vector,
@@ -32,6 +33,7 @@ use ::helper_functions::*;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
+use itertools::PutBack;
 
 use std::io::Write;
 ".trim_left());
@@ -108,17 +110,27 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
 
     ////////////////////////////////////////////////////// apply_individual_pair
     fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn apply_individual_pair(&mut self, pair: &CodePair) -> DxfResult<()> {\n");
+    fun.push_str("    pub fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>\n");
+    fun.push_str("        where I: Iterator<Item = DxfResult<CodePair>> {\n");
+    fun.push_str("\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
         if c.name == "Field" {
-            let read_fun = if allow_multiples(&c) {
-                format!(".push({})", get_field_reader(&c))
+            if name(c) == "extension_data_groups" && code(c) == 102 {
+                fun.push_str("            102 => {\n");
+                fun.push_str("                let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
+                fun.push_str("                self.extension_data_groups.push(group);\n");
+                fun.push_str("            },\n");
             }
             else {
-                format!(" = {}", get_field_reader(&c))
-            };
-            fun.push_str(&format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun));
+                let read_fun = if allow_multiples(&c) {
+                    format!(".push({})", get_field_reader(&c))
+                }
+                else {
+                    format!(" = {}", get_field_reader(&c))
+                };
+                fun.push_str(&format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun));
+            }
         }
         else if c.name == "Pointer" {
             // TODO: proper handling of pointers
@@ -524,7 +536,11 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
             commands.push(String::from("}"));
         },
         "WriteExtensionData" => {
-            // TODO:
+            commands.push(String::from("if *version >= AcadVersion::R14 {"));
+            commands.push(String::from("    for group in &self.extension_data_groups {"));
+            commands.push(String::from("        try!(group.write(writer));"));
+            commands.push(String::from("    }"));
+            commands.push(String::from("}"));
         },
         _ => panic!("unexpected write command {}", write_command.name),
     }
