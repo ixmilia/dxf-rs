@@ -2,6 +2,7 @@
 
 extern crate dxf;
 use self::dxf::*;
+use self::dxf::enums::*;
 use self::dxf::tables::*;
 
 mod test_helpers;
@@ -182,5 +183,52 @@ fn write_view_with_invalid_values() {
         " 22", "0.0",
         " 32", "0.0",
         " 42", "42.0",
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_table_item_with_extended_data() {
+    let drawing = read_table("LAYER", vec![
+        "  0", "LAYER",
+        "102", "{IXMILIA",
+        "  1", "some string",
+        "102", "}",
+    ]);
+    let layer = &drawing.layers[0];
+    assert_eq!(1, layer.extension_data_groups.len());
+    let group = &layer.extension_data_groups[0];
+    assert_eq!("IXMILIA", group.application_name);
+    assert_eq!(1, group.items.len());
+    match group.items[0] {
+        ExtensionGroupItem::CodePair(ref p) => {
+            assert_eq!(&CodePair::new_str(1, "some string"), p);
+        },
+        _ => panic!("expected a code pair"),
+    }
+}
+
+#[test]
+fn write_table_item_with_extended_data() {
+    let layer = Layer {
+        extension_data_groups: vec![
+            ExtensionGroup {
+                application_name: String::from("IXMILIA"),
+                items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string"))],
+            }
+        ],
+        .. Default::default()
+    };
+    let drawing = Drawing {
+        header: Header {
+            version: AcadVersion::R14,
+            .. Default::default()
+        },
+        layers: vec![layer],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec![
+        "102", "{IXMILIA",
+        "  1", "some string",
+        "102", "}",
     ].join("\r\n"));
 }

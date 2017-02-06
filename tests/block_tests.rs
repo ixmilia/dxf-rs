@@ -305,7 +305,7 @@ fn write_extension_group_data() {
     drawing.header.version = AcadVersion::R14; // extension group data only written on >= R14
     drawing.blocks.push(block);
     assert_contains(&drawing, vec![
-         "102", "{IXMILIA",
+        "102", "{IXMILIA",
             "  1", "some string",
             "102", "{NESTED",
                 " 10", "1.1",

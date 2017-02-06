@@ -27,12 +27,14 @@ use ::{
     Drawing,
     DxfError,
     DxfResult,
+    ExtensionGroup,
     LineWeight,
     Point,
     Vector,
 };
 use ::code_pair_writer::CodePairWriter;
 use ::helper_functions::*;
+use ::extension_data;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
@@ -56,6 +58,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("    pub name: String,\n");
         fun.push_str("    pub handle: u32,\n");
         fun.push_str("    pub owner_handle: u32,\n");
+        fun.push_str("    pub extension_data_groups: Vec<ExtensionGroup>,\n");
         for field in &table_item.children {
             let name = name(&field);
             if !seen_fields.contains(&name) {
@@ -77,6 +80,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("            name: String::new(),\n");
         fun.push_str("            handle: 0,\n");
         fun.push_str("            owner_handle: 0,\n");
+        fun.push_str("            extension_data_groups: vec![],\n");
         for field in &table_item.children {
             let name = name(&field);
             if !seen_fields.contains(&name) {
@@ -153,6 +157,10 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                                match pair.code {\n");
         fun.push_str("                                    2 => item.name = try!(pair.value.assert_string()),\n");
         fun.push_str("                                    5 => item.handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
+        fun.push_str("                                    extension_data::EXTENSION_DATA_GROUP => {\n");
+        fun.push_str("                                        let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
+        fun.push_str("                                        item.extension_data_groups.push(group);\n");
+        fun.push_str("                                    },\n");
         fun.push_str("                                    330 => item.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
         for field in &table_item.children {
             if generate_reader(&field) {
@@ -246,6 +254,12 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str(&format!("        try!(writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")));
         fun.push_str("        if write_handles {\n");
         fun.push_str("            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(item.handle))));\n");
+        fun.push_str("        }\n");
+        fun.push_str("\n");
+        fun.push_str("        if drawing.header.version >= AcadVersion::R14 {\n");
+        fun.push_str("            for group in &item.extension_data_groups {\n");
+        fun.push_str("                try!(group.write(writer));\n");
+        fun.push_str("            }\n");
         fun.push_str("        }\n");
         fun.push_str("\n");
         fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\")));\n");

@@ -9,19 +9,18 @@ use ::{
     DxfResult,
 };
 
-use ::enums::AcadVersion;
 use ::code_pair_writer::CodePairWriter;
 
-#[doc(hidden)] pub const EXTENDED_DATA_GROUP: i32 = 102;
+#[doc(hidden)] pub const EXTENSION_DATA_GROUP: i32 = 102;
 
-/// Represents an application name and a collection of extended group data in the form of `CodePair`s.
+/// Represents an application name and a collection of extension group data in the form of `CodePair`s.
 #[derive(Clone, Debug)]
 pub struct ExtensionGroup {
     pub application_name: String,
     pub items: Vec<ExtensionGroupItem>,
 }
 
-/// Represents a single piece of extended data or a named group.
+/// Represents a single piece of extension data or a named group.
 #[derive(Clone, Debug)]
 pub enum ExtensionGroupItem {
     CodePair(CodePair),
@@ -46,7 +45,7 @@ impl ExtensionGroup {
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             };
-            if pair.code == EXTENDED_DATA_GROUP {
+            if pair.code == EXTENSION_DATA_GROUP {
                 let name = try!(pair.value.assert_string());
                 if name == "}" {
                     // end of group
@@ -68,21 +67,21 @@ impl ExtensionGroup {
         Ok(ExtensionGroup { application_name: application_name, items: items })
     }
     #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         if self.items.len() > 0 {
             let mut full_group_name = String::new();
             full_group_name.push('{');
             full_group_name.push_str(&self.application_name);
-            try!(writer.write_code_pair(&CodePair::new_string(EXTENDED_DATA_GROUP, &full_group_name)));
+            try!(writer.write_code_pair(&CodePair::new_string(EXTENSION_DATA_GROUP, &full_group_name)));
             for item in &self.items {
                 match item {
                     &ExtensionGroupItem::CodePair(ref pair) => try!(writer.write_code_pair(pair)),
-                    &ExtensionGroupItem::Group(ref group) => try!(group.write(version, writer)),
+                    &ExtensionGroupItem::Group(ref group) => try!(group.write(writer)),
                 }
             }
-            try!(writer.write_code_pair(&CodePair::new_str(EXTENDED_DATA_GROUP, "}")));
+            try!(writer.write_code_pair(&CodePair::new_str(EXTENSION_DATA_GROUP, "}")));
         }
         Ok(())
     }

@@ -17,7 +17,7 @@ use entities::Entity;
 use entity_iter::EntityIter;
 use enums::*;
 use helper_functions::*;
-use extended_data;
+use extension_data;
 
 use itertools::PutBack;
 
@@ -166,7 +166,7 @@ impl Block {
                                 67 => current.is_in_paperspace = as_bool(try!(pair.value.assert_i16())),
                                 70 => current.flags = try!(pair.value.assert_i16()) as i32,
                                 330 => current.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),
-                                extended_data::EXTENDED_DATA_GROUP => {
+                                extension_data::EXTENSION_DATA_GROUP => {
                                     let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));
                                     current.extension_data_groups.push(group);
                                 },
@@ -193,7 +193,7 @@ impl Block {
 
         if version >= &AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                try!(group.write(version, writer));
+                try!(group.write(writer));
             }
         }
 
@@ -239,7 +239,7 @@ impl Block {
 
         if version >= &AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                try!(group.write(version, writer));
+                try!(group.write(writer));
             }
         }
 

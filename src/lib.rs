@@ -110,8 +110,8 @@ mod dxb_item_type;
 mod dxb_reader;
 mod dxb_writer;
 
-mod extended_data;
-pub use extended_data::*;
+mod extension_data;
+pub use extension_data::*;
 
 mod drawing;
 pub use drawing::Drawing;
@@ -162,6 +162,7 @@ mod class;
 pub use class::Class;
 
 mod header;
+pub use header::Header;
 
 mod line_weight;
 pub use line_weight::LineWeight;
