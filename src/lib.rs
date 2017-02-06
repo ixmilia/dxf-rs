@@ -113,6 +113,9 @@ mod dxb_writer;
 mod extension_data;
 pub use extension_data::*;
 
+mod x_data;
+pub use x_data::*;
+
 mod drawing;
 pub use drawing::Drawing;
 

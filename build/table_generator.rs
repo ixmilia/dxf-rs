@@ -31,10 +31,12 @@ use ::{
     LineWeight,
     Point,
     Vector,
+    XData,
 };
 use ::code_pair_writer::CodePairWriter;
 use ::helper_functions::*;
 use ::extension_data;
+use ::x_data;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
@@ -59,6 +61,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("    pub handle: u32,\n");
         fun.push_str("    pub owner_handle: u32,\n");
         fun.push_str("    pub extension_data_groups: Vec<ExtensionGroup>,\n");
+        fun.push_str("    pub x_data: Vec<XData>,\n");
         for field in &table_item.children {
             let name = name(&field);
             if !seen_fields.contains(&name) {
@@ -81,6 +84,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("            handle: 0,\n");
         fun.push_str("            owner_handle: 0,\n");
         fun.push_str("            extension_data_groups: vec![],\n");
+        fun.push_str("            x_data: vec![],\n");
         for field in &table_item.children {
             let name = name(&field);
             if !seen_fields.contains(&name) {
@@ -160,6 +164,10 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                                    extension_data::EXTENSION_DATA_GROUP => {\n");
         fun.push_str("                                        let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
         fun.push_str("                                        item.extension_data_groups.push(group);\n");
+        fun.push_str("                                    },\n");
+        fun.push_str("                                    x_data::XDATA_APPLICATIONNAME => {\n");
+        fun.push_str("                                        let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));\n");
+        fun.push_str("                                        item.x_data.push(x);\n");
         fun.push_str("                                    },\n");
         fun.push_str("                                    330 => item.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
         for field in &table_item.children {
@@ -327,6 +335,10 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                 }
             }
         }
+
+        fun.push_str("        for x in &item.x_data {\n");
+        fun.push_str("            try!(x.write(&drawing.header.version, writer));\n");
+        fun.push_str("        }\n");
 
         fun.push_str("    }\n");
         fun.push_str("\n");

@@ -10,6 +10,7 @@ use ::{
     DxfResult,
     ExtensionGroup,
     Point,
+    XData,
 };
 
 use code_pair_writer::CodePairWriter;
@@ -18,6 +19,7 @@ use entity_iter::EntityIter;
 use enums::*;
 use helper_functions::*;
 use extension_data;
+use x_data;
 
 use itertools::PutBack;
 
@@ -46,6 +48,8 @@ pub struct Block {
     pub entities: Vec<Entity>,
     /// Extension data groups.
     pub extension_data_groups: Vec<ExtensionGroup>,
+    /// XData.
+    pub x_data: Vec<XData>,
 }
 
 // public implementation
@@ -108,6 +112,7 @@ impl Default for Block {
             is_in_paperspace: false,
             entities: vec![],
             extension_data_groups: vec![],
+            x_data: vec![],
         }
     }
 }
@@ -169,6 +174,10 @@ impl Block {
                                 extension_data::EXTENSION_DATA_GROUP => {
                                     let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));
                                     current.extension_data_groups.push(group);
+                                },
+                                x_data::XDATA_APPLICATIONNAME => {
+                                    let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));
+                                    current.x_data.push(x);
                                 },
                                 _ => (), // unsupported code pair
                             }
@@ -258,6 +267,10 @@ impl Block {
         try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer)));
         if version >= &AcadVersion::R13 {
             try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd")));
+        }
+
+        for x in &self.x_data {
+            try!(x.write(&version, writer));
         }
 
         Ok(())

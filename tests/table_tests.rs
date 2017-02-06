@@ -232,3 +232,46 @@ fn write_table_item_with_extended_data() {
         "102", "}",
     ].join("\r\n"));
 }
+
+#[test]
+fn read_table_item_with_x_data() {
+    let drawing = read_table("LAYER", vec![
+        "  0", "LAYER",
+        "1001", "IXMILIA",
+        "1040", "1.1",
+    ]);
+    let layer = &drawing.layers[0];
+    assert_eq!(1, layer.x_data.len());
+    let x = &layer.x_data[0];
+    assert_eq!("IXMILIA", x.application_name);
+    assert_eq!(1, x.items.len());
+    match x.items[0] {
+        XDataItem::Real(r) => assert_eq!(1.1, r),
+        _ => panic!("expected a code pair"),
+    }
+}
+
+#[test]
+fn write_table_item_with_x_data() {
+    let layer = Layer {
+        x_data: vec![
+            XData {
+                application_name: String::from("IXMILIA"),
+                items: vec![XDataItem::Real(1.1)],
+            }
+        ],
+        .. Default::default()
+    };
+    let drawing = Drawing {
+        header: Header {
+            version: AcadVersion::R2000,
+            .. Default::default()
+        },
+        layers: vec![layer],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec![
+        "1001", "IXMILIA",
+        "1040", "1.1",
+    ].join("\r\n"));
+}

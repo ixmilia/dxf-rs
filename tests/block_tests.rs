@@ -315,6 +315,61 @@ fn write_extension_group_data() {
 }
 
 #[test]
+fn read_x_data() {
+    let block = read_single_block(vec![
+        "1001", "IXMILIA",
+        "1000", "some string",
+        "1002", "{",
+            "1040", "1.1",
+        "1002", "}",
+    ]);
+    assert_eq!(1, block.x_data.len());
+    let x = &block.x_data[0];
+    assert_eq!("IXMILIA", x.application_name);
+    assert_eq!(2, x.items.len());
+    match x.items[0] {
+        XDataItem::Str(ref s) => assert_eq!("some string", s),
+        _ => panic!("expected a string"),
+    }
+    match x.items[1] {
+        XDataItem::ControlGroup(ref items) => {
+            assert_eq!(1, items.len());
+            match items[0] {
+                XDataItem::Real(r) => assert_eq!(1.1, r),
+                _ => panic!("expected a real"),
+            }
+        },
+        _ => panic!("expected a control group"),
+    }
+}
+
+#[test]
+fn write_x_data() {
+    let mut block = Block::default();
+    block.x_data.push(
+        XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![
+                XDataItem::Str(String::from("some string")),
+                XDataItem::ControlGroup(vec![
+                    XDataItem::Real(1.1),
+                ])
+            ],
+        }
+    );
+    let mut drawing = Drawing::default();
+    drawing.header.version = AcadVersion::R2000; // xdata only written on >= R2000
+    drawing.blocks.push(block);
+    assert_contains(&drawing, vec![
+        "1001", "IXMILIA",
+        "1000", "some string",
+        "1002", "{",
+            "1040", "1.1",
+        "1002", "}",
+    ].join("\r\n"));
+}
+
+#[test]
 fn round_trip_blocks() {
     let mut drawing = Drawing::default();
     let mut b1 = Block::default();
