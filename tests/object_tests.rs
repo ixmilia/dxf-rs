@@ -340,7 +340,6 @@ fn write_version_specific_object() {
     ].join("\r\n"));
 }
 
-
 #[test]
 fn read_extension_data() {
     let obj = read_object("IDBUFFER", vec![
@@ -383,5 +382,49 @@ fn write_extension_data() {
         "102", "{IXMILIA",
         "  1", "some string",
         "102", "}",
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_x_data() {
+    let obj = read_object("IDBUFFER", vec![
+        "1001", "IXMILIA",
+        "1000", "some string",
+    ].join("\r\n"));
+    assert_eq!(1, obj.common.x_data.len());
+    let x = &obj.common.x_data[0];
+    assert_eq!("IXMILIA", x.application_name);
+    match x.items[0] {
+        XDataItem::Str(ref s) => assert_eq!("some string", s),
+        _ => panic!("expected a string"),
+    }
+}
+
+#[test]
+fn write_x_data() {
+    let drawing = Drawing {
+        header: Header { version: AcadVersion::R2000, .. Default::default() },
+        objects: vec![
+            Object {
+                common: ObjectCommon {
+                    x_data: vec![
+                        XData {
+                            application_name: String::from("IXMILIA"),
+                            items: vec![
+                                XDataItem::Real(1.1),
+                            ],
+                        }
+                    ],
+                    .. Default::default()
+                },
+                specific: ObjectType::IdBuffer(IdBuffer::default()),
+            }
+        ],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec![
+        "1001", "IXMILIA",
+        "1040", "1.1",
+        "  0", "ENDSEC", // xdata is written after all the object's other code pairs
     ].join("\r\n"));
 }

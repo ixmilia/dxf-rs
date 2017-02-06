@@ -859,3 +859,92 @@ fn write_extension_data() {
         "102", "}",
     ].join("\r\n"));
 }
+
+#[test]
+fn read_x_data() {
+    let ent = read_entity("LINE", vec![
+        "1001", "IXMILIA",
+        "1000", "some string",
+    ].join("\r\n"));
+    assert_eq!(1, ent.common.x_data.len());
+    let x = &ent.common.x_data[0];
+    assert_eq!("IXMILIA", x.application_name);
+    match x.items[0] {
+        XDataItem::Str(ref s) => assert_eq!("some string", s),
+        _ => panic!("expected a string"),
+    }
+}
+
+#[test]
+fn write_x_data() {
+    let drawing = Drawing {
+        header: Header { version: AcadVersion::R2000, .. Default::default() },
+        entities: vec![
+            Entity {
+                common: EntityCommon {
+                    x_data: vec![
+                        XData {
+                            application_name: String::from("IXMILIA"),
+                            items: vec![
+                                XDataItem::Real(1.1),
+                            ],
+                        }
+                    ],
+                    .. Default::default()
+                },
+                specific: EntityType::Line(Line::default()),
+            }
+        ],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec![
+        "1001", "IXMILIA",
+        "1040", "1.1",
+        "  0", "ENDSEC", // xdata is written after all the entity's other code pairs
+    ].join("\r\n"));
+}
+
+#[test]
+fn read_entity_after_extension_data() {
+    let drawing = parse_drawing(vec![
+        "  0", "SECTION",
+        "  2", "ENTITIES",
+            "  0", "LINE",
+            "102", "{IXMILIA",
+            "102", "}",
+            "  0", "CIRCLE",
+        "  0", "ENDSEC",
+        "  0", "EOF",
+    ].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+    match drawing.entities[1].specific {
+        EntityType::Circle(_) => (),
+        _ => panic!("expected a circle"),
+    }
+}
+
+#[test]
+fn read_entity_after_x_data() {
+    let drawing = parse_drawing(vec![
+        "  0", "SECTION",
+        "  2", "ENTITIES",
+            "  0", "LINE",
+            "1001", "IXMILIA",
+            "  0", "CIRCLE",
+        "  0", "ENDSEC",
+        "  0", "EOF",
+    ].join("\r\n").as_str());
+    assert_eq!(2, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Line(_) => (),
+        _ => panic!("expected a line"),
+    }
+    match drawing.entities[1].specific {
+        EntityType::Circle(_) => (),
+        _ => panic!("expected a circle"),
+    }
+}

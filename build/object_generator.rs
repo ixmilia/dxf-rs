@@ -39,9 +39,12 @@ use ::{
     TableCellStyle,
     TransformationMatrix,
     Vector,
+    XData,
 };
 use ::code_pair_writer::CodePairWriter;
+use ::extension_data;
 use ::helper_functions::*;
+use ::x_data;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
@@ -132,10 +135,13 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     for c in &object.children {
         if c.name == "Field" {
             if name(c) == "extension_data_groups" && code(c) == 102 {
-                fun.push_str("            102 => {\n");
+                fun.push_str("            extension_data::EXTENSION_DATA_GROUP => {\n");
                 fun.push_str("                let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
                 fun.push_str("                self.extension_data_groups.push(group);\n");
                 fun.push_str("            },\n");
+            }
+            else if name(c) == "x_data" && code(c) == 1001 {
+                // handled below: x_data::XDATA_APPLICATIONNAME
             }
             else {
                 let read_fun = if allow_multiples(&c) {
@@ -153,6 +159,10 @@ fn generate_base_object(fun: &mut String, element: &Element) {
         }
     }
 
+    fun.push_str("            x_data::XDATA_APPLICATIONNAME => {\n");
+    fun.push_str("                let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));\n");
+    fun.push_str("                self.x_data.push(x);\n");
+    fun.push_str("            },\n");
     fun.push_str("            _ => return Ok(false), // unknown code\n");
     fun.push_str("        }\n");
     fun.push_str("        Ok(true)\n");

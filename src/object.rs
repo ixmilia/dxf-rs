@@ -907,6 +907,9 @@ impl Object {
                 try!(self.specific.write(version, writer));
                 try!(self.post_write(&version, writer));
             }
+            for x in &self.common.x_data {
+                try!(x.write(version, writer));
+            }
         }
 
         Ok(())

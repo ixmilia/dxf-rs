@@ -746,6 +746,9 @@ impl Entity {
                 try!(self.specific.write(&self.common, version, writer));
                 try!(self.post_write(&version, write_handles, writer));
             }
+            for x in &self.common.x_data {
+                try!(x.write(version, writer));
+            }
         }
 
         Ok(())
