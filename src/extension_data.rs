@@ -14,14 +14,14 @@ use ::code_pair_writer::CodePairWriter;
 #[doc(hidden)] pub const EXTENSION_DATA_GROUP: i32 = 102;
 
 /// Represents an application name and a collection of extension group data in the form of `CodePair`s.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExtensionGroup {
     pub application_name: String,
     pub items: Vec<ExtensionGroupItem>,
 }
 
 /// Represents a single piece of extension data or a named group.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ExtensionGroupItem {
     CodePair(CodePair),
     Group(ExtensionGroup),

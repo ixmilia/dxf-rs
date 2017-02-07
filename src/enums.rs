@@ -18,7 +18,7 @@ pub enum Dwf3DPrecision {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum AcadVersion {
     Version_1_0,
     Version_1_2,

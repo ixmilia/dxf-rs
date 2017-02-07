@@ -8,6 +8,9 @@ use self::dxf::enums::*;
 mod test_helpers;
 use test_helpers::helpers::*;
 
+mod generated;
+use generated::all_types;
+
 fn read_entity(entity_type: &str, body: String) -> Entity {
     let drawing = from_section("ENTITIES", vec!["0", entity_type, body.as_str()].join("\r\n").as_str());
     assert_eq!(1, drawing.entities.len());
@@ -946,5 +949,76 @@ fn read_entity_after_x_data() {
     match drawing.entities[1].specific {
         EntityType::Circle(_) => (),
         _ => panic!("expected a circle"),
+    }
+}
+
+#[test]
+fn read_all_types() {
+    for (type_string, subclass, expected_type, _) in all_types::get_all_entity_types() {
+        println!("parsing {}/{}", type_string, subclass);
+        let ent = read_entity(type_string, vec![
+            "100", subclass,
+            "102", "{IXMILIA", // read extension data
+            "  1", "some string",
+            "102", "}",
+            "1001", "IXMILIA", // read x data
+            "1040", "1.1",
+        ].join("\r\n"));
+
+        // validate specific
+        assert_eq!(expected_type, ent.specific);
+
+        // validate extension data
+        assert_eq!(1, ent.common.extension_data_groups.len());
+        assert_eq!("IXMILIA", ent.common.extension_data_groups[0].application_name);
+        assert_eq!(1, ent.common.extension_data_groups[0].items.len());
+        assert_eq!(ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string")), ent.common.extension_data_groups[0].items[0]);
+
+        // validate x data
+        assert_eq!(1, ent.common.x_data.len());
+        assert_eq!("IXMILIA", ent.common.x_data[0].application_name);
+        assert_eq!(1, ent.common.x_data[0].items.len());
+        assert_eq!(XDataItem::Real(1.1), ent.common.x_data[0].items[0]);
+    }
+}
+
+#[test]
+fn write_all_types() {
+    for (type_string, _, expected_type, max_version) in all_types::get_all_entity_types() {
+        println!("writing {}", type_string);
+        let mut common = EntityCommon::default();
+        common.extension_data_groups.push(ExtensionGroup {
+            application_name: String::from("IXMILIA"),
+            items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string"))]
+        });
+        common.x_data.push(XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        });
+        let drawing = Drawing {
+            entities: vec![Entity { common: common, specific: expected_type }],
+            header: Header { version: max_version, .. Default::default() },
+            .. Default::default()
+        };
+        // 3DLINE writes as a LINE
+        let type_string = if type_string == "3DLINE" { "LINE" } else { type_string };
+        assert_contains(&drawing, vec![
+            "  0", type_string,
+        ].join("\r\n"));
+        if max_version >= AcadVersion::R14 {
+            // only written on R14+
+            assert_contains(&drawing, vec![
+                "102", "{IXMILIA",
+                "  1", "some string",
+                "102", "}",
+            ].join("\r\n"));
+        }
+        if max_version >= AcadVersion::R2000 {
+            // only written on R2000+
+            assert_contains(&drawing, vec![
+                "1001", "IXMILIA",
+                "1040", "1.1",
+            ].join("\r\n"));
+        }
     }
 }

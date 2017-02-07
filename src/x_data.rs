@@ -39,7 +39,7 @@ pub struct XData {
 }
 
 /// Represents a piece of extended data.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum XDataItem {
     Str(String),
     ControlGroup(Vec<XDataItem>),

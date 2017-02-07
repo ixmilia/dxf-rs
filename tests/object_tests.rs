@@ -8,6 +8,9 @@ use self::dxf::enums::*;
 mod test_helpers;
 use test_helpers::helpers::*;
 
+mod generated;
+use generated::all_types;
+
 fn read_object(object_type: &str, body: String) -> Object {
     let drawing = from_section("OBJECTS", vec!["0", object_type, body.as_str()].join("\r\n").as_str());
     assert_eq!(1, drawing.objects.len());
@@ -427,4 +430,83 @@ fn write_x_data() {
         "1040", "1.1",
         "  0", "ENDSEC", // xdata is written after all the object's other code pairs
     ].join("\r\n"));
+}
+
+#[test]
+fn read_all_types() {
+    for (type_string, expected_type, _) in all_types::get_all_object_types() {
+        println!("parsing {}", type_string);
+        let obj = read_object(type_string, vec![
+            "102", "{IXMILIA", // read extension data
+            "  1", "some string",
+            "102", "}",
+            "1001", "IXMILIA", // read x data
+            "1040", "1.1",
+        ].join("\r\n"));
+
+        // validate specific
+        match (&expected_type, &obj.specific) {
+            (&ObjectType::LayerIndex(ref a), &ObjectType::LayerIndex(ref b)) => {
+                // LayerIndex has a timestamp that will obviously differ; the remaining fields must be checked manually
+                assert_eq!(a.layer_names, b.layer_names);
+                assert_eq!(a.id_buffers, b.id_buffers);
+                assert_eq!(a.id_buffer_counts, b.id_buffer_counts);
+            },
+            (&ObjectType::SpatialIndex(_), &ObjectType::SpatialIndex(_)) => {
+                // SpatialIndex has a timestamp that will obviously differ; there are no other fields
+            }
+            _ => assert_eq!(expected_type, obj.specific),
+        }
+
+        // validate extension data
+        assert_eq!(1, obj.common.extension_data_groups.len());
+        assert_eq!("IXMILIA", obj.common.extension_data_groups[0].application_name);
+        assert_eq!(1, obj.common.extension_data_groups[0].items.len());
+        assert_eq!(ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string")), obj.common.extension_data_groups[0].items[0]);
+
+        // validate x data
+        assert_eq!(1, obj.common.x_data.len());
+        assert_eq!("IXMILIA", obj.common.x_data[0].application_name);
+        assert_eq!(1, obj.common.x_data[0].items.len());
+        assert_eq!(XDataItem::Real(1.1), obj.common.x_data[0].items[0]);
+    }
+}
+
+#[test]
+fn write_all_types() {
+    for (type_string, expected_type, max_version) in all_types::get_all_object_types() {
+        println!("writing {}", type_string);
+        let mut common = ObjectCommon::default();
+        common.extension_data_groups.push(ExtensionGroup {
+            application_name: String::from("IXMILIA"),
+            items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(1, "some string"))]
+        });
+        common.x_data.push(XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        });
+        let drawing = Drawing {
+            objects: vec![Object { common: common, specific: expected_type }],
+            header: Header { version: max_version, .. Default::default() },
+            .. Default::default()
+        };
+        assert_contains(&drawing, vec![
+            "  0", type_string,
+        ].join("\r\n"));
+        if max_version >= AcadVersion::R14 {
+            // only written on R14+
+            assert_contains(&drawing, vec![
+                "102", "{IXMILIA",
+                "  1", "some string",
+                "102", "}",
+            ].join("\r\n"));
+        }
+        if max_version >= AcadVersion::R2000 {
+            // only written on R2000+
+            assert_contains(&drawing, vec![
+                "1001", "IXMILIA",
+                "1040", "1.1",
+            ].join("\r\n"));
+        }
+    }
 }

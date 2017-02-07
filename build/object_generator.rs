@@ -186,7 +186,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
 }
 
 fn generate_object_types(fun: &mut String, element: &Element) {
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
     fun.push_str("pub enum ObjectType {\n");
     for c in &element.children {
         if c.name != "Object" { panic!("expected top level object"); }
@@ -354,7 +354,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
         if c.name != "Object" { panic!("expected top level object"); }
         if name(c) != "Object" {
             if generate_reader_function(&c) {
-                let obj = if name(&c) == "PlaceHolder" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER doesn't use this variable
+                let obj = if name(&c) == "PlaceHolder" || name(&c) == "ObjectPointer" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
                 fun.push_str(&format!("            &mut ObjectType::{typ}(ref mut {obj}) => {{\n", typ=name(c), obj=obj));
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
@@ -435,7 +435,7 @@ fn generate_write(fun: &mut String, element: &Element) {
     for object in &element.children {
         if name(&object) != "Object" {
             if generate_writer_function(&object) {
-                let obj = if name(&object) == "PlaceHolder" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER doesn't use this variable
+                let obj = if name(&object) == "PlaceHolder" || name(&object) == "ObjectPointer" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
                 fun.push_str(&format!("            &ObjectType::{typ}(ref {obj}) => {{\n", typ=name(&object), obj=obj));
                 for line in generate_write_code_pairs(&object) {
                     fun.push_str(&format!("                {}\n", line));

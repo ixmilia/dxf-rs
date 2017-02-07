@@ -64,7 +64,7 @@
   ACDBPLACEHOLDER
 
   -->
-  <Object Name="PlaceHolder" SubclassMarker="[none]" TypeString="ACDBPLACEHOLDER" MinVersion="R2000">
+  <Object Name="PlaceHolder" SubclassMarker="" TypeString="ACDBPLACEHOLDER" MinVersion="R2000">
     <!-- this object has no properties and writes nothing, including the 100-code subclass marker -->
     <WriteOrder />
   </Object>
@@ -134,7 +134,7 @@
   FIELD
 
   -->
-  <Object Name="Field" SubclassMarker="[none]" TypeString="FIELD" MinVersion="R2004">
+  <Object Name="Field" SubclassMarker="" TypeString="FIELD" MinVersion="R2004">
     <Field Name="evaluator_id" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="field_code_string" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="field_code_string_overflow" Code="3" Type="String" DefaultValue="String::new()" />
@@ -201,7 +201,7 @@
   GEODATA
 
   -->
-  <Object Name="GeoData" SubclassMarker="[none]" TypeString="GEODATA" MinVersion="R2010">
+  <Object Name="GeoData" SubclassMarker="" TypeString="GEODATA" MinVersion="R2010">
     <Field Name="version" Code="90" Type="GeoDataVersion" DefaultValue="GeoDataVersion::R2009" ReadConverter="try_result!(GeoDataVersion::from_i32({}))" WriteConverter="{} as i32" />
     <Field Name="coordinate_type" Code="70" Type="DesignCoordinateType" DefaultValue="DesignCoordinateType::Unknown" ReadConverter="try_result!(DesignCoordinateType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="design_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -687,11 +687,8 @@
   OBJECT_PTR
 
   -->
-  <Object Name="ObjectPointer" SubclassMarker="null" TypeString="OBJECT_PTR" MaxVersion="R14">
-    <Field Name="ase_x_data" Code="1001" Type="String" DefaultValue="String::new()" />
-    <WriteOrder>
-      <WriteField Field="ase_x_data" />
-    </WriteOrder>
+  <Object Name="ObjectPointer" SubclassMarker="" TypeString="OBJECT_PTR" MaxVersion="R14">
+    <!-- only contains extension and x data -->
   </Object>
   <!--
 

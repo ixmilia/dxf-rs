@@ -171,7 +171,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
 }
 
 fn generate_entity_types(fun: &mut String, element: &Element) {
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
     fun.push_str("pub enum EntityType {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }

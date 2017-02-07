@@ -195,7 +195,7 @@ impl Vertex {
 //                                                                    EntityType
 //------------------------------------------------------------------------------
 impl EntityType {
-    fn apply_dimension_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
+    fn apply_dimension_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {
         match self {
             &mut EntityType::RotatedDimension(ref mut dim) => {
                 match pair.code {
@@ -210,7 +210,7 @@ impl EntityType {
                     34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
                     50 => { dim.rotation_angle = try!(pair.value.assert_f64()); },
                     52 => { dim.extension_line_angle = try!(pair.value.assert_f64()); },
-                    _ => {},
+                    _ => { return Ok(false); },
                 }
             },
             &mut EntityType::RadialDimension(ref mut dim) => {
@@ -219,7 +219,7 @@ impl EntityType {
                     25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
                     35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
                     40 => { dim.leader_length = try!(pair.value.assert_f64()); },
-                    _ => {},
+                    _ => { return Ok(false); },
                 }
             },
             &mut EntityType::DiameterDimension(ref mut dim) => {
@@ -228,7 +228,7 @@ impl EntityType {
                     25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
                     35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
                     40 => { dim.leader_length = try!(pair.value.assert_f64()); },
-                    _ => {},
+                    _ => { return Ok(false); },
                 }
             },
             &mut EntityType::AngularThreePointDimension(ref mut dim) => {
@@ -245,7 +245,7 @@ impl EntityType {
                     16 => { dim.definition_point_5.x = try!(pair.value.assert_f64()); },
                     26 => { dim.definition_point_5.y = try!(pair.value.assert_f64()); },
                     36 => { dim.definition_point_5.z = try!(pair.value.assert_f64()); },
-                    _ => {},
+                    _ => { return Ok(false); },
                 }
             },
             &mut EntityType::OrdinateDimension(ref mut dim) => {
@@ -256,12 +256,12 @@ impl EntityType {
                     14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
                     24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
                     34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
-                    _ => {},
+                    _ => { return Ok(false); },
                 }
             },
             _ => { return Err(DxfError::UnexpectedEnumValue); },
         }
-        Ok(())
+        Ok(true)
     }
 }
 
@@ -305,7 +305,11 @@ impl Entity {
                                     },
                                     Some(Ok(pair)) => {
                                         match dimension_entity {
-                                            Some(ref mut dim) => { try!(dim.apply_dimension_code_pair(&pair)); },
+                                            Some(ref mut dim) => {
+                                                if !try!(dim.apply_dimension_code_pair(&pair)) {
+                                                    try!(common.apply_individual_pair(&pair, iter));
+                                                }
+                                            },
                                             None => {
                                                 match pair.code {
                                                     1 => { dimension_base.text = try!(pair.value.assert_string()); },

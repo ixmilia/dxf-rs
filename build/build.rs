@@ -5,6 +5,7 @@ mod entity_generator;
 mod header_generator;
 mod object_generator;
 mod table_generator;
+mod test_helper_generator;
 
 use std::fs::File;
 use std::io::Write;
@@ -27,4 +28,6 @@ pub mod tables;
     header_generator::generate_header();
     object_generator::generate_objects();
     table_generator::generate_tables();
+
+    test_helper_generator::generate_test_helpers();
 }
