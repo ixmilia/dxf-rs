@@ -80,10 +80,7 @@ impl Color {
     }
     #[doc(hidden)]
     pub fn get_writable_color_value(&self, layer: &Layer) -> i16 {
-       let value = match self.get_raw_value().abs() {
-            0 | 256 => 7i16, // BYLAYER and BYBLOCK aren't valid
-            v => v,
-        };
+        let value = self.get_raw_value().abs();
         let value = match layer.is_layer_on {
             true => value,
             false => -value,

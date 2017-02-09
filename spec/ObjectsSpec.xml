@@ -665,7 +665,7 @@
     <Field Name="_element_count" Code="71" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
     <Field Name="_element_offsets" Code="49" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_element_colors" Code="62" Type="Color" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{}.get_raw_value()" />
-    <Field Name="_element_linetypes" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="_element_line_types" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMlineStyle")' />
       <WriteField Field="style_name" />
@@ -678,7 +678,7 @@
       <Foreach Field="obj.elements">
         <WriteSpecificValue Code="49" Value="item.offset" />
         <WriteSpecificValue Code="62" Value="item.color.get_raw_value()" />
-        <WriteSpecificValue Code="6" Value="&amp;item.linetype" />
+        <WriteSpecificValue Code="6" Value="&amp;item.line_type" />
       </Foreach>
     </WriteOrder>
   </Object>
@@ -1153,8 +1153,8 @@
     <Field Name="edge_style" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="edge_intersection_color" Code="64" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="edge_obscured_color" Code="65" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
-    <Field Name="edge_obscured_linetype" Code="75" Type="i16" DefaultValue="0" />
-    <Field Name="edge_intersection_linetype" Code="175" Type="i16" DefaultValue="0" />
+    <Field Name="edge_obscured_line_type" Code="75" Type="i16" DefaultValue="0" />
+    <Field Name="edge_intersection_line_type" Code="175" Type="i16" DefaultValue="0" />
     <Field Name="edge_crease_angle" Code="42" Type="f64" DefaultValue="0.0" />
     <Field Name="edge_modifiers" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="edge_color" Code="66" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />

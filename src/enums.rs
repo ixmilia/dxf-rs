@@ -544,7 +544,7 @@ pub enum LightType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum LinetypeStyle {
+pub enum LineTypeStyle {
     Off = 0,
     Solid = 1,
     Dashed = 2,

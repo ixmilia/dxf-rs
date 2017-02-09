@@ -90,22 +90,23 @@ fn write_multiple_value_variable() {
 }
 
 #[test]
-fn write_header_with_invalid_values() {
-    let mut file = Drawing::default();
-    file.header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
-    file.header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
-    file.header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
-    file.header.current_layer = String::new(); // $CLAYER; normalized to "0"
-    file.header.current_entity_linetype = String::new(); // $CELTYPE; normalized to "BYLAYER"
-    file.header.dimension_style_name = String::new(); // $DIMSTYLE; normalized to "STANDARD"
-    file.header.file_name = String::new(); // $MENU; normalized to "."
-    assert_contains(&file, vec!["  9", "$TEXTSIZE", " 40", "0.2"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$TRACEWID", " 40", "0.05"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$TEXTSTYLE", "  7", "STANDARD"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$CLAYER", "  8", "0"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$CELTYPE", "  6", "BYLAYER"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$DIMSTYLE", "  2", "STANDARD"].join("\r\n"));
-    assert_contains(&file, vec!["  9", "$MENU", "  1", "."].join("\r\n"));
+fn normalize_header() {
+    let mut header = Header::default();
+    header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
+    header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
+    header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
+    header.current_layer = String::new(); // $CLAYER; normalized to "0"
+    header.current_entity_line_type = String::new(); // $CELTYPE; normalized to "BYLAYER"
+    header.dimension_style_name = String::new(); // $DIMSTYLE; normalized to "STANDARD"
+    header.file_name = String::new(); // $MENU; normalized to "."
+    header.normalize();
+    assert_eq!(0.2, header.default_text_height);
+    assert_eq!(0.05, header.trace_width);
+    assert_eq!("STANDARD", header.text_style);
+    assert_eq!("0", header.current_layer);
+    assert_eq!("BYLAYER", header.current_entity_line_type);
+    assert_eq!("STANDARD", header.dimension_style_name);
+    assert_eq!(".", header.file_name);
 }
 
 #[test]

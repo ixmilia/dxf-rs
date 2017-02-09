@@ -39,6 +39,7 @@ use std::io::{
     Write,
 };
 
+use std::collections::HashSet;
 use std::path::Path;
 use itertools::PutBack;
 
@@ -117,6 +118,7 @@ impl Drawing {
             _ => {
                 let reader = CodePairIter::new(reader, first_line);
                 let mut drawing = Drawing::default();
+                drawing.clear();
                 let mut iter = PutBack::new(reader);
                 try!(Drawing::read_sections(&mut drawing, &mut iter));
                 match iter.next() {
@@ -195,6 +197,55 @@ impl Drawing {
         let file = try!(File::create(&path));
         let mut buf_writer = BufWriter::new(file);
         self.save_dxb(&mut buf_writer)
+    }
+    /// Clears all items from the `Drawing`.
+    pub fn clear(&mut self) {
+        self.classes.clear();
+        self.app_ids.clear();
+        self.block_records.clear();
+        self.dim_styles.clear();
+        self.layers.clear();
+        self.line_types.clear();
+        self.styles.clear();
+        self.ucs.clear();
+        self.views.clear();
+        self.view_ports.clear();
+        self.blocks.clear();
+        self.entities.clear();
+        self.objects.clear();
+        self.thumbnail = None;
+    }
+    /// Normalizes the `Drawing` by ensuring expected items are present.
+    pub fn normalize(&mut self) {
+        // TODO: check for duplicates
+        self.header.normalize();
+        self.normalize_blocks();
+        self.normalize_entities();
+        self.normalize_objects();
+        self.normalize_app_ids();
+        self.normalize_block_records();
+        self.normalize_layers();
+        self.normalize_text_styles();
+        self.normalize_view_ports();
+        self.normalize_views();
+        self.ensure_mline_styles();
+        self.ensure_dimension_styles();
+        self.ensure_layers();
+        self.ensure_line_types();
+        self.ensure_text_styles();
+        self.ensure_view_ports();
+        self.ensure_views();
+        self.ensure_ucs();
+
+        self.app_ids.sort_by(|a, b| a.name.cmp(&b.name));
+        self.block_records.sort_by(|a, b| a.name.cmp(&b.name));
+        self.dim_styles.sort_by(|a, b| a.name.cmp(&b.name));
+        self.layers.sort_by(|a, b| a.name.cmp(&b.name));
+        self.line_types.sort_by(|a, b| a.name.cmp(&b.name));
+        self.styles.sort_by(|a, b| a.name.cmp(&b.name));
+        self.ucs.sort_by(|a, b| a.name.cmp(&b.name));
+        self.views.sort_by(|a, b| a.name.cmp(&b.name));
+        self.view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
 }
 
@@ -479,5 +530,366 @@ impl Drawing {
         }
 
         Ok(())
+    }
+    fn normalize_blocks(&mut self) {
+        for i in 0..self.blocks.len() {
+            self.blocks[i].normalize();
+        }
+    }
+    fn normalize_entities(&mut self) {
+        for i in 0..self.entities.len() {
+            self.entities[i].normalize();
+        }
+    }
+    fn normalize_objects(&mut self) {
+        for i in 0..self.objects.len() {
+            self.objects[i].normalize();
+        }
+    }
+    fn normalize_app_ids(&mut self) {
+        // gather existing app ids
+        let mut existing_app_ids = HashSet::new();
+        for app_id in &self.app_ids {
+            add_to_existing(&mut existing_app_ids, &app_id.name);
+        }
+
+        // prepare app ids that should exist
+        let should_exist = vec![
+            String::from("ACAD"),
+            String::from("ACADANNOTATIVE"),
+            String::from("ACAD_NAV_VCDISPLAY"),
+            String::from("ACAD_MLEADERVER"),
+        ];
+
+        // ensure all app ids that should exist do
+        for name in &should_exist {
+            if !existing_app_ids.contains(name) {
+                existing_app_ids.insert(name.clone());
+                self.app_ids.push(AppId {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn normalize_block_records(&mut self) {
+        // gather existing block records
+        let mut existing_block_records = HashSet::new();
+        for block_record in &self.block_records {
+            add_to_existing(&mut existing_block_records, &block_record.name);
+        }
+
+        // prepare block records that should exist
+        let should_exist = vec![
+            String::from("*MODEL_SPACE"),
+            String::from("*PAPER_SPACE"),
+        ];
+
+        // ensure all block records that should exist do
+        for name in &should_exist {
+            if !existing_block_records.contains(name) {
+                existing_block_records.insert(name.clone());
+                self.block_records.push(BlockRecord {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn normalize_layers(&mut self) {
+        for i in 0..self.layers.len() {
+            self.layers[i].normalize();
+        }
+    }
+    fn normalize_text_styles(&mut self) {
+        for i in 0..self.styles.len() {
+            self.styles[i].normalize();
+        }
+    }
+    fn normalize_view_ports(&mut self) {
+        for i in 0..self.view_ports.len() {
+            self.view_ports[i].normalize();
+        }
+    }
+    fn normalize_views(&mut self) {
+        for i in 0..self.views.len() {
+            self.views[i].normalize();
+        }
+    }
+    fn ensure_mline_styles(&mut self) {
+        // gather existing mline style names
+        let mut existing_mline_styles = HashSet::new();
+        for obj in &self.objects {
+            match &obj.specific {
+                &ObjectType::MLineStyle(ref ml) => add_to_existing(&mut existing_mline_styles, &ml.style_name),
+                _ => (),
+            }
+        }
+
+        // find mline style names that should exist
+        let mut to_add = HashSet::new();
+        for ent in &self.entities {
+            match &ent.specific {
+                &EntityType::MLine(ref ml) => add_to_existing(&mut to_add, &ml.style_name),
+                _ => (),
+            }
+        }
+
+        // ensure all mline styles that should exist do
+        for name in &to_add {
+            if !existing_mline_styles.contains(name) {
+                existing_mline_styles.insert(name.clone());
+                self.objects.push(Object::new(ObjectType::MLineStyle(MLineStyle {
+                    style_name: name.clone(),
+                    .. Default::default()
+                })));
+            }
+        }
+    }
+    fn ensure_dimension_styles(&mut self) {
+        // gather existing dimension style names
+        let mut existing_dim_styles = HashSet::new();
+        for dim_style in &self.dim_styles {
+            add_to_existing(&mut existing_dim_styles, &dim_style.name);
+        }
+
+        // find dimension style names that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &String::from("STANDARD"));
+        add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
+        for ent in &self.entities {
+            match &ent.specific {
+                &EntityType::RotatedDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::RadialDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::DiameterDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::AngularThreePointDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::OrdinateDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::Leader(ref l) => add_to_existing(&mut to_add, &l.dimension_style_name),
+                &EntityType::Tolerance(ref t) => add_to_existing(&mut to_add, &t.dimension_style_name),
+                _ => (),
+            }
+        }
+
+        // ensure all dimension styles that should exist do
+        for name in &to_add {
+            if !existing_dim_styles.contains(name) {
+                existing_dim_styles.insert(name.clone());
+                self.dim_styles.push(DimStyle {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_layers(&mut self) {
+        // gather existing layer names
+        let mut existing_layers = HashSet::new();
+        for layer in &self.layers {
+            add_to_existing(&mut existing_layers, &layer.name);
+        }
+
+        // find layer names that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &String::from("0"));
+        add_to_existing(&mut to_add, &self.header.current_layer);
+        for block in &self.blocks {
+            add_to_existing(&mut to_add, &block.layer);
+            for ent in &block.entities {
+                add_to_existing(&mut to_add, &ent.common.layer);
+            }
+        }
+        for ent in &self.entities {
+            add_to_existing(&mut to_add, &ent.common.layer);
+        }
+        for obj in &self.objects {
+            match &obj.specific {
+                &ObjectType::LayerFilter(ref l) => {
+                    for layer_name in &l.layer_names {
+                        add_to_existing(&mut to_add, &layer_name);
+                    }
+                },
+                &ObjectType::LayerIndex(ref l) => {
+                    for layer_name in &l.layer_names {
+                        add_to_existing(&mut to_add, &layer_name);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        // ensure all layers that should exist do
+        for name in &to_add {
+            if !existing_layers.contains(name) {
+                existing_layers.insert(name.clone());
+                self.layers.push(Layer {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_line_types(&mut self) {
+        // gather existing line type names
+        let mut existing_line_types = HashSet::new();
+        for line_type in &self.line_types {
+            add_to_existing(&mut existing_line_types, &line_type.name);
+        }
+
+        // find line_types that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &String::from("BYLAYER"));
+        add_to_existing(&mut to_add, &String::from("BYBLOCK"));
+        add_to_existing(&mut to_add, &String::from("CONTINUOUS"));
+        add_to_existing(&mut to_add, &self.header.current_entity_line_type);
+        add_to_existing(&mut to_add, &self.header.dimension_line_type);
+        for layer in &self.layers {
+            add_to_existing(&mut to_add, &layer.line_type_name);
+        }
+        for block in &self.blocks {
+            for ent in &block.entities {
+                add_to_existing(&mut to_add, &ent.common.line_type_name);
+            }
+        }
+        for ent in &self.entities {
+            add_to_existing(&mut to_add, &ent.common.line_type_name);
+        }
+        for obj in &self.objects {
+            match &obj.specific {
+                &ObjectType::MLineStyle(ref style) => add_to_existing(&mut to_add, &style.style_name),
+                _ => (),
+            }
+        }
+
+        // ensure all line_types that should exist do
+        for name in &to_add {
+            if !existing_line_types.contains(name) {
+                existing_line_types.insert(name.clone());
+                self.line_types.push(LineType {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_text_styles(&mut self) {
+        // gather existing text style names
+        let mut existing_styles = HashSet::new();
+        for style in &self.styles {
+            add_to_existing(&mut existing_styles, &style.name);
+        }
+
+        // find styles that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &String::from("STANDARD"));
+        add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
+        for entity in &self.entities {
+            match &entity.specific {
+                &EntityType::ArcAlignedText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::Attribute(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::AttributeDefinition(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::MText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::Text(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                _ => (),
+            }
+        }
+        for obj in &self.objects {
+            match &obj.specific {
+                &ObjectType::MLineStyle(ref o) => add_to_existing(&mut to_add, &o.style_name),
+                _ => (),
+            }
+        }
+
+        // ensure all styles that should exist do
+        for name in &to_add {
+            if !existing_styles.contains(name) {
+                existing_styles.insert(name.clone());
+                self.styles.push(Style {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_view_ports(&mut self) {
+        // gather existing view port names
+        let mut existing_view_ports = HashSet::new();
+        for vp in &self.view_ports {
+            add_to_existing(&mut existing_view_ports, &vp.name);
+        }
+
+        // find view ports that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &String::from("*ACTIVE"));
+
+        // ensure all view ports that should exist do
+        for name in &to_add {
+            if !existing_view_ports.contains(name) {
+                existing_view_ports.insert(name.clone());
+                self.view_ports.push(ViewPort {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_views(&mut self) {
+        // gather existing view names
+        let mut existing_views = HashSet::new();
+        for view in &self.views {
+            add_to_existing(&mut existing_views, &view.name);
+        }
+
+        // find views that should exist
+        let mut to_add = HashSet::new();
+        for obj in &self.objects {
+            match &obj.specific {
+                &ObjectType::PlotSettings(ref ps) => add_to_existing(&mut to_add, &ps.plot_view_name),
+                _ => (),
+            }
+        }
+
+        // ensure all views that should exist do
+        for name in &to_add {
+            if !existing_views.contains(name) {
+                existing_views.insert(name.clone());
+                self.views.push(View {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_ucs(&mut self) {
+        // gather existing ucs names
+        let mut existing_ucs = HashSet::new();
+        for ucs in &self.ucs {
+            add_to_existing(&mut existing_ucs, &ucs.name);
+        }
+
+        // find ucs that should exist
+        let mut to_add = HashSet::new();
+        add_to_existing(&mut to_add, &self.header.ucs_definition_name);
+        add_to_existing(&mut to_add, &self.header.ucs_name);
+        add_to_existing(&mut to_add, &self.header.ortho_ucs_reference);
+        add_to_existing(&mut to_add, &self.header.paperspace_ucs_definition_name);
+        add_to_existing(&mut to_add, &self.header.paperspace_ucs_name);
+        add_to_existing(&mut to_add, &self.header.paperspace_ortho_ucs_reference);
+
+        // ensure all ucs that should exist do
+        for name in &to_add {
+            if !name.is_empty() && !existing_ucs.contains(name) {
+                existing_ucs.insert(name.clone());
+                self.ucs.push(Ucs {
+                    name: name.clone(),
+                    .. Default::default()
+                });
+            }
+        }
+    }
+}
+
+fn add_to_existing(set: &mut HashSet<String>, val: &String) {
+    if !set.contains(val) {
+        set.insert(val.clone());
     }
 }

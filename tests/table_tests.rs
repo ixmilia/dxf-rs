@@ -145,45 +145,26 @@ fn write_layer() {
 }
 
 #[test]
-fn write_layer_with_invalid_values() {
-    let mut drawing = Drawing::default();
+fn normalize_layer() {
     let mut layer = Layer::default();
     layer.name = String::from("layer-name");
-    layer.color = Color::by_layer(); // code 62, value 256 not valid; normalized to 7
-    layer.linetype_name = String::from(""); // code 6, empty string not valid; normalized to CONTINUOUS
-    drawing.layers.push(layer);
-    assert_contains(&drawing, vec![
-        "  2", "layer-name",
-        " 70", "     0",
-        " 62", "     7",
-        "  6", "CONTINUOUS",
-    ].join("\r\n"));
+    layer.color = Color::by_layer(); // value 256 not valid; normalized to 7
+    layer.line_type_name = String::from(""); // empty string not valid; normalized to CONTINUOUS
+    layer.normalize();
+    assert_eq!(7, layer.color.get_raw_value());
+    assert_eq!("CONTINUOUS", layer.line_type_name);
 }
 
 #[test]
-fn write_view_with_invalid_values() {
-    let mut drawing = Drawing::default();
+fn normalize_view() {
     let mut view = View::default();
-    view.name = String::from("view-name");
-    view.view_height = 0.0; // code 40, invalid; normalized to 1.0
-    view.view_width = -1.0; // code 41, invalid; normalized to 1.0
-    view.lens_length = 42.0; // code 42, valid
-    drawing.views.push(view);
-    assert_contains(&drawing, vec![
-        "  2", "view-name",
-        " 70", "     0",
-        " 40", "1.0",
-        " 10", "0.0",
-        " 20", "0.0",
-        " 41", "1.0",
-        " 11", "0.0",
-        " 21", "0.0",
-        " 31", "1.0",
-        " 12", "0.0",
-        " 22", "0.0",
-        " 32", "0.0",
-        " 42", "42.0",
-    ].join("\r\n"));
+    view.view_height = 0.0; // invalid; normalized to 1.0
+    view.view_width = -1.0; // invalid; normalized to 1.0
+    view.lens_length = 42.0; // valid
+    view.normalize();
+    assert_eq!(1.0, view.view_height);
+    assert_eq!(1.0, view.view_width);
+    assert_eq!(42.0, view.lens_length);
 }
 
 #[test]

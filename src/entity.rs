@@ -266,6 +266,16 @@ impl EntityType {
 }
 
 //------------------------------------------------------------------------------
+//                                                                  EntityCommon
+//------------------------------------------------------------------------------
+impl EntityCommon {
+    /// Ensures all values are valid.
+    pub fn normalize(&mut self) {
+        default_if_empty(&mut self.layer, "0");
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                                        Entity
 //------------------------------------------------------------------------------
 impl Entity {
@@ -275,6 +285,11 @@ impl Entity {
             common: Default::default(),
             specific: specific,
         }
+    }
+    /// Ensures all entity values are valid.
+    pub fn normalize(&mut self) {
+        self.common.normalize();
+        // no entity-specific values to set
     }
     #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>

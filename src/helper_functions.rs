@@ -171,28 +171,31 @@ pub fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec
 }
 
 #[doc(hidden)]
-pub fn default_if_empty(val: &String, default: &str) -> String {
-    if val.is_empty() { String::from(default) } else { val.clone() }
+pub fn default_if_empty(val: &mut String, default: &str) {
+    if val.is_empty() {
+        *val = String::from(default);
+    }
 }
 
 #[doc(hidden)]
-pub fn ensure_positive_or_default(val: f64, default: f64) -> f64 {
-    if val <= 0.0 { default } else { val }
+pub fn ensure_positive_or_default(val: &mut f64, default: f64) {
+    if *val <= 0.0 {
+        *val = default
+    }
 }
 
 #[doc(hidden)]
-pub fn ensure_positive_or_default_i32(val: i32, default: i32) -> i32 {
-    if val <= 0 { default } else { val }
+pub fn ensure_positive_or_default_i32(val: &mut i32, default: i32) {
+    if *val <= 0 {
+        *val = default;
+    }
 }
 
 #[doc(hidden)]
-pub fn ensure_positive_or_default_i16(val: i16, default: i16) -> i16 {
-    if val <= 0 { default } else { val }
-}
-
-#[doc(hidden)]
-pub fn get_writable_linetype_name<'a>(val: &'a str) -> &'a str {
-    if val.is_empty() { "CONTINUOUS" } else { val }
+pub fn ensure_positive_or_default_i16(val: &mut i16, default: i16) {
+    if *val <= 0 {
+        *val = default;
+    }
 }
 
 #[doc(hidden)]

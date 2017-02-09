@@ -2,7 +2,9 @@
 
 extern crate dxf;
 use self::dxf::*;
+use self::dxf::entities::*;
 use self::dxf::enums::*;
+use self::dxf::objects::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -26,4 +28,122 @@ fn write_string_with_control_characters() {
     drawing.header.version = AcadVersion::R2004;
     drawing.header.last_saved_by = String::from("a\u{7}^\u{1E} b");
     assert_contains(&drawing, String::from("a^G^ ^^ b"));
+}
+
+#[test]
+fn normalize_mline_styles() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.objects.len());
+    let mut mline = MLine::default();
+    mline.style_name = String::from("style name");
+    file.entities.push(Entity::new(EntityType::MLine(mline)));
+    file.normalize();
+    assert_eq!(1, file.objects.len());
+    match &file.objects[0].specific {
+        &ObjectType::MLineStyle(ref ml) => assert_eq!("style name", ml.style_name),
+        _ => panic!("expected an mline style"),
+    }
+}
+
+#[test]
+fn normalize_dimension_styles() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.dim_styles.len());
+    file.entities.push(Entity::new(EntityType::RadialDimension(RadialDimension {
+        dimension_base: DimensionBase {
+            dimension_style_name: String::from("style name"),
+            .. Default::default()
+        },
+        .. Default::default()
+    })));
+    file.normalize();
+    assert_eq!(3, file.dim_styles.len());
+    assert_eq!("ANNOTATIVE", file.dim_styles[0].name);
+    assert_eq!("STANDARD", file.dim_styles[1].name);
+    assert_eq!("style name", file.dim_styles[2].name);
+}
+
+#[test]
+fn normalize_layers() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.layers.len());
+    file.header.current_layer = String::from("current layer");
+    file.normalize();
+    assert_eq!(2, file.layers.len());
+    assert_eq!("0", file.layers[0].name);
+    assert_eq!("current layer", file.layers[1].name);
+}
+
+#[test]
+fn normalize_line_types() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.line_types.len());
+    file.entities.push(Entity {
+        common: EntityCommon {
+            line_type_name: String::from("line type"),
+            .. Default::default()
+        },
+        specific: EntityType::Line(Default::default()),
+    });
+    file.normalize();
+    assert_eq!(4, file.line_types.len());
+    assert_eq!("BYBLOCK", file.line_types[0].name);
+    assert_eq!("BYLAYER", file.line_types[1].name);
+    assert_eq!("CONTINUOUS", file.line_types[2].name);
+    assert_eq!("line type", file.line_types[3].name);
+}
+
+#[test]
+fn normalize_text_styles() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.styles.len());
+    file.entities.push(Entity::new(EntityType::Attribute(Attribute {
+        text_style_name: String::from("text style"),
+        .. Default::default()
+    })));
+    file.normalize();
+    assert_eq!(3, file.styles.len());
+    assert_eq!("ANNOTATIVE", file.styles[0].name);
+    assert_eq!("STANDARD", file.styles[1].name);
+    assert_eq!("text style", file.styles[2].name);
+}
+
+#[test]
+fn normalize_view_ports() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.view_ports.len());
+    file.normalize();
+    assert_eq!(1, file.view_ports.len());
+    assert_eq!("*ACTIVE", file.view_ports[0].name);
+}
+
+#[test]
+fn normalize_views() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.views.len());
+    file.objects.push(Object::new(ObjectType::PlotSettings(PlotSettings {
+        plot_view_name: String::from("some view"),
+        .. Default::default()
+    })));
+    file.normalize();
+    assert_eq!(1, file.views.len());
+    assert_eq!("some view", file.views[0].name);
+}
+
+#[test]
+fn normalize_ucs() {
+    let mut file = Drawing::default();
+    file.clear();
+    assert_eq!(0, file.ucs.len());
+    file.header.ucs_name = String::from("primary ucs");
+    file.normalize();
+    assert_eq!(1, file.ucs.len());
+    assert_eq!("primary ucs", file.ucs[0].name);
 }

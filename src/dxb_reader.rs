@@ -108,7 +108,8 @@ impl<T: Read> DxbReader<T> {
 
         let mut gathered_entities = vec![];
         try!(collect_entities(&mut entities.into_iter(), &mut gathered_entities));
-        let mut drawing = Drawing::default(); // TODO: completely clear the file when supported
+        let mut drawing = Drawing::default();
+        drawing.clear();
         match block_base {
             Some(location) => {
                 let mut block = Block::default();

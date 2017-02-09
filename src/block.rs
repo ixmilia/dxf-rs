@@ -96,6 +96,10 @@ impl Block {
     pub fn set_is_resolved_external_reference(&mut self, val: bool) {
         self.set_flag(64, val)
     }
+    /// Ensure all values are valid.
+    pub fn normalize(&mut self) {
+        default_if_empty(&mut self.layer, "0");
+    }
 }
 
 impl Default for Block {
@@ -103,7 +107,7 @@ impl Default for Block {
         Block {
             handle: 0,
             owner_handle: 0,
-            layer: String::new(),
+            layer: String::from("0"),
             name: String::new(),
             flags: 0,
             base_point: Point::origin(),

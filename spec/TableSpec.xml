@@ -93,7 +93,7 @@
     <Table Collection="layers" TypeString="LAYER">
         <TableItem Name="Layer" ClassName="AcDbLayerTableRecord">
             <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.get_writable_color_value(&amp;item)" />
-            <Field Name="linetype_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;String::from(get_writable_linetype_name(&amp;{}))" />
+            <Field Name="line_type_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;{}" />
             <Field Name="is_layer_plotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
             <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::get_raw_value(&amp;{})" MinVersion="R2000" />
             <Field Name="plot_style_pointer" Code="390" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" MinVersion="R2000" />
@@ -145,12 +145,12 @@
     </Table>
     <Table Collection="views" TypeString="VIEW">
         <TableItem Name="View" ClassName="AcDbViewTableRecord">
-            <Field Name="view_height" Code="40" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" />
+            <Field Name="view_height" Code="40" Type="f64" DefaultValue="1.0" />
             <Field Name="view_center_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20" />
-            <Field Name="view_width" Code="41" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" />
+            <Field Name="view_width" Code="41" Type="f64" DefaultValue="1.0" />
             <Field Name="view_direction" Code="11" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="11,21,31" />
             <Field Name="target_point" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
-            <Field Name="lens_length" Code="42" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" />
+            <Field Name="lens_length" Code="42" Type="f64" DefaultValue="1.0" />
             <Field Name="front_clipping_plane" Code="43" Type="f64" DefaultValue="0.0" />
             <Field Name="back_clipping_plane" Code="44" Type="f64" DefaultValue="1.0" />
             <Field Name="twist_angle" Code="50" Type="f64" DefaultValue="0.0" />
@@ -177,22 +177,22 @@
             <Field Name="upper_right" Code="11" Type="Point" DefaultValue="Point::new(1.0, 1.0, 0.0)" CodeOverrides="11,21" />
             <Field Name="view_center" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22" />
             <Field Name="snap_base_point" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23" />
-            <Field Name="snap_spacing" Code="14" Type="Vector" DefaultValue="Vector::new(1.0, 1.0, 0.0)" WriteConverter="ensure_positive_or_default({}, 1.0)" CodeOverrides="14,24" />
-            <Field Name="grid_spacing" Code="15" Type="Vector" DefaultValue="Vector::new(1.0, 1.0, 0.0)" WriteConverter="ensure_positive_or_default({}, 1.0)" CodeOverrides="15,25" />
+            <Field Name="snap_spacing" Code="14" Type="Vector" DefaultValue="Vector::new(1.0, 1.0, 0.0)" CodeOverrides="14,24" />
+            <Field Name="grid_spacing" Code="15" Type="Vector" DefaultValue="Vector::new(1.0, 1.0, 0.0)" CodeOverrides="15,25" />
             <Field Name="view_direction" Code="16" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="16,26,36" />
             <Field Name="target_view_point" Code="17" Type="Point" DefaultValue="Point::origin()" CodeOverrides="17,27,37" />
-            <Field Name="view_height" Code="40" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" MaxVersion="R2004" />
-            <Field Name="view_port_aspect_ratio" Code="41" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" MaxVersion="R2004" />
-            <Field Name="lens_length" Code="42" Type="f64" DefaultValue="50.0" WriteConverter="ensure_positive_or_default({}, 50.0)" />
+            <Field Name="view_height" Code="40" Type="f64" DefaultValue="1.0" MaxVersion="R2004" />
+            <Field Name="view_port_aspect_ratio" Code="41" Type="f64" DefaultValue="1.0" MaxVersion="R2004" />
+            <Field Name="lens_length" Code="42" Type="f64" DefaultValue="50.0" />
             <Field Name="front_clipping_plane" Code="43" Type="f64" DefaultValue="0.0" />
             <Field Name="back_clipping_plane" Code="44" Type="f64" DefaultValue="0.0" />
-            <Field Name="view_height" Code="45" Type="f64" DefaultValue="1.0" WriteConverter="ensure_positive_or_default({}, 1.0)" MinVersion="R2007" />
+            <Field Name="view_height" Code="45" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
             <Field Name="snap_rotation_angle" Code="50" Type="f64" DefaultValue="0.0" />
             <Field Name="view_twist_angle" Code="51" Type="f64" DefaultValue="0.0" />
             <Field Name="view_mode" Code="71" Type="ViewMode" DefaultValue="ViewMode::default()" ReadConverter="ViewMode::from_i16({})" WriteConverter="{}.get_raw() as i16" />
-            <Field Name="circle_sides" Code="72" Type="i32" DefaultValue="1000" ReadConverter="{} as i32" WriteConverter="ensure_positive_or_default_i32({}, 1000) as i16" />
+            <Field Name="circle_sides" Code="72" Type="i32" DefaultValue="1000" ReadConverter="{} as i32" WriteConverter="{} as i16" />
             <Field Name="fast_zoom" Code="73" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R2004" />
-            <Field Name="ucs_icon" Code="74" Type="i16" DefaultValue="3" WriteConverter="ensure_positive_or_default_i16({}, 3)" />
+            <Field Name="ucs_icon" Code="74" Type="i16" DefaultValue="3" />
             <Field Name="snap_on" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R2004" />
             <Field Name="grid_on" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R2004" />
             <Field Name="snap_style" Code="77" Type="SnapStyle" DefaultValue="SnapStyle::Standard" ReadConverter="try_result!(SnapStyle::from_i16({}))" WriteConverter="{} as i16" MaxVersion="R2004" />

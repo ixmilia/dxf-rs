@@ -62,16 +62,16 @@ impl Class {
     pub fn set_is_layer_change_allowed(&mut self, val: bool) {
         self.set_flag(8, val)
     }
-    pub fn get_is_linetype_change_allowed(&self) -> bool {
+    pub fn get_is_line_type_change_allowed(&self) -> bool {
         self.get_flag(16)
     }
-    pub fn set_is_linetype_change_allowed(&mut self, val: bool) {
+    pub fn set_is_line_type_change_allowed(&mut self, val: bool) {
         self.set_flag(16, val)
     }
-    pub fn get_is_linetype_scale_change_allowed(&self) -> bool {
+    pub fn get_is_line_type_scale_change_allowed(&self) -> bool {
         self.get_flag(32)
     }
-    pub fn set_is_linetype_scale_change_allowed(&mut self, val: bool) {
+    pub fn set_is_line_type_scale_change_allowed(&mut self, val: bool) {
         self.set_flag(32, val)
     }
     pub fn get_is_visibility_change_allowed(&self) -> bool {

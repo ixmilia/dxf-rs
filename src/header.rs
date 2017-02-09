@@ -10,11 +10,22 @@ use ::{
     DxfError,
     DxfResult,
 };
+use ::helper_functions::*;
 use code_pair_writer::CodePairWriter;
 
 pub use generated::header::*;
 
 impl Header {
+    /// Ensure all values are valid.
+    pub fn normalize(&mut self) {
+        ensure_positive_or_default(&mut self.default_text_height, 0.2);
+        ensure_positive_or_default(&mut self.trace_width, 0.05);
+        default_if_empty(&mut self.text_style, "STANDARD");
+        default_if_empty(&mut self.current_layer, "0");
+        default_if_empty(&mut self.current_entity_line_type, "BYLAYER");
+        default_if_empty(&mut self.dimension_style_name, "STANDARD");
+        default_if_empty(&mut self.file_name, ".");
+    }
     #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
         where I: Iterator<Item = DxfResult<CodePair>> {

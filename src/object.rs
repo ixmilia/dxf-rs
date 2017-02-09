@@ -56,15 +56,15 @@ impl GeoMeshPoint {
 pub struct MLineStyleElement {
     pub offset: f64,
     pub color: Color,
-    pub linetype: String,
+    pub line_type: String,
 }
 
 impl MLineStyleElement {
-    pub fn new(offset: f64, color: Color, linetype: String) -> Self {
+    pub fn new(offset: f64, color: Color, line_type: String) -> Self {
         MLineStyleElement {
             offset: offset,
             color: color,
-            linetype: linetype,
+            line_type: line_type,
         }
     }
 }
@@ -101,6 +101,16 @@ impl VbaProject {
 }
 
 //------------------------------------------------------------------------------
+//                                                                  ObjectCommon
+//------------------------------------------------------------------------------
+impl ObjectCommon {
+    /// Ensures all values are valid.
+    pub fn normalize(&mut self) {
+        // nothing to do, but this method should still exist.
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                                        Object
 //------------------------------------------------------------------------------
 impl Object {
@@ -110,6 +120,11 @@ impl Object {
             common: Default::default(),
             specific: specific,
         }
+    }
+    /// Ensures all object values are valid.
+    pub fn normalize(&mut self) {
+        self.common.normalize();
+        // no object-specific values to set
     }
     #[doc(hidden)]
     pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Object>>
@@ -227,7 +242,7 @@ impl Object {
                 material._normal_map_transformation_matrix_values.clear();
             },
             ObjectType::MLineStyle(ref mut mline) => {
-                for (o, (c, l)) in mline._element_offsets.drain(..).zip(mline._element_colors.drain(..).zip(mline._element_linetypes.drain(..))) {
+                for (o, (c, l)) in mline._element_offsets.drain(..).zip(mline._element_colors.drain(..).zip(mline._element_line_types.drain(..))) {
                     mline.elements.push(MLineStyleElement::new(o, c, l));
                 }
             },
@@ -650,7 +665,7 @@ impl Object {
                     match pair.code {
                         2 => { mline.style_name = try!(pair.value.assert_string()); },
                         3 => { mline.description = try!(pair.value.assert_string()); },
-                        6 => { mline._element_linetypes.push(try!(pair.value.assert_string())); },
+                        6 => { mline._element_line_types.push(try!(pair.value.assert_string())); },
                         49 => { mline._element_offsets.push(try!(pair.value.assert_f64())); },
                         51 => { mline.start_angle = try!(pair.value.assert_f64()); },
                         52 => { mline.end_angle = try!(pair.value.assert_f64()); },

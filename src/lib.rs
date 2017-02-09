@@ -116,6 +116,8 @@ pub use extension_data::*;
 mod x_data;
 pub use x_data::*;
 
+mod table;
+
 mod drawing;
 pub use drawing::Drawing;
 
