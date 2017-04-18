@@ -79,7 +79,7 @@ fn as_datetime_conversion_test() {
 fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
     where T: TimeZone {
     let epoch = get_epoch(timezone);
-    let duration = date - epoch;
+    let duration = date.signed_duration_since(epoch);
     (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
 }
 

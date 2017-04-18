@@ -58,10 +58,10 @@ impl<T: Write> DxbWriter<T> {
         }
         else {
             let groups = drawing.entities.iter().group_by(|&e| e.common.layer.clone());
-            for (layer, entities) in groups {
+            for (layer, entities) in &groups {
                 try!(self.write_item_type(&DxbItemType::NewLayer));
                 try!(self.write_null_terminated_string(&*layer));
-                for entity in &entities {
+                for entity in entities {
                     match entity.common.color.get_raw_value() {
                         c if c == last_color => (), // same color, do nothing
                         c => {
@@ -70,7 +70,7 @@ impl<T: Write> DxbWriter<T> {
                             try!(self.write_w(last_color));
                         },
                     }
-                    try!(self.write_entity(entity));
+                    try!(self.write_entity(&entity));
                 }
             }
         }

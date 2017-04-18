@@ -1,6 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use itertools::PutBack;
+use itertools::{
+    PutBack,
+    put_back,
+};
 use ::{
     CodePair,
     DxfResult,
@@ -46,7 +49,7 @@ pub fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResul
         Ok(())
     }
 
-    let mut iter = PutBack::new(iter);
+    let mut iter = put_back(iter);
     loop {
         match iter.next() {
             Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.has_attributes => {

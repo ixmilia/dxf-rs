@@ -41,7 +41,10 @@ use std::io::{
 
 use std::collections::HashSet;
 use std::path::Path;
-use itertools::PutBack;
+use itertools::{
+    PutBack,
+    put_back,
+};
 
 /// Represents a DXF drawing.
 pub struct Drawing {
@@ -119,7 +122,7 @@ impl Drawing {
                 let reader = CodePairIter::new(reader, first_line);
                 let mut drawing = Drawing::default();
                 drawing.clear();
-                let mut iter = PutBack::new(reader);
+                let mut iter = put_back(reader);
                 try!(Drawing::read_sections(&mut drawing, &mut iter));
                 match iter.next() {
                     Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
@@ -416,7 +419,7 @@ impl Drawing {
     fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        let mut iter = PutBack::new(ObjectIter { iter: iter });
+        let mut iter = put_back(ObjectIter { iter: iter });
         loop {
             match iter.next() {
                 Some(obj) => self.objects.push(obj),
