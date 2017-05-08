@@ -121,7 +121,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         if c.name == "Field" {
             if name(c) == "extension_data_groups" && code(c) == 102 {
                 fun.push_str("            extension_data::EXTENSION_DATA_GROUP => {\n");
-                fun.push_str("                let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
+                fun.push_str("                let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;\n");
                 fun.push_str("                self.extension_data_groups.push(group);\n");
                 fun.push_str("            },\n");
             }
@@ -140,12 +140,12 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         }
         else if c.name == "Pointer" {
             // TODO: proper handling of pointers
-            fun.push_str(&format!("            {code} => {{ self.{field} = try!(as_u32(try!(pair.value.assert_string()))) }},\n", code=code(&c), field=name(c)));
+            fun.push_str(&format!("            {code} => {{ self.{field} = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
         }
     }
 
     fun.push_str("            x_data::XDATA_APPLICATIONNAME => {\n");
-    fun.push_str("                let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));\n");
+    fun.push_str("                let x = XData::read_item(pair.value.assert_string()?, iter)?;\n");
     fun.push_str("                self.x_data.push(x);\n");
     fun.push_str("            },\n");
     fun.push_str("            _ => (), // unknown code, just ignore\n");
@@ -403,10 +403,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     else if f.name == "Pointer" {
                         // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(try!(as_u32(try!(pair.value.assert_string())))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field} = try!(as_u32(try!(pair.value.assert_string()))); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.{field} = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }
@@ -481,7 +481,7 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
     // no order given, use declaration order
     let subclass = attr(&entity, "SubclassMarker");
     if !subclass.is_empty() {
-        commands.push(format!("try!(writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\")));", subclass=subclass));
+        commands.push(format!("writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\"))?;", subclass=subclass));
     }
     for field in &entity.children {
         if generate_writer(&field) {
@@ -531,7 +531,7 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
                 commands.push(format!("if {} {{", predicates.join(" && ")));
             }
             let indent = if predicates.len() > 0 { "    " } else { "" };
-            commands.push(format!("{indent}try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {val})));", indent=indent, typ=typ, code=code, val=attr(&write_command, "Value")));
+            commands.push(format!("{indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;", indent=indent, typ=typ, code=code, val=attr(&write_command, "Value")));
             if predicates.len() > 0 {
                 commands.push(String::from("}"));
             }
@@ -548,7 +548,7 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
         "WriteExtensionData" => {
             commands.push(String::from("if *version >= AcadVersion::R14 {"));
             commands.push(String::from("    for group in &self.extension_data_groups {"));
-            commands.push(String::from("        try!(group.write(writer));"));
+            commands.push(String::from("        group.write(writer)?;"));
             commands.push(String::from("    }"));
             commands.push(String::from("}"));
         },
@@ -595,12 +595,12 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         };
         let typ = get_code_pair_type(expected_type);
         commands.push(format!("{indent}for v in &ent.{field} {{", indent=indent, field=name(&field)));
-        commands.push(format!("{indent}    try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {val})));", indent=indent, typ=typ, code=codes(&field)[0], val=val));
+        commands.push(format!("{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;", indent=indent, typ=typ, code=codes(&field)[0], val=val));
         commands.push(format!("{indent}}}", indent=indent));
     }
     else {
         for command in get_code_pairs_for_field(&field) {
-            commands.push(format!("{indent}try!(writer.write_code_pair(&{command}));", indent=indent, command=command));
+            commands.push(format!("{indent}writer.write_code_pair(&{command})?;", indent=indent, command=command));
         }
     }
 

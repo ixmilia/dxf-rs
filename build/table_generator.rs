@@ -111,13 +111,13 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("                return Err(DxfError::ExpectedTableType);\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
-    fun.push_str("            match &*try!(pair.value.assert_string()) {\n");
+    fun.push_str("            match &*pair.value.assert_string()? {\n");
 
     for table in &element.children {
-        fun.push_str(&format!("                \"{table_name}\" => try!(read_{collection}(drawing, iter)),\n", table_name=attr(&table, "TypeString"), collection=attr(&table, "Collection")));
+        fun.push_str(&format!("                \"{table_name}\" => read_{collection}(drawing, iter)?,\n", table_name=attr(&table, "TypeString"), collection=attr(&table, "Collection")));
     }
 
-    fun.push_str("                _ => try!(Drawing::swallow_table(iter)),\n");
+    fun.push_str("                _ => Drawing::swallow_table(iter)?,\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
     fun.push_str("            match iter.next() {\n");
@@ -145,7 +145,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
         fun.push_str("                if pair.code == 0 {\n");
-        fun.push_str(&format!("                    if try!(pair.value.assert_string()) != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
+        fun.push_str(&format!("                    if pair.value.assert_string()? != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
         fun.push_str("                        iter.put_back(Ok(pair));\n");
         fun.push_str("                        break;\n");
         fun.push_str("                    }\n");
@@ -159,17 +159,17 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                            },\n");
         fun.push_str("                            Some(Ok(pair)) => {\n");
         fun.push_str("                                match pair.code {\n");
-        fun.push_str("                                    2 => item.name = try!(pair.value.assert_string()),\n");
-        fun.push_str("                                    5 => item.handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
+        fun.push_str("                                    2 => item.name = pair.value.assert_string()?,\n");
+        fun.push_str("                                    5 => item.handle = as_u32(pair.value.assert_string()?)?,\n");
         fun.push_str("                                    extension_data::EXTENSION_DATA_GROUP => {\n");
-        fun.push_str("                                        let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));\n");
+        fun.push_str("                                        let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;\n");
         fun.push_str("                                        item.extension_data_groups.push(group);\n");
         fun.push_str("                                    },\n");
         fun.push_str("                                    x_data::XDATA_APPLICATIONNAME => {\n");
-        fun.push_str("                                        let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));\n");
+        fun.push_str("                                        let x = XData::read_item(pair.value.assert_string()?, iter)?;\n");
         fun.push_str("                                        item.x_data.push(x);\n");
         fun.push_str("                                    },\n");
-        fun.push_str("                                    330 => item.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),\n");
+        fun.push_str("                                    330 => item.owner_handle = as_u32(pair.value.assert_string()?)?,\n");
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {
@@ -231,7 +231,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
     fun.push_str("    where T: Write {\n");
     fun.push_str("\n");
     for table in &element.children {
-        fun.push_str(&format!("    try!(write_{collection}(drawing, write_handles, writer));\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("    write_{collection}(drawing, write_handles, writer)?;\n", collection=attr(&table, "Collection")));
     }
 
     fun.push_str("    Ok(())\n");
@@ -247,33 +247,33 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str("        return Ok(()) // nothing to write\n");
         fun.push_str("    }\n");
         fun.push_str("\n");
-        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(0, \"TABLE\")));\n");
-        fun.push_str(&format!("    try!(writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")));
+        fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"TABLE\"))?;\n");
+        fun.push_str(&format!("    writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\"))?;\n", type_string=attr(&table, "TypeString")));
 
         // TODO: handles
         // fun.push_str("    if write_handles {\n");
-        // fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(5, \"0\")));\n");
+        // fun.push_str("        writer.write_code_pair(&CodePair::new_str(5, \"0\"))?;\n");
         // fun.push_str("    }\n");
         // fun.push_str("\n");
 
-        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\")));\n");
-        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_i16(70, 0)));\n");
+        fun.push_str("    writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\"))?;\n");
+        fun.push_str("    writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n");
         fun.push_str(&format!("    for item in &drawing.{collection} {{\n", collection=attr(&table, "Collection")));
-        fun.push_str(&format!("        try!(writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\")));\n", type_string=attr(&table, "TypeString")));
+        fun.push_str(&format!("        writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\"))?;\n", type_string=attr(&table, "TypeString")));
         fun.push_str("        if write_handles {\n");
-        fun.push_str("            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(item.handle))));\n");
+        fun.push_str("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(item.handle)))?;\n");
         fun.push_str("        }\n");
         fun.push_str("\n");
         fun.push_str("        if drawing.header.version >= AcadVersion::R14 {\n");
         fun.push_str("            for group in &item.extension_data_groups {\n");
-        fun.push_str("                try!(group.write(writer));\n");
+        fun.push_str("                group.write(writer)?;\n");
         fun.push_str("            }\n");
         fun.push_str("        }\n");
         fun.push_str("\n");
-        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\")));\n");
-        fun.push_str(&format!("        try!(writer.write_code_pair(&CodePair::new_str(100, \"{class_name}\")));\n", class_name=attr(&table_item, "ClassName")));
-        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_string(2, &item.name)));\n");
-        fun.push_str("        try!(writer.write_code_pair(&CodePair::new_i16(70, 0)));\n"); // TODO: flags
+        fun.push_str("        writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\"))?;\n");
+        fun.push_str(&format!("        writer.write_code_pair(&CodePair::new_str(100, \"{class_name}\"))?;\n", class_name=attr(&table_item, "ClassName")));
+        fun.push_str("        writer.write_code_pair(&CodePair::new_string(2, &item.name))?;\n");
+        fun.push_str("        writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n"); // TODO: flags
         for field in &table_item.children {
             if generate_writer(&field) {
                 let mut predicates = vec![];
@@ -300,7 +300,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                     let typ = get_code_pair_type(typ);
                     let deref = if typ == "string" { "" } else { "*" };
                     fun.push_str(&format!("{indent}        for x in &item.{field} {{\n", indent=indent, field=name(&field)));
-                    fun.push_str(&format!("{indent}            try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x)))\n",
+                    fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x))?;\n",
                         indent=indent, typ=typ, code=code, deref=deref));
                     fun.push_str(&format!("{indent}        }}\n", indent=indent));
                 }
@@ -313,7 +313,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                         let value = format!("item.{}", name(&field));
                         let write_converter = if attr(&field, "WriteConverter").is_empty() { String::from("{}") } else { attr(&field, "WriteConverter") };
                         let value = write_converter.replace("{}", &value);
-                        fun.push_str(&format!("{indent}        try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
+                        fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
                             indent=indent, typ=typ, code=code, value=value));
                     }
                     else {
@@ -324,7 +324,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 2 => "z",
                                 _ => panic!("impossible"),
                             };
-                            fun.push_str(&format!("{indent}        try!(writer.write_code_pair(&CodePair::new_f64({code}, item.{field}.{suffix})));\n",
+                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_f64({code}, item.{field}.{suffix}))?;\n",
                                 indent=indent, code=code, field=name(&field), suffix=suffix));
                         }
                     }
@@ -337,12 +337,12 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         }
 
         fun.push_str("        for x in &item.x_data {\n");
-        fun.push_str("            try!(x.write(&drawing.header.version, writer));\n");
+        fun.push_str("            x.write(&drawing.header.version, writer)?;\n");
         fun.push_str("        }\n");
 
         fun.push_str("    }\n");
         fun.push_str("\n");
-        fun.push_str("    try!(writer.write_code_pair(&CodePair::new_str(0, \"ENDTAB\")));\n");
+        fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"ENDTAB\"))?;\n");
         fun.push_str("    Ok(())\n");
         fun.push_str("}\n");
         fun.push_str("\n");

@@ -123,7 +123,7 @@ impl Drawing {
                 let mut drawing = Drawing::default();
                 drawing.clear();
                 let mut iter = put_back(reader);
-                try!(Drawing::read_sections(&mut drawing, &mut iter));
+                Drawing::read_sections(&mut drawing, &mut iter)?;
                 match iter.next() {
                     Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
                     Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
@@ -136,7 +136,7 @@ impl Drawing {
     /// Loads a `Drawing` from disk, using a `BufReader`.
     pub fn load_file(file_name: &str) -> DxfResult<Drawing> {
         let path = Path::new(file_name);
-        let file = try!(File::open(&path));
+        let file = File::open(&path)?;
         let mut buf_reader = BufReader::new(file);
         Drawing::load(&mut buf_reader)
     }
@@ -157,16 +157,16 @@ impl Drawing {
     fn save_internal<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_prelude());
-        try!(self.header.write(writer));
+        writer.write_prelude()?;
+        self.header.write(writer)?;
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
-        try!(self.write_classes(writer));
-        try!(self.write_tables(write_handles, writer));
-        try!(self.write_blocks(write_handles, writer));
-        try!(self.write_entities(write_handles, writer));
-        try!(self.write_objects(writer));
-        try!(self.write_thumbnail(writer));
-        try!(writer.write_code_pair(&CodePair::new_str(0, "EOF")));
+        self.write_classes(writer)?;
+        self.write_tables(write_handles, writer)?;
+        self.write_blocks(write_handles, writer)?;
+        self.write_entities(write_handles, writer)?;
+        self.write_objects(writer)?;
+        self.write_thumbnail(writer)?;
+        writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
@@ -179,7 +179,7 @@ impl Drawing {
     }
     fn save_file_internal(&self, file_name: &str, as_ascii: bool) -> DxfResult<()> {
         let path = Path::new(file_name);
-        let file = try!(File::create(&path));
+        let file = File::create(&path)?;
         let buf_writer = BufWriter::new(file);
         let mut writer = match as_ascii {
             true => CodePairWriter::new_ascii_writer(buf_writer),
@@ -197,7 +197,7 @@ impl Drawing {
     /// Writes a `Drawing` as DXB to disk, using a `BufWriter`.
     pub fn save_file_dxb(&self, file_name: &str) -> DxfResult<()> {
         let path = Path::new(file_name);
-        let file = try!(File::create(&path));
+        let file = File::create(&path)?;
         let mut buf_writer = BufWriter::new(file);
         self.save_dxb(&mut buf_writer)
     }
@@ -261,22 +261,22 @@ impl Drawing {
             return Ok(());
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "CLASSES")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "CLASSES"))?;
         for c in &self.classes {
-            try!(c.write(&self.header.version, writer));
+            c.write(&self.header.version, writer)?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
     fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "TABLES")));
-        try!(write_tables(&self, write_handles, writer));
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
+        write_tables(&self, write_handles, writer)?;
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
     fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
@@ -286,37 +286,37 @@ impl Drawing {
             return Ok(());
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "BLOCKS")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "BLOCKS"))?;
         for b in &self.blocks {
-            try!(b.write(&self.header.version, write_handles, writer));
+            b.write(&self.header.version, write_handles, writer)?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
     fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "ENTITIES")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
         for e in &self.entities {
-            try!(e.write(&self.header.version, write_handles, writer));
+            e.write(&self.header.version, write_handles, writer)?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
     fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "OBJECTS")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
         for o in &self.objects {
-            try!(o.write(&self.header.version, writer));
+            o.write(&self.header.version, writer)?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
     fn write_thumbnail<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
@@ -325,18 +325,18 @@ impl Drawing {
         if &self.header.version >= &AcadVersion::R2000 {
             match self.thumbnail {
                 Some(ref data) => {
-                    try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-                    try!(writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE")));
+                    writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+                    writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
                     let length = data.len() - 14;
-                    try!(writer.write_code_pair(&CodePair::new_i32(90, length as i32)));
+                    writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
                     for s in data[14..].chunks(128) {
                         let mut line = String::new();
                         for b in s {
                             line.push_str(&format!("{:X}", b));
                         }
-                        try!(writer.write_code_pair(&CodePair::new_string(310, &line)));
+                        writer.write_code_pair(&CodePair::new_string(310, &line))?;
                     }
-                    try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+                    writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
                 },
                 None => (), // nothing to write
             }
@@ -349,7 +349,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match &*try!(pair.value.assert_string()) {
+                    match &*pair.value.assert_string()? {
                         "EOF" => {
                             iter.put_back(Ok(pair));
                             break;
@@ -358,14 +358,14 @@ impl Drawing {
                             match iter.next() {
                                Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
                                     match &*s {
-                                        "HEADER" => drawing.header = try!(Header::read(iter)),
-                                        "CLASSES" => try!(Class::read_classes(drawing, iter)),
-                                        "TABLES" => try!(drawing.read_section_item(iter, "TABLE", read_specific_table)),
-                                        "BLOCKS" => try!(drawing.read_section_item(iter, "BLOCK", Block::read_block)),
-                                        "ENTITIES" => try!(drawing.read_entities(iter)),
-                                        "OBJECTS" => try!(drawing.read_objects(iter)),
-                                        "THUMBNAILIMAGE" => { let _ = try!(drawing.read_thumbnail(iter)); },
-                                        _ => try!(Drawing::swallow_section(iter)),
+                                        "HEADER" => drawing.header = Header::read(iter)?,
+                                        "CLASSES" => Class::read_classes(drawing, iter)?,
+                                        "TABLES" => drawing.read_section_item(iter, "TABLE", read_specific_table)?,
+                                        "BLOCKS" => drawing.read_section_item(iter, "BLOCK", Block::read_block)?,
+                                        "ENTITIES" => drawing.read_entities(iter)?,
+                                        "OBJECTS" => drawing.read_objects(iter)?,
+                                        "THUMBNAILIMAGE" => { let _ = drawing.read_thumbnail(iter)?; },
+                                        _ => Drawing::swallow_section(iter)?,
                                     }
 
                                     match iter.next() {
@@ -397,7 +397,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
-                    if pair.code == 0 && try!(pair.value.assert_string()) == "ENDSEC" {
+                    if pair.code == 0 && pair.value.assert_string()? == "ENDSEC" {
                         iter.put_back(Ok(pair));
                         break;
                     }
@@ -413,7 +413,7 @@ impl Drawing {
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         let mut iter = EntityIter { iter: iter };
-        try!(iter.read_entities_into_vec(&mut self.entities));
+        iter.read_entities_into_vec(&mut self.entities)?;
         Ok(())
     }
     fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
@@ -435,7 +435,7 @@ impl Drawing {
         // get the length; we don't really care about this since we'll just read whatever's there
         let length_pair = next_pair!(iter);
         let _length = match length_pair.code {
-            90 => try!(length_pair.value.assert_i32()) as usize,
+            90 => length_pair.value.assert_i32()? as usize,
             _ => return Err(DxfError::UnexpectedCode(length_pair.code)),
         };
 
@@ -457,7 +457,7 @@ impl Drawing {
                     iter.put_back(Ok(pair));
                     break;
                 },
-                Some(Ok(pair @ CodePair { code: 310, .. })) => { try!(parse_hex_string(&try!(pair.value.assert_string()), &mut data)); },
+                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.value.assert_string()?, &mut data)?; },
                 Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code)); },
                 Some(Err(e)) => return Err(e),
                 None => break,
@@ -484,14 +484,14 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*try!(pair.value.assert_string()) {
+                        match &*pair.value.assert_string()? {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
                             },
                             val => {
                                 if val == item_type {
-                                    try!(callback(self, iter));
+                                    callback(self, iter)?;
                                 }
                                 else {
                                     return Err(DxfError::UnexpectedCodePair(pair, String::new()));
@@ -518,7 +518,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*try!(pair.value.assert_string()) {
+                        match &*pair.value.assert_string()? {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;

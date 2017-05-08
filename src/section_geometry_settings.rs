@@ -83,23 +83,23 @@ impl SectionGeometrySettings {
             };
 
             match pair.code {
-                1 => { gs.plot_style_name = try!(pair.value.assert_string()); },
-                2 => { gs.hatch_pattern_name = try!(pair.value.assert_string()); },
+                1 => { gs.plot_style_name = pair.value.assert_string()?; },
+                2 => { gs.hatch_pattern_name = pair.value.assert_string()?; },
                 3 => { break; }, // done reading; value should be "SectionGeometrySettingsEnd" but it doesn't really matter
-                6 => { gs.line_type_name = try!(pair.value.assert_string()); },
-                8 => { gs.layer_name = try!(pair.value.assert_string()); },
-                40 => { gs.line_type_scale = try!(pair.value.assert_f64()); },
-                41 => { gs.hatch_angle = try!(pair.value.assert_f64()); },
-                42 => { gs.hatch_scale = try!(pair.value.assert_f64()); },
-                43 => { gs.hatch_spacing = try!(pair.value.assert_f64()); },
-                63 => { gs.color = Color::from_raw_value(try!(pair.value.assert_i16())); },
-                70 => { gs.face_transparency = try!(pair.value.assert_i16()); },
-                71 => { gs.edge_transparency = try!(pair.value.assert_i16()); },
-                72 => { gs.hatch_pattern_type = try!(pair.value.assert_i16()); },
-                90 => { gs.section_type = try!(pair.value.assert_i32()); },
-                91 => { gs.geometry_count = try!(pair.value.assert_i32()); },
-                92 => { gs.bit_flags = try!(pair.value.assert_i32()); },
-                370 => { gs.line_weight = try!(pair.value.assert_i16()); },
+                6 => { gs.line_type_name = pair.value.assert_string()?; },
+                8 => { gs.layer_name = pair.value.assert_string()?; },
+                40 => { gs.line_type_scale = pair.value.assert_f64()?; },
+                41 => { gs.hatch_angle = pair.value.assert_f64()?; },
+                42 => { gs.hatch_scale = pair.value.assert_f64()?; },
+                43 => { gs.hatch_spacing = pair.value.assert_f64()?; },
+                63 => { gs.color = Color::from_raw_value(pair.value.assert_i16()?); },
+                70 => { gs.face_transparency = pair.value.assert_i16()?; },
+                71 => { gs.edge_transparency = pair.value.assert_i16()?; },
+                72 => { gs.hatch_pattern_type = pair.value.assert_i16()?; },
+                90 => { gs.section_type = pair.value.assert_i32()?; },
+                91 => { gs.geometry_count = pair.value.assert_i32()?; },
+                92 => { gs.bit_flags = pair.value.assert_i32()?; },
+                370 => { gs.line_weight = pair.value.assert_i16()?; },
                 _ => {
                     // unexpected end; put the pair back and return what we have
                     iter.put_back(Ok(pair));
@@ -114,23 +114,23 @@ impl SectionGeometrySettings {
     pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_i32(90, self.section_type)));
-        try!(writer.write_code_pair(&CodePair::new_i32(91, self.geometry_count)));
-        try!(writer.write_code_pair(&CodePair::new_i32(92, self.bit_flags)));
-        try!(writer.write_code_pair(&CodePair::new_i16(63, self.color.get_raw_value())));
-        try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer_name)));
-        try!(writer.write_code_pair(&CodePair::new_string(6, &self.line_type_name)));
-        try!(writer.write_code_pair(&CodePair::new_f64(40, self.line_type_scale)));
-        try!(writer.write_code_pair(&CodePair::new_string(1, &self.plot_style_name)));
-        try!(writer.write_code_pair(&CodePair::new_i16(370, self.line_weight)));
-        try!(writer.write_code_pair(&CodePair::new_i16(70, self.face_transparency)));
-        try!(writer.write_code_pair(&CodePair::new_i16(71, self.edge_transparency)));
-        try!(writer.write_code_pair(&CodePair::new_i16(72, self.hatch_pattern_type)));
-        try!(writer.write_code_pair(&CodePair::new_string(2, &self.hatch_pattern_name)));
-        try!(writer.write_code_pair(&CodePair::new_f64(41, self.hatch_angle)));
-        try!(writer.write_code_pair(&CodePair::new_f64(42, self.hatch_scale)));
-        try!(writer.write_code_pair(&CodePair::new_f64(43, self.hatch_spacing)));
-        try!(writer.write_code_pair(&CodePair::new_str(3, "SectionGeometrySettingsEnd")));
+        writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
+        writer.write_code_pair(&CodePair::new_i32(91, self.geometry_count))?;
+        writer.write_code_pair(&CodePair::new_i32(92, self.bit_flags))?;
+        writer.write_code_pair(&CodePair::new_i16(63, self.color.get_raw_value()))?;
+        writer.write_code_pair(&CodePair::new_string(8, &self.layer_name))?;
+        writer.write_code_pair(&CodePair::new_string(6, &self.line_type_name))?;
+        writer.write_code_pair(&CodePair::new_f64(40, self.line_type_scale))?;
+        writer.write_code_pair(&CodePair::new_string(1, &self.plot_style_name))?;
+        writer.write_code_pair(&CodePair::new_i16(370, self.line_weight))?;
+        writer.write_code_pair(&CodePair::new_i16(70, self.face_transparency))?;
+        writer.write_code_pair(&CodePair::new_i16(71, self.edge_transparency))?;
+        writer.write_code_pair(&CodePair::new_i16(72, self.hatch_pattern_type))?;
+        writer.write_code_pair(&CodePair::new_string(2, &self.hatch_pattern_name))?;
+        writer.write_code_pair(&CodePair::new_f64(41, self.hatch_angle))?;
+        writer.write_code_pair(&CodePair::new_f64(42, self.hatch_scale))?;
+        writer.write_code_pair(&CodePair::new_f64(43, self.hatch_spacing))?;
+        writer.write_code_pair(&CodePair::new_str(3, "SectionGeometrySettingsEnd"))?;
         Ok(())
     }
 }

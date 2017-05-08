@@ -164,11 +164,11 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                 // only one variable with that name
                 fun.push_str(" ");
                 if code(&v) < 0 {
-                    fun.push_str(&format!("try!(self.{field}.set(&pair));", field=field(&v)));
+                    fun.push_str(&format!("self.{field}.set(&pair)?;", field=field(&v)));
                 }
                 else {
                     let read_cmd = get_read_command(&v);
-                    fun.push_str(&format!("try!(verify_code({code}, pair.code)); self.{field} = {cmd};", code=code(&v), field=field(&v), cmd=read_cmd));
+                    fun.push_str(&format!("verify_code({code}, pair.code)?; self.{field} = {cmd};", code=code(&v), field=field(&v), cmd=read_cmd));
                 }
 
                 fun.push_str(" ");
@@ -201,7 +201,7 @@ fn get_read_command(element: &Element) -> String {
     let expected_type = get_expected_type(code(element)).unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
-    converter.replace("{}", &format!("try!(pair.value.{}())", reader_fun))
+    converter.replace("{}", &format!("pair.value.{}()?", reader_fun))
 }
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
@@ -231,12 +231,12 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
         if parts.len() > 0 {
             fun.push_str(&format!("        if {} {{\n", parts.join(" && ")));
         }
-        fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_str(9, \"${name}\")));\n", name=name(&v), indent=indent));
+        fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_str(9, \"${name}\"))?;\n", name=name(&v), indent=indent));
         let write_converter = if write_converter(&v).is_empty() { String::from("{}") } else { write_converter(&v).clone() };
         if code(&v) > 0 {
             let expected_type = get_code_pair_type(get_expected_type(code(&v)).unwrap());
             let value = write_converter.replace("{}", &format!("self.{}", field(&v)));
-            fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_{typ}({code}, {value})));\n",
+            fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
                 code=code(&v),
                 value=value,
                 typ=expected_type,
@@ -252,7 +252,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
                     _ => panic!("unexpected number of values"),
                 };
                 let value = write_converter.replace("{}", &format!("self.{}.{}", field(&v), fld));
-                fun.push_str(&format!("        {indent}try!(writer.write_code_pair(&CodePair::new_f64({code}, {value})));\n",
+                fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_f64({code}, {value}))?;\n",
                     code=code,
                     value=value,
                     indent=indent));

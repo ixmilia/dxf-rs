@@ -199,63 +199,63 @@ impl EntityType {
         match self {
             &mut EntityType::RotatedDimension(ref mut dim) => {
                 match pair.code {
-                    12 => { dim.insertion_point.x = try!(pair.value.assert_f64()); },
-                    22 => { dim.insertion_point.y = try!(pair.value.assert_f64()); },
-                    32 => { dim.insertion_point.z = try!(pair.value.assert_f64()); },
-                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
-                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
-                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
-                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
-                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
-                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
-                    50 => { dim.rotation_angle = try!(pair.value.assert_f64()); },
-                    52 => { dim.extension_line_angle = try!(pair.value.assert_f64()); },
+                    12 => { dim.insertion_point.x = pair.value.assert_f64()?; },
+                    22 => { dim.insertion_point.y = pair.value.assert_f64()?; },
+                    32 => { dim.insertion_point.z = pair.value.assert_f64()?; },
+                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
+                    50 => { dim.rotation_angle = pair.value.assert_f64()?; },
+                    52 => { dim.extension_line_angle = pair.value.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::RadialDimension(ref mut dim) => {
                 match pair.code {
-                    15 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
-                    25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
-                    35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
-                    40 => { dim.leader_length = try!(pair.value.assert_f64()); },
+                    15 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
+                    25 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
+                    35 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
+                    40 => { dim.leader_length = pair.value.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::DiameterDimension(ref mut dim) => {
                 match pair.code {
-                    15 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
-                    25 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
-                    35 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
-                    40 => { dim.leader_length = try!(pair.value.assert_f64()); },
+                    15 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
+                    25 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
+                    35 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
+                    40 => { dim.leader_length = pair.value.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::AngularThreePointDimension(ref mut dim) => {
                 match pair.code {
-                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
-                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
-                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
-                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
-                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
-                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
-                    15 => { dim.definition_point_4.x = try!(pair.value.assert_f64()); },
-                    25 => { dim.definition_point_4.y = try!(pair.value.assert_f64()); },
-                    35 => { dim.definition_point_4.z = try!(pair.value.assert_f64()); },
-                    16 => { dim.definition_point_5.x = try!(pair.value.assert_f64()); },
-                    26 => { dim.definition_point_5.y = try!(pair.value.assert_f64()); },
-                    36 => { dim.definition_point_5.z = try!(pair.value.assert_f64()); },
+                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
+                    15 => { dim.definition_point_4.x = pair.value.assert_f64()?; },
+                    25 => { dim.definition_point_4.y = pair.value.assert_f64()?; },
+                    35 => { dim.definition_point_4.z = pair.value.assert_f64()?; },
+                    16 => { dim.definition_point_5.x = pair.value.assert_f64()?; },
+                    26 => { dim.definition_point_5.y = pair.value.assert_f64()?; },
+                    36 => { dim.definition_point_5.z = pair.value.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::OrdinateDimension(ref mut dim) => {
                 match pair.code {
-                    13 => { dim.definition_point_2.x = try!(pair.value.assert_f64()); },
-                    23 => { dim.definition_point_2.y = try!(pair.value.assert_f64()); },
-                    33 => { dim.definition_point_2.z = try!(pair.value.assert_f64()); },
-                    14 => { dim.definition_point_3.x = try!(pair.value.assert_f64()); },
-                    24 => { dim.definition_point_3.y = try!(pair.value.assert_f64()); },
-                    34 => { dim.definition_point_3.z = try!(pair.value.assert_f64()); },
+                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
@@ -299,7 +299,7 @@ impl Entity {
             match iter.next() {
                 // first code pair must be 0/entity-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    let type_string = try!(pair.value.assert_string());
+                    let type_string = pair.value.assert_string()?;
                     if type_string == "ENDSEC" || type_string == "ENDBLK" {
                         iter.put_back(Ok(pair));
                         return Ok(None);
@@ -321,34 +321,34 @@ impl Entity {
                                     Some(Ok(pair)) => {
                                         match dimension_entity {
                                             Some(ref mut dim) => {
-                                                if !try!(dim.apply_dimension_code_pair(&pair)) {
-                                                    try!(common.apply_individual_pair(&pair, iter));
+                                                if !dim.apply_dimension_code_pair(&pair)? {
+                                                    common.apply_individual_pair(&pair, iter)?;
                                                 }
                                             },
                                             None => {
                                                 match pair.code {
-                                                    1 => { dimension_base.text = try!(pair.value.assert_string()); },
-                                                    2 => { dimension_base.block_name = try!(pair.value.assert_string()); },
-                                                    3 => { dimension_base.dimension_style_name = try!(pair.value.assert_string()); },
-                                                    10 => { dimension_base.definition_point_1.x = try!(pair.value.assert_f64()); },
-                                                    20 => { dimension_base.definition_point_1.y = try!(pair.value.assert_f64()); },
-                                                    30 => { dimension_base.definition_point_1.z = try!(pair.value.assert_f64()); },
-                                                    11 => { dimension_base.text_mid_point.x = try!(pair.value.assert_f64()); },
-                                                    21 => { dimension_base.text_mid_point.y = try!(pair.value.assert_f64()); },
-                                                    31 => { dimension_base.text_mid_point.z = try!(pair.value.assert_f64()); },
-                                                    41 => { dimension_base.text_line_spacing_factor = try!(pair.value.assert_f64()); },
-                                                    42 => { dimension_base.actual_measurement = try!(pair.value.assert_f64()); },
-                                                    51 => { dimension_base.horizontal_direction_angle = try!(pair.value.assert_f64()); },
-                                                    53 => { dimension_base.text_rotation_angle = try!(pair.value.assert_f64()); },
-                                                    70 => { try!(dimension_base.set_dimension_type(try!(pair.value.assert_i16()))); },
-                                                    71 => { dimension_base.attachment_point = try_result!(AttachmentPoint::from_i16(try!(pair.value.assert_i16()))); },
-                                                    72 => { dimension_base.text_line_spacing_style = try_result!(TextLineSpacingStyle::from_i16(try!(pair.value.assert_i16()))); },
-                                                    210 => { dimension_base.normal.x = try!(pair.value.assert_f64()); },
-                                                    220 => { dimension_base.normal.y = try!(pair.value.assert_f64()); },
-                                                    230 => { dimension_base.normal.z = try!(pair.value.assert_f64()); },
-                                                    280 => { dimension_base.version = try_result!(Version::from_i16(try!(pair.value.assert_i16()))); },
+                                                    1 => { dimension_base.text = pair.value.assert_string()?; },
+                                                    2 => { dimension_base.block_name = pair.value.assert_string()?; },
+                                                    3 => { dimension_base.dimension_style_name = pair.value.assert_string()?; },
+                                                    10 => { dimension_base.definition_point_1.x = pair.value.assert_f64()?; },
+                                                    20 => { dimension_base.definition_point_1.y = pair.value.assert_f64()?; },
+                                                    30 => { dimension_base.definition_point_1.z = pair.value.assert_f64()?; },
+                                                    11 => { dimension_base.text_mid_point.x = pair.value.assert_f64()?; },
+                                                    21 => { dimension_base.text_mid_point.y = pair.value.assert_f64()?; },
+                                                    31 => { dimension_base.text_mid_point.z = pair.value.assert_f64()?; },
+                                                    41 => { dimension_base.text_line_spacing_factor = pair.value.assert_f64()?; },
+                                                    42 => { dimension_base.actual_measurement = pair.value.assert_f64()?; },
+                                                    51 => { dimension_base.horizontal_direction_angle = pair.value.assert_f64()?; },
+                                                    53 => { dimension_base.text_rotation_angle = pair.value.assert_f64()?; },
+                                                    70 => { dimension_base.set_dimension_type(pair.value.assert_i16()?)?; },
+                                                    71 => { dimension_base.attachment_point = try_result!(AttachmentPoint::from_i16(pair.value.assert_i16()?)); },
+                                                    72 => { dimension_base.text_line_spacing_style = try_result!(TextLineSpacingStyle::from_i16(pair.value.assert_i16()?)); },
+                                                    210 => { dimension_base.normal.x = pair.value.assert_f64()?; },
+                                                    220 => { dimension_base.normal.y = pair.value.assert_f64()?; },
+                                                    230 => { dimension_base.normal.z = pair.value.assert_f64()?; },
+                                                    280 => { dimension_base.version = try_result!(Version::from_i16(pair.value.assert_i16()?)); },
                                                     100 => {
-                                                        match &*try!(pair.value.assert_string()) {
+                                                        match &*pair.value.assert_string()? {
                                                             "AcDbAlignedDimension" => { dimension_entity = Some(EntityType::RotatedDimension(RotatedDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
                                                             "AcDbRadialDimension" => { dimension_entity = Some(EntityType::RadialDimension(RadialDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
                                                             "AcDbDiametricDimension" => { dimension_entity = Some(EntityType::DiameterDimension(DiameterDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
@@ -357,7 +357,7 @@ impl Entity {
                                                             _ => {}, // unexpected dimension type
                                                         }
                                                     },
-                                                    _ => { try!(common.apply_individual_pair(&pair, iter)); },
+                                                    _ => { common.apply_individual_pair(&pair, iter)?; },
                                                 }
                                             },
                                         }
@@ -376,7 +376,7 @@ impl Entity {
                             match EntityType::from_type_string(&type_string) {
                                 Some(e) => {
                                     let mut entity = Entity::new(e);
-                                    if !try!(entity.apply_custom_reader(iter)) {
+                                    if !entity.apply_custom_reader(iter)? {
                                         // no custom reader, use the auto-generated one
                                         loop {
                                             match iter.next() {
@@ -385,13 +385,13 @@ impl Entity {
                                                     iter.put_back(Ok(pair));
                                                     break;
                                                 },
-                                                Some(Ok(pair)) => try!(entity.apply_code_pair(&pair, iter)),
+                                                Some(Ok(pair)) => entity.apply_code_pair(&pair, iter)?,
                                                 Some(Err(e)) => return Err(e),
                                                 None => return Err(DxfError::UnexpectedEndOfInput),
                                             }
                                         }
 
-                                        try!(entity.post_parse());
+                                        entity.post_parse()?;
                                     }
 
                                     return Ok(Some(entity));
@@ -424,8 +424,8 @@ impl Entity {
     fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        if !try!(self.specific.try_apply_code_pair(&pair)) {
-            try!(self.common.apply_individual_pair(&pair, iter));
+        if !self.specific.try_apply_code_pair(&pair)? {
+            self.common.apply_individual_pair(&pair, iter)?;
         }
         Ok(())
     }
@@ -479,92 +479,92 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = try!(pair.value.assert_string()); },
-                        1 => { att.value = try!(pair.value.assert_string()); },
+                        100 => { last_subclass_marker = pair.value.assert_string()?; },
+                        1 => { att.value = pair.value.assert_string()?; },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = try!(pair.value.assert_string());
+                                att.x_record_tag = pair.value.assert_string()?;
                             }
                             else {
-                                att.attribute_tag = try!(pair.value.assert_string());
+                                att.attribute_tag = pair.value.assert_string()?;
                             }
                         },
-                        7 => { att.text_style_name = try!(pair.value.assert_string()); },
+                        7 => { att.text_style_name = pair.value.assert_string()?; },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = try!(pair.value.assert_f64());
+                                att.alignment_point.x = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.x = try!(pair.value.assert_f64());
+                                att.location.x = pair.value.assert_f64()?;
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = try!(pair.value.assert_f64());
+                                att.alignment_point.y = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.y = try!(pair.value.assert_f64());
+                                att.location.y = pair.value.assert_f64()?;
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = try!(pair.value.assert_f64());
+                                att.alignment_point.z = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.z = try!(pair.value.assert_f64());
+                                att.location.z = pair.value.assert_f64()?;
                             }
                         },
-                        11 => { att.second_alignment_point.x = try!(pair.value.assert_f64()); },
-                        21 => { att.second_alignment_point.y = try!(pair.value.assert_f64()); },
-                        31 => { att.second_alignment_point.z = try!(pair.value.assert_f64()); },
-                        39 => { att.thickness = try!(pair.value.assert_f64()); },
+                        11 => { att.second_alignment_point.x = pair.value.assert_f64()?; },
+                        21 => { att.second_alignment_point.y = pair.value.assert_f64()?; },
+                        31 => { att.second_alignment_point.z = pair.value.assert_f64()?; },
+                        39 => { att.thickness = pair.value.assert_f64()?; },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = try!(pair.value.assert_f64());
+                                att.annotation_scale = pair.value.assert_f64()?;
                             }
                             else {
-                                att.text_height = try!(pair.value.assert_f64());
+                                att.text_height = pair.value.assert_f64()?;
                             }
                         },
-                        41 => { att.relative_x_scale_factor = try!(pair.value.assert_f64()); },
-                        50 => { att.rotation = try!(pair.value.assert_f64()); },
-                        51 => { att.oblique_angle = try!(pair.value.assert_f64()); },
+                        41 => { att.relative_x_scale_factor = pair.value.assert_f64()?; },
+                        50 => { att.rotation = pair.value.assert_f64()?; },
+                        51 => { att.oblique_angle = pair.value.assert_f64()?; },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(try!(pair.value.assert_i16()))),
-                                    1 => att.is_really_locked = as_bool(try!(pair.value.assert_i16())),
-                                    2 => att._secondary_attribute_count = try!(pair.value.assert_i16()) as i32,
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
+                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
+                                    2 => att._secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = try!(pair.value.assert_i16()) as i32;
+                                att.flags = pair.value.assert_i16()? as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = try!(pair.value.assert_i16()) as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(try!(pair.value.assert_i16()))); },
-                        73 => { att.field_length = try!(pair.value.assert_i16()); },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(try!(pair.value.assert_i16()))); },
-                        210 => { att.normal.x = try!(pair.value.assert_f64()); },
-                        220 => { att.normal.y = try!(pair.value.assert_f64()); },
-                        230 => { att.normal.z = try!(pair.value.assert_f64()); },
+                        71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        73 => { att.field_length = pair.value.assert_i16()?; },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        210 => { att.normal.x = pair.value.assert_f64()?; },
+                        220 => { att.normal.y = pair.value.assert_f64()?; },
+                        230 => { att.normal.z = pair.value.assert_f64()?; },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(try!(pair.value.assert_i16()));
+                                att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(try!(pair.value.assert_i16())));
+                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()?));
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(try!(pair.value.assert_i16()));
+                                att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
                             }
                         },
-                        340 => { att.secondary_attributes.push(try!(as_u32(try!(pair.value.assert_string())))); },
-                        -1 => { att.m_text = try!(as_u32(try!(pair.value.assert_string()))); },
-                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
+                        340 => { att.secondary_attributes.push(as_u32(pair.value.assert_string()?)?); },
+                        -1 => { att.m_text = as_u32(pair.value.assert_string()?)?; },
+                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
             },
@@ -576,93 +576,93 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = try!(pair.value.assert_string()); },
-                        1 => { att.value = try!(pair.value.assert_string()); },
+                        100 => { last_subclass_marker = pair.value.assert_string()?; },
+                        1 => { att.value = pair.value.assert_string()?; },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = try!(pair.value.assert_string());
+                                att.x_record_tag = pair.value.assert_string()?;
                             }
                             else {
-                                att.text_tag = try!(pair.value.assert_string());
+                                att.text_tag = pair.value.assert_string()?;
                             }
                         },
-                        3 => { att.prompt = try!(pair.value.assert_string()); },
-                        7 => { att.text_style_name = try!(pair.value.assert_string()); },
+                        3 => { att.prompt = pair.value.assert_string()?; },
+                        7 => { att.text_style_name = pair.value.assert_string()?; },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = try!(pair.value.assert_f64());
+                                att.alignment_point.x = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.x = try!(pair.value.assert_f64());
+                                att.location.x = pair.value.assert_f64()?;
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = try!(pair.value.assert_f64());
+                                att.alignment_point.y = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.y = try!(pair.value.assert_f64());
+                                att.location.y = pair.value.assert_f64()?;
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = try!(pair.value.assert_f64());
+                                att.alignment_point.z = pair.value.assert_f64()?;
                             }
                             else {
-                                att.location.z = try!(pair.value.assert_f64());
+                                att.location.z = pair.value.assert_f64()?;
                             }
                         },
-                        11 => { att.second_alignment_point.x = try!(pair.value.assert_f64()); },
-                        21 => { att.second_alignment_point.y = try!(pair.value.assert_f64()); },
-                        31 => { att.second_alignment_point.z = try!(pair.value.assert_f64()); },
-                        39 => { att.thickness = try!(pair.value.assert_f64()); },
+                        11 => { att.second_alignment_point.x = pair.value.assert_f64()?; },
+                        21 => { att.second_alignment_point.y = pair.value.assert_f64()?; },
+                        31 => { att.second_alignment_point.z = pair.value.assert_f64()?; },
+                        39 => { att.thickness = pair.value.assert_f64()?; },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = try!(pair.value.assert_f64());
+                                att.annotation_scale = pair.value.assert_f64()?;
                             }
                             else {
-                                att.text_height = try!(pair.value.assert_f64());
+                                att.text_height = pair.value.assert_f64()?;
                             }
                         },
-                        41 => { att.relative_x_scale_factor = try!(pair.value.assert_f64()); },
-                        50 => { att.rotation = try!(pair.value.assert_f64()); },
-                        51 => { att.oblique_angle = try!(pair.value.assert_f64()); },
+                        41 => { att.relative_x_scale_factor = pair.value.assert_f64()?; },
+                        50 => { att.rotation = pair.value.assert_f64()?; },
+                        51 => { att.oblique_angle = pair.value.assert_f64()?; },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(try!(pair.value.assert_i16()))),
-                                    1 => att.is_really_locked = as_bool(try!(pair.value.assert_i16())),
-                                    2 => att._secondary_attribute_count = try!(pair.value.assert_i16()) as i32,
+                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
+                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
+                                    2 => att._secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = try!(pair.value.assert_i16()) as i32;
+                                att.flags = pair.value.assert_i16()? as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = try!(pair.value.assert_i16()) as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(try!(pair.value.assert_i16()))); },
-                        73 => { att.field_length = try!(pair.value.assert_i16()); },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(try!(pair.value.assert_i16()))); },
-                        210 => { att.normal.x = try!(pair.value.assert_f64()); },
-                        220 => { att.normal.y = try!(pair.value.assert_f64()); },
-                        230 => { att.normal.z = try!(pair.value.assert_f64()); },
+                        71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
+                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        73 => { att.field_length = pair.value.assert_i16()?; },
+                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        210 => { att.normal.x = pair.value.assert_f64()?; },
+                        220 => { att.normal.y = pair.value.assert_f64()?; },
+                        230 => { att.normal.z = pair.value.assert_f64()?; },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(try!(pair.value.assert_i16()));
+                                att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(try!(pair.value.assert_i16())));
+                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()?));
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(try!(pair.value.assert_i16()));
+                                att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
                             }
                         },
-                        340 => { att.secondary_attributes.push(try!(as_u32(try!(pair.value.assert_string())))); },
-                        -1 => { att.m_text = try!(as_u32(try!(pair.value.assert_string()))); },
-                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
+                        340 => { att.secondary_attributes.push(as_u32(pair.value.assert_string()?)?); },
+                        -1 => { att.m_text = as_u32(pair.value.assert_string()?)?; },
+                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
             },
@@ -674,21 +674,21 @@ impl Entity {
                         10 => {
                             // start a new vertex
                             poly.vertices.push(LwPolylineVertex::default());
-                            vec_last!(poly.vertices).x = try!(pair.value.assert_f64());
+                            vec_last!(poly.vertices).x = pair.value.assert_f64()?;
                         },
-                        20 => { vec_last!(poly.vertices).y = try!(pair.value.assert_f64()); },
-                        40 => { vec_last!(poly.vertices).starting_width = try!(pair.value.assert_f64()); },
-                        41 => { vec_last!(poly.vertices).ending_width = try!(pair.value.assert_f64()); },
-                        42 => { vec_last!(poly.vertices).bulge = try!(pair.value.assert_f64()); },
-                        91 => { vec_last!(poly.vertices).id = try!(pair.value.assert_i32()); },
+                        20 => { vec_last!(poly.vertices).y = pair.value.assert_f64()?; },
+                        40 => { vec_last!(poly.vertices).starting_width = pair.value.assert_f64()?; },
+                        41 => { vec_last!(poly.vertices).ending_width = pair.value.assert_f64()?; },
+                        42 => { vec_last!(poly.vertices).bulge = pair.value.assert_f64()?; },
+                        91 => { vec_last!(poly.vertices).id = pair.value.assert_i32()?; },
                         // other pairs
-                        39 => { poly.thickness = try!(pair.value.assert_f64()); },
-                        43 => { poly.constant_width = try!(pair.value.assert_f64()); },
-                        70 => { poly.flags = try!(pair.value.assert_i16()) as i32; },
-                        210 => { poly.extrusion_direction.x = try!(pair.value.assert_f64()); },
-                        220 => { poly.extrusion_direction.y = try!(pair.value.assert_f64()); },
-                        230 => { poly.extrusion_direction.z = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
+                        39 => { poly.thickness = pair.value.assert_f64()?; },
+                        43 => { poly.constant_width = pair.value.assert_f64()?; },
+                        70 => { poly.flags = pair.value.assert_i16()? as i32; },
+                        210 => { poly.extrusion_direction.x = pair.value.assert_f64()?; },
+                        220 => { poly.extrusion_direction.y = pair.value.assert_f64()?; },
+                        230 => { poly.extrusion_direction.z = pair.value.assert_f64()?; },
+                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
             },
@@ -698,56 +698,56 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        10 => { mtext.insertion_point.x = try!(pair.value.assert_f64()); },
-                        20 => { mtext.insertion_point.y = try!(pair.value.assert_f64()); },
-                        30 => { mtext.insertion_point.z = try!(pair.value.assert_f64()); },
-                        40 => { mtext.initial_text_height = try!(pair.value.assert_f64()); },
-                        41 => { mtext.reference_rectangle_width = try!(pair.value.assert_f64()); },
-                        71 => { mtext.attachment_point = try_result!(AttachmentPoint::from_i16(try!(pair.value.assert_i16()))); },
-                        72 => { mtext.drawing_direction = try_result!(DrawingDirection::from_i16(try!(pair.value.assert_i16()))); },
-                        3 => { mtext.extended_text.push(try!(pair.value.assert_string())); },
-                        1 => { mtext.text = try!(pair.value.assert_string()); },
-                        7 => { mtext.text_style_name = try!(pair.value.assert_string()); },
-                        210 => { mtext.extrusion_direction.x = try!(pair.value.assert_f64()); },
-                        220 => { mtext.extrusion_direction.y = try!(pair.value.assert_f64()); },
-                        230 => { mtext.extrusion_direction.z = try!(pair.value.assert_f64()); },
-                        11 => { mtext.x_axis_direction.x = try!(pair.value.assert_f64()); },
-                        21 => { mtext.x_axis_direction.y = try!(pair.value.assert_f64()); },
-                        31 => { mtext.x_axis_direction.z = try!(pair.value.assert_f64()); },
-                        42 => { mtext.horizontal_width = try!(pair.value.assert_f64()); },
-                        43 => { mtext.vertical_height = try!(pair.value.assert_f64()); },
+                        10 => { mtext.insertion_point.x = pair.value.assert_f64()?; },
+                        20 => { mtext.insertion_point.y = pair.value.assert_f64()?; },
+                        30 => { mtext.insertion_point.z = pair.value.assert_f64()?; },
+                        40 => { mtext.initial_text_height = pair.value.assert_f64()?; },
+                        41 => { mtext.reference_rectangle_width = pair.value.assert_f64()?; },
+                        71 => { mtext.attachment_point = try_result!(AttachmentPoint::from_i16(pair.value.assert_i16()?)); },
+                        72 => { mtext.drawing_direction = try_result!(DrawingDirection::from_i16(pair.value.assert_i16()?)); },
+                        3 => { mtext.extended_text.push(pair.value.assert_string()?); },
+                        1 => { mtext.text = pair.value.assert_string()?; },
+                        7 => { mtext.text_style_name = pair.value.assert_string()?; },
+                        210 => { mtext.extrusion_direction.x = pair.value.assert_f64()?; },
+                        220 => { mtext.extrusion_direction.y = pair.value.assert_f64()?; },
+                        230 => { mtext.extrusion_direction.z = pair.value.assert_f64()?; },
+                        11 => { mtext.x_axis_direction.x = pair.value.assert_f64()?; },
+                        21 => { mtext.x_axis_direction.y = pair.value.assert_f64()?; },
+                        31 => { mtext.x_axis_direction.z = pair.value.assert_f64()?; },
+                        42 => { mtext.horizontal_width = pair.value.assert_f64()?; },
+                        43 => { mtext.vertical_height = pair.value.assert_f64()?; },
                         50 => {
                             if reading_column_data {
                                 if read_column_count {
-                                    mtext.column_heights.push(try!(pair.value.assert_f64()));
+                                    mtext.column_heights.push(pair.value.assert_f64()?);
                                 }
                                 else {
-                                    mtext.column_count = try!(pair.value.assert_f64()) as i32;
+                                    mtext.column_count = pair.value.assert_f64()? as i32;
                                     read_column_count = true;
                                 }
                             }
                             else {
-                                mtext.rotation_angle = try!(pair.value.assert_f64());
+                                mtext.rotation_angle = pair.value.assert_f64()?;
                             }
                         },
-                        73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(try!(pair.value.assert_i16()))); },
-                        44 => { mtext.line_spacing_factor = try!(pair.value.assert_f64()); },
-                        90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(try!(pair.value.assert_i32()))); },
-                        420 => { mtext.background_color_rgb = try!(pair.value.assert_i32()); },
-                        430 => { mtext.background_color_name = try!(pair.value.assert_string()); },
-                        45 => { mtext.fill_box_scale = try!(pair.value.assert_f64()); },
-                        63 => { mtext.background_fill_color = Color::from_raw_value(try!(pair.value.assert_i16())); },
-                        441 => { mtext.background_fill_color_transparency = try!(pair.value.assert_i32()); },
+                        73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(pair.value.assert_i16()?)); },
+                        44 => { mtext.line_spacing_factor = pair.value.assert_f64()?; },
+                        90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(pair.value.assert_i32()?)); },
+                        420 => { mtext.background_color_rgb = pair.value.assert_i32()?; },
+                        430 => { mtext.background_color_name = pair.value.assert_string()?; },
+                        45 => { mtext.fill_box_scale = pair.value.assert_f64()?; },
+                        63 => { mtext.background_fill_color = Color::from_raw_value(pair.value.assert_i16()?); },
+                        441 => { mtext.background_fill_color_transparency = pair.value.assert_i32()?; },
                         75 => {
-                            mtext.column_type = try!(pair.value.assert_i16());
+                            mtext.column_type = pair.value.assert_i16()?;
                             reading_column_data = true;
                         },
-                        76 => { mtext.column_count = try!(pair.value.assert_i16()) as i32; },
-                        78 => { mtext.is_column_flow_reversed = as_bool(try!(pair.value.assert_i16())); },
-                        79 => { mtext.is_column_auto_height = as_bool(try!(pair.value.assert_i16())); },
-                        48 => { mtext.column_width = try!(pair.value.assert_f64()); },
-                        49 => { mtext.column_gutter = try!(pair.value.assert_f64()); },
-                        _ => { try!(self.common.apply_individual_pair(&pair, iter)); },
+                        76 => { mtext.column_count = pair.value.assert_i16()? as i32; },
+                        78 => { mtext.is_column_flow_reversed = as_bool(pair.value.assert_i16()?); },
+                        79 => { mtext.is_column_auto_height = as_bool(pair.value.assert_i16()?); },
+                        48 => { mtext.column_width = pair.value.assert_f64()?; },
+                        49 => { mtext.column_gutter = pair.value.assert_f64()?; },
+                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
             },
@@ -759,14 +759,14 @@ impl Entity {
         where T: Write {
 
         if self.specific.is_supported_on_version(version) {
-            try!(writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string())));
-            try!(self.common.write(version, write_handles, writer));
-            if !try!(self.apply_custom_writer(version, writer)) {
-                try!(self.specific.write(&self.common, version, writer));
-                try!(self.post_write(&version, write_handles, writer));
+            writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
+            self.common.write(version, write_handles, writer)?;
+            if !self.apply_custom_writer(version, writer)? {
+                self.specific.write(&self.common, version, writer)?;
+                self.post_write(&version, write_handles, writer)?;
             }
             for x in &self.common.x_data {
-                try!(x.write(version, writer));
+                x.write(version, writer)?;
             }
         }
 
@@ -777,66 +777,66 @@ impl Entity {
 
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
-                try!(dim.dimension_base.write(version, writer));
+                dim.dimension_base.write(version, writer)?;
                 if version >= &AcadVersion::R13 {
-                    try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension")));
+                    writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension"))?;
                 }
-                try!(writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle)));
-                try!(writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle)));
+                writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x))?;
+                writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y))?;
+                writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z))?;
+                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+                writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle))?;
+                writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle))?;
                 if version >= &AcadVersion::R13 {
-                    try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension")));
+                    writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
                 }
             },
             EntityType::RadialDimension(ref dim) => {
-                try!(dim.dimension_base.write(version, writer));
-                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension")));
-                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length)));
+                dim.dimension_base.write(version, writer)?;
+                writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
+                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
+                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
+                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
+                writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
             },
             EntityType::DiameterDimension(ref dim) => {
-                try!(dim.dimension_base.write(version, writer));
-                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension")));
-                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length)));
+                dim.dimension_base.write(version, writer)?;
+                writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
+                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
+                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
+                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
+                writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
             },
             EntityType::AngularThreePointDimension(ref dim) => {
-                try!(dim.dimension_base.write(version, writer));
-                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension")));
-                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z)));
+                dim.dimension_base.write(version, writer)?;
+                writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
+                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x))?;
+                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y))?;
+                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z))?;
+                writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x))?;
+                writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y))?;
+                writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z))?;
             },
             EntityType::OrdinateDimension(ref dim) => {
-                try!(dim.dimension_base.write(version, writer));
-                try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension")));
-                try!(writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z)));
-                try!(writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z)));
+                dim.dimension_base.write(version, writer)?;
+                writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
+                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
             },
             _ => return Ok(false), // no custom writer
         }
@@ -851,10 +851,10 @@ impl Entity {
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
                     let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
-                    try!(v.write(&version, write_handles, writer));
+                    v.write(&version, write_handles, writer)?;
                 }
                 let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
-                try!(seqend.write(&version, write_handles, writer));
+                seqend.write(&version, write_handles, writer)?;
             },
             _ => (),
         }

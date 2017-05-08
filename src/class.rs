@@ -133,12 +133,12 @@ impl Class {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*try!(pair.value.assert_string()) {
+                        match &*pair.value.assert_string()? {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
                             },
-                            typ => try!(Class::read_class(typ, drawing, iter)),
+                            typ => Class::read_class(typ, drawing, iter)?,
                         }
                     }
                 },
@@ -154,24 +154,24 @@ impl Class {
         where T: Write {
 
         if version >= &AcadVersion::R14 {
-            try!(writer.write_code_pair(&CodePair::new_str(0, "CLASS")));
-            try!(writer.write_code_pair(&CodePair::new_string(1, &self.record_name)));
-            try!(writer.write_code_pair(&CodePair::new_string(2, &self.class_name)));
-            try!(writer.write_code_pair(&CodePair::new_string(3, &self.application_name)));
-            try!(writer.write_code_pair(&CodePair::new_i32(90, self.proxy_capability_flags)));
+            writer.write_code_pair(&CodePair::new_str(0, "CLASS"))?;
+            writer.write_code_pair(&CodePair::new_string(1, &self.record_name))?;
+            writer.write_code_pair(&CodePair::new_string(2, &self.class_name))?;
+            writer.write_code_pair(&CodePair::new_string(3, &self.application_name))?;
+            writer.write_code_pair(&CodePair::new_i32(90, self.proxy_capability_flags))?;
             if version >= &AcadVersion::R2004 {
-                try!(writer.write_code_pair(&CodePair::new_i32(91, self.instance_count as i32)));
+                writer.write_code_pair(&CodePair::new_i32(91, self.instance_count as i32))?;
             }
         }
         else {
-            try!(writer.write_code_pair(&CodePair::new_string(0, &self.record_name)));
-            try!(writer.write_code_pair(&CodePair::new_string(1, &self.class_name)));
-            try!(writer.write_code_pair(&CodePair::new_string(2, &self.application_name)));
-            try!(writer.write_code_pair(&CodePair::new_i32(90, self.version_number)));
+            writer.write_code_pair(&CodePair::new_string(0, &self.record_name))?;
+            writer.write_code_pair(&CodePair::new_string(1, &self.class_name))?;
+            writer.write_code_pair(&CodePair::new_string(2, &self.application_name))?;
+            writer.write_code_pair(&CodePair::new_i32(90, self.version_number))?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_i16(280, as_i16(!self.was_class_loaded_with_file))));
-        try!(writer.write_code_pair(&CodePair::new_i16(281, as_i16(self.is_entity))));
+        writer.write_code_pair(&CodePair::new_i16(280, as_i16(!self.was_class_loaded_with_file)))?;
+        writer.write_code_pair(&CodePair::new_i16(281, as_i16(self.is_entity)))?;
 
         Ok(())
     }
@@ -199,36 +199,36 @@ impl Class {
                         },
                         1 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.class_name = try!(pair.value.assert_string());
+                                class.class_name = pair.value.assert_string()?;
                             }
                             else {
-                                class.record_name = try!(pair.value.assert_string());
+                                class.record_name = pair.value.assert_string()?;
                             }
                         },
                         2 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.application_name = try!(pair.value.assert_string());
+                                class.application_name = pair.value.assert_string()?;
                             }
                             else {
-                                class.class_name = try!(pair.value.assert_string());
+                                class.class_name = pair.value.assert_string()?;
                             }
                         },
                         3 => {
                             if drawing.header.version >= AcadVersion::R14 {
-                                class.application_name = try!(pair.value.assert_string());
+                                class.application_name = pair.value.assert_string()?;
                             }
                         },
                         90 => {
                             if drawing.header.version <= AcadVersion::R13 {
-                                class.version_number = try!(pair.value.assert_i32());
+                                class.version_number = pair.value.assert_i32()?;
                             }
                             else {
-                                class.proxy_capability_flags = try!(pair.value.assert_i32());
+                                class.proxy_capability_flags = pair.value.assert_i32()?;
                             }
                         },
-                        91 => class.instance_count = try!(pair.value.assert_i32()) as usize,
-                        280 => class.was_class_loaded_with_file = !as_bool(try!(pair.value.assert_i16())),
-                        281 => class.is_entity = as_bool(try!(pair.value.assert_i16())),
+                        91 => class.instance_count = pair.value.assert_i32()? as usize,
+                        280 => class.was_class_loaded_with_file = !as_bool(pair.value.assert_i16()?),
+                        281 => class.is_entity = as_bool(pair.value.assert_i16()?),
                         _ => (),
                     }
                 },

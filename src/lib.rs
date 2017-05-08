@@ -12,7 +12,7 @@
 //! use dxf::Drawing;
 //! use dxf::entities::*;
 //!
-//! let drawing = try!(Drawing::load_file("path/to/file.dxf"));
+//! let drawing = Drawing::load_file("path/to/file.dxf")?;
 //! for e in drawing.entities {
 //!     println!("found entity on layer {}", e.common.layer);
 //!     match e.specific {
@@ -39,7 +39,7 @@
 //!
 //! let mut drawing = Drawing::default();
 //! drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
-//! try!(drawing.save_file("path/to/file.dxf"));
+//! drawing.save_file("path/to/file.dxf")?;
 //! # Ok(())
 //! # }
 //! ```

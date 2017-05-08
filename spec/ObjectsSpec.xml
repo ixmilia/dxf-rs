@@ -7,10 +7,10 @@
 
   -->
   <Object Name="Object" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" />
     <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="x_data" Code="1001" Type="XData" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" />
+    <Field Name="owner_handle" Code="330" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" />
     <WriteOrder>
       <WriteField Field="handle" />
       <WriteExtensionData />
@@ -156,7 +156,7 @@
     <!-- internal properties -->
     <Field Name="_long_value" Code="91" Type="i32" DefaultValue="0" Accessibility="private" />
     <Field Name="_double_value" Code="140" Type="f64" DefaultValue="0.0" Accessibility="private" />
-    <Field Name="_id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="try!(as_u32({}))" WriteConverter="&amp;as_handle({})" Accessibility="private" />
+    <Field Name="_id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" Accessibility="private" />
     <Field Name="_binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
     <Field Name="_binary_data" Code="310" Type="String" DefaultValue="String::new()" Accessibility="private" />
     <Field Name="_format_string_code301" Code="301" Type="String" DefaultValue="String::new()" Accessibility="private" />
@@ -1127,7 +1127,7 @@
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbVbaProject")' />
       <WriteSpecificValue Code="90" Value="obj.data.len() as i32" />
-      <Foreach Field="try!(obj.get_hex_strings())">
+      <Foreach Field="obj.get_hex_strings()?">
         <WriteSpecificValue Code="310" Value="item" />
       </Foreach>
     </WriteOrder>

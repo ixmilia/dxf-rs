@@ -66,23 +66,23 @@ impl SectionTypeSettings {
             };
 
             match pair.code {
-                1 => { ss.destination_file_name = try!(pair.value.assert_string()); },
+                1 => { ss.destination_file_name = pair.value.assert_string()?; },
                 2 => {
                     // value should be "SectionGeometrySettings", but it doesn't really matter
                     loop {
-                        match try!(SectionGeometrySettings::read(iter)) {
+                        match SectionGeometrySettings::read(iter)? {
                             Some(gs) => ss.geometry_settings.push(gs),
                             None => break,
                         }
                     }
                 },
                 3 => (), // value should be "SectionTypeSettingsEnd", but it doesn't really matter
-                90 => { ss.section_type = try!(pair.value.assert_i32()); },
-                91 => { ss.is_generation_option = as_bool(try!(pair.value.assert_i32()) as i16); },
+                90 => { ss.section_type = pair.value.assert_i32()?; },
+                91 => { ss.is_generation_option = as_bool(pair.value.assert_i32()? as i16); },
                 92 => (), // source objects count; we just read as many as we're given
                 93 => (), // generation settings count; we just read as many as we're given
-                330 => { ss.source_object_handles.push(try!(as_u32(try!(pair.value.assert_string())))); },
-                331 => { ss.destination_object_handle = try!(as_u32(try!(pair.value.assert_string()))); },
+                330 => { ss.source_object_handles.push(as_u32(pair.value.assert_string()?)?); },
+                331 => { ss.destination_object_handle = as_u32(pair.value.assert_string()?)?; },
                 _ => {
                     // unexpected end; put the pair back and return what we have
                     iter.put_back(Ok(pair));
@@ -95,21 +95,21 @@ impl SectionTypeSettings {
     pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(1, "SectionTypeSettings")));
-        try!(writer.write_code_pair(&CodePair::new_i32(90, self.section_type)));
-        try!(writer.write_code_pair(&CodePair::new_i32(91, as_i16(self.is_generation_option) as i32)));
-        try!(writer.write_code_pair(&CodePair::new_i32(92, self.source_object_handles.len() as i32)));
+        writer.write_code_pair(&CodePair::new_str(1, "SectionTypeSettings"))?;
+        writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
+        writer.write_code_pair(&CodePair::new_i32(91, as_i16(self.is_generation_option) as i32))?;
+        writer.write_code_pair(&CodePair::new_i32(92, self.source_object_handles.len() as i32))?;
         for handle in &self.source_object_handles {
-            try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(*handle))));
+            writer.write_code_pair(&CodePair::new_string(330, &as_handle(*handle)))?;
         }
-        try!(writer.write_code_pair(&CodePair::new_string(331, &as_handle(self.destination_object_handle))));
-        try!(writer.write_code_pair(&CodePair::new_string(1, &self.destination_file_name)));
-        try!(writer.write_code_pair(&CodePair::new_i32(93, self.geometry_settings.len() as i32)));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "SectionGeometrySettings")));
+        writer.write_code_pair(&CodePair::new_string(331, &as_handle(self.destination_object_handle)))?;
+        writer.write_code_pair(&CodePair::new_string(1, &self.destination_file_name))?;
+        writer.write_code_pair(&CodePair::new_i32(93, self.geometry_settings.len() as i32))?;
+        writer.write_code_pair(&CodePair::new_str(2, "SectionGeometrySettings"))?;
         for geometry_settings in &self.geometry_settings {
-            try!(geometry_settings.write(writer));
+            geometry_settings.write(writer)?;
         }
-        try!(writer.write_code_pair(&CodePair::new_str(3, "SectionTypeSettingsEnd")));
+        writer.write_code_pair(&CodePair::new_str(3, "SectionTypeSettingsEnd"))?;
         Ok(())
     }
 }

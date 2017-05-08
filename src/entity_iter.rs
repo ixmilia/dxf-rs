@@ -66,7 +66,7 @@ pub fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResul
                     }
                 }
 
-                try!(swallow_seqend(&mut iter));
+                swallow_seqend(&mut iter)?;
 
                 // and finally keep the INSERT
                 entities.push(Entity {
@@ -88,7 +88,7 @@ pub fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResul
                     }
                 }
 
-                try!(swallow_seqend(&mut iter));
+                swallow_seqend(&mut iter)?;
 
                 // and finally keep the POLYLINE
                 entities.push(Entity {

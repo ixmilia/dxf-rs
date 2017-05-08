@@ -40,7 +40,7 @@ impl Header {
                             break;
                         },
                         9 => {
-                            let last_header_variable = try!(pair.value.assert_string());
+                            let last_header_variable = pair.value.assert_string()?;
                             loop {
                                 match iter.next() {
                                     Some(Ok(pair)) => {
@@ -50,7 +50,7 @@ impl Header {
                                             break;
                                         }
                                         else {
-                                            try!(header.set_header_value(&last_header_variable, &pair));
+                                            header.set_header_value(&last_header_variable, &pair)?;
                                         }
                                     },
                                     Some(Err(e)) => return Err(e),
@@ -72,10 +72,10 @@ impl Header {
     pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "SECTION")));
-        try!(writer.write_code_pair(&CodePair::new_str(2, "HEADER")));
-        try!(self.write_code_pairs(writer));
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDSEC")));
+        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+        writer.write_code_pair(&CodePair::new_str(2, "HEADER"))?;
+        self.write_code_pairs(writer)?;
+        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
 }

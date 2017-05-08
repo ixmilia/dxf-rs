@@ -33,9 +33,9 @@ impl Point {
     #[doc(hidden)]
     pub fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
         match pair.code {
-            10 => self.x = try!(pair.value.assert_f64()),
-            20 => self.y = try!(pair.value.assert_f64()),
-            30 => self.z = try!(pair.value.assert_f64()),
+            10 => self.x = pair.value.assert_f64()?,
+            20 => self.y = pair.value.assert_f64()?,
+            30 => self.z = pair.value.assert_f64()?,
             _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for point"))),
         }
 

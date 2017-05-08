@@ -77,7 +77,7 @@ impl XData {
                 // new xdata or non xdata
                 break;
             }
-            xdata.items.push(try!(XDataItem::read_item(&pair, iter)));
+            xdata.items.push(XDataItem::read_item(&pair, iter)?);
         }
         Ok(xdata)
     }
@@ -87,9 +87,9 @@ impl XData {
 
         // not supported on < R2000
         if version >= &AcadVersion::R2000 {
-            try!(writer.write_code_pair(&CodePair::new_string(XDATA_APPLICATIONNAME, &self.application_name)));
+            writer.write_code_pair(&CodePair::new_string(XDATA_APPLICATIONNAME, &self.application_name))?;
             for item in &self.items {
-                try!(item.write(writer));
+                item.write(writer)?;
             }
         }
         Ok(())
@@ -103,7 +103,7 @@ impl XDataItem {
 
         loop {
             match pair.code {
-                XDATA_STRING => return Ok(XDataItem::Str(try!(pair.value.assert_string()))),
+                XDATA_STRING => return Ok(XDataItem::Str(pair.value.assert_string()?)),
                 XDATA_CONTROLGROUP => {
                     let mut items = vec![];
                     loop {
@@ -117,31 +117,31 @@ impl XDataItem {
                             Some(Err(e)) => return Err(e),
                             None => return Err(DxfError::UnexpectedEndOfInput),
                         };
-                        if pair.code == XDATA_CONTROLGROUP && try!(pair.value.assert_string()) == "}" {
+                        if pair.code == XDATA_CONTROLGROUP && pair.value.assert_string()? == "}" {
                             // end of group
                             break;
                         }
 
-                        items.push(try!(XDataItem::read_item(&pair, iter)));
+                        items.push(XDataItem::read_item(&pair, iter)?);
                     }
                     return Ok(XDataItem::ControlGroup(items));
                 },
-                XDATA_LAYER => return Ok(XDataItem::LayerName(try!(pair.value.assert_string()))),
+                XDATA_LAYER => return Ok(XDataItem::LayerName(pair.value.assert_string()?)),
                 XDATA_BINARYDATA => {
                     let mut data = vec![];
-                    try!(parse_hex_string(&try!(pair.value.assert_string()), &mut data));
+                    parse_hex_string(&pair.value.assert_string()?, &mut data)?;
                     return Ok(XDataItem::BinaryData(data));
                 },
-                XDATA_HANDLE => return Ok(XDataItem::Handle(try!(as_u32(try!(pair.value.assert_string()))))),
-                XDATA_THREEREALS => return Ok(XDataItem::ThreeReals(try!(pair.value.assert_f64()), try!(XDataItem::read_double(iter, pair.code)), try!(XDataItem::read_double(iter, pair.code)))),
-                XDATA_WORLDSPACEDISPLACEMENT => return Ok(XDataItem::WorldSpaceDisplacement(try!(XDataItem::read_point(iter, try!(pair.value.assert_f64()), pair.code)))),
-                XDATA_WORLDSPACEPOSITION => return Ok(XDataItem::WorldSpacePosition(try!(XDataItem::read_point(iter, try!(pair.value.assert_f64()), pair.code)))),
-                XDATA_WORLDDIRECTION => return Ok(XDataItem::WorldDirection(try!(XDataItem::read_vector(iter, try!(pair.value.assert_f64()), pair.code)))),
-                XDATA_REAL => return Ok(XDataItem::Real(try!(pair.value.assert_f64()))),
-                XDATA_DISTANCE => return Ok(XDataItem::Distance(try!(pair.value.assert_f64()))),
-                XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(try!(pair.value.assert_f64()))),
-                XDATA_INTEGER => return Ok(XDataItem::Integer(try!(pair.value.assert_i16()))),
-                XDATA_LONG => return Ok(XDataItem::Long(try!(pair.value.assert_i32()))),
+                XDATA_HANDLE => return Ok(XDataItem::Handle(as_u32(pair.value.assert_string()?)?)),
+                XDATA_THREEREALS => return Ok(XDataItem::ThreeReals(pair.value.assert_f64()?, XDataItem::read_double(iter, pair.code)?, XDataItem::read_double(iter, pair.code)?)),
+                XDATA_WORLDSPACEDISPLACEMENT => return Ok(XDataItem::WorldSpaceDisplacement(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),
+                XDATA_WORLDSPACEPOSITION => return Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),
+                XDATA_WORLDDIRECTION => return Ok(XDataItem::WorldDirection(XDataItem::read_vector(iter, pair.value.assert_f64()?, pair.code)?)),
+                XDATA_REAL => return Ok(XDataItem::Real(pair.value.assert_f64()?)),
+                XDATA_DISTANCE => return Ok(XDataItem::Distance(pair.value.assert_f64()?)),
+                XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(pair.value.assert_f64()?)),
+                XDATA_INTEGER => return Ok(XDataItem::Integer(pair.value.assert_i16()?)),
+                XDATA_LONG => return Ok(XDataItem::Long(pair.value.assert_i32()?)),
                 _ => return Err(DxfError::UnexpectedCode(pair.code)),
             }
         }
@@ -150,7 +150,7 @@ impl XDataItem {
         where T: Iterator<Item = DxfResult<CodePair>> {
 
         match iter.next() {
-            Some(Ok(ref pair)) if pair.code == expected_code => return Ok(try!(pair.value.assert_f64())),
+            Some(Ok(ref pair)) if pair.code == expected_code => return Ok(pair.value.assert_f64()?),
             Some(Ok(pair)) => return Err(DxfError::UnexpectedCode(pair.code)),
             Some(Err(e)) => return Err(e),
             None => return Err(DxfError::UnexpectedEndOfInput),
@@ -159,60 +159,60 @@ impl XDataItem {
     fn read_point<I>(iter: &mut PutBack<I>, first: f64, expected_code: i32) -> DxfResult<Point>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        Ok(Point::new(first, try!(XDataItem::read_double(iter, expected_code)), try!(XDataItem::read_double(iter, expected_code))))
+        Ok(Point::new(first, XDataItem::read_double(iter, expected_code)?, XDataItem::read_double(iter, expected_code)?))
     }
     fn read_vector<I>(iter: &mut PutBack<I>, first: f64, expected_code: i32) -> DxfResult<Vector>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
-        Ok(Vector::new(first, try!(XDataItem::read_double(iter, expected_code)), try!(XDataItem::read_double(iter, expected_code))))
+        Ok(Vector::new(first, XDataItem::read_double(iter, expected_code)?, XDataItem::read_double(iter, expected_code)?))
     }
     #[doc(hidden)]
     pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         match self {
-            &XDataItem::Str(ref s) => { try!(writer.write_code_pair(&CodePair::new_string(XDATA_STRING, s))); },
+            &XDataItem::Str(ref s) => { writer.write_code_pair(&CodePair::new_string(XDATA_STRING, s))?; },
             &XDataItem::ControlGroup(ref items) => {
-                try!(writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "{")));
+                writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "{"))?;
                 for item in &items[..] {
-                    try!(item.write(writer));
+                    item.write(writer)?;
                 }
-                try!(writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "}")));
+                writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "}"))?;
             },
-            &XDataItem::LayerName(ref l) => { try!(writer.write_code_pair(&CodePair::new_string(XDATA_LAYER, l))); },
+            &XDataItem::LayerName(ref l) => { writer.write_code_pair(&CodePair::new_string(XDATA_LAYER, l))?; },
             &XDataItem::BinaryData(ref data) => {
                 let mut line = String::new();
                 for b in data {
                     line.push_str(&format!("{:X}", b));
                 }
-                try!(writer.write_code_pair(&CodePair::new_string(XDATA_BINARYDATA, &line)));
+                writer.write_code_pair(&CodePair::new_string(XDATA_BINARYDATA, &line))?;
             },
-            &XDataItem::Handle(h) => { try!(writer.write_code_pair(&CodePair::new_string(XDATA_HANDLE, &as_handle(h)))); },
+            &XDataItem::Handle(h) => { writer.write_code_pair(&CodePair::new_string(XDATA_HANDLE, &as_handle(h)))?; },
             &XDataItem::ThreeReals(x, y, z) => {
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, z)));
+                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, x))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, z))?;
             },
             &XDataItem::WorldSpacePosition(ref p) => {
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.z)));
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.x))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.z))?;
             },
             &XDataItem::WorldSpaceDisplacement(ref p) => {
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.z)));
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.x))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.z))?;
             },
             &XDataItem::WorldDirection(ref v) => {
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.x)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.y)));
-                try!(writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.z)));
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.x))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.z))?;
             },
-            &XDataItem::Real(f) => { try!(writer.write_code_pair(&CodePair::new_f64(XDATA_REAL, f))); },
-            &XDataItem::Distance(f) => { try!(writer.write_code_pair(&CodePair::new_f64(XDATA_DISTANCE, f))); },
-            &XDataItem::ScaleFactor(f) => { try!(writer.write_code_pair(&CodePair::new_f64(XDATA_SCALEFACTOR, f))); },
-            &XDataItem::Integer(i) => { try!(writer.write_code_pair(&CodePair::new_i16(XDATA_INTEGER, i))); },
-            &XDataItem::Long(i) => { try!(writer.write_code_pair(&CodePair::new_i32(XDATA_LONG, i))); },
+            &XDataItem::Real(f) => { writer.write_code_pair(&CodePair::new_f64(XDATA_REAL, f))?; },
+            &XDataItem::Distance(f) => { writer.write_code_pair(&CodePair::new_f64(XDATA_DISTANCE, f))?; },
+            &XDataItem::ScaleFactor(f) => { writer.write_code_pair(&CodePair::new_f64(XDATA_SCALEFACTOR, f))?; },
+            &XDataItem::Integer(i) => { writer.write_code_pair(&CodePair::new_i16(XDATA_INTEGER, i))?; },
+            &XDataItem::Long(i) => { writer.write_code_pair(&CodePair::new_i32(XDATA_LONG, i))?; },
         }
         Ok(())
     }

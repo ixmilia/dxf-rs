@@ -112,7 +112,7 @@ pub fn as_duration(d: f64) -> Duration {
 #[doc(hidden)]
 pub fn as_u32(s: String) -> DxfResult<u32> {
     let mut bytes = vec![];
-    try!(parse_hex_string(&s, &mut bytes));
+    parse_hex_string(&s, &mut bytes)?;
     while bytes.len() < 4 {
         bytes.insert(0, 0);
     }
@@ -486,7 +486,7 @@ pub fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<()> {
     let mut complete_byte = data.len() % 2 != 0; // handles strings with an odd number of bytes
     let mut current_byte = 0u8;
     for c in data.chars() {
-        let value = try!(char_to_value(c));
+        let value = char_to_value(c)?;
         if complete_byte {
             let x = current_byte * 16 + value;
             bytes.push(x);

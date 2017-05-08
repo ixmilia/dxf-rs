@@ -46,14 +46,14 @@ impl ExtensionGroup {
                 None => return Err(DxfError::UnexpectedEndOfInput),
             };
             if pair.code == EXTENSION_DATA_GROUP {
-                let name = try!(pair.value.assert_string());
+                let name = pair.value.assert_string()?;
                 if name == "}" {
                     // end of group
                     break;
                 }
                 else if name.starts_with("{") {
                     // nested group
-                    let sub_group = try!(ExtensionGroup::read_group(name, iter));
+                    let sub_group = ExtensionGroup::read_group(name, iter)?;
                     items.push(ExtensionGroupItem::Group(sub_group));
                 }
                 else {
@@ -74,14 +74,14 @@ impl ExtensionGroup {
             let mut full_group_name = String::new();
             full_group_name.push('{');
             full_group_name.push_str(&self.application_name);
-            try!(writer.write_code_pair(&CodePair::new_string(EXTENSION_DATA_GROUP, &full_group_name)));
+            writer.write_code_pair(&CodePair::new_string(EXTENSION_DATA_GROUP, &full_group_name))?;
             for item in &self.items {
                 match item {
-                    &ExtensionGroupItem::CodePair(ref pair) => try!(writer.write_code_pair(pair)),
-                    &ExtensionGroupItem::Group(ref group) => try!(group.write(writer)),
+                    &ExtensionGroupItem::CodePair(ref pair) => writer.write_code_pair(pair)?,
+                    &ExtensionGroupItem::Group(ref group) => group.write(writer)?,
                 }
             }
-            try!(writer.write_code_pair(&CodePair::new_str(EXTENSION_DATA_GROUP, "}")));
+            writer.write_code_pair(&CodePair::new_str(EXTENSION_DATA_GROUP, "}"))?;
         }
         Ok(())
     }

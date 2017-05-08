@@ -53,27 +53,27 @@ impl<T: Read> DxbReader<T> {
         loop {
             match try_result!(DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(&mut self.reader)))) {
                 // entities
-                DxbItemType::Arc => { entities.push(try!(self.read_arc())); },
-                DxbItemType::Circle => { entities.push(try!(self.read_circle())); },
-                DxbItemType::Face => { entities.push(try!(self.read_face())); },
+                DxbItemType::Arc => { entities.push(self.read_arc()?); },
+                DxbItemType::Circle => { entities.push(self.read_circle()?); },
+                DxbItemType::Face => { entities.push(self.read_face()?); },
                 DxbItemType::Line |
-                DxbItemType::Line3D => { entities.push(try!(self.read_line())); },
-                DxbItemType::LineExtension => { entities.push(try!(self.read_line_extension())); },
-                DxbItemType::LineExtension3D => { entities.push(try!(self.read_line_extension_3d())); },
-                DxbItemType::Point => { entities.push(try!(self.read_point())); },
-                DxbItemType::Polyline => { entities.push(try!(self.read_polyline())); },
-                DxbItemType::Seqend => { entities.push(try!(self.read_seqend())); },
-                DxbItemType::Solid => { entities.push(try!(self.read_solid())); },
-                DxbItemType::Trace => { entities.push(try!(self.read_trace())); },
-                DxbItemType::TraceExtension => { entities.push(try!(self.read_trace_extension())); },
-                DxbItemType::Vertex => { entities.push(try!(self.read_vertex())); },
+                DxbItemType::Line3D => { entities.push(self.read_line()?); },
+                DxbItemType::LineExtension => { entities.push(self.read_line_extension()?); },
+                DxbItemType::LineExtension3D => { entities.push(self.read_line_extension_3d()?); },
+                DxbItemType::Point => { entities.push(self.read_point()?); },
+                DxbItemType::Polyline => { entities.push(self.read_polyline()?); },
+                DxbItemType::Seqend => { entities.push(self.read_seqend()?); },
+                DxbItemType::Solid => { entities.push(self.read_solid()?); },
+                DxbItemType::Trace => { entities.push(self.read_trace()?); },
+                DxbItemType::TraceExtension => { entities.push(self.read_trace_extension()?); },
+                DxbItemType::Vertex => { entities.push(self.read_vertex()?); },
                 // global values
-                DxbItemType::NewColor => { self.current_color = Color::from_raw_value(try!(self.read_w()) as i16); },
-                DxbItemType::NewLayer => { self.layer_name = try!(self.read_null_terminated_string()); },
-                DxbItemType::ScaleFactor => { self.scale_factor = try!(self.read_f()); },
+                DxbItemType::NewColor => { self.current_color = Color::from_raw_value(self.read_w()? as i16); },
+                DxbItemType::NewLayer => { self.layer_name = self.read_null_terminated_string()?; },
+                DxbItemType::ScaleFactor => { self.scale_factor = self.read_f()?; },
                 // other
                 DxbItemType::BlockBase => {
-                    let loc = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+                    let loc = Point::new(self.read_n()?, self.read_n()?, 0.0);
                     if block_base == None && entities.len() == 0 {
                         // only if this is the first item encountered
                         block_base = Some(loc);
@@ -83,16 +83,16 @@ impl<T: Read> DxbReader<T> {
                     }
                 },
                 DxbItemType::Bulge => {
-                    let bulge = try!(self.read_u());
+                    let bulge = self.read_u()?;
                     match vec_last!(entities) {
                         &mut Entity { specific: EntityType::Vertex(ref mut v), .. } => { v.bulge = bulge; },
                         _ => return Err(DxfError::UnexpectedEnumValue),
                     }
                 },
-                DxbItemType::NumberMode => { self.is_integer_mode = try!(self.read_w()) == 0; },
+                DxbItemType::NumberMode => { self.is_integer_mode = self.read_w()? == 0; },
                 DxbItemType::Width => {
-                    let starting_width = try!(self.read_n());
-                    let ending_width = try!(self.read_n());
+                    let starting_width = self.read_n()?;
+                    let ending_width = self.read_n()?;
                     match vec_last!(entities) {
                         &mut Entity { specific: EntityType::Vertex(ref mut v), .. } => {
                             v.starting_width = starting_width;
@@ -107,7 +107,7 @@ impl<T: Read> DxbReader<T> {
         }
 
         let mut gathered_entities = vec![];
-        try!(collect_entities(&mut entities.into_iter(), &mut gathered_entities));
+        collect_entities(&mut entities.into_iter(), &mut gathered_entities)?;
         let mut drawing = Drawing::default();
         drawing.clear();
         match block_base {
@@ -125,53 +125,53 @@ impl<T: Read> DxbReader<T> {
         Ok(drawing)
     }
     fn read_arc(&mut self) -> DxfResult<Entity> {
-        let center = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let radius = try!(self.read_n());
-        let start = try!(self.read_a());
-        let end = try!(self.read_a());
+        let center = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let radius = self.read_n()?;
+        let start = self.read_a()?;
+        let end = self.read_a()?;
         let arc = Arc::new(center, radius, start, end);
         Ok(self.wrap_common_values(EntityType::Arc(arc)))
     }
     fn read_circle(&mut self) -> DxfResult<Entity> {
-        let center = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let radius = try!(self.read_n());
+        let center = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let radius = self.read_n()?;
         let circle = Circle::new(center, radius);
         Ok(self.wrap_common_values(EntityType::Circle(circle)))
     }
     fn read_face(&mut self) -> DxfResult<Entity> {
-        let p1 = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
-        let p2 = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
-        let p3 = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
-        let p4 = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
+        let p1 = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
+        let p2 = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
+        let p3 = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
+        let p4 = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
         let face = Face3D::new(p1, p2, p3, p4);
         Ok(self.wrap_common_values(EntityType::Face3D(face)))
     }
     fn read_line(&mut self) -> DxfResult<Entity> {
-        let from = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
-        let to = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
+        let from = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
+        let to = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
         self.last_line_point = to.clone();
         let line = Line::new(from, to);
         Ok(self.wrap_common_values(EntityType::Line(line)))
     }
     fn read_line_extension(&mut self) -> DxfResult<Entity> {
-        let to = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let to = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let line = Line::new(self.last_line_point.clone(), to);
         self.last_line_point = line.p2.clone();
         Ok(self.wrap_common_values(EntityType::Line(line)))
     }
     fn read_line_extension_3d(&mut self) -> DxfResult<Entity> {
-        let to = Point::new(try!(self.read_n()), try!(self.read_n()), try!(self.read_n()));
+        let to = Point::new(self.read_n()?, self.read_n()?, self.read_n()?);
         let line = Line::new(self.last_line_point.clone(), to);
         self.last_line_point = line.p2.clone();
         Ok(self.wrap_common_values(EntityType::Line(line)))
     }
     fn read_point(&mut self) -> DxfResult<Entity> {
-        let point = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let point = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let point = ModelPoint::new(point);
         Ok(self.wrap_common_values(EntityType::ModelPoint(point)))
     }
     fn read_polyline(&mut self) -> DxfResult<Entity> {
-        let is_closed = try!(self.read_w()) != 0;
+        let is_closed = self.read_w()? != 0;
         let mut poly = Polyline::default();
         poly.set_is_closed(is_closed);
         Ok(self.wrap_common_values(EntityType::Polyline(poly)))
@@ -180,33 +180,33 @@ impl<T: Read> DxbReader<T> {
         Ok(self.wrap_common_values(EntityType::Seqend(Seqend::default())))
     }
     fn read_solid(&mut self) -> DxfResult<Entity> {
-        let p1 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p2 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p3 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p4 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let p1 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p2 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p3 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p4 = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let solid = Solid::new(p1, p2, p3, p4);
         Ok(self.wrap_common_values(EntityType::Solid(solid)))
     }
     fn read_trace(&mut self) -> DxfResult<Entity> {
-        let p1 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p2 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p3 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p4 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let p1 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p2 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p3 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p4 = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let trace = Trace::new(p1, p2, p3, p4);
         self.last_trace_p3 = trace.third_corner.clone();
         self.last_trace_p4 = trace.fourth_corner.clone();
         Ok(self.wrap_common_values(EntityType::Trace(trace)))
     }
     fn read_trace_extension(&mut self) -> DxfResult<Entity> {
-        let p3 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
-        let p4 = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let p3 = Point::new(self.read_n()?, self.read_n()?, 0.0);
+        let p4 = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let trace = Trace::new(self.last_trace_p3.clone(), self.last_trace_p4.clone(), p3, p4);
         self.last_trace_p3 = trace.third_corner.clone();
         self.last_trace_p4 = trace.fourth_corner.clone();
         Ok(self.wrap_common_values(EntityType::Trace(trace)))
     }
     fn read_vertex(&mut self) -> DxfResult<Entity> {
-        let location = Point::new(try!(self.read_n()), try!(self.read_n()), 0.0);
+        let location = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let vertex = Vertex::new(location);
         Ok(self.wrap_common_values(EntityType::Vertex(vertex)))
     }
@@ -230,32 +230,32 @@ impl<T: Read> DxbReader<T> {
     }
     fn read_a(&mut self) -> DxfResult<f64> {
         if self.is_integer_mode {
-            Ok(try!(read_i32(&mut self.reader)) as f64 * self.scale_factor / 1000000.0)
+            Ok(read_i32(&mut self.reader)? as f64 * self.scale_factor / 1000000.0)
         }
         else {
-            Ok(try!(read_f32(&mut self.reader)) as f64)
+            Ok(read_f32(&mut self.reader)? as f64)
         }
     }
     fn read_f(&mut self) -> DxfResult<f64> {
-        Ok(try!(read_f64(&mut self.reader)))
+        Ok(read_f64(&mut self.reader)?)
     }
     fn read_n(&mut self) -> DxfResult<f64> {
         if self.is_integer_mode {
-            Ok(try!(read_i16(&mut self.reader)) as f64 * self.scale_factor)
+            Ok(read_i16(&mut self.reader)? as f64 * self.scale_factor)
         }
         else {
-            Ok(try!(read_f32(&mut self.reader)) as f64)
+            Ok(read_f32(&mut self.reader)? as f64)
         }
     }
     fn read_u(&mut self) -> DxfResult<f64> {
         if self.is_integer_mode {
-            Ok(try!(read_i32(&mut self.reader)) as f64 * 65536.0 * self.scale_factor)
+            Ok(read_i32(&mut self.reader)? as f64 * 65536.0 * self.scale_factor)
         }
         else {
-            Ok(try!(read_f32(&mut self.reader)) as f64)
+            Ok(read_f32(&mut self.reader)? as f64)
         }
     }
     fn read_w(&mut self) -> DxfResult<i32> {
-        Ok((try!(read_i16(&mut self.reader)) as f64 * self.scale_factor) as i32)
+        Ok((read_i16(&mut self.reader)? as f64 * self.scale_factor) as i32)
     }
 }

@@ -158,29 +158,29 @@ impl Block {
                             // should be an entity
                             iter.put_back(Ok(pair));
                             let mut iter = EntityIter { iter: iter };
-                            try!(iter.read_entities_into_vec(&mut current.entities));
+                            iter.read_entities_into_vec(&mut current.entities)?;
                         },
                         _ => {
                             // specific to the BLOCK
                             match pair.code {
-                                1 => current.xref_path_name = try!(pair.value.assert_string()),
-                                2 => current.name = try!(pair.value.assert_string()),
+                                1 => current.xref_path_name = pair.value.assert_string()?,
+                                2 => current.name = pair.value.assert_string()?,
                                 3 => (), // another instance of the name
-                                4 => current.description = try!(pair.value.assert_string()),
-                                5 => current.handle = try!(as_u32(try!(pair.value.assert_string()))),
-                                8 => current.layer = try!(pair.value.assert_string()),
-                                10 => current.base_point.x = try!(pair.value.assert_f64()),
-                                20 => current.base_point.y = try!(pair.value.assert_f64()),
-                                30 => current.base_point.z = try!(pair.value.assert_f64()),
-                                67 => current.is_in_paperspace = as_bool(try!(pair.value.assert_i16())),
-                                70 => current.flags = try!(pair.value.assert_i16()) as i32,
-                                330 => current.owner_handle = try!(as_u32(try!(pair.value.assert_string()))),
+                                4 => current.description = pair.value.assert_string()?,
+                                5 => current.handle = as_u32(pair.value.assert_string()?)?,
+                                8 => current.layer = pair.value.assert_string()?,
+                                10 => current.base_point.x = pair.value.assert_f64()?,
+                                20 => current.base_point.y = pair.value.assert_f64()?,
+                                30 => current.base_point.z = pair.value.assert_f64()?,
+                                67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()?),
+                                70 => current.flags = pair.value.assert_i16()? as i32,
+                                330 => current.owner_handle = as_u32(pair.value.assert_string()?)?,
                                 extension_data::EXTENSION_DATA_GROUP => {
-                                    let group = try!(ExtensionGroup::read_group(try!(pair.value.assert_string()), iter));
+                                    let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;
                                     current.extension_data_groups.push(group);
                                 },
                                 x_data::XDATA_APPLICATIONNAME => {
-                                    let x = try!(XData::read_item(try!(pair.value.assert_string()), iter));
+                                    let x = XData::read_item(pair.value.assert_string()?, iter)?;
                                     current.x_data.push(x);
                                 },
                                 _ => (), // unsupported code pair
@@ -199,82 +199,82 @@ impl Block {
     pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "BLOCK")));
+        writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
         if write_handles && self.handle != 0 {
-            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
+            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
         }
 
         if version >= &AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                try!(group.write(writer));
+                group.write(writer)?;
             }
         }
 
         if version >= &AcadVersion::R13 {
             if self.owner_handle != 0 {
-                try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
+                writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle)))?;
             }
 
-            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity")));
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
         }
 
         if self.is_in_paperspace {
-            try!(writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace))));
+            writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace)))?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer)));
+        writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
         if version >= &AcadVersion::R13 {
-            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockBegin")));
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockBegin"))?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_string(2, &self.name)));
-        try!(writer.write_code_pair(&CodePair::new_i16(70, self.flags as i16)));
-        try!(writer.write_code_pair(&CodePair::new_f64(10, self.base_point.x)));
-        try!(writer.write_code_pair(&CodePair::new_f64(20, self.base_point.y)));
-        try!(writer.write_code_pair(&CodePair::new_f64(30, self.base_point.z)));
+        writer.write_code_pair(&CodePair::new_string(2, &self.name))?;
+        writer.write_code_pair(&CodePair::new_i16(70, self.flags as i16))?;
+        writer.write_code_pair(&CodePair::new_f64(10, self.base_point.x))?;
+        writer.write_code_pair(&CodePair::new_f64(20, self.base_point.y))?;
+        writer.write_code_pair(&CodePair::new_f64(30, self.base_point.z))?;
         if version >= &AcadVersion::R12 {
-            try!(writer.write_code_pair(&CodePair::new_string(3, &self.name)));
+            writer.write_code_pair(&CodePair::new_string(3, &self.name))?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_string(1, &self.xref_path_name)));
+        writer.write_code_pair(&CodePair::new_string(1, &self.xref_path_name))?;
         if !self.description.is_empty() {
-            try!(writer.write_code_pair(&CodePair::new_string(4, &self.description)));
+            writer.write_code_pair(&CodePair::new_string(4, &self.description))?;
         }
 
         for e in &self.entities {
-            try!(e.write(version, false, writer)); // entities in blocks never have handles
+            e.write(version, false, writer)?; // entities in blocks never have handles
         }
 
-        try!(writer.write_code_pair(&CodePair::new_str(0, "ENDBLK")));
+        writer.write_code_pair(&CodePair::new_str(0, "ENDBLK"))?;
         if write_handles && self.handle != 0 {
-            try!(writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle))));
+            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
         }
 
         if version >= &AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                try!(group.write(writer));
+                group.write(writer)?;
             }
         }
 
         if version >= &AcadVersion::R2000 && self.owner_handle != 0 {
-            try!(writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle))));
+            writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle)))?;
         }
 
         if version >= &AcadVersion::R13 {
-            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity")));
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
         }
 
         if self.is_in_paperspace {
-            try!(writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace))));
+            writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace)))?;
         }
 
-        try!(writer.write_code_pair(&CodePair::new_string(8, &self.layer)));
+        writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
         if version >= &AcadVersion::R13 {
-            try!(writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd")));
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd"))?;
         }
 
         for x in &self.x_data {
-            try!(x.write(&version, writer));
+            x.write(&version, writer)?;
         }
 
         Ok(())
