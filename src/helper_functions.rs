@@ -362,16 +362,6 @@ macro_rules! assert_or_err {
     )
 }
 
-// Used to turn Option<T> into DxfResult<T>.
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
-            Some(v) => v,
-            None => return Err(DxfError::UnexpectedEnumValue)
-        }
-    )
-}
-
 // returns the next CodePair that's not 0, or bails out early
 macro_rules! next_pair {
     ($expr : expr) => (
