@@ -3,9 +3,10 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::{get_code_pair_type, get_expected_type, get_reader_function};
+use ::ExpectedType;
 
 use xml_helpers::*;
+use other_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -198,7 +199,7 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
 }
 
 fn get_read_command(element: &Element) -> String {
-    let expected_type = get_expected_type(code(element)).unwrap();
+    let expected_type = ExpectedType::get_expected_type(code(element)).unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
     converter.replace("{}", &format!("pair.value.{}()?", reader_fun))
@@ -234,7 +235,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
         fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_str(9, \"${name}\"))?;\n", name=name(&v), indent=indent));
         let write_converter = if write_converter(&v).is_empty() { String::from("{}") } else { write_converter(&v).clone() };
         if code(&v) > 0 {
-            let expected_type = get_code_pair_type(get_expected_type(code(&v)).unwrap());
+            let expected_type = get_code_pair_type(ExpectedType::get_expected_type(code(&v)).unwrap());
             let value = write_converter.replace("{}", &format!("self.{}", field(&v)));
             fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
                 code=code(&v),

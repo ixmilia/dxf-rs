@@ -3,14 +3,14 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::{get_code_pair_type, get_expected_type};
+use ::ExpectedType;
 
 use xml_helpers::*;
+use other_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
-//use std::iter::Iterator;
 
 pub fn generate_tables() {
     let element = load_xml();
@@ -296,7 +296,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
                 if allow_multiples(&field) {
                     let code = code(&field);
-                    let typ = get_expected_type(code).unwrap();
+                    let typ = ExpectedType::get_expected_type(code).unwrap();
                     let typ = get_code_pair_type(typ);
                     let deref = if typ == "string" { "" } else { "*" };
                     fun.push_str(&format!("{indent}        for x in &item.{field} {{\n", indent=indent, field=name(&field)));
@@ -308,7 +308,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                     let codes = codes(&field);
                     if codes.len() == 1 {
                         let code = codes[0];
-                        let typ = get_expected_type(code).unwrap();
+                        let typ = ExpectedType::get_expected_type(code).unwrap();
                         let typ = get_code_pair_type(typ);
                         let value = format!("item.{}", name(&field));
                         let write_converter = if attr(&field, "WriteConverter").is_empty() { String::from("{}") } else { attr(&field, "WriteConverter") };

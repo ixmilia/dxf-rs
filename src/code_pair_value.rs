@@ -12,6 +12,7 @@ use ::{
     DxfResult,
 };
 
+/// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
 pub enum CodePairValue {
     Boolean(i16),

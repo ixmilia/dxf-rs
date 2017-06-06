@@ -2,8 +2,8 @@
 
 extern crate xmltree;
 use self::xmltree::Element;
-
-use ::{get_expected_type, get_reader_function};
+use other_helpers::*;
+use ::ExpectedType;
 
 pub fn attr(element: &Element, name: &str) -> String {
     match &element.attributes.get(name) {
@@ -51,7 +51,7 @@ pub fn generate_writer(element: &Element) -> bool {
 }
 
 pub fn get_field_reader(element: &Element) -> String {
-    let expected_type = get_expected_type(code(&element)).unwrap();
+    let expected_type = ExpectedType::get_expected_type(code(&element)).unwrap();
     let reader_fun = get_reader_function(&expected_type);
     let mut read_converter = attr(&element, "ReadConverter");
     if read_converter.is_empty() {

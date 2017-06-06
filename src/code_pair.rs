@@ -8,6 +8,8 @@ use std::fmt::{
 
 use ::CodePairValue;
 
+/// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
+/// data itself.
 #[derive(Clone, PartialEq)]
 pub struct CodePair {
     pub code: i32,

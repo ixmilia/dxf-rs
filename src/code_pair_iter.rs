@@ -6,7 +6,6 @@ use ::{
     DxfError,
     DxfResult,
     ExpectedType,
-    get_expected_type,
 };
 
 use helper_functions::*;
@@ -80,7 +79,7 @@ impl<T: Read> CodePairIter<T> {
         };
 
         // construct the value pair
-        let expected_type = match get_expected_type(code) {
+        let expected_type = match ExpectedType::get_expected_type(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue)),
         };
@@ -109,7 +108,7 @@ impl<T: Read> CodePairIter<T> {
         }
 
         // Read value.  If no data is available die horribly.
-        let expected_type = match get_expected_type(code) {
+        let expected_type = match ExpectedType::get_expected_type(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue)),
         };

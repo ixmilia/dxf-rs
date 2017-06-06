@@ -3,9 +3,10 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::{ExpectedType, get_code_pair_type, get_expected_type};
+use ::ExpectedType;
 
 use xml_helpers::*;
+use other_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -525,7 +526,7 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
                 predicates.push(format!("{} != {}", attr(&write_command, "Value"), attr(&write_command, "DontWriteIfValueIs")));
             }
             let code = code(&write_command);
-            let expected_type = get_expected_type(code).unwrap();
+            let expected_type = ExpectedType::get_expected_type(code).unwrap();
             let typ = get_code_pair_type(expected_type);
             if predicates.len() > 0 {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
@@ -581,7 +582,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     }
 
     if allow_multiples(&field) {
-        let expected_type = get_expected_type(codes(&field)[0]).unwrap();
+        let expected_type = ExpectedType::get_expected_type(codes(&field)[0]).unwrap();
         let val = if field.name == "Pointer" {
             "&as_handle(*v)"
         }
@@ -634,7 +635,7 @@ fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
 }
 
 fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
-    let expected_type = get_expected_type(code).unwrap();
+    let expected_type = ExpectedType::get_expected_type(code).unwrap();
     let typ = get_code_pair_type(expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
     if field.name == "Pointer" {
