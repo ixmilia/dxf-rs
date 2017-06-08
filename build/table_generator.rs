@@ -70,6 +70,10 @@ fn generate_table_items(fun: &mut String, element: &Element) {
                 if allow_multiples(&field) {
                     typ = format!("Vec<{}>", typ);
                 }
+                let is_private = name.starts_with("_");
+                if is_private {
+                    fun.push_str("    #[doc(hidden)]\n");
+                }
                 fun.push_str(&format!("    pub {name}: {typ},\n", name=name, typ=typ));
             }
         }

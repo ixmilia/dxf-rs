@@ -33,7 +33,7 @@
     <Field Name="_object_ids_c" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_object_ids_d" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <!-- a 94/0 code pair is usually read here to indicate the end of the object ids, but the generated reader doesn't depend on this to be present -->
-    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" Accessibility="private" />
+    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" />
     <Field Name="is_original_object_format" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbProxyObject")' MinVersion="R13" />
@@ -138,36 +138,36 @@
     <Field Name="evaluator_id" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="field_code_string" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="field_code_string_overflow" Code="3" Type="String" DefaultValue="String::new()" />
-    <Field Name="format_string" Code="4" Type="String" DefaultValue="String::new()" Accessibility="private" />
+    <Field Name="_format_string" Code="4" Type="String" DefaultValue="String::new()" />
     <Field Name="evaluation_error_message" Code="300" Type="String" DefaultValue="String::new()" MaxVersion="R2007" />
-    <Field Name="_child_field_count" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_child_field_count" Code="90" Type="i32" DefaultValue="0" />
     <Pointer Name="child_fields" Code="360" Type="Field" AllowMultiples="true" />
     <Field Name="evaluation_option" Code="91" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="filling_option" Code="92" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="field_state" Code="94" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="evaluation_status" Code="95" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="evaluation_error_code" Code="96" Type="i32" DefaultValue="0" MaxVersion="R2007" />
-    <Field Name="_object_id_count" Code="97" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_object_id_count" Code="97" Type="i32" DefaultValue="0" />
     <Pointer Name="objects" Code="331" Type="Object" AllowMultiples="true" />
-    <Field Name="_data_set_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_data_set_count" Code="93" Type="i32" DefaultValue="0" />
     <Field Name="field_data_keys" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="evaluated_cache_key" Code="7" Type="String" DefaultValue='String::from("ACFD_FIELD_VALUE")' ProtectedSet="true" />
-    <Field Name="_value_type_code" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_value_type_code" Code="90" Type="i32" DefaultValue="0" />
     <!-- internal properties -->
-    <Field Name="_long_value" Code="91" Type="i32" DefaultValue="0" Accessibility="private" />
-    <Field Name="_double_value" Code="140" Type="f64" DefaultValue="0.0" Accessibility="private" />
-    <Field Name="_id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" Accessibility="private" />
-    <Field Name="_binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
-    <Field Name="_binary_data" Code="310" Type="String" DefaultValue="String::new()" Accessibility="private" />
-    <Field Name="_format_string_code301" Code="301" Type="String" DefaultValue="String::new()" Accessibility="private" />
-    <Field Name="_format_string_overflow" Code="9" Type="String" DefaultValue="String::new()" Accessibility="private" />
-    <Field Name="_format_string_length" Code="98" Type="i32" DefaultValue="0" Accessibility="private" />
-    <Field Name="_child_field_count_value_type_code" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" Accessibility="private" />
+    <Field Name="_long_value" Code="91" Type="i32" DefaultValue="0" />
+    <Field Name="_double_value" Code="140" Type="f64" DefaultValue="0.0" />
+    <Field Name="_id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" />
+    <Field Name="_binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="_binary_data" Code="310" Type="String" DefaultValue="String::new()" />
+    <Field Name="_format_string_code301" Code="301" Type="String" DefaultValue="String::new()" />
+    <Field Name="_format_string_overflow" Code="9" Type="String" DefaultValue="String::new()" />
+    <Field Name="_format_string_length" Code="98" Type="i32" DefaultValue="0" />
+    <Field Name="_child_field_count_value_type_code" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteField Field="evaluator_id" />
       <WriteField Field="field_code_string" />
       <WriteField Field="field_code_string_overflow" />
-      <WriteSpecificValue Code="4" Value="&amp;obj.format_string" MaxVersion="R2007" />
+      <WriteSpecificValue Code="4" Value="&amp;obj._format_string" MaxVersion="R2007" />
       <WriteField Field="evaluation_error_message" />
       <WriteSpecificValue Code="90" Value="obj.child_fields.len() as i32" />
       <WriteField Field="child_fields" />
@@ -191,9 +191,9 @@
       <WriteField Field="evaluated_cache_key" />
       <WriteSpecificValue Code="90" Value="obj._value_type_code" />
       <!--<WriteSpecificValue Code="_valueTypeCode" Value="Value" />-->
-      <WriteSpecificValue Code="301" Value="&amp;obj.format_string" MinVersion="R2010" />
+      <WriteSpecificValue Code="301" Value="&amp;obj._format_string" MinVersion="R2010" />
       <WriteField Field="_format_string_overflow" />
-      <WriteSpecificValue Code="98" Value="obj.format_string.len() as i32" />
+      <WriteSpecificValue Code="98" Value="obj._format_string.len() as i32" />
     </WriteOrder>
   </Object>
   <!--
@@ -223,13 +223,13 @@
     <Field Name="observation_to_tag" Code="306" Type="String" DefaultValue="String::new()" />
     <Field Name="observation_coverage_tag" Code="307" Type="String" DefaultValue="String::new()" />
     <Field Name="geo_mesh_points" Code="13" Type="GeoMeshPoint" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_geo_mesh_point_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_geo_mesh_point_count" Code="93" Type="i32" DefaultValue="0" />
     <Field Name="_source_mesh_x_points" Code="13" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_source_mesh_y_points" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_destination_mesh_x_points" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_destination_mesh_y_points" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="face_indices" Code="97" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_faces_count" Code="96" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_faces_count" Code="96" Type="i32" DefaultValue="0" />
     <Field Name="_face_point_index_x" Code="97" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
     <Field Name="_face_point_index_y" Code="98" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
     <Field Name="_face_point_index_z" Code="99" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
@@ -905,7 +905,7 @@
   -->
   <Object Name="SectionManager" SubclassMarker="AcDbSectionManager" TypeString="SECTIONMANAGER" MaxVersion="R2007">
     <Field Name="requires_full_update" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="_section_count" Code="90" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_section_count" Code="90" Type="i32" DefaultValue="0" />
     <Pointer Name="section_entities" Code="330" Type="Entity" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSectionManager")' />

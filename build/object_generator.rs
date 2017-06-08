@@ -202,17 +202,16 @@ fn generate_object_types(fun: &mut String, element: &Element) {
             fun.push_str(&format!("pub struct {typ} {{\n", typ=name(c)));
             for f in &c.children {
                 let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
-                let is_private = attr(&f, "Accessibility") == "private";
-                let acc = if is_private { "" } else { "pub " };
+                let is_private = name(f).starts_with("_");
                 if !comment(&f).is_empty() {
                     fun.push_str(&format!("    /// {}\n", comment(&f)));
                 }
-                if !is_private && name(f).starts_with("_") {
+                if is_private {
                     fun.push_str("    #[doc(hidden)]\n");
                 }
                 match &*f.name {
                     "Field" => {
-                        fun.push_str(&format!("    {acc}{name}: {typ},\n", acc=acc, name=name(f), typ=t));
+                        fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=t));
                     },
                     "Pointer" => {
                         // TODO: proper handling of pointers

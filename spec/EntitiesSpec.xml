@@ -626,7 +626,7 @@
       <Flag Name="suppress_start_caps" Mask="4" />
       <Flag Name="suppress_end_caps" Mask="8" />
     </Field>
-    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="start_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" DisableWritingDefault="true" />
@@ -642,9 +642,9 @@
     <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="miter_directions" Code="13" Type="Vector" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="parameters" Code="41" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMline")' />
@@ -890,12 +890,12 @@
     <Field Name="indicator_transparency" Code="70" Type="i16" DefaultValue="0" />
     <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
-    <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="_vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_vertices_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_vertices_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" Accessibility="private" />
+    <Field Name="_back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" />
     <Field Name="_back_line_vertices_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_back_line_vertices_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="_back_line_vertices_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -978,9 +978,9 @@
       <Flag Name="is_linear" Mask="16" />
     </Field>
     <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
-    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
-    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" Accessibility="private" />
+    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
