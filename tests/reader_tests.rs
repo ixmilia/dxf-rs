@@ -161,7 +161,7 @@ fn read_dxb_file() {
     ];
     let drawing = Drawing::load(&mut data.as_slice()).unwrap();
     assert_eq!(1, drawing.entities.len());
-    assert_eq!(1i16, drawing.entities[0].common.color.get_raw_value());
+    assert_eq!(Some(1), drawing.entities[0].common.color.index());
     match drawing.entities[0].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(1.0, 2.0, 3.0), line.p1);

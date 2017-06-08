@@ -123,10 +123,9 @@ impl Default for Class {
     }
 }
 
-// public but should be internal implementation
+// internal visibility only
 impl Class {
-    #[doc(hidden)]
-    pub fn read_classes<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn read_classes<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         loop {
@@ -149,8 +148,7 @@ impl Class {
 
         Ok(())
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         if version >= &AcadVersion::R14 {

@@ -18,8 +18,7 @@ use ::helper_functions::*;
 
 use enum_primitive::FromPrimitive;
 
-#[doc(hidden)]
-pub struct DxbReader<T: Read> {
+pub(crate) struct DxbReader<T: Read> {
     reader: T,
     is_integer_mode: bool,
     layer_name: String,

@@ -73,8 +73,7 @@ impl MLineStyleElement {
 //                                                                     DataTable
 //------------------------------------------------------------------------------
 impl DataTable {
-    #[doc(hidden)]
-    pub fn set_value(&mut self, row: usize, col: usize, val: DataTableValue) {
+    pub(crate) fn set_value(&mut self, row: usize, col: usize, val: DataTableValue) {
         if row <= self.row_count && col <= self.column_count {
             self.values[row][col] = Some(val);
         }
@@ -85,8 +84,7 @@ impl DataTable {
 //                                                                    VbaProject
 //------------------------------------------------------------------------------
 impl VbaProject {
-    #[doc(hidden)]
-    pub fn get_hex_strings(&self) -> DxfResult<Vec<String>> {
+    pub(crate) fn get_hex_strings(&self) -> DxfResult<Vec<String>> {
         let mut result = vec![];
         for s in self.data.chunks(128) {
             let mut line = String::new();
@@ -126,8 +124,7 @@ impl Object {
         self.common.normalize();
         // no object-specific values to set
     }
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Object>>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Object>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         loop {
@@ -911,8 +908,7 @@ impl Object {
             _ => return Ok(false), // no custom reader
         }
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         if self.specific.is_supported_on_version(version) {

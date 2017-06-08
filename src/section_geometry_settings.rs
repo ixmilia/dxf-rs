@@ -55,10 +55,9 @@ impl Default for SectionGeometrySettings {
     }
 }
 
-// public but should be internal implementation
+// internal visibility only
 impl SectionGeometrySettings {
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<SectionGeometrySettings>>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<SectionGeometrySettings>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         // check the first pair; only code 90 can start one of these
@@ -110,8 +109,7 @@ impl SectionGeometrySettings {
 
         return Ok(Some(gs));
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;

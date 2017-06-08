@@ -59,8 +59,7 @@ impl DimensionBase {
         self.dimension_type = try_result!(DimensionType::from_i16(val & 0x0F)); // only take the lower 4 bits
         Ok(())
     }
-    #[doc(hidden)]
-    pub fn get_dimension_type(&self) -> i16 {
+    pub(crate) fn get_dimension_type(&self) -> i16 {
         let mut val = self.dimension_type as i16;
         if self.is_block_reference_referenced_by_this_block_only {
             val |= 32;
@@ -291,8 +290,7 @@ impl Entity {
         self.common.normalize();
         // no entity-specific values to set
     }
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         'new_entity: loop {
@@ -754,8 +752,7 @@ impl Entity {
             _ => return Ok(false), // no custom reader
         }
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         if self.specific.is_supported_on_version(version) {

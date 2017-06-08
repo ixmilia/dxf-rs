@@ -121,10 +121,9 @@ impl Default for Block {
     }
 }
 
-// public but should be internal implementation
+// internal visibility only
 impl Block {
-    #[doc(hidden)]
-    pub fn read_block<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn read_block<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         // match code pair:
@@ -195,8 +194,7 @@ impl Block {
 
         Ok(())
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;

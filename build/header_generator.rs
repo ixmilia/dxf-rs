@@ -153,8 +153,7 @@ fn generate_set_defaults(fun: &mut String, element: &Element) {
 
 fn generate_set_header_value(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
+    fun.push_str("    pub(crate) fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
     for v in &element.children {
         if !seen_fields.contains(&field(&v)) {
@@ -206,8 +205,7 @@ fn get_read_command(element: &Element) -> String {
 }
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     for v in &element.children {

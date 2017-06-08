@@ -11,7 +11,7 @@ use ::{
 
 use ::code_pair_writer::CodePairWriter;
 
-#[doc(hidden)] pub const EXTENSION_DATA_GROUP: i32 = 102;
+pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 
 /// Represents an application name and a collection of extension group data in the form of `CodePair`s.
 #[derive(Clone, Debug, PartialEq)]
@@ -28,8 +28,7 @@ pub enum ExtensionGroupItem {
 }
 
 impl ExtensionGroup {
-    #[doc(hidden)]
-    pub fn read_group<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<ExtensionGroup>
+    pub(crate) fn read_group<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<ExtensionGroup>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         if !application_name.starts_with("{") {
@@ -66,8 +65,7 @@ impl ExtensionGroup {
         }
         Ok(ExtensionGroup { application_name: application_name, items: items })
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         if self.items.len() > 0 {

@@ -41,10 +41,9 @@ pub struct TableCellStyle {
 }
 
 
-// public but should be internal implementation
+// internal visibility only
 impl TableCellStyle {
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<TableCellStyle>>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<TableCellStyle>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         let mut seen_name = false;

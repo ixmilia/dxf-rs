@@ -106,7 +106,7 @@ fn read_layer_color_and_layer_is_on() {
         "62", "5",
     ]);
     let layer = &drawing.layers[0];
-    assert_eq!(5, layer.color.get_raw_value());
+    assert_eq!(Some(5), layer.color.index());
     assert!(layer.is_layer_on);
 }
 
@@ -117,7 +117,7 @@ fn read_layer_color_and_layer_is_off() {
         "62", "-5",
     ]);
     let layer = &drawing.layers[0];
-    assert_eq!(5, layer.color.get_raw_value());
+    assert_eq!(Some(5), layer.color.index());
     assert!(!layer.is_layer_on);
 }
 
@@ -151,7 +151,7 @@ fn normalize_layer() {
     layer.color = Color::by_layer(); // value 256 not valid; normalized to 7
     layer.line_type_name = String::from(""); // empty string not valid; normalized to CONTINUOUS
     layer.normalize();
-    assert_eq!(7, layer.color.get_raw_value());
+    assert_eq!(Some(7), layer.color.index());
     assert_eq!("CONTINUOUS", layer.line_type_name);
 }
 

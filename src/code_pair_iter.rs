@@ -11,8 +11,7 @@ use ::{
 use helper_functions::*;
 use std::io::Read;
 
-#[doc(hidden)]
-pub struct CodePairIter<T: Read> {
+pub(crate) struct CodePairIter<T: Read> {
     reader: T,
     first_line: String,
     read_first_line: bool,

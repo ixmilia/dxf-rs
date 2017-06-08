@@ -26,8 +26,7 @@ impl Header {
         default_if_empty(&mut self.dimension_style_name, "STANDARD");
         default_if_empty(&mut self.file_name, ".");
     }
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         let mut header = Header::default();
@@ -68,8 +67,7 @@ impl Header {
 
         Ok(header)
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;

@@ -34,10 +34,9 @@ impl TransformationMatrix {
     }
 }
 
-// public but should be internal implementation
+// internal visibility only
 impl TransformationMatrix {
-    #[doc(hidden)]
-    pub fn from_vec(&mut self, values: &Vec<f64>) {
+    pub(crate) fn from_vec(&mut self, values: &Vec<f64>) {
         self.m11 = TransformationMatrix::get_value_or_default(&values, 0);
         self.m12 = TransformationMatrix::get_value_or_default(&values, 1);
         self.m13 = TransformationMatrix::get_value_or_default(&values, 2);
@@ -55,8 +54,7 @@ impl TransformationMatrix {
         self.m43 = TransformationMatrix::get_value_or_default(&values, 14);
         self.m44 = TransformationMatrix::get_value_or_default(&values, 15);
     }
-    #[doc(hidden)]
-    pub fn get_values(&self) -> Vec<f64> {
+    pub(crate) fn get_values(&self) -> Vec<f64> {
         vec![
             self.m11,
             self.m12,
@@ -76,8 +74,7 @@ impl TransformationMatrix {
             self.m44,
         ]
     }
-    #[doc(hidden)]
-    pub fn get_4x3_values_row_major(&self) -> Vec<f64> {
+    pub(crate) fn get_4x3_values_row_major(&self) -> Vec<f64> {
         vec![
             self.m11,
             self.m21,

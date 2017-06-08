@@ -63,10 +63,9 @@ impl CodePairValue {
     }
 }
 
-// public but should be internal
+// internal visibility only
 impl CodePairValue {
-    #[doc(hidden)]
-    pub fn escape_string<'a>(val: &'a String) -> Cow<'a, String> {
+    pub(crate) fn escape_string<'a>(val: &'a String) -> Cow<'a, String> {
         fn needs_escaping(c: char) -> bool {
             let c = c as u8;
             c <= 0x1F || c == 0x5E
@@ -127,8 +126,7 @@ impl CodePairValue {
             Cow::Borrowed(val)
         }
     }
-    #[doc(hidden)]
-    pub fn un_escape_string<'a>(val: &'a String) -> Cow<'a, String> {
+    pub(crate) fn un_escape_string<'a>(val: &'a String) -> Cow<'a, String> {
         fn needs_un_escaping(c: char) -> bool {
             c == '^'
         }

@@ -15,7 +15,7 @@ use ::enums::AcadVersion;
 use ::helper_functions::*;
 use ::code_pair_writer::CodePairWriter;
 
-#[doc(hidden)] pub const XDATA_APPLICATIONNAME: i32 = 1001;
+pub(crate) const XDATA_APPLICATIONNAME: i32 = 1001;
 const XDATA_STRING: i32 = 1000;
 const XDATA_CONTROLGROUP: i32 = 1002;
 const XDATA_LAYER: i32 = 1003;
@@ -58,8 +58,7 @@ pub enum XDataItem {
 }
 
 impl XData {
-    #[doc(hidden)]
-    pub fn read_item<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<XData>
+    pub(crate) fn read_item<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<XData>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         let mut xdata = XData { application_name: application_name, items: vec![] };
@@ -81,8 +80,7 @@ impl XData {
         }
         Ok(xdata)
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         // not supported on < R2000
@@ -97,7 +95,6 @@ impl XData {
 }
 
 impl XDataItem {
-    #[doc(hidden)]
     fn read_item<I>(pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<XDataItem>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
@@ -166,8 +163,7 @@ impl XDataItem {
 
         Ok(Vector::new(first, XDataItem::read_double(iter, expected_code)?, XDataItem::read_double(iter, expected_code)?))
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         match self {

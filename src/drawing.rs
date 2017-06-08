@@ -510,8 +510,7 @@ impl Drawing {
 
         Ok(())
     }
-    #[doc(hidden)]
-    pub fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         loop {

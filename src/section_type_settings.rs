@@ -36,10 +36,9 @@ impl Default for SectionTypeSettings {
     }
 }
 
-// public but should be internal implementation
+// internal visibility only
 impl SectionTypeSettings {
-    #[doc(hidden)]
-    pub fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<SectionTypeSettings>>
+    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<SectionTypeSettings>>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         // check the first pair and only continue if it's not 0
@@ -91,8 +90,7 @@ impl SectionTypeSettings {
             }
         }
     }
-    #[doc(hidden)]
-    pub fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(1, "SectionTypeSettings"))?;

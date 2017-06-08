@@ -14,8 +14,7 @@ use ::{
     DxfResult,
 };
 
-#[doc(hidden)]
-pub struct CodePairWriter<T>
+pub(crate) struct CodePairWriter<T>
     where T: Write {
 
     writer: T,

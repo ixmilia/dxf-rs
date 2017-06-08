@@ -7,8 +7,7 @@ pub struct LineWeight {
 }
 
 impl LineWeight {
-    #[doc(hidden)]
-    pub fn from_raw_value(v: i16) -> LineWeight {
+    pub(crate) fn from_raw_value(v: i16) -> LineWeight {
         LineWeight { raw_value: v }
     }
     /// Creates a new `LineWeight` that defaults back to the containing block's line weight.

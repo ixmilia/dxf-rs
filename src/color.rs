@@ -54,12 +54,10 @@ impl Color {
             None
         }
     }
-    #[doc(hidden)]
-    pub fn get_raw_value(&self) -> i16 {
+    pub(crate) fn get_raw_value(&self) -> i16 {
         self.raw_value
     }
-    #[doc(hidden)]
-    pub fn from_raw_value(val: i16) -> Color {
+    pub(crate) fn from_raw_value(val: i16) -> Color {
         Color { raw_value: val }
     }
     /// Creates a `Color` that defaults to the item's layer's color.
@@ -78,8 +76,7 @@ impl Color {
     pub fn from_index(i: u8) -> Color {
         Color { raw_value: i as i16 }
     }
-    #[doc(hidden)]
-    pub fn get_writable_color_value(&self, layer: &Layer) -> i16 {
+    pub(crate) fn get_writable_color_value(&self, layer: &Layer) -> i16 {
         let value = self.get_raw_value().abs();
         let value = match layer.is_layer_on {
             true => value,

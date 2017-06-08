@@ -22,8 +22,7 @@ use ::{Color, DxfError, DxfResult};
 use ::enums::*;
 use ::tables::Layer;
 
-#[doc(hidden)]
-pub fn verify_code(expected: i32, actual: i32) -> DxfResult<()> {
+pub(crate) fn verify_code(expected: i32, actual: i32) -> DxfResult<()> {
     if expected == actual {
         Ok(())
     }
@@ -32,8 +31,7 @@ pub fn verify_code(expected: i32, actual: i32) -> DxfResult<()> {
     }
 }
 
-#[doc(hidden)]
-pub fn as_bool(v: i16) -> bool {
+pub(crate) fn as_bool(v: i16) -> bool {
     v == 1
 }
 
@@ -60,13 +58,11 @@ fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
     epoch + duration
 }
 
-#[doc(hidden)]
-pub fn as_datetime_local(date: f64) -> DateTime<Local> {
+pub(crate) fn as_datetime_local(date: f64) -> DateTime<Local> {
     as_datetime(&Local, date)
 }
 
-#[doc(hidden)]
-pub fn as_datetime_utc(date: f64) -> DateTime<UTC> {
+pub(crate) fn as_datetime_utc(date: f64) -> DateTime<UTC> {
     as_datetime(&UTC, date)
 }
 
@@ -83,13 +79,11 @@ fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
     (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
 }
 
-#[doc(hidden)]
-pub fn as_double_local(date: DateTime<Local>) -> f64 {
+pub(crate) fn as_double_local(date: DateTime<Local>) -> f64 {
     as_double(&Local, date)
 }
 
-#[doc(hidden)]
-pub fn as_double_utc(date: DateTime<UTC>) -> f64 {
+pub(crate) fn as_double_utc(date: DateTime<UTC>) -> f64 {
     as_double(&UTC, date)
 }
 
@@ -99,18 +93,15 @@ fn as_double_conversion_test() {
     assert_eq!(2451544.9156828704, as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35)));
 }
 
-#[doc(hidden)]
-pub fn duration_as_double(duration: Duration) -> f64 {
+pub(crate) fn duration_as_double(duration: Duration) -> f64 {
     duration.num_seconds() as f64
 }
 
-#[doc(hidden)]
-pub fn as_duration(d: f64) -> Duration {
+pub(crate) fn as_duration(d: f64) -> Duration {
     Duration::seconds(d as i64)
 }
 
-#[doc(hidden)]
-pub fn as_u32(s: String) -> DxfResult<u32> {
+pub(crate) fn as_u32(s: String) -> DxfResult<u32> {
     let mut bytes = vec![];
     parse_hex_string(&s, &mut bytes)?;
     while bytes.len() < 4 {
@@ -126,31 +117,26 @@ fn as_u32_test() {
     assert_eq!(0xABCD, as_u32(String::from("ABCD")).unwrap());
 }
 
-#[doc(hidden)]
-pub fn as_handle(h: u32) -> String {
+pub(crate) fn as_handle(h: u32) -> String {
     format!("{:X}", h)
 }
 
-#[doc(hidden)]
-pub fn as_uuid(s: String) -> DxfResult<Uuid> {
+pub(crate) fn as_uuid(s: String) -> DxfResult<Uuid> {
     match Uuid::parse_str(s.as_str()) {
         Ok(uuid) => Ok(uuid),
         Err(_) => Err(DxfError::ParseError),
     }
 }
 
-#[doc(hidden)]
-pub fn as_i16(b: bool) -> i16 {
+pub(crate) fn as_i16(b: bool) -> i16 {
     if b { 1 } else { 0 }
 }
 
-#[doc(hidden)]
-pub fn uuid_string(u: &Uuid) -> String {
+pub(crate) fn uuid_string(u: &Uuid) -> String {
     format!("{}", u)
 }
 
-#[doc(hidden)]
-pub fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+pub(crate) fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
     for (x, y) in v1.drain(..).zip(v2.drain(..)) {
         result.push(comb(x, y, 0.0));
@@ -159,8 +145,7 @@ pub fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut
     v2.clear();
 }
 
-#[doc(hidden)]
-pub fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
+pub(crate) fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
     where F: Fn(f64, f64, f64) -> T {
     for (x, (y, z)) in v1.drain(..).zip(v2.drain(..).zip(v3.drain(..))) {
         result.push(comb(x, y, z))
@@ -170,46 +155,39 @@ pub fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec
     v3.clear();
 }
 
-#[doc(hidden)]
-pub fn default_if_empty(val: &mut String, default: &str) {
+pub(crate) fn default_if_empty(val: &mut String, default: &str) {
     if val.is_empty() {
         *val = String::from(default);
     }
 }
 
-#[doc(hidden)]
-pub fn ensure_positive_or_default(val: &mut f64, default: f64) {
+pub(crate) fn ensure_positive_or_default(val: &mut f64, default: f64) {
     if *val <= 0.0 {
         *val = default
     }
 }
 
-#[doc(hidden)]
-pub fn ensure_positive_or_default_i32(val: &mut i32, default: i32) {
+pub(crate) fn ensure_positive_or_default_i32(val: &mut i32, default: i32) {
     if *val <= 0 {
         *val = default;
     }
 }
 
-#[doc(hidden)]
-pub fn ensure_positive_or_default_i16(val: &mut i16, default: i16) {
+pub(crate) fn ensure_positive_or_default_i16(val: &mut i16, default: i16) {
     if *val <= 0 {
         *val = default;
     }
 }
 
-#[doc(hidden)]
-pub fn clipping_from_bool(b: bool) -> Option<XrefClippingBoundaryVisibility> {
+pub(crate) fn clipping_from_bool(b: bool) -> Option<XrefClippingBoundaryVisibility> {
     XrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 })
 }
 
-#[doc(hidden)]
-pub fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
+pub(crate) fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
     c != XrefClippingBoundaryVisibility::NotDisplayedNotPlotted
 }
 
-#[doc(hidden)]
-pub fn parse_f64(s: String) -> DxfResult<f64> {
+pub(crate) fn parse_f64(s: String) -> DxfResult<f64> {
     match s.trim().parse::<f64>() {
         Ok(d) => Ok(d),
         Err(e) => Err(DxfError::ParseFloatError(e)),
@@ -221,8 +199,7 @@ fn parse_f64_test() {
     assert_eq!(3.14, parse_f64("  3.14 ".to_string()).unwrap());
 }
 
-#[doc(hidden)]
-pub fn parse_i32(s: String) -> DxfResult<i32> {
+pub(crate) fn parse_i32(s: String) -> DxfResult<i32> {
     match s.trim().parse::<i32>() {
         Ok(i) => Ok(i),
         Err(e) => Err(DxfError::ParseIntError(e)),
@@ -234,8 +211,7 @@ fn parse_i32_test() {
     assert_eq!(2, parse_i32("  2 ".to_string()).unwrap());
 }
 
-#[doc(hidden)]
-pub fn parse_i64(s: String) -> DxfResult<i64> {
+pub(crate) fn parse_i64(s: String) -> DxfResult<i64> {
     match s.trim().parse::<i64>() {
         Ok(l) => Ok(l),
         Err(e) => Err(DxfError::ParseIntError(e)),
@@ -247,8 +223,7 @@ fn parse_i64_test() {
     assert_eq!(2, parse_i64("  2 ".to_string()).unwrap());
 }
 
-#[doc(hidden)]
-pub fn parse_i16(s: String) -> DxfResult<i16> {
+pub(crate) fn parse_i16(s: String) -> DxfResult<i16> {
     match s.trim().parse::<f64>() {
         Ok(s) => Ok(s as i16),
         Err(e) => Err(DxfError::ParseFloatError(e)),
@@ -263,14 +238,12 @@ fn parse_i16_test() {
     assert_eq!(2, parse_i16(" 2.0 ".to_string()).unwrap());
 }
 
-#[doc(hidden)]
-pub fn read_color_value(layer: &mut Layer, color: i16) -> Color {
+pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
     layer.is_layer_on = color >= 0;
     Color::from_raw_value(color.abs())
 }
 
-#[doc(hidden)]
-pub fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
+pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
     where T: Read {
 
     let mut result = String::new();
@@ -297,8 +270,7 @@ pub fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
     Some(Ok(result))
 }
 
-#[doc(hidden)]
-pub fn read_u8<T: Read>(reader: &mut T) -> Option<io::Result<u8>> {
+pub(crate) fn read_u8<T: Read>(reader: &mut T) -> Option<io::Result<u8>> {
     let mut buf = [0];
     let size = match reader.read(&mut buf) {
         Ok(v) => v,
@@ -397,15 +369,13 @@ macro_rules! vec_last {
     )
 }
 
-#[doc(hidden)]
-pub fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
+pub(crate) fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     Ok(LittleEndian::read_i16(&[a, b]))
 }
 
-#[doc(hidden)]
-pub fn read_i32<T: Read>(reader: &mut T) -> DxfResult<i32> {
+pub(crate) fn read_i32<T: Read>(reader: &mut T) -> DxfResult<i32> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
@@ -413,8 +383,7 @@ pub fn read_i32<T: Read>(reader: &mut T) -> DxfResult<i32> {
     Ok(LittleEndian::read_i32(&[a, b, c, d]))
 }
 
-#[doc(hidden)]
-pub fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
+pub(crate) fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
@@ -426,8 +395,7 @@ pub fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
     Ok(LittleEndian::read_i64(&[a, b, c, d, e, f, g, h]))
 }
 
-#[doc(hidden)]
-pub fn read_f32<T: Read>(reader: &mut T) -> DxfResult<f32> {
+pub(crate) fn read_f32<T: Read>(reader: &mut T) -> DxfResult<f32> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
@@ -435,8 +403,7 @@ pub fn read_f32<T: Read>(reader: &mut T) -> DxfResult<f32> {
     Ok(LittleEndian::read_f32(&[a, b, c, d]))
 }
 
-#[doc(hidden)]
-pub fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
+pub(crate) fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
     let c = try_from_option_io_result!(read_u8(reader));
@@ -448,8 +415,7 @@ pub fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h]))
 }
 
-#[doc(hidden)]
-pub fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<()> {
+pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<()> {
     fn char_to_value(c: char) -> DxfResult<u8> {
         let value = match c {
             '0' => 0,

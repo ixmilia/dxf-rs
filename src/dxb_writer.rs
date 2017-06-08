@@ -18,8 +18,7 @@ use ::entities::*;
 
 use itertools::Itertools;
 
-#[doc(hidden)]
-pub struct DxbWriter<T: Write> {
+pub(crate) struct DxbWriter<T: Write> {
     writer: T,
 }
 

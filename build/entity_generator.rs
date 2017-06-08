@@ -113,8 +113,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("impl EntityCommon {\n");
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>\n");
     fun.push_str("        where I: Iterator<Item = DxfResult<CodePair>> {\n");
     fun.push_str("\n");
     fun.push_str("        match pair.code {\n");
@@ -155,8 +154,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        let ent = self;\n");
@@ -253,8 +251,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
             if name(&c) == "DimensionBase" {
                 fun.push_str("impl DimensionBase {\n");
-                fun.push_str("    #[doc(hidden)]\n");
-                fun.push_str("    pub fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+                fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
                 fun.push_str("        where T: Write {\n");
                 fun.push_str("\n");
                 fun.push_str("        let ent = self;\n");
@@ -305,8 +302,7 @@ fn generate_flags_methods(fun: &mut String, element: &Element) {
 }
 
 fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n");
+    fun.push_str("    pub(crate) fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {
         if name(&entity) != "Entity" && name(&entity) != "DimensionBase" {
@@ -326,8 +322,7 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
 }
 
 fn generate_type_string(fun: &mut String, element: &Element) {
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn from_type_string(type_string: &str) -> Option<EntityType> {\n");
+    fun.push_str("    pub(crate) fn from_type_string(type_string: &str) -> Option<EntityType> {\n");
     fun.push_str("        match type_string {\n");
     for c in &element.children {
         if name(c) != "Entity" && name(c) != "DimensionBase" && base_class(&c) != "DimensionBase" && !attr(&c, "TypeString").is_empty() {
@@ -343,8 +338,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
     fun.push_str("        }\n");
     fun.push_str("    }\n");
 
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn to_type_string(&self) -> &str {\n");
+    fun.push_str("    pub(crate) fn to_type_string(&self) -> &str {\n");
     fun.push_str("        match self {\n");
     for c in &element.children {
         // only write the first type string given
@@ -359,8 +353,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
 }
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
+    fun.push_str("    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
     fun.push_str("        match self {\n");
     for c in &element.children {
         if c.name != "Entity" { panic!("expected top level entity"); }
@@ -428,8 +421,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 }
 
 fn generate_write(fun: &mut String, element: &Element) {
-    fun.push_str("    #[doc(hidden)]\n");
-    fun.push_str("    pub fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        match self {\n");

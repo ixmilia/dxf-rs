@@ -7,8 +7,7 @@ use ::{
 };
 use ::objects::Object;
 
-#[doc(hidden)]
-pub struct ObjectIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
+pub(crate) struct ObjectIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
     pub iter: &'a mut PutBack<I>,
 }
 

@@ -30,8 +30,7 @@ impl Point {
     pub fn origin() -> Point {
         Point::new(0.0, 0.0, 0.0)
     }
-    #[doc(hidden)]
-    pub fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
+    pub(crate) fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
         match pair.code {
             10 => self.x = pair.value.assert_f64()?,
             20 => self.y = pair.value.assert_f64()?,

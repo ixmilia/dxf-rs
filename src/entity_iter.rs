@@ -10,8 +10,7 @@ use ::{
 };
 use ::entities::*;
 
-#[doc(hidden)]
-pub struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
+pub(crate) struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
     pub iter: &'a mut PutBack<I>,
 }
 
@@ -27,14 +26,12 @@ impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'
 }
 
 impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> EntityIter<'a, I> {
-    #[doc(hidden)]
-    pub fn read_entities_into_vec(&mut self, entities: &mut Vec<Entity>) -> DxfResult<()> {
+    pub(crate) fn read_entities_into_vec(&mut self, entities: &mut Vec<Entity>) -> DxfResult<()> {
         collect_entities(self, entities)
     }
 }
 
-#[doc(hidden)]
-pub fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResult<()>
+pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResult<()>
     where I: Iterator<Item = Entity> {
 
     fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
