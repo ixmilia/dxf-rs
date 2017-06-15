@@ -89,7 +89,7 @@ impl VbaProject {
         for s in self.data.chunks(128) {
             let mut line = String::new();
             for b in s {
-                line.push_str(&format!("{:X}", b));
+                line.push_str(&format!("{:02X}", b));
             }
             result.push(line);
         }

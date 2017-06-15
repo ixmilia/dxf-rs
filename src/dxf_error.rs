@@ -49,7 +49,7 @@ impl fmt::Display for DxfError {
             &DxfError::ParseError => write!(formatter, "there was a general parsing error"),
             &DxfError::UnexpectedCode(c) => write!(formatter, "an unexpected code '{}' was encountered", c),
             &DxfError::UnexpectedCodePair(ref cp, ref s) => write!(formatter, "the code pair '{:?}' was not expected at this time: {}", cp, s),
-            &DxfError::UnexpectedByte(ref b) => write!(formatter, "the byte '{:x}' was not expected at this time", b),
+            &DxfError::UnexpectedByte(ref b) => write!(formatter, "the byte '0x{:02x}' was not expected at this time", b),
             &DxfError::UnexpectedEndOfInput => write!(formatter, "the input unexpectedly ended before the drawing was completely loaded"),
             &DxfError::UnexpectedEnumValue => write!(formatter, "the specified enum value does not fall into the expected range"),
             &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
