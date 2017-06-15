@@ -92,6 +92,7 @@
 
 #[macro_use] extern crate enum_primitive;
 
+extern crate image;
 extern crate itertools;
 
 mod code_pair;

@@ -5,11 +5,14 @@ use std::fmt;
 use std::io;
 use std::num;
 
+use ::image;
+
 use CodePair;
 
 #[derive(Debug)]
 pub enum DxfError {
     IoError(io::Error),
+    ImageError(image::ImageError),
     ParseFloatError(num::ParseFloatError),
     ParseIntError(num::ParseIntError),
     ParseError,
@@ -30,10 +33,17 @@ impl From<io::Error> for DxfError {
     }
 }
 
+impl From<::image::ImageError> for DxfError {
+    fn from(ie: ::image::ImageError) -> DxfError {
+        DxfError::ImageError(ie)
+    }
+}
+
 impl fmt::Display for DxfError {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &DxfError::IoError(ref e) => write!(formatter, "{}", e),
+            &DxfError::ImageError(ref e) => write!(formatter, "{}", e),
             &DxfError::ParseFloatError(ref e) => write!(formatter, "{}", e),
             &DxfError::ParseIntError(ref e) => write!(formatter, "{}", e),
             &DxfError::ParseError => write!(formatter, "there was a general parsing error"),
@@ -54,6 +64,7 @@ impl error::Error for DxfError {
     fn description(&self) -> &str {
         match self {
             &DxfError::IoError(ref e) => e.description(),
+            &DxfError::ImageError(ref e) => e.description(),
             &DxfError::ParseFloatError(ref e) => e.description(),
             &DxfError::ParseIntError(ref e) => e.description(),
             &DxfError::ParseError => "there was a general parsing error",
@@ -71,6 +82,7 @@ impl error::Error for DxfError {
     fn cause(&self) -> Option<&error::Error> {
         match self {
             &DxfError::IoError(ref e) => Some(e),
+            &DxfError::ImageError(ref e) => Some(e),
             &DxfError::ParseFloatError(ref e) => Some(e),
             &DxfError::ParseIntError(ref e) => Some(e),
             _ => None,

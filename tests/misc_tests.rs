@@ -6,6 +6,12 @@ use self::dxf::entities::*;
 use self::dxf::enums::*;
 use self::dxf::objects::*;
 
+extern crate image;
+use self::image::{
+    DynamicImage,
+    GenericImage,
+};
+
 mod test_helpers;
 use test_helpers::helpers::*;
 
@@ -146,4 +152,33 @@ fn normalize_ucs() {
     file.normalize();
     assert_eq!(1, file.ucs.len());
     assert_eq!("primary ucs", file.ucs[0].name);
+}
+
+#[test]
+fn thumbnail_round_trip() {
+    // prepare 1x1 px image, red pixel
+    let mut imgbuf = image::ImageBuffer::new(1, 1);
+    imgbuf.put_pixel(0, 0, image::Rgb([255u8, 0, 0]));
+    let thumbnail = DynamicImage::ImageRgb8(imgbuf);
+
+    // write drawing with thumbnail
+    let drawing = Drawing {
+        header: Header {
+            version: AcadVersion::R2000, // thumbnails are only written >= R2000
+            .. Default::default()
+        },
+        thumbnail: Some(thumbnail),
+        .. Default::default()
+    };
+    let drawing_text = to_test_string(&drawing);
+    assert!(drawing_text.contains(&vec![
+        "  0", "SECTION",
+        "  2", "THUMBNAILIMAGE",
+    ].join("\r\n")));
+
+    // re-read the drawing
+    let drawing = parse_drawing(&*drawing_text);
+    let thumbnail = drawing.thumbnail.unwrap();
+    assert_eq!((1, 1), thumbnail.dimensions());
+    assert_eq!(image::Rgba([255u8, 0, 0, 255]), thumbnail.get_pixel(0, 0));
 }
