@@ -103,7 +103,7 @@
     <Field Name="object_id_3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_id_4" Code="360" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="terminator" Code="94" Type="i32" DefaultValue="0" />
-    <Field Name="_object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" MinVersion="R2000" />
+    <Field Name="__object_drawing_format" Code="95" Type="u32" DefaultValue="0" ReadConverter="{} as u32" WriteConverter="{} as i32" MinVersion="R2000" />
     <Field Name="original_data_format_is_dxf" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2000" />
   </Entity>
   <!--
@@ -189,7 +189,7 @@
     <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="try_result!(MTextFlag::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
     <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="__secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
@@ -264,7 +264,7 @@
     <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="(MTextFlag)" WriteConverter="{} as i16" MinVersion="R2007" />
     <Field Name="is_really_locked" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
-    <Field Name="_secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
+    <Field Name="__secondary_attribute_count" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2007" />
     <Pointer Name="secondary_attributes" Code="340" Type="IItem" AllowMultiples="true" MinVersion="R2007" />
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
@@ -440,8 +440,8 @@
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
     <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
-    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>
@@ -502,9 +502,9 @@
     <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
     <Field Name="vertex_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="_vertices_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="10" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="associated_annotation_reference" Code="340" Type="String" DefaultValue="String::new()" />
@@ -626,25 +626,25 @@
       <Flag Name="suppress_start_caps" Mask="4" />
       <Flag Name="suppress_end_caps" Mask="8" />
     </Field>
-    <Field Name="_vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__vertex_count" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="style_element_count" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="start_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" DisableWritingDefault="true" />
-    <Field Name="_vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_segment_direction_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_segment_direction_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_segment_direction_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__segment_direction_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__segment_direction_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__segment_direction_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="segment_directions" Code="12" Type="Vector" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_miter_direction_x" Code="13" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_miter_direction_y" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_miter_direction_z" Code="33" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__miter_direction_x" Code="13" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__miter_direction_y" Code="23" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__miter_direction_z" Code="33" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="miter_directions" Code="13" Type="Vector" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__parameter_count" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="parameters" Code="41" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__area_fill_parameter_count" Code="75" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="area_fill_parameters" Code="42" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMline")' />
@@ -890,15 +890,15 @@
     <Field Name="indicator_transparency" Code="70" Type="i16" DefaultValue="0" />
     <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
-    <Field Name="_vertex_count" Code="92" Type="i32" DefaultValue="0" />
-    <Field Name="_vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_vertices_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertex_count" Code="92" Type="i32" DefaultValue="0" />
+    <Field Name="__vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__vertices_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" />
-    <Field Name="_back_line_vertices_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_back_line_vertices_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_back_line_vertices_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__back_line_vertex_count" Code="93" Type="i32" DefaultValue="0" />
+    <Field Name="__back_line_vertices_x" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__back_line_vertices_y" Code="22" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__back_line_vertices_z" Code="32" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="back_line_vertices" Code="12" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Pointer Name="geometry_settings" Code="360" Type="IItem" />
     <WriteOrder>
@@ -978,9 +978,9 @@
       <Flag Name="is_linear" Mask="16" />
     </Field>
     <Field Name="degree_of_curve" Code="71" Type="i32" DefaultValue="1" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="_number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="_number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="_number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="__number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
     <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
@@ -988,13 +988,13 @@
     <Field Name="end_tangent" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
     <Field Name="knot_values" Code="40" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="weight" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
-    <Field Name="_control_point_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_control_point_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_control_point_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__control_point_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__control_point_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__control_point_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="control_points" Code="10" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="_fit_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_fit_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_fit_point_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__fit_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__fit_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__fit_point_z" Code="31" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="fit_points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSpline")' />
@@ -1122,8 +1122,8 @@
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
-    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
@@ -1160,8 +1160,8 @@
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
-    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
@@ -1198,8 +1198,8 @@
     </Field>
     <Field Name="contrast" Code="281" Type="i16" DefaultValue="100" />
     <Field Name="fade" Code="282" Type="i16" DefaultValue="0" />
-    <Field Name="_point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__point_y" Code="21" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="points" Code="11" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbUnderlayReference")' />
@@ -1276,8 +1276,8 @@
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
     <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="try_result!(ImageClippingBoundaryType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
-    <Field Name="_clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="_clipping_vertices_y" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__clipping_vertices_y" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="clipping_vertices" Code="14" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="is_inside_clipping" Code="290" Type="bool" DefaultValue="false" MinVersion="R2010" />
     <WriteOrder>

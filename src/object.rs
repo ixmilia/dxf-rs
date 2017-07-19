@@ -194,64 +194,64 @@ impl Object {
     fn post_parse(&mut self) -> DxfResult<()> {
         match self.specific {
             ObjectType::AcadProxyObject(ref mut proxy) => {
-                for item in &proxy._object_ids_a {
+                for item in &proxy.__object_ids_a {
                     proxy.object_ids.push(item.clone());
                 }
-                for item in &proxy._object_ids_b {
+                for item in &proxy.__object_ids_b {
                     proxy.object_ids.push(item.clone());
                 }
-                for item in &proxy._object_ids_c {
+                for item in &proxy.__object_ids_c {
                     proxy.object_ids.push(item.clone());
                 }
-                for item in &proxy._object_ids_d {
+                for item in &proxy.__object_ids_d {
                     proxy.object_ids.push(item.clone());
                 }
-                proxy._object_ids_a.clear();
-                proxy._object_ids_b.clear();
-                proxy._object_ids_c.clear();
-                proxy._object_ids_d.clear();
+                proxy.__object_ids_a.clear();
+                proxy.__object_ids_b.clear();
+                proxy.__object_ids_c.clear();
+                proxy.__object_ids_d.clear();
             },
             ObjectType::GeoData(ref mut geo) => {
                 let mut source_points = vec![];
                 let mut destination_points = vec![];
-                combine_points_2(&mut geo._source_mesh_x_points, &mut geo._source_mesh_y_points, &mut source_points, Point::new);
-                combine_points_2(&mut geo._destination_mesh_x_points, &mut geo._destination_mesh_y_points, &mut destination_points, Point::new);
+                combine_points_2(&mut geo.__source_mesh_x_points, &mut geo.__source_mesh_y_points, &mut source_points, Point::new);
+                combine_points_2(&mut geo.__destination_mesh_x_points, &mut geo.__destination_mesh_y_points, &mut destination_points, Point::new);
                 for (s, d) in source_points.drain(..).zip(destination_points.drain(..)) {
                     geo.geo_mesh_points.push(GeoMeshPoint::new(s, d));
                 }
 
-                combine_points_3(&mut geo._face_point_index_x, &mut geo._face_point_index_y, &mut geo._face_point_index_z, &mut geo.face_indices, Point::new);
+                combine_points_3(&mut geo.__face_point_index_x, &mut geo.__face_point_index_y, &mut geo.__face_point_index_z, &mut geo.face_indices, Point::new);
             },
             ObjectType::Material(ref mut material) => {
-                material.diffuse_map_transformation_matrix.from_vec(&material._diffuse_map_transformation_matrix_values);
-                material.specular_map_transformation_matrix.from_vec(&material._specular_map_transformation_matrix_values);
-                material.reflection_map_transformation_matrix.from_vec(&material._reflection_map_transformation_matrix_values);
-                material.opacity_map_transformation_matrix.from_vec(&material._opacity_map_transformation_matrix_values);
-                material.bump_map_transformation_matrix.from_vec(&material._bump_map_transformation_matrix_values);
-                material.refraction_map_transformation_matrix.from_vec(&material._refraction_map_transformation_matrix_values);
-                material.normal_map_transformation_matrix.from_vec(&material._normal_map_transformation_matrix_values);
-                material._diffuse_map_transformation_matrix_values.clear();
-                material._specular_map_transformation_matrix_values.clear();
-                material._reflection_map_transformation_matrix_values.clear();
-                material._opacity_map_transformation_matrix_values.clear();
-                material._bump_map_transformation_matrix_values.clear();
-                material._refraction_map_transformation_matrix_values.clear();
-                material._normal_map_transformation_matrix_values.clear();
+                material.diffuse_map_transformation_matrix.from_vec(&material.__diffuse_map_transformation_matrix_values);
+                material.specular_map_transformation_matrix.from_vec(&material.__specular_map_transformation_matrix_values);
+                material.reflection_map_transformation_matrix.from_vec(&material.__reflection_map_transformation_matrix_values);
+                material.opacity_map_transformation_matrix.from_vec(&material.__opacity_map_transformation_matrix_values);
+                material.bump_map_transformation_matrix.from_vec(&material.__bump_map_transformation_matrix_values);
+                material.refraction_map_transformation_matrix.from_vec(&material.__refraction_map_transformation_matrix_values);
+                material.normal_map_transformation_matrix.from_vec(&material.__normal_map_transformation_matrix_values);
+                material.__diffuse_map_transformation_matrix_values.clear();
+                material.__specular_map_transformation_matrix_values.clear();
+                material.__reflection_map_transformation_matrix_values.clear();
+                material.__opacity_map_transformation_matrix_values.clear();
+                material.__bump_map_transformation_matrix_values.clear();
+                material.__refraction_map_transformation_matrix_values.clear();
+                material.__normal_map_transformation_matrix_values.clear();
             },
             ObjectType::MLineStyle(ref mut mline) => {
-                for (o, (c, l)) in mline._element_offsets.drain(..).zip(mline._element_colors.drain(..).zip(mline._element_line_types.drain(..))) {
+                for (o, (c, l)) in mline.__element_offsets.drain(..).zip(mline.__element_colors.drain(..).zip(mline.__element_line_types.drain(..))) {
                     mline.elements.push(MLineStyleElement::new(o, c, l));
                 }
             },
             ObjectType::VbaProject(ref mut vba) => {
                 // each char in each _hex_data should be added to `data` byte array
                 let mut result = vec![];
-                for s in &vba._hex_data {
+                for s in &vba.__hex_data {
                     parse_hex_string(s, &mut result)?;
                 }
 
                 vba.data = result;
-                vba._hex_data.clear();
+                vba.__hex_data.clear();
             },
             _ => (),
         }
@@ -495,18 +495,18 @@ impl Object {
                         },
                         43 => {
                             if is_reading_normal {
-                                mat._normal_map_transformation_matrix_values.push(pair.value.assert_f64()?);
+                                mat.__normal_map_transformation_matrix_values.push(pair.value.assert_f64()?);
                             }
                             else {
-                                mat._diffuse_map_transformation_matrix_values.push(pair.value.assert_f64()?);
+                                mat.__diffuse_map_transformation_matrix_values.push(pair.value.assert_f64()?);
                             }
                         },
                         44 => { mat.specular_gloss_factor = pair.value.assert_f64()?; },
                         45 => { mat.specular_color_factor = pair.value.assert_f64()?; },
                         46 => { mat.specular_map_blend_factor = pair.value.assert_f64()?; },
-                        47 => { mat._specular_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
+                        47 => { mat.__specular_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         48 => { mat.reflection_map_blend_factor = pair.value.assert_f64()?; },
-                        49 => { mat._reflection_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
+                        49 => { mat.__reflection_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         62 => { mat.gen_proc_color_index_value = Color::from_raw_value(pair.value.assert_i16()?); },
                         70 => { mat.override_ambient_color = as_bool(pair.value.assert_i16()?); },
                         71 => { mat.override_diffuse_color = as_bool(pair.value.assert_i16()?); },
@@ -568,12 +568,12 @@ impl Object {
                         94 => { mat.channel_flags = pair.value.assert_i32()?; },
                         140 => { mat.opacity_factor = pair.value.assert_f64()?; },
                         141 => { mat.opacity_map_blend_factor = pair.value.assert_f64()?; },
-                        142 => { mat._opacity_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
+                        142 => { mat.__opacity_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         143 => { mat.bump_map_blend_factor = pair.value.assert_f64()?; },
-                        144 => { mat._bump_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
+                        144 => { mat.__bump_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         145 => { mat.refraction_index = pair.value.assert_f64()?; },
                         146 => { mat.refraction_map_blend_factor = pair.value.assert_f64()?; },
-                        147 => { mat._refraction_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
+                        147 => { mat.__refraction_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         148 => { mat.translucence = pair.value.assert_f64()?; },
                         170 => { mat.specular_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?)); },
                         171 => { mat.use_image_file_for_reflection_map = as_bool(pair.value.assert_i16()?); },
@@ -662,21 +662,21 @@ impl Object {
                     match pair.code {
                         2 => { mline.style_name = pair.value.assert_string()?; },
                         3 => { mline.description = pair.value.assert_string()?; },
-                        6 => { mline._element_line_types.push(pair.value.assert_string()?); },
-                        49 => { mline._element_offsets.push(pair.value.assert_f64()?); },
+                        6 => { mline.__element_line_types.push(pair.value.assert_string()?); },
+                        49 => { mline.__element_offsets.push(pair.value.assert_f64()?); },
                         51 => { mline.start_angle = pair.value.assert_f64()?; },
                         52 => { mline.end_angle = pair.value.assert_f64()?; },
                         62 => {
                             if read_element_count {
-                                mline._element_colors.push(Color::from_raw_value(pair.value.assert_i16()?));
+                                mline.__element_colors.push(Color::from_raw_value(pair.value.assert_i16()?));
                             }
                             else {
                                 mline.fill_color = Color::from_raw_value(pair.value.assert_i16()?);
                             }
                         },
-                        70 => { mline._flags = pair.value.assert_i16()? as i32; },
+                        70 => { mline.__flags = pair.value.assert_i16()? as i32; },
                         71 => {
-                            mline._element_count = pair.value.assert_i16()? as i32;
+                            mline.__element_count = pair.value.assert_i16()? as i32;
                             read_element_count = true;
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },

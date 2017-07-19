@@ -134,17 +134,17 @@ impl ModelPoint {
 impl ProxyEntity {
     // lower word
     pub fn get_object_drawing_format_version(&self) -> i32 {
-        (self._object_drawing_format & 0xFFFF) as i32
+        (self.__object_drawing_format & 0xFFFF) as i32
     }
     pub fn set_object_drawing_format_version(&mut self, version: i32) {
-        self._object_drawing_format |= version as u32 & 0xFFFF;
+        self.__object_drawing_format |= version as u32 & 0xFFFF;
     }
     // upper word
     pub fn get_object_maintenance_release_version(&self) -> i32 {
-        self._object_drawing_format as i32 >> 4
+        self.__object_drawing_format as i32 >> 4
     }
     pub fn set_object_mainenance_release_version(&mut self, version: i32) {
-        self._object_drawing_format = (version << 4) as u32 + (self._object_drawing_format & 0xFFFF);
+        self.__object_drawing_format = (version << 4) as u32 + (self.__object_drawing_format & 0xFFFF);
     }
 }
 
@@ -430,35 +430,35 @@ impl Entity {
     fn post_parse(&mut self) -> DxfResult<()> {
         match self.specific {
             EntityType::Image(ref mut image) => {
-                combine_points_2(&mut image._clipping_vertices_x, &mut image._clipping_vertices_y, &mut image.clipping_vertices, Point::new);
+                combine_points_2(&mut image.__clipping_vertices_x, &mut image.__clipping_vertices_y, &mut image.clipping_vertices, Point::new);
             },
             EntityType::Leader(ref mut leader) => {
-                combine_points_3(&mut leader._vertices_x, &mut leader._vertices_y, &mut leader._vertices_z, &mut leader.vertices, Point::new);
+                combine_points_3(&mut leader.__vertices_x, &mut leader.__vertices_y, &mut leader.__vertices_z, &mut leader.vertices, Point::new);
             },
             EntityType::MLine(ref mut mline) => {
-                combine_points_3(&mut mline._vertices_x, &mut mline._vertices_y, &mut mline._vertices_z, &mut mline.vertices, Point::new);
-                combine_points_3(&mut mline._segment_direction_x, &mut mline._segment_direction_y, &mut mline._segment_direction_z, &mut mline.segment_directions, Vector::new);
-                combine_points_3(&mut mline._miter_direction_x, &mut mline._miter_direction_y, &mut mline._miter_direction_z, &mut mline.miter_directions, Vector::new);
+                combine_points_3(&mut mline.__vertices_x, &mut mline.__vertices_y, &mut mline.__vertices_z, &mut mline.vertices, Point::new);
+                combine_points_3(&mut mline.__segment_direction_x, &mut mline.__segment_direction_y, &mut mline.__segment_direction_z, &mut mline.segment_directions, Vector::new);
+                combine_points_3(&mut mline.__miter_direction_x, &mut mline.__miter_direction_y, &mut mline.__miter_direction_z, &mut mline.miter_directions, Vector::new);
             },
             EntityType::Section(ref mut section) => {
-                combine_points_3(&mut section._vertices_x, &mut section._vertices_y, &mut section._vertices_z, &mut section.vertices, Point::new);
-                combine_points_3(&mut section._back_line_vertices_x, &mut section._back_line_vertices_y, &mut section._back_line_vertices_z, &mut section.back_line_vertices, Point::new);
+                combine_points_3(&mut section.__vertices_x, &mut section.__vertices_y, &mut section.__vertices_z, &mut section.vertices, Point::new);
+                combine_points_3(&mut section.__back_line_vertices_x, &mut section.__back_line_vertices_y, &mut section.__back_line_vertices_z, &mut section.back_line_vertices, Point::new);
             },
             EntityType::Spline(ref mut spline) => {
-                combine_points_3(&mut spline._control_point_x, &mut spline._control_point_y, &mut spline._control_point_z, &mut spline.control_points, Point::new);
-                combine_points_3(&mut spline._fit_point_x, &mut spline._fit_point_y, &mut spline._fit_point_z, &mut spline.fit_points, Point::new);
+                combine_points_3(&mut spline.__control_point_x, &mut spline.__control_point_y, &mut spline.__control_point_z, &mut spline.control_points, Point::new);
+                combine_points_3(&mut spline.__fit_point_x, &mut spline.__fit_point_y, &mut spline.__fit_point_z, &mut spline.fit_points, Point::new);
             },
             EntityType::DgnUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
             },
             EntityType::DwfUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
             },
             EntityType::PdfUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay._point_x, &mut underlay._point_y, &mut underlay.points, Point::new);
+                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
             },
             EntityType::Wipeout(ref mut wo) => {
-                combine_points_2(&mut wo._clipping_vertices_x, &mut wo._clipping_vertices_y, &mut wo.clipping_vertices, Point::new);
+                combine_points_2(&mut wo.__clipping_vertices_x, &mut wo.__clipping_vertices_y, &mut wo.clipping_vertices, Point::new);
             },
             _ => (),
         }
@@ -532,7 +532,7 @@ impl Entity {
                                 match xrec_code_70_count {
                                     0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
-                                    2 => att._secondary_attribute_count = pair.value.assert_i16()? as i32,
+                                    2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
@@ -630,7 +630,7 @@ impl Entity {
                                 match xrec_code_70_count {
                                     0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
-                                    2 => att._secondary_attribute_count = pair.value.assert_i16()? as i32,
+                                    2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
