@@ -59,14 +59,15 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str(&format!("pub struct {name} {{\n", name=name(&table_item)));
         fun.push_str("    pub name: String,\n");
         fun.push_str("    pub handle: u32,\n");
-        fun.push_str("    pub owner_handle: u32,\n");
+        fun.push_str("    #[doc(hidden)]\n");
+        fun.push_str("    pub __owner_handle: u32,\n");
         fun.push_str("    pub extension_data_groups: Vec<ExtensionGroup>,\n");
         fun.push_str("    pub x_data: Vec<XData>,\n");
         for field in &table_item.children {
-            let name = name(&field);
+            let name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
             if !seen_fields.contains(&name) {
                 seen_fields.insert(name.clone());
-                let mut typ = attr(&field, "Type");
+                let mut typ = if field.name == "Pointer" { String::from("u32") } else { attr(&field, "Type") };
                 if allow_multiples(&field) {
                     typ = format!("Vec<{}>", typ);
                 }
@@ -86,14 +87,19 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str(&format!("        {name} {{\n", name=name(&table_item)));
         fun.push_str("            name: String::new(),\n");
         fun.push_str("            handle: 0,\n");
-        fun.push_str("            owner_handle: 0,\n");
+        fun.push_str("            __owner_handle: 0,\n");
         fun.push_str("            extension_data_groups: vec![],\n");
         fun.push_str("            x_data: vec![],\n");
         for field in &table_item.children {
-            let name = name(&field);
+            let name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
             if !seen_fields.contains(&name) {
                 seen_fields.insert(name.clone());
-                fun.push_str(&format!("            {field}: {default_value},\n", field=name, default_value=attr(&field, "DefaultValue")));
+                let default_value = match (&*field.name, allow_multiples(&field)) {
+                    ("Pointer", true) => String::from("vec![]"),
+                    ("Pointer", false) => String::from("0"),
+                    (_, _) => attr(&field, "DefaultValue"),
+                };
+                fun.push_str(&format!("            {field}: {default_value},\n", field=name, default_value=default_value));
             }
         }
 
@@ -172,7 +178,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                                        let x = XData::read_item(pair.value.assert_string()?, iter)?;\n");
         fun.push_str("                                        item.x_data.push(x);\n");
         fun.push_str("                                    },\n");
-        fun.push_str("                                    330 => item.owner_handle = as_u32(pair.value.assert_string()?)?,\n");
+        fun.push_str("                                    330 => item.__owner_handle = as_u32(pair.value.assert_string()?)?,\n");
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {
@@ -186,7 +192,8 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
                             else {
                                 format!(" = {}", reader)
                             };
-                            format!("item.{field}{read_fun}", field=name(&field), read_fun=read_fun)
+                            let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
+                            format!("item.{field}{read_fun}", field=normalized_field_name, read_fun=read_fun)
                         },
                         _ => {
                             let suffix = match i {
@@ -252,7 +259,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"TABLE\"))?;\n");
         fun.push_str(&format!("    writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\"))?;\n", type_string=attr(&table, "TypeString")));
 
-        // TODO: handles
+        // TODO: assign and write handles
         // fun.push_str("    if write_handles {\n");
         // fun.push_str("        writer.write_code_pair(&CodePair::new_str(5, \"0\"))?;\n");
         // fun.push_str("    }\n");
@@ -298,25 +305,38 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
                 if allow_multiples(&field) {
                     let code = code(&field);
-                    let typ = ExpectedType::get_expected_type(code).unwrap();
-                    let typ = get_code_pair_type(typ);
-                    let deref = if typ == "string" { "" } else { "*" };
-                    fun.push_str(&format!("{indent}        for x in &item.{field} {{\n", indent=indent, field=name(&field)));
-                    fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x))?;\n",
-                        indent=indent, typ=typ, code=code, deref=deref));
+                    if field.name == "Pointer" {
+                        fun.push_str(&format!("{indent}        for x in &item.__{field}_handle {{\n", indent=indent, field=name(&field)));
+                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_string({code}, &as_handle(*x)))?;\n",
+                            indent=indent, code=code));
+                    }
+                    else {
+                        let typ = ExpectedType::get_expected_type(code).unwrap();
+                        let typ = get_code_pair_type(typ);
+                        let deref = if typ == "string" { "" } else { "*" };
+                        fun.push_str(&format!("{indent}        for x in &item.{field} {{\n", indent=indent, field=name(&field)));
+                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x))?;\n",
+                            indent=indent, typ=typ, code=code, deref=deref));
+                    }
                     fun.push_str(&format!("{indent}        }}\n", indent=indent));
                 }
                 else {
                     let codes = codes(&field);
                     if codes.len() == 1 {
                         let code = codes[0];
-                        let typ = ExpectedType::get_expected_type(code).unwrap();
-                        let typ = get_code_pair_type(typ);
-                        let value = format!("item.{}", name(&field));
-                        let write_converter = if attr(&field, "WriteConverter").is_empty() { String::from("{}") } else { attr(&field, "WriteConverter") };
-                        let value = write_converter.replace("{}", &value);
-                        fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
-                            indent=indent, typ=typ, code=code, value=value));
+                        if field.name == "Pointer" {
+                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_string({code}, &as_handle(item.__{field}_handle)))?;\n",
+                                indent=indent, code=code, field=name(&field)));
+                        }
+                        else {
+                            let typ = ExpectedType::get_expected_type(code).unwrap();
+                            let typ = get_code_pair_type(typ);
+                            let value = format!("item.{}", name(&field));
+                            let write_converter = if attr(&field, "WriteConverter").is_empty() { String::from("{}") } else { attr(&field, "WriteConverter") };
+                            let value = write_converter.replace("{}", &value);
+                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
+                                indent=indent, typ=typ, code=code, value=value));
+                        }
                     }
                     else {
                         for (i, code) in codes.iter().enumerate() {

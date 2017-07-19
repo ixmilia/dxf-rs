@@ -82,9 +82,9 @@ fn generate_base_object(fun: &mut String, element: &Element) {
                 fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=t));
             },
             "Pointer" => {
-                // TODO: proper handling of pointers
                 let typ = if allow_multiples(&c) { "Vec<u32>" } else { "u32" };
-                fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=typ));
+                fun.push_str("    #[doc(hidden)]\n");
+                fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(c), typ=typ));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Object: {}", c.name),
@@ -106,10 +106,11 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     fun.push_str("        ObjectCommon {\n");
     for c in &object.children {
         match &*c.name {
-            "Field" | "Pointer" => {
-                // TODO: proper handling of pointers
-                let default_value = if c.name == "Field" { default_value(&c) } else { String::from("0") };
-                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value));
+            "Field" => {
+                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value(&c)));
+            },
+            "Pointer" => {
+                fun.push_str(&format!("            __{name}_handle: 0,\n", name=name(c)));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Object: {}", c.name),
@@ -150,8 +151,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
             }
         }
         else if c.name == "Pointer" {
-            // TODO: proper handling of pointers
-            fun.push_str(&format!("            {code} => {{ self.{field} = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
+            fun.push_str(&format!("            {code} => {{ self.__{field}_handle = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
         }
     }
 
@@ -214,9 +214,9 @@ fn generate_object_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=t));
                     },
                     "Pointer" => {
-                        // TODO: proper handling of pointers
                         let typ = if allow_multiples(&f) { "Vec<u32>" } else { "u32" };
-                        fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=typ));
+                        fun.push_str("    #[doc(hidden)]\n");
+                        fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(f), typ=typ));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Object", f.name),
@@ -236,9 +236,8 @@ fn generate_object_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=default_value(&f)));
                     },
                     "Pointer" => {
-                        // TODO: proper handling of pointers
                         let val = if allow_multiples(&f) { "vec![]" } else { "0" };
-                        fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=val));
+                        fun.push_str(&format!("            __{name}_handle: {val},\n", name=name(f), val=val));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Object", f.name),
@@ -380,12 +379,11 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                         }
                     }
                     else if f.name == "Pointer" {
-                        // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ obj.{field}.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ obj.{field} = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }
@@ -588,7 +586,8 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         let write_converter = get_write_converter(&field);
         let to_write = write_converter.replace("{}", val);
         let typ = get_code_pair_type(expected_type);
-        commands.push(format!("{indent}for v in &obj.{field} {{", indent=indent, field=name(&field)));
+        let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
+        commands.push(format!("{indent}for v in &obj.{field} {{", indent=indent, field=normalized_field_name));
         commands.push(format!("{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {to_write}))?;", indent=indent, typ=typ, code=codes(&field)[0], to_write=to_write));
         commands.push(format!("{indent}}}", indent=indent));
     }
@@ -655,7 +654,8 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     let expected_type = ExpectedType::get_expected_type(code).unwrap();
     let typ = get_code_pair_type(expected_type);
     let write_converter = get_write_converter_with_code(code, &field);
-    let mut field_access = format!("obj.{field}", field=name(&field));
+    let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
+    let mut field_access = format!("obj.{field}", field=normalized_field_name);
     if let Some(suffix) = suffix {
         field_access = format!("{}.{}", field_access, suffix);
     }

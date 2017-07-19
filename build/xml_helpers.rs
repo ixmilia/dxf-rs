@@ -58,7 +58,8 @@ pub fn get_field_reader(element: &Element) -> String {
         read_converter = String::from("{}");
     }
     let read_cmd = format!("pair.value.{}()?", reader_fun);
-    read_converter.replace("{}", &read_cmd)
+    let normalized_read_cmd = if element.name == "Pointer" { format!("as_u32({})?", read_cmd) } else { read_cmd };
+    read_converter.replace("{}", &normalized_read_cmd)
 }
 
 pub fn min_version(element: &Element) -> String {

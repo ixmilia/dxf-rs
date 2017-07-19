@@ -336,9 +336,9 @@ fn read_entity_with_handle_and_pointer() {
         "350", "A3", // history_object pointer
     ].join("\r\n"));
     assert_eq!(0xa1, ent.common.handle);
-    assert_eq!(0xa2, ent.common.owner_handle);
+    assert_eq!(0xa2, ent.common.__owner_handle);
     match ent.specific {
-        EntityType::Solid3D(ref solid) => assert_eq!(0xa3, solid.history_object),
+        EntityType::Solid3D(ref solid) => assert_eq!(0xa3, solid.__history_object_handle),
         _ => panic!("expected a 3DSOLID entity"),
     }
 }
@@ -350,7 +350,7 @@ fn write_entity_with_handle_and_pointer() {
     drawing.entities.push(Entity {
         common: EntityCommon {
             handle: 0xa1,
-            owner_handle: 0xa2,
+            __owner_handle: 0xa2,
             .. Default::default()
         },
         specific: EntityType::Line(Default::default()),

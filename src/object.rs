@@ -409,9 +409,9 @@ impl Object {
                             71 => { layout.tab_order = pair.value.assert_i16()? as i32; },
                             76 => { layout.ucs_orthographic_type = try_result!(UcsOrthographicType::from_i16(pair.value.assert_i16()?)); },
                             146 => { layout.elevation = pair.value.assert_f64()?; },
-                            330 => { layout.viewport = as_u32(pair.value.assert_string()?)?; },
-                            345 => { layout.table_record = as_u32(pair.value.assert_string()?)?; },
-                            346 => { layout.table_record_base = as_u32(pair.value.assert_string()?)?; },
+                            330 => { layout.__viewport_handle = as_u32(pair.value.assert_string()?)?; },
+                            345 => { layout.__table_record_handle = as_u32(pair.value.assert_string()?)?; },
+                            346 => { layout.__table_record_base_handle = as_u32(pair.value.assert_string()?)?; },
                             _ => { self.common.apply_individual_pair(&pair, iter)?; },
                         }
                     }
@@ -426,7 +426,7 @@ impl Object {
                         5 => {
                             if read_version_number {
                                 // pointer to a new light
-                                ll.lights.push(as_u32(pair.value.assert_string()?)?);
+                                ll.__lights_handle.push(as_u32(pair.value.assert_string()?)?);
                             }
                             else {
                                 // might still be the handle
@@ -709,7 +709,7 @@ impl Object {
                     match pair.code {
                         5 => {
                             if is_ready_for_sort_handles {
-                                sort.sort_items.push(as_u32(pair.value.assert_string()?)?);
+                                sort.__sort_items_handle.push(as_u32(pair.value.assert_string()?)?);
                             }
                             else {
                                 self.common.handle = as_u32(pair.value.assert_string()?)?;
@@ -718,11 +718,11 @@ impl Object {
                         },
                         100 => { is_ready_for_sort_handles = true; },
                         330 => {
-                            self.common.owner_handle = as_u32(pair.value.assert_string()?)?;
+                            self.common.__owner_handle = as_u32(pair.value.assert_string()?)?;
                             is_ready_for_sort_handles = true;
                         },
                         331 => {
-                            sort.entities.push(as_u32(pair.value.assert_string()?)?);
+                            sort.__entities_handle.push(as_u32(pair.value.assert_string()?)?);
                             is_ready_for_sort_handles = true;
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
@@ -838,10 +838,10 @@ impl Object {
                         292 => { ss.select_range_of_dates = pair.value.assert_bool()?; },
                         293 => { ss.lock_viewports = pair.value.assert_bool()?; },
                         294 => { ss.label_viewports = pair.value.assert_bool()?; },
-                        340 => { ss.page_setup_wizard = as_u32(pair.value.assert_string()?)?; },
-                        341 => { ss.view = as_u32(pair.value.assert_string()?)?; },
-                        342 => { ss.visual_style = as_u32(pair.value.assert_string()?)?; },
-                        343 => { ss.text_style = as_u32(pair.value.assert_string()?)?; },
+                        340 => { ss.__page_setup_wizard_handle = as_u32(pair.value.assert_string()?)?; },
+                        341 => { ss.__view_handle = as_u32(pair.value.assert_string()?)?; },
+                        342 => { ss.__visual_style_handle = as_u32(pair.value.assert_string()?)?; },
+                        343 => { ss.__text_style_handle = as_u32(pair.value.assert_string()?)?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -1004,8 +1004,8 @@ impl Object {
             ObjectType::LightList(ref ll) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbLightList"))?;
                 writer.write_code_pair(&CodePair::new_i32(90, ll.version))?;
-                writer.write_code_pair(&CodePair::new_i32(90, ll.lights.len() as i32))?;
-                for light in &ll.lights {
+                writer.write_code_pair(&CodePair::new_i32(90, ll.__lights_handle.len() as i32))?;
+                for light in &ll.__lights_handle {
                     writer.write_code_pair(&CodePair::new_string(5, &as_handle(*light)))?;
                     writer.write_code_pair(&CodePair::new_string(1, &String::new()))?; // TODO: write the light's real name
                 }
@@ -1040,9 +1040,9 @@ impl Object {
                 for v in &ss.hours {
                     writer.write_code_pair(&CodePair::new_i16(290, *v as i16))?;
                 }
-                writer.write_code_pair(&CodePair::new_string(340, &as_handle(ss.page_setup_wizard)))?;
-                writer.write_code_pair(&CodePair::new_string(341, &as_handle(ss.view)))?;
-                writer.write_code_pair(&CodePair::new_string(342, &as_handle(ss.visual_style)))?;
+                writer.write_code_pair(&CodePair::new_string(340, &as_handle(ss.__page_setup_wizard_handle)))?;
+                writer.write_code_pair(&CodePair::new_string(341, &as_handle(ss.__view_handle)))?;
+                writer.write_code_pair(&CodePair::new_string(342, &as_handle(ss.__visual_style_handle)))?;
                 writer.write_code_pair(&CodePair::new_i16(74, ss.shade_plot_type))?;
                 writer.write_code_pair(&CodePair::new_i16(75, ss.viewports_per_page as i16))?;
                 writer.write_code_pair(&CodePair::new_i16(76, ss.viewport_distribution_row_count as i16))?;
@@ -1050,7 +1050,7 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_f64(40, ss.spacing))?;
                 writer.write_code_pair(&CodePair::new_bool(293, ss.lock_viewports))?;
                 writer.write_code_pair(&CodePair::new_bool(294, ss.label_viewports))?;
-                writer.write_code_pair(&CodePair::new_string(343, &as_handle(ss.text_style)))?;
+                writer.write_code_pair(&CodePair::new_string(343, &as_handle(ss.__text_style_handle)))?;
             },
             ObjectType::XRecordObject(ref xr) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbXrecord"))?;

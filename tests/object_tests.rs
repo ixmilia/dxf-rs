@@ -238,7 +238,7 @@ fn read_object_with_handles() {
         "330", "A2", // owner handle
     ].join("\r\n"));
     assert_eq!(0xa1, obj.common.handle);
-    assert_eq!(0xa2, obj.common.owner_handle);
+    assert_eq!(0xa2, obj.common.__owner_handle);
     match obj.specific {
         ObjectType::LightList(_) => (),
         _ => panic!("expected a light list"),
@@ -252,7 +252,7 @@ fn write_object_with_handles() {
     drawing.objects.push(Object {
         common: ObjectCommon {
             handle: 0xa1,
-            owner_handle: 0xa2,
+            __owner_handle: 0xa2,
             .. Default::default()
         },
         specific: ObjectType::LightList(Default::default()),
@@ -449,7 +449,7 @@ fn read_all_types() {
             (&ObjectType::LayerIndex(ref a), &ObjectType::LayerIndex(ref b)) => {
                 // LayerIndex has a timestamp that will obviously differ; the remaining fields must be checked manually
                 assert_eq!(a.layer_names, b.layer_names);
-                assert_eq!(a.id_buffers, b.id_buffers);
+                assert_eq!(a.__id_buffers_handle, b.__id_buffers_handle);
                 assert_eq!(a.id_buffer_counts, b.id_buffer_counts);
             },
             (&ObjectType::SpatialIndex(_), &ObjectType::SpatialIndex(_)) => {

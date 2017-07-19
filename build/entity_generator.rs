@@ -71,9 +71,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
                 fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=t));
             },
             "Pointer" => {
-                // TODO: proper handling of pointers
                 let typ = if allow_multiples(&c) { "Vec<u32>" } else { "u32" };
-                fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=typ));
+                fun.push_str("    #[doc(hidden)]\n");
+                fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(c), typ=typ));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -95,10 +95,11 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("        EntityCommon {\n");
     for c in &entity.children {
         match &*c.name {
-            "Field" | "Pointer" => {
-                // TODO: proper handling of pointers
-                let default_value = if c.name == "Field" { default_value(&c) } else { String::from("0") };
-                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value));
+            "Field" => {
+                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value(&c)));
+            },
+            "Pointer" => {
+                fun.push_str(&format!("            __{name}_handle: 0,\n", name=name(c)));
             },
             "WriteOrder" => (),
             _ => panic!("unexpected element under Entity: {}", c.name),
@@ -139,8 +140,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
             }
         }
         else if c.name == "Pointer" {
-            // TODO: proper handling of pointers
-            fun.push_str(&format!("            {code} => {{ self.{field} = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
+            fun.push_str(&format!("            {code} => {{ self.__{field}_handle = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
         }
     }
 
@@ -206,9 +206,9 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=t));
                     },
                     "Pointer" => {
-                        // TODO: proper handling of pointers
                         let typ = if allow_multiples(&f) { "Vec<u32>" } else { "u32" };
-                        fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=typ));
+                        fun.push_str("    #[doc(hidden)]\n");
+                        fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(f), typ=typ));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -231,9 +231,8 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=default_value(&f)));
                     },
                     "Pointer" => {
-                        // TODO: proper handling of pointers
                         let val = if allow_multiples(&f) { "vec![]" } else { "0" };
-                        fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=val));
+                        fun.push_str(&format!("            __{name}_handle: {val},\n", name=name(f), val=val));
                     },
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Entity", f.name),
@@ -394,12 +393,11 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                         }
                     }
                     else if f.name == "Pointer" {
-                        // TODO: proper handling of pointers
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field}.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ ent.{field} = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }
@@ -497,9 +495,10 @@ fn generate_write_code_pairs_for_write_order(entity: &Element, write_command: &E
         "WriteField" => {
             let field_name = write_command.attributes.get("Field").unwrap();
             let field = get_field_with_name(&entity, &field_name);
+            let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", field_name) } else { field_name.clone() };
             let mut write_conditions = vec![attr(&write_command, "WriteCondition")];
             if !attr(&write_command, "DontWriteIfValueIs").is_empty() {
-                write_conditions.push(format!("ent.{} != {}", field_name, attr(&write_command, "DontWriteIfValueIs")));
+                write_conditions.push(format!("ent.{} != {}", normalized_field_name, attr(&write_command, "DontWriteIfValueIs")));
             }
             for line in get_write_lines_for_field(&field, write_conditions) {
                 commands.push(line);
@@ -585,8 +584,9 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
                 "*v"
             }
         };
+        let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
         let typ = get_code_pair_type(expected_type);
-        commands.push(format!("{indent}for v in &ent.{field} {{", indent=indent, field=name(&field)));
+        commands.push(format!("{indent}for v in &ent.{field} {{", indent=indent, field=normalized_field_name));
         commands.push(format!("{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;", indent=indent, typ=typ, code=codes(&field)[0], val=val));
         commands.push(format!("{indent}}}", indent=indent));
     }
@@ -640,7 +640,8 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
             write_converter = String::from("{}");
         }
     }
-    let mut field_access = format!("ent.{field}", field=name(&field));
+    let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
+    let mut field_access = format!("ent.{field}", field=normalized_field_name);
     if let Some(suffix) = suffix {
         field_access = format!("{}.{}", field_access, suffix);
     }
