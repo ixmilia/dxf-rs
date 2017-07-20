@@ -106,7 +106,7 @@
 
   -->
   <Object Name="DimensionAssoc" SubclassMarker="AcDbDimAssoc" TypeString="DIMASSOC" MinVersion="R2004">
-    <Pointer Name="dimension" Code="330" Type="DimensionBase" />
+    <Pointer Name="dimension" Code="330" Type="Entity" />
     <Field Name="associativity_flags" Code="90" Type="i32" DefaultValue="0">
       <Flag Name="is_first_point_reference" Mask="1" />
       <Flag Name="is_second_point_reference" Mask="2" />
@@ -117,13 +117,13 @@
     <Field Name="rotated_dimension_type" Code="71" Type="RotatedDimensionType" DefaultValue="RotatedDimensionType::Parallel" ReadConverter="try_result!(RotatedDimensionType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="class_name" Code="1" Type="String" DefaultValue='String::from("AcDbOsnapPointRef")' />
     <Field Name="object_osnap_type" Code="72" Type="ObjectOsnapType" DefaultValue="ObjectOsnapType::None" ReadConverter="try_result!(ObjectOsnapType::from_i16({}))" WriteConverter="{} as i16" />
-    <Pointer Name="main_object" Code="331" Type="IItem" />
+    <Pointer Name="main_object" Code="331" />
     <Field Name="main_object_subentity_type" Code="73" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="main_object_gs_marker_index" Code="91" Type="i32" DefaultValue="0" />
     <Pointer Name="main_object_xref" Code="301" />
     <Field Name="near_osnap_geometry_parameter" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="osnap_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
-    <Pointer Name="intersection_object" Code="332" Type="IItem" />
+    <Pointer Name="intersection_object" Code="332" />
     <Field Name="intersection_subentity_type" Code="74" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="intersection_object_gs_marker_index" Code="92" Type="i32" DefaultValue="0" />
     <Pointer Name="insertion_object_xref" Code="302" />
@@ -141,7 +141,7 @@
     <Field Name="__format_string" Code="4" Type="String" DefaultValue="String::new()" />
     <Field Name="evaluation_error_message" Code="300" Type="String" DefaultValue="String::new()" MaxVersion="R2007" />
     <Field Name="__child_field_count" Code="90" Type="i32" DefaultValue="0" />
-    <Pointer Name="child_fields" Code="360" Type="Field" AllowMultiples="true" />
+    <Pointer Name="child_fields" Code="360" Type="Object" SubType="Field" AllowMultiples="true" />
     <Field Name="evaluation_option" Code="91" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="filling_option" Code="92" Type="i32" DefaultValue="0" MaxVersion="R2007" />
     <Field Name="field_state" Code="94" Type="i32" DefaultValue="0" MaxVersion="R2007" />
@@ -177,15 +177,10 @@
       <WriteField Field="evaluation_status" />
       <WriteField Field="evaluation_error_code" />
       <WriteSpecificValue Code="97" Value="obj.__objects_handle.len() as i32" />
-      <!--
-
-      pointers NYI
-
-      <Foreach Field="objects_pointers._pointers">
-        <WriteSpecificValue Code="330" Value="&amp;as_handle(item.handle)" MaxVersion="R2007" />
-        <WriteSpecificValue Code="331" Value="&amp;as_handle(item.Handle)" MinVersion="R2010" />
+      <Foreach Field="obj.__objects_handle">
+        <WriteSpecificValue Code="330" Value="&amp;as_handle(*item)" MaxVersion="R2007" />
+        <WriteSpecificValue Code="331" Value="&amp;as_handle(*item)" MinVersion="R2010" />
       </Foreach>
-      -->
       <WriteSpecificValue Code="93" Value="obj.field_data_keys.len() as i32" />
       <WriteField Field="field_data_keys" />
       <WriteField Field="evaluated_cache_key" />
@@ -332,7 +327,7 @@
   <Object Name="LayerIndex" SubclassMarker="AcDbLayerIndex" TypeString="LAYER_INDEX" MinVersion="R14">
     <Field Name="time_stamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
     <Field Name="layer_names" Code="8" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
-    <Pointer Name="id_buffers" Code="360" Type="IItem" AllowMultiples="true" />
+    <Pointer Name="id_buffers" Code="360" AllowMultiples="true" />
     <Field Name="id_buffer_counts" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbIndex")' />
@@ -365,9 +360,9 @@
     <Field Name="ucs_x_axis" Code="16" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="16,26,36" />
     <Field Name="ucs_y_axis" Code="17" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="17,27,37" />
     <Field Name="ucs_orthographic_type" Code="76" Type="UcsOrthographicType" DefaultValue="UcsOrthographicType::NotOrthographic" WriteConverter="{} as i16" />
-    <Pointer Name="viewport" Code="330" Type="IItem" />
-    <Pointer Name="table_record" Code="345" Type="IItem" />
-    <Pointer Name="table_record_base" Code="346" Type="IItem" />
+    <Pointer Name="viewport" Code="330" />
+    <Pointer Name="table_record" Code="345" />
+    <Pointer Name="table_record_base" Code="346" />
     <!-- plot object (code 333) is inherited from `PlotSettings` -->
   </Object>
   <!--
@@ -377,7 +372,7 @@
   -->
   <Object Name="LightList" SubclassMarker="AcDbLightList" TypeString="LIGHTLIST" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2007">
     <Field Name="version" Code="90" Type="i32" DefaultValue="0" />
-    <Pointer Name="lights" Code="5" Type="Light" AllowMultiples="true" />
+    <Pointer Name="lights" Code="5" Type="Entity" SubType="Light" AllowMultiples="true" />
   </Object>
   <!--
 
@@ -604,17 +599,17 @@
     <Field Name="second_segment_angle_constraint" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="leader_line_type" Code="173" Type="i16" DefaultValue="0" />
     <Field Name="leader_line_color" Code="91" Type="i32" DefaultValue="0" />
-    <Pointer Name="line_leader_type" Code="340" Type="IItem" />
+    <Pointer Name="line_leader_type" Code="340" />
     <Field Name="leader_line_weight" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="enable_landing" Code="290" Type="bool" DefaultValue="true" />
     <Field Name="landing_gap" Code="42" Type="f64" DefaultValue="0.0" />
     <Field Name="enable_dogleg" Code="291" Type="bool" DefaultValue="true" />
     <Field Name="dogleg_length" Code="43" Type="f64" DefaultValue="0.0" />
     <Field Name="m_leader_style_description" Code="3" Type="String" DefaultValue="String::new()" />
-    <Pointer Name="arrowhead" Code="341" Type="IItem" />
+    <Pointer Name="arrowhead" Code="341" />
     <Field Name="arrowhead_size" Code="44" Type="f64" DefaultValue="0.0" />
     <Field Name="default_m_text_contents" Code="300" Type="String" DefaultValue="String::new()" />
-    <Pointer Name="m_text_style" Code="342" Type="IItem" />
+    <Pointer Name="m_text_style" Code="342" />
     <Field Name="text_left_attachment_type" Code="174" Type="i16" DefaultValue="0" />
     <Field Name="text_angle_type" Code="175" Type="i16" DefaultValue="0" />
     <Field Name="text_alignment_type" Code="176" Type="i16" DefaultValue="0" />
@@ -624,7 +619,7 @@
     <Field Name="enable_frame_text" Code="292" Type="bool" DefaultValue="true" />
     <Field Name="always_align_text_left" Code="297" Type="bool" DefaultValue="true" />
     <Field Name="align_gap" Code="46" Type="f64" DefaultValue="0.0" />
-    <Pointer Name="block_content" Code="343" Type="IItem" />
+    <Pointer Name="block_content" Code="343" />
     <Field Name="block_content_color" Code="94" Type="i32" DefaultValue="0" />
     <Field Name="block_content_x_scale" Code="47" Type="f64" DefaultValue="1.0" />
     <Field Name="block_content_y_scale" Code="49" Type="f64" DefaultValue="1.0" />
@@ -742,7 +737,7 @@
     <Field Name="standard_scale_value" Code="147" Type="f64" DefaultValue="1.0" />
     <Field Name="paper_image_origin_x" Code="148" Type="f64" DefaultValue="0.0" />
     <Field Name="paper_image_origin_y" Code="149" Type="f64" DefaultValue="0.0" />
-    <Pointer Name="shade_plot_object" Code="333" Type="IItem" />
+    <Pointer Name="shade_plot_object" Code="333" />
   </Object>
   <!--
 
@@ -923,8 +918,8 @@
   <Object Name="SectionSettings" SubclassMarker="AcDbSectionSettings" TypeString="SECTIONSETTINGS" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2007">
     <Field Name="section_type" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="is_generation_option" Code="91" Type="bool" DefaultValue="false" />
-    <Pointer Name="source_objects" Code="330" AllowMultiples="true" />
-    <Pointer Name="destination_object" Code="331" />
+    <Pointer Name="source_objects" Code="330" Type="Object" AllowMultiples="true" />
+    <Pointer Name="destination_object" Code="331" Type="Object" />
     <Field Name="destination_file_name" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="geometry_settings" Code="90" Type="SectionTypeSettings" DefaultValue="vec![]" AllowMultiples="true" />  </Object>
   <!--
@@ -934,7 +929,7 @@
   -->
   <Object Name="SortentsTable" SubclassMarker="AcDbSortentsTable" TypeString="SORTENTSTABLE" GenerateReaderFunction="false" MinVersion="R14">
     <Pointer Name="entities" Code="331" Type="Entity" AllowMultiples="true" />
-    <Pointer Name="sort_items" Code="5" Type="IItem" AllowMultiples="true" />
+    <Pointer Name="sort_items" Code="5" AllowMultiples="true" />
   </Object>
   <!--
 
@@ -1009,9 +1004,9 @@
     <Field Name="end_time_seconds_past_midnight" Code="94" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="interval_in_seconds" Code="95" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="hours" Code="290" Type="i32" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{} as i16" />
-    <Pointer Name="page_setup_wizard" Code="340" Type="IItem" />
-    <Pointer Name="view" Code="341" Type="IItem" />
-    <Pointer Name="visual_style" Code="342" Type="IItem" />
+    <Pointer Name="page_setup_wizard" Code="340" />
+    <Pointer Name="view" Code="341" />
+    <Pointer Name="visual_style" Code="342" />
     <Field Name="shade_plot_type" Code="74" Type="i16" DefaultValue="0" />
     <Field Name="viewports_per_page" Code="75" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
     <Field Name="viewport_distribution_row_count" Code="76" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
@@ -1019,7 +1014,7 @@
     <Field Name="spacing" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="lock_viewports" Code="293" Type="bool" DefaultValue="false" />
     <Field Name="label_viewports" Code="294" Type="bool" DefaultValue="false" />
-    <Pointer Name="text_style" Code="343" Type="IItem" />
+    <Pointer Name="text_style" Code="343" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbSunStudy")' />
       <WriteField Field="version" />

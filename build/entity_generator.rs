@@ -22,6 +22,8 @@ pub fn generate_entities() {
 use ::{
     CodePair,
     Color,
+    Drawing,
+    DrawingItem,
     DxfError,
     DxfResult,
     ExtensionGroup,
@@ -37,8 +39,9 @@ use ::x_data;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
-use itertools::PutBack;
+use objects::*;
 
+use itertools::PutBack;
 use std::io::Write;
 ".trim_left());
     fun.push_str("\n");
@@ -112,6 +115,13 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("\n");
 
     fun.push_str("impl EntityCommon {\n");
+
+    /////////////////////////////////////////////////////////////////// pointers
+    for p in &entity.children {
+        if p.name == "Pointer" {
+            fun.push_str(&*get_methods_for_pointer_access(p));
+        }
+    }
 
     ////////////////////////////////////////////////////// apply_individual_pair
     fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>\n");
@@ -244,8 +254,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push_str("}\n");
             fun.push_str("\n");
 
-            // flags
-            generate_flags_methods(fun, &c);
+            generate_implementation(fun, &c);
 
             if name(&c) == "DimensionBase" {
                 fun.push_str("impl DimensionBase {\n");
@@ -265,35 +274,42 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
     }
 }
 
-fn generate_flags_methods(fun: &mut String, element: &Element) {
-    let mut impl_written = false;
+fn generate_implementation(fun: &mut String, element: &Element) {
+    let mut implementation = String::new();
+
+    // generate flags methods
     for field in &element.children {
         if field.name == "Field" {
             for flag in &field.children {
                 if flag.name == "Flag" {
                     let flag_name = name(&flag);
                     let mask = attr(&flag, "Mask");
-                    if !impl_written {
-                        fun.push_str(&format!("impl {typ} {{\n", typ=name(&element)));
-                        impl_written = true;
-                    }
-                    fun.push_str(&format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name));
-                    fun.push_str(&format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask));
-                    fun.push_str("    }\n");
-                    fun.push_str(&format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name));
-                    fun.push_str("        if val {\n");
-                    fun.push_str(&format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask));
-                    fun.push_str("        }\n");
-                    fun.push_str("        else {\n");
-                    fun.push_str(&format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask));
-                    fun.push_str("        }\n");
-                    fun.push_str("    }\n");
+                    implementation.push_str(&format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name));
+                    implementation.push_str(&format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask));
+                    implementation.push_str("    }\n");
+                    implementation.push_str(&format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name));
+                    implementation.push_str("        if val {\n");
+                    implementation.push_str(&format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask));
+                    implementation.push_str("        }\n");
+                    implementation.push_str("        else {\n");
+                    implementation.push_str(&format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask));
+                    implementation.push_str("        }\n");
+                    implementation.push_str("    }\n");
                 }
             }
         }
     }
 
-    if impl_written {
+    // generate pointer methods
+    for field in &element.children {
+        if field.name == "Pointer" {
+            implementation.push_str(&*get_methods_for_pointer_access(field));
+        }
+    }
+
+    if !implementation.is_empty() {
+        fun.push_str(&format!("impl {typ} {{\n", typ=name(&element)));
+        fun.push_str(&implementation);
         fun.push_str("}\n");
         fun.push_str("\n");
     }

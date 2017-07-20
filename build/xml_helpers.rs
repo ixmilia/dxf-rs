@@ -62,6 +62,72 @@ pub fn get_field_reader(element: &Element) -> String {
     read_converter.replace("{}", &normalized_read_cmd)
 }
 
+pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
+    let mut fun = String::new();
+    let typ = attr(&pointer, "Type");
+    let sub_type = attr(&pointer, "SubType");
+    let normalized_field_name = format!("__{}_handle", name(&pointer));
+    let return_type = match (allow_multiples(&pointer), typ.is_empty()) {
+        (true, true) => String::from("Vec<DrawingItem<'a>>"),
+        (true, false) => format!("Vec<&'a {}>", typ),
+        (false, true) => String::from("Option<DrawingItem<'a>>"),
+        (false, false) => format!("Option<&'a {}>", typ),
+    };
+    fun.push_str(&format!("    pub fn get_{name}<'a>(&self, drawing: &'a Drawing) -> {return_type} {{\n", name=name(&pointer), return_type=return_type));
+    if !typ.is_empty() {
+        if allow_multiples(&pointer) {
+            if !sub_type.is_empty() {
+                fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| {{\n", field=normalized_field_name));
+                fun.push_str(&format!("            match drawing.get_item_by_handle(h) {{\n"));
+                fun.push_str(&format!("                Some(DrawingItem::{typ}(val)) => {{\n", typ=typ));
+                fun.push_str(&format!("                    match val.specific {{\n"));
+                fun.push_str(&format!("                        {typ}Type::{sub_type}(_) => Some(val),\n", typ=typ, sub_type=sub_type));
+                fun.push_str(&format!("                        _ => None,\n"));
+                fun.push_str(&format!("                    }}\n"));
+                fun.push_str(&format!("                }},\n"));
+                fun.push_str(&format!("                _ => None,\n"));
+                fun.push_str(&format!("            }}\n"));
+                fun.push_str("        }).collect()\n");
+            }
+            else {
+                fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| {{\n", field=normalized_field_name));
+                fun.push_str(&format!("            match drawing.get_item_by_handle(h) {{\n"));
+                fun.push_str(&format!("                Some(DrawingItem::{typ}(val)) => Some(val),\n", typ=typ));
+                fun.push_str(&format!("                _ => None,\n"));
+                fun.push_str(&format!("            }}\n"));
+                fun.push_str("        }).collect()\n");
+            }
+        }
+        else {
+            fun.push_str(&format!("        match drawing.get_item_by_handle(self.{field}) {{\n", field=normalized_field_name));
+            if !sub_type.is_empty() {
+                fun.push_str(&format!("            Some(DrawingItem::{typ}(val)) => {{\n", typ=typ));
+                fun.push_str("                match val.specific {\n");
+                fun.push_str(&format!("                    {typ}Type::{sub_type}(_) => Some(val),\n", typ=typ, sub_type=sub_type));
+                fun.push_str("                    _ => None,\n");
+                fun.push_str("                }\n");
+                fun.push_str("            },\n");
+            }
+            else {
+                fun.push_str(&format!("            Some(DrawingItem::{typ}(val)) => Some(val),\n", typ=typ));
+            }
+            fun.push_str("            _ => None,\n");
+            fun.push_str("        }\n");
+        }
+    }
+    else {
+        if allow_multiples(&pointer) {
+            fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| drawing.get_item_by_handle(h)).collect()\n", field=normalized_field_name));
+        }
+        else {
+            fun.push_str(&format!("        drawing.get_item_by_handle(self.{field})\n", field=normalized_field_name));
+        }
+    }
+
+    fun.push_str("    }\n");
+    fun
+}
+
 pub fn min_version(element: &Element) -> String {
     attr(&element, "MinVersion")
 }

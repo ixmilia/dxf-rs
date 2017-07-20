@@ -15,6 +15,7 @@ use enums::*;
 use header::*;
 use objects::*;
 use tables::*;
+use drawing_item::DrawingItem;
 
 use ::{
     CodePair,
@@ -253,6 +254,21 @@ impl Drawing {
         self.ucs.sort_by(|a, b| a.name.cmp(&b.name));
         self.views.sort_by(|a, b| a.name.cmp(&b.name));
         self.view_ports.sort_by(|a, b| a.name.cmp(&b.name));
+    }
+    /// Gets a `DrawingItem` with the appropriate handle or `None`.
+    pub fn get_item_by_handle<'a>(&'a self, handle: u32) -> Option<DrawingItem<'a>> {
+        for ent in &self.entities {
+            if ent.common.handle == handle {
+                return Some(DrawingItem::Entity(ent));
+            }
+        }
+        for obj in &self.objects {
+            if obj.common.handle == handle {
+                return Some(DrawingItem::Object(obj));
+            }
+        }
+
+        None
     }
 }
 
