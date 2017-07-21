@@ -123,7 +123,10 @@ mod drawing;
 pub use drawing::Drawing;
 
 mod drawing_item;
-pub use drawing_item::DrawingItem;
+pub use drawing_item::{
+    DrawingItem,
+    DrawingItemMut,
+};
 
 mod section_geometry_settings;
 pub use section_geometry_settings::SectionGeometrySettings;

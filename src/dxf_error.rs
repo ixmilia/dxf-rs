@@ -25,6 +25,7 @@ pub enum DxfError {
     ExpectedTableType,
     WrongValueType,
     InvalidBinaryFile,
+    WrongItemType,
 }
 
 impl From<io::Error> for DxfError {
@@ -56,6 +57,7 @@ impl fmt::Display for DxfError {
             &DxfError::ExpectedTableType => write!(formatter, "a 2/<table-type> code pair was expected"),
             &DxfError::WrongValueType => write!(formatter, "the CodePairValue does not contain the requested type"),
             &DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
+            &DxfError::WrongItemType => write!(formatter, "the specified item type is not correct"),
         }
     }
 }
@@ -77,6 +79,7 @@ impl error::Error for DxfError {
             &DxfError::ExpectedTableType => "a 2/<table-type> code pair was expected",
             &DxfError::WrongValueType => "the CodePairValue does not contain the requested type",
             &DxfError::InvalidBinaryFile => "the binary file is invalid",
+            &DxfError::WrongItemType => "the specified item type is not correct",
         }
     }
     fn cause(&self) -> Option<&error::Error> {

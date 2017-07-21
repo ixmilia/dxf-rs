@@ -24,6 +24,7 @@ use ::{
     Color,
     Drawing,
     DrawingItem,
+    DrawingItemMut,
     DxfError,
     DxfResult,
     ExtensionGroup,

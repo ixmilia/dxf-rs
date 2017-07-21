@@ -15,7 +15,10 @@ use enums::*;
 use header::*;
 use objects::*;
 use tables::*;
-use drawing_item::DrawingItem;
+use drawing_item::{
+    DrawingItem,
+    DrawingItemMut,
+};
 
 use ::{
     CodePair,
@@ -45,6 +48,7 @@ use std::io::{
 };
 
 use std::collections::HashSet;
+use std::iter::Iterator;
 use std::path::Path;
 use itertools::{
     PutBack,
@@ -269,6 +273,29 @@ impl Drawing {
         }
 
         None
+    }
+    /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
+    pub fn get_item_by_handle_mut<'a>(&'a mut self, handle: u32) -> Option<DrawingItemMut<'a>> {
+        for ent in &mut self.entities {
+            if ent.common.handle == handle {
+                return Some(DrawingItemMut::Entity(ent));
+            }
+        }
+        for obj in &mut self.objects {
+            if obj.common.handle == handle {
+                return Some(DrawingItemMut::Object(obj));
+            }
+        }
+
+        None
+    }
+    pub(crate) fn assign_and_get_handle(&mut self, item: &mut DrawingItemMut) -> u32 {
+        if item.get_handle() == 0 {
+            item.set_handle(self.header.next_available_handle);
+            self.header.next_available_handle += 1;
+        }
+
+        item.get_handle()
     }
 }
 

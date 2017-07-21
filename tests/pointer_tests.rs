@@ -1,7 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
+use self::dxf::*;
 use self::dxf::entities::*;
+use self::dxf::enums::*;
 use self::dxf::objects::*;
 
 mod test_helpers;
@@ -72,4 +74,42 @@ fn no_pointer_bound() {
         None => (),
         _ => panic!("expected None"),
     }
+}
+
+#[test]
+fn set_pointer_on_entity() {
+    let mut drawing = Drawing {
+        header: Header {
+            version: AcadVersion::R2007,
+            .. Default::default()
+        },
+        .. Default::default()
+    };
+    let mut material = Object {
+        common: Default::default(),
+        specific: ObjectType::Material(Material {
+            name: String::from("material-name"),
+            .. Default::default()
+        }),
+    };
+    let mut line = Entity {
+        common: Default::default(),
+        specific: EntityType::Line(Default::default()),
+    };
+    assert_eq!(0, material.common.handle);
+    line.common.set_material(&mut material, &mut drawing).ok().unwrap();
+    assert_eq!(1, material.common.handle);
+    drawing.objects.push(material);
+    drawing.entities.push(line);
+    assert_contains(&drawing, vec![
+        "  0", "MATERIAL",
+        "  5", "1",
+    ].join("\r\n"));
+    assert_contains(&drawing, vec![
+        "  0", "LINE",
+        "  5", "0",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "347", "1", // handle of `material`
+    ].join("\r\n"));
 }
