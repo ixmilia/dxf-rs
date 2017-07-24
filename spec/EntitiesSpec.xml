@@ -617,7 +617,7 @@
   -->
   <Entity Name="MLine" SubclassMarker="AcDbMline" TypeString="MLINE" MinVersion="R13">
     <Field Name="style_name" Code="2" Type="String" DefaultValue="String::new()" />
-    <Pointer Name="style" Code="340" />
+    <Pointer Name="style" Code="340" Type="Style" />
     <Field Name="scale_factor" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="justification" Code="70" Type="Justification" DefaultValue="Justification::Top" ReadConverter="try_result!(Justification::from_i16({}))" WriteConverter="{} as i16" />
     <Field Name="flags" Code="71" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">

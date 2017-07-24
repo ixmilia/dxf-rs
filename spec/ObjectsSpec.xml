@@ -360,7 +360,7 @@
     <Field Name="ucs_x_axis" Code="16" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="16,26,36" />
     <Field Name="ucs_y_axis" Code="17" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="17,27,37" />
     <Field Name="ucs_orthographic_type" Code="76" Type="UcsOrthographicType" DefaultValue="UcsOrthographicType::NotOrthographic" WriteConverter="{} as i16" />
-    <Pointer Name="viewport" Code="330" />
+    <Pointer Name="viewport" Code="330" Type="ViewPort" />
     <Pointer Name="table_record" Code="345" />
     <Pointer Name="table_record_base" Code="346" />
     <!-- plot object (code 333) is inherited from `PlotSettings` -->
@@ -1005,7 +1005,7 @@
     <Field Name="interval_in_seconds" Code="95" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="hours" Code="290" Type="i32" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{} as i16" />
     <Pointer Name="page_setup_wizard" Code="340" />
-    <Pointer Name="view" Code="341" />
+    <Pointer Name="view" Code="341" Type="View" />
     <Pointer Name="visual_style" Code="342" />
     <Field Name="shade_plot_type" Code="74" Type="i16" DefaultValue="0" />
     <Field Name="viewports_per_page" Code="75" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />

@@ -45,6 +45,7 @@ use ::code_pair_writer::CodePairWriter;
 use ::extension_data;
 use ::handle_tracker::HandleTracker;
 use ::helper_functions::*;
+use ::tables::*;
 use ::x_data;
 
 use entities::*;

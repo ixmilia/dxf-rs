@@ -25,6 +25,8 @@ use ::{
     CodePairValue,
     Color,
     Drawing,
+    DrawingItem,
+    DrawingItemMut,
     DxfError,
     DxfResult,
     ExtensionGroup,
@@ -104,6 +106,16 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         }
 
         fun.push_str("        }\n");
+        fun.push_str("    }\n");
+        fun.push_str("}\n");
+        fun.push_str("\n");
+
+        fun.push_str(&format!("impl {name} {{\n", name=name(&table_item)));
+        fun.push_str("    pub fn get_owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {\n");
+        fun.push_str("        drawing.get_item_by_handle(self.__owner_handle)\n");
+        fun.push_str("    }\n");
+        fun.push_str("    pub fn set_owner<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {\n");
+        fun.push_str("        self.__owner_handle = drawing.assign_and_get_handle(item);\n");
         fun.push_str("    }\n");
         fun.push_str("}\n");
         fun.push_str("\n");

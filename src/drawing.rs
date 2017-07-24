@@ -263,14 +263,59 @@ impl Drawing {
     }
     /// Gets a `DrawingItem` with the appropriate handle or `None`.
     pub fn get_item_by_handle<'a>(&'a self, handle: u32) -> Option<DrawingItem<'a>> {
-        for ent in &self.entities {
-            if ent.common.handle == handle {
-                return Some(DrawingItem::Entity(ent));
+        for item in &self.app_ids {
+            if item.handle == handle {
+                return Some(DrawingItem::AppId(item));
             }
         }
-        for obj in &self.objects {
-            if obj.common.handle == handle {
-                return Some(DrawingItem::Object(obj));
+        for item in &self.block_records {
+            if item.handle == handle {
+                return Some(DrawingItem::BlockRecord(item));
+            }
+        }
+        for item in &self.dim_styles {
+            if item.handle == handle {
+                return Some(DrawingItem::DimStyle(item));
+            }
+        }
+        for item in &self.entities {
+            if item.common.handle == handle {
+                return Some(DrawingItem::Entity(item));
+            }
+        }
+        for item in &self.layers {
+            if item.handle == handle {
+                return Some(DrawingItem::Layer(item));
+            }
+        }
+        for item in &self.line_types {
+            if item.handle == handle {
+                return Some(DrawingItem::LineType(item));
+            }
+        }
+        for item in &self.objects {
+            if item.common.handle == handle {
+                return Some(DrawingItem::Object(item));
+            }
+        }
+        for item in &self.styles {
+            if item.handle == handle {
+                return Some(DrawingItem::Style(item));
+            }
+        }
+        for item in &self.ucss {
+            if item.handle == handle {
+                return Some(DrawingItem::Ucs(item));
+            }
+        }
+        for item in &self.views {
+            if item.handle == handle {
+                return Some(DrawingItem::View(item));
+            }
+        }
+        for item in &self.view_ports {
+            if item.handle == handle {
+                return Some(DrawingItem::ViewPort(item));
             }
         }
 
@@ -278,14 +323,59 @@ impl Drawing {
     }
     /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
     pub fn get_item_by_handle_mut<'a>(&'a mut self, handle: u32) -> Option<DrawingItemMut<'a>> {
-        for ent in &mut self.entities {
-            if ent.common.handle == handle {
-                return Some(DrawingItemMut::Entity(ent));
+        for item in &mut self.app_ids {
+            if item.handle == handle {
+                return Some(DrawingItemMut::AppId(item));
             }
         }
-        for obj in &mut self.objects {
-            if obj.common.handle == handle {
-                return Some(DrawingItemMut::Object(obj));
+        for item in &mut self.block_records {
+            if item.handle == handle {
+                return Some(DrawingItemMut::BlockRecord(item));
+            }
+        }
+        for item in &mut self.dim_styles {
+            if item.handle == handle {
+                return Some(DrawingItemMut::DimStyle(item));
+            }
+        }
+        for item in &mut self.entities {
+            if item.common.handle == handle {
+                return Some(DrawingItemMut::Entity(item));
+            }
+        }
+        for item in &mut self.layers {
+            if item.handle == handle {
+                return Some(DrawingItemMut::Layer(item));
+            }
+        }
+        for item in &mut self.line_types {
+            if item.handle == handle {
+                return Some(DrawingItemMut::LineType(item));
+            }
+        }
+        for item in &mut self.objects {
+            if item.common.handle == handle {
+                return Some(DrawingItemMut::Object(item));
+            }
+        }
+        for item in &mut self.styles {
+            if item.handle == handle {
+                return Some(DrawingItemMut::Style(item));
+            }
+        }
+        for item in &mut self.ucss {
+            if item.handle == handle {
+                return Some(DrawingItemMut::Ucs(item));
+            }
+        }
+        for item in &mut self.views {
+            if item.handle == handle {
+                return Some(DrawingItemMut::View(item));
+            }
+        }
+        for item in &mut self.view_ports {
+            if item.handle == handle {
+                return Some(DrawingItemMut::ViewPort(item));
             }
         }
 
