@@ -18,6 +18,7 @@ use ::{
 use code_pair_writer::CodePairWriter;
 use enums::*;
 use entities::*;
+use handle_tracker::HandleTracker;
 use helper_functions::*;
 
 //------------------------------------------------------------------------------
@@ -752,15 +753,15 @@ impl Entity {
             _ => return Ok(false), // no custom reader
         }
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, write_handles, writer)?;
+            self.common.write(version, write_handles, writer, handle_tracker)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(&self.common, version, writer)?;
-                self.post_write(&version, write_handles, writer)?;
+                self.post_write(&version, write_handles, writer, handle_tracker)?;
             }
             for x in &self.common.x_data {
                 x.write(version, writer)?;
@@ -840,7 +841,7 @@ impl Entity {
 
         Ok(true)
     }
-    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         match self.specific {
@@ -848,10 +849,10 @@ impl Entity {
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
                     let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
-                    v.write(&version, write_handles, writer)?;
+                    v.write(&version, write_handles, writer, handle_tracker)?;
                 }
                 let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
-                seqend.write(&version, write_handles, writer)?;
+                seqend.write(&version, write_handles, writer, handle_tracker)?;
             },
             _ => (),
         }

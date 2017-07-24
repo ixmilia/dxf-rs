@@ -30,6 +30,7 @@ use ::{
 use ::dxb_reader::DxbReader;
 use ::dxb_writer::DxbWriter;
 use ::entity_iter::EntityIter;
+use ::handle_tracker::HandleTracker;
 use ::helper_functions::*;
 use ::object_iter::ObjectIter;
 
@@ -169,10 +170,11 @@ impl Drawing {
         writer.write_prelude()?;
         self.header.write(writer)?;
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         self.write_classes(writer)?;
         self.write_tables(write_handles, writer)?;
         self.write_blocks(write_handles, writer)?;
-        self.write_entities(write_handles, writer)?;
+        self.write_entities(write_handles, writer, &mut handle_tracker)?;
         self.write_objects(writer)?;
         self.write_thumbnail(writer)?;
         writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
@@ -342,13 +344,13 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
         for e in &self.entities {
-            e.write(&self.header.version, write_handles, writer)?;
+            e.write(&self.header.version, write_handles, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;

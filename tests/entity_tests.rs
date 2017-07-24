@@ -107,7 +107,7 @@ fn write_common_entity_fields() {
     drawing.entities.push(ent);
     assert_contains(&drawing, vec![
         "  0", "LINE",
-        "  5", "0",
+        "  5", "1",
         "100", "AcDbEntity",
         "  8", "some-layer",
     ].join("\r\n"));
@@ -587,7 +587,7 @@ fn write_polyline() {
     });
     assert_contains(&drawing, vec![
         "  0", "POLYLINE", // polyline
-        "  5", "0",
+        "  5", "1",
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDb2dPolyline",
@@ -596,7 +596,7 @@ fn write_polyline() {
         " 20", "0.0",
         " 30", "0.0",
         "  0", "VERTEX", // vertex 1
-        "  5", "0",
+        "  5", "2",
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",
@@ -606,7 +606,7 @@ fn write_polyline() {
         " 70", "     0",
         " 50", "0.0",
         "  0", "VERTEX", // vertex 2
-        "  5", "0",
+        "  5", "3",
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",
@@ -616,7 +616,7 @@ fn write_polyline() {
         " 70", "     0",
         " 50", "0.0",
         "  0", "VERTEX", // vertex 3
-        "  5", "0",
+        "  5", "4",
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",

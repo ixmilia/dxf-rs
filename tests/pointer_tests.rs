@@ -107,7 +107,7 @@ fn set_pointer_on_entity() {
     ].join("\r\n"));
     assert_contains(&drawing, vec![
         "  0", "LINE",
-        "  5", "0",
+        "  5", "2",
         "100", "AcDbEntity",
         "  8", "0",
         "347", "1", // handle of `material`

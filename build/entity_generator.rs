@@ -35,6 +35,7 @@ use ::{
 };
 use ::code_pair_writer::CodePairWriter;
 use ::extension_data;
+use ::handle_tracker::HandleTracker;
 use ::helper_functions::*;
 use ::x_data;
 
@@ -165,7 +166,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        let ent = self;\n");
@@ -663,7 +664,12 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
         field_access = format!("{}.{}", field_access, suffix);
     }
     let writer = write_converter.replace("{}", &field_access);
-    format!("CodePair::new_{typ}({code}, {writer})", typ=typ, code=code, writer=writer)
+    if name(&field) == "handle" && code == 5 {
+        String::from("CodePair::new_string(5, &as_handle(if self.handle == 0 { handle_tracker.get_entity_handle(&self) } else { self.handle }))")
+    }
+    else {
+        format!("CodePair::new_{typ}({code}, {writer})", typ=typ, code=code, writer=writer)
+    }
 }
 
 fn load_xml() -> Element {

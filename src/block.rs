@@ -17,6 +17,7 @@ use code_pair_writer::CodePairWriter;
 use entities::Entity;
 use entity_iter::EntityIter;
 use enums::*;
+use handle_tracker::HandleTracker;
 use helper_functions::*;
 use extension_data;
 use x_data;
@@ -240,7 +241,7 @@ impl Block {
         }
 
         for e in &self.entities {
-            e.write(version, false, writer)?; // entities in blocks never have handles
+            e.write(version, false, writer, &mut HandleTracker::new(0))?; // entities in blocks never have handles
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDBLK"))?;

@@ -119,6 +119,8 @@ pub use x_data::*;
 
 mod table;
 
+mod handle_tracker;
+
 mod drawing;
 pub use drawing::Drawing;
 
