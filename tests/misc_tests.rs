@@ -147,11 +147,11 @@ fn normalize_views() {
 fn normalize_ucs() {
     let mut file = Drawing::default();
     file.clear();
-    assert_eq!(0, file.ucs.len());
+    assert_eq!(0, file.ucss.len());
     file.header.ucs_name = String::from("primary ucs");
     file.normalize();
-    assert_eq!(1, file.ucs.len());
-    assert_eq!("primary ucs", file.ucs[0].name);
+    assert_eq!(1, file.ucss.len());
+    assert_eq!("primary ucs", file.ucss[0].name);
 }
 
 #[test]

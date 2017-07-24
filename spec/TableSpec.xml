@@ -131,7 +131,7 @@
             <Field Name="big_font_file_name" Code="4" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" />
         </TableItem>
     </Table>
-    <Table Collection="ucs" TypeString="UCS">
+    <Table Collection="ucss" TypeString="UCS">
         <TableItem Name="Ucs" ClassName="AcDbUCSTableRecord">
             <Field Name="origin" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
             <Field Name="x_axis" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />

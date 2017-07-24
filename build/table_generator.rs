@@ -36,6 +36,7 @@ use ::{
     XData,
 };
 use ::code_pair_writer::CodePairWriter;
+use ::handle_tracker::HandleTracker;
 use ::helper_functions::*;
 use ::extension_data;
 use ::x_data;
@@ -248,11 +249,11 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
-    fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
     fun.push_str("    where T: Write {\n");
     fun.push_str("\n");
     for table in &element.children {
-        fun.push_str(&format!("    write_{collection}(drawing, write_handles, writer)?;\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("    write_{collection}(drawing, write_handles, writer, handle_tracker)?;\n", collection=attr(&table, "Collection")));
     }
 
     fun.push_str("    Ok(())\n");
@@ -261,7 +262,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
     for table in &element.children {
         let table_item = &table.children[0];
-        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
         fun.push_str("\n");
         fun.push_str(&format!("    if drawing.{collection}.len() == 0 {{\n", collection=attr(&table, "Collection")));
@@ -271,18 +272,22 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"TABLE\"))?;\n");
         fun.push_str(&format!("    writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\"))?;\n", type_string=attr(&table, "TypeString")));
 
-        // TODO: assign and write handles
+        // TODO: assign and write table handles
         // fun.push_str("    if write_handles {\n");
         // fun.push_str("        writer.write_code_pair(&CodePair::new_str(5, \"0\"))?;\n");
         // fun.push_str("    }\n");
         // fun.push_str("\n");
+
+        let collection = attr(&table, "Collection");
+        let (item_type, _) = collection.split_at(collection.len() - 1); // remove the 's' suffix
 
         fun.push_str("    writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\"))?;\n");
         fun.push_str("    writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n");
         fun.push_str(&format!("    for item in &drawing.{collection} {{\n", collection=attr(&table, "Collection")));
         fun.push_str(&format!("        writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\"))?;\n", type_string=attr(&table, "TypeString")));
         fun.push_str("        if write_handles {\n");
-        fun.push_str("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(item.handle)))?;\n");
+        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(handle_tracker.get_{item_type}_handle(&item))))?;\n",
+            item_type=item_type));
         fun.push_str("        }\n");
         fun.push_str("\n");
         fun.push_str("        if drawing.header.version >= AcadVersion::R14 {\n");

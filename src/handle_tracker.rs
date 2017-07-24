@@ -2,6 +2,7 @@
 
 use ::entities::EntityCommon;
 use ::objects::ObjectCommon;
+use ::tables::*;
 
 pub(crate) struct HandleTracker {
     next_handle: u32,
@@ -13,24 +14,47 @@ impl HandleTracker {
             next_handle: next_handle,
         }
     }
+    pub fn get_app_id_handle(&mut self, item: &AppId) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_block_record_handle(&mut self, item: &BlockRecord) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_dim_style_handle(&mut self, item: &DimStyle) -> u32 {
+        self.get_next_handle(item.handle)
+    }
     pub fn get_entity_handle(&mut self, item: &EntityCommon) -> u32 {
-        match item.handle {
-            0 => {
-                let handle = self.next_handle;
-                self.next_handle += 1;
-                handle
-            },
-            _ => item.handle,
-        }
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_layer_handle(&mut self, item: &Layer) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_line_type_handle(&mut self, item: &LineType) -> u32 {
+        self.get_next_handle(item.handle)
     }
     pub fn get_object_handle(&mut self, item: &ObjectCommon) -> u32 {
-        match item.handle {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_style_handle(&mut self, item: &Style) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_ucs_handle(&mut self, item: &Ucs) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_view_handle(&mut self, item: &View) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_view_port_handle(&mut self, item: &ViewPort) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    fn get_next_handle(&mut self, existing_handle: u32) -> u32 {
+        match existing_handle {
             0 => {
                 let handle = self.next_handle;
                 self.next_handle += 1;
                 handle
             },
-            _ => item.handle,
+            _ => existing_handle,
         }
     }
 }

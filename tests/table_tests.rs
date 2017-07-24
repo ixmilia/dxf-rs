@@ -134,7 +134,7 @@ fn write_layer() {
         "100", "AcDbSymbolTable",
         " 70", "     0",
             "  0", "LAYER",
-            "  5", "0",
+            "  5", "1",
             "100", "AcDbSymbolTableRecord",
             "100", "AcDbLayerTableRecord",
             "  2", "layer-name",

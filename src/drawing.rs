@@ -75,7 +75,7 @@ pub struct Drawing {
     /// The visual styles contained by the drawing.
     pub styles: Vec<Style>,
     /// The user coordinate systems (UCS) contained by the drawing.
-    pub ucs: Vec<Ucs>,
+    pub ucss: Vec<Ucs>,
     /// The views contained by the drawing.
     pub views: Vec<View>,
     /// The view ports contained by the drawing.
@@ -101,7 +101,7 @@ impl Default for Drawing {
             layers: vec![],
             line_types: vec![],
             styles: vec![],
-            ucs: vec![],
+            ucss: vec![],
             views: vec![],
             view_ports: vec![],
             blocks: vec![],
@@ -172,7 +172,7 @@ impl Drawing {
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         self.write_classes(writer)?;
-        self.write_tables(write_handles, writer)?;
+        self.write_tables(write_handles, writer, &mut handle_tracker)?;
         self.write_blocks(write_handles, writer)?;
         self.write_entities(write_handles, writer, &mut handle_tracker)?;
         self.write_objects(writer, &mut handle_tracker)?;
@@ -221,7 +221,7 @@ impl Drawing {
         self.layers.clear();
         self.line_types.clear();
         self.styles.clear();
-        self.ucs.clear();
+        self.ucss.clear();
         self.views.clear();
         self.view_ports.clear();
         self.blocks.clear();
@@ -257,7 +257,7 @@ impl Drawing {
         self.layers.sort_by(|a, b| a.name.cmp(&b.name));
         self.line_types.sort_by(|a, b| a.name.cmp(&b.name));
         self.styles.sort_by(|a, b| a.name.cmp(&b.name));
-        self.ucs.sort_by(|a, b| a.name.cmp(&b.name));
+        self.ucss.sort_by(|a, b| a.name.cmp(&b.name));
         self.views.sort_by(|a, b| a.name.cmp(&b.name));
         self.view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
@@ -409,12 +409,12 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
-        write_tables(&self, write_handles, writer)?;
+        write_tables(&self, write_handles, writer, handle_tracker)?;
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
@@ -1030,7 +1030,7 @@ impl Drawing {
     fn ensure_ucs(&mut self) {
         // gather existing ucs names
         let mut existing_ucs = HashSet::new();
-        for ucs in &self.ucs {
+        for ucs in &self.ucss {
             add_to_existing(&mut existing_ucs, &ucs.name);
         }
 
@@ -1047,7 +1047,7 @@ impl Drawing {
         for name in &to_add {
             if !name.is_empty() && !existing_ucs.contains(name) {
                 existing_ucs.insert(name.clone());
-                self.ucs.push(Ucs {
+                self.ucss.push(Ucs {
                     name: name.clone(),
                     .. Default::default()
                 });
