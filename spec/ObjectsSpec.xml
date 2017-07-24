@@ -7,14 +7,14 @@
 
   -->
   <Object Name="Object" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" />
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" />
     <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="x_data" Code="1001" Type="XData" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="owner" Code="330" />
     <WriteOrder>
       <WriteField Field="handle" />
       <WriteExtensionData />
-      <WriteField Field="owner" />
+      <WriteField Field="owner" DontWriteIfValueIs="0" />
     </WriteOrder>
   </Object>
   <!--

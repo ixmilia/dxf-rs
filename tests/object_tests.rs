@@ -90,8 +90,7 @@ fn write_common_object_fields() {
     drawing.objects.push(obj);
     assert_contains(&drawing, vec![
         "  0", "IMAGEDEF",
-        "  5", "0",
-        "330", "0",
+        "  5", "1",
     ].join("\r\n"));
 }
 

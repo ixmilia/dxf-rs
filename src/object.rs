@@ -27,6 +27,7 @@ use ::{
 
 use code_pair_writer::CodePairWriter;
 use enums::*;
+use handle_tracker::HandleTracker;
 use objects::*;
 use helper_functions::*;
 
@@ -908,15 +909,15 @@ impl Object {
             _ => return Ok(false), // no custom reader
         }
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, writer)?;
+            self.common.write(version, writer, handle_tracker)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(version, writer)?;
-                self.post_write(&version, writer)?;
+                self.post_write(&version, writer, handle_tracker)?;
             }
             for x in &self.common.x_data {
                 x.write(version, writer)?;
@@ -1064,7 +1065,7 @@ impl Object {
 
         Ok(true)
     }
-    fn post_write<T>(&self, _version: &AcadVersion, _writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn post_write<T>(&self, _version: &AcadVersion, _writer: &mut CodePairWriter<T>, _handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         match self.specific {

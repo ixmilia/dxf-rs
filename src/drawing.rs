@@ -175,7 +175,7 @@ impl Drawing {
         self.write_tables(write_handles, writer)?;
         self.write_blocks(write_handles, writer)?;
         self.write_entities(write_handles, writer, &mut handle_tracker)?;
-        self.write_objects(writer)?;
+        self.write_objects(writer, &mut handle_tracker)?;
         self.write_thumbnail(writer)?;
         writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
         Ok(())
@@ -356,13 +356,13 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
         for o in &self.objects {
-            o.write(&self.header.version, writer)?;
+            o.write(&self.header.version, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
