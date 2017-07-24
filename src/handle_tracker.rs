@@ -1,5 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use ::Block;
 use ::entities::EntityCommon;
 use ::objects::ObjectCommon;
 use ::tables::*;
@@ -15,6 +16,9 @@ impl HandleTracker {
         }
     }
     pub fn get_app_id_handle(&mut self, item: &AppId) -> u32 {
+        self.get_next_handle(item.handle)
+    }
+    pub fn get_block_handle(&mut self, item: &Block) -> u32 {
         self.get_next_handle(item.handle)
     }
     pub fn get_block_record_handle(&mut self, item: &BlockRecord) -> u32 {

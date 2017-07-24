@@ -6,6 +6,8 @@ use ::{
     CodePair,
     CodePairValue,
     Drawing,
+    DrawingItem,
+    DrawingItemMut,
     DxfError,
     DxfResult,
     ExtensionGroup,
@@ -29,8 +31,8 @@ use itertools::PutBack;
 pub struct Block {
     /// The block's handle.
     pub handle: u32,
-    /// The block's owner's handle.
-    pub owner_handle: u32,
+    #[doc(hidden)]
+    pub __owner_handle: u32,
     /// The name of the layer containing the block.
     pub layer: String,
     /// The name of the block.
@@ -55,6 +57,12 @@ pub struct Block {
 
 // public implementation
 impl Block {
+    pub fn get_owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {
+        drawing.get_item_by_handle(self.__owner_handle)
+    }
+    pub fn set_owner<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {
+        self.__owner_handle = drawing.assign_and_get_handle(item);
+    }
     pub fn get_is_anonymous(&self) -> bool {
         self.get_flag(1)
     }
@@ -107,7 +115,7 @@ impl Default for Block {
     fn default() -> Self {
         Block {
             handle: 0,
-            owner_handle: 0,
+            __owner_handle: 0,
             layer: String::from("0"),
             name: String::new(),
             flags: 0,
@@ -174,7 +182,7 @@ impl Block {
                                 30 => current.base_point.z = pair.value.assert_f64()?,
                                 67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()?),
                                 70 => current.flags = pair.value.assert_i16()? as i32,
-                                330 => current.owner_handle = as_u32(pair.value.assert_string()?)?,
+                                330 => current.__owner_handle = as_u32(pair.value.assert_string()?)?,
                                 extension_data::EXTENSION_DATA_GROUP => {
                                     let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;
                                     current.extension_data_groups.push(group);
@@ -195,12 +203,12 @@ impl Block {
 
         Ok(())
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
         if write_handles && self.handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
+            writer.write_code_pair(&CodePair::new_string(5, &as_handle(handle_tracker.get_block_handle(&self))))?;
         }
 
         if version >= &AcadVersion::R14 {
@@ -210,8 +218,8 @@ impl Block {
         }
 
         if version >= &AcadVersion::R13 {
-            if self.owner_handle != 0 {
-                writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle)))?;
+            if self.__owner_handle != 0 {
+                writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
             }
 
             writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
@@ -255,8 +263,8 @@ impl Block {
             }
         }
 
-        if version >= &AcadVersion::R2000 && self.owner_handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.owner_handle)))?;
+        if version >= &AcadVersion::R2000 && self.__owner_handle != 0 {
+            writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
         }
 
         if version >= &AcadVersion::R13 {

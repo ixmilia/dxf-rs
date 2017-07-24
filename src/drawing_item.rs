@@ -1,11 +1,13 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use ::Block;
 use entities::*;
 use objects::*;
 use tables::*;
 
 pub enum DrawingItem<'a> {
     AppId(&'a AppId),
+    Block(&'a Block),
     BlockRecord(&'a BlockRecord),
     DimStyle(&'a DimStyle),
     Entity(&'a Entity),
@@ -22,6 +24,7 @@ impl<'a> DrawingItem<'a> {
     pub fn get_handle(&self) -> u32 {
         match self {
             &DrawingItem::AppId(ref app_id) => app_id.handle,
+            &DrawingItem::Block(ref b) => b.handle,
             &DrawingItem::BlockRecord(ref br) => br.handle,
             &DrawingItem::DimStyle(ref ds) => ds.handle,
             &DrawingItem::Entity(&Entity { ref common, .. }) => common.handle,
@@ -38,6 +41,7 @@ impl<'a> DrawingItem<'a> {
 
 pub enum DrawingItemMut<'a> {
     AppId(&'a mut AppId),
+    Block(&'a mut Block),
     BlockRecord(&'a mut BlockRecord),
     DimStyle(&'a mut DimStyle),
     Entity(&'a mut Entity),
@@ -54,6 +58,7 @@ impl<'a> DrawingItemMut<'a> {
     pub fn get_handle(&self) -> u32 {
         match self {
             &DrawingItemMut::AppId(ref app_id) => app_id.handle,
+            &DrawingItemMut::Block(ref b) => b.handle,
             &DrawingItemMut::BlockRecord(ref br) => br.handle,
             &DrawingItemMut::DimStyle(ref ds) => ds.handle,
             &DrawingItemMut::Entity(&mut Entity { ref common, .. }) => common.handle,
@@ -69,6 +74,7 @@ impl<'a> DrawingItemMut<'a> {
     pub fn set_handle(&mut self, handle: u32) {
         match self {
             &mut DrawingItemMut::AppId(ref mut app_id) => app_id.handle = handle,
+            &mut DrawingItemMut::Block(ref mut b) => b.handle = handle,
             &mut DrawingItemMut::BlockRecord(ref mut br) => br.handle = handle,
             &mut DrawingItemMut::DimStyle(ref mut ds) => ds.handle = handle,
             &mut DrawingItemMut::Entity(&mut Entity { ref mut common, .. }) => common.handle = handle,
@@ -84,6 +90,7 @@ impl<'a> DrawingItemMut<'a> {
     pub fn to_drawing_item(&self) -> DrawingItem {
         match self {
             &DrawingItemMut::AppId(ref app_id) => DrawingItem::AppId(app_id),
+            &DrawingItemMut::Block(ref b) => DrawingItem::Block(b),
             &DrawingItemMut::BlockRecord(ref br) => DrawingItem::BlockRecord(br),
             &DrawingItemMut::DimStyle(ref ds) => DrawingItem::DimStyle(ds),
             &DrawingItemMut::Entity(ref ent) => DrawingItem::Entity(ent),

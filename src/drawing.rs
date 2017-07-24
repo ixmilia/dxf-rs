@@ -173,7 +173,7 @@ impl Drawing {
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         self.write_classes(writer)?;
         self.write_tables(write_handles, writer, &mut handle_tracker)?;
-        self.write_blocks(write_handles, writer)?;
+        self.write_blocks(write_handles, writer, &mut handle_tracker)?;
         self.write_entities(write_handles, writer, &mut handle_tracker)?;
         self.write_objects(writer, &mut handle_tracker)?;
         self.write_thumbnail(writer)?;
@@ -268,6 +268,11 @@ impl Drawing {
                 return Some(DrawingItem::AppId(item));
             }
         }
+        for item in &self.blocks {
+            if item.handle == handle {
+                return Some(DrawingItem::Block(item));
+            }
+        }
         for item in &self.block_records {
             if item.handle == handle {
                 return Some(DrawingItem::BlockRecord(item));
@@ -326,6 +331,11 @@ impl Drawing {
         for item in &mut self.app_ids {
             if item.handle == handle {
                 return Some(DrawingItemMut::AppId(item));
+            }
+        }
+        for item in &mut self.blocks {
+            if item.handle == handle {
+                return Some(DrawingItemMut::Block(item));
             }
         }
         for item in &mut self.block_records {
@@ -418,7 +428,7 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
+    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
         where T: Write {
 
         if self.blocks.len() == 0 {
@@ -428,7 +438,7 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "BLOCKS"))?;
         for b in &self.blocks {
-            b.write(&self.header.version, write_handles, writer)?;
+            b.write(&self.header.version, write_handles, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
