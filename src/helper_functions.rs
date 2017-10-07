@@ -244,7 +244,7 @@ pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
 }
 
 pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
-    where T: Read {
+    where T: Read + ?Sized {
 
     let mut result = String::new();
     let bytes = reader.bytes();
@@ -270,7 +270,7 @@ pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
     Some(Ok(result))
 }
 
-pub(crate) fn read_u8<T: Read>(reader: &mut T) -> Option<io::Result<u8>> {
+pub(crate) fn read_u8<T: Read + ?Sized>(reader: &mut T) -> Option<io::Result<u8>> {
     let mut buf = [0];
     let size = match reader.read(&mut buf) {
         Ok(v) => v,

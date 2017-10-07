@@ -116,7 +116,7 @@ impl Default for Drawing {
 impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: &mut T) -> DxfResult<Drawing>
-        where T: Read {
+        where T: Read + ?Sized {
 
         let first_line = match read_line(reader) {
             Some(Ok(line)) => line,
@@ -152,14 +152,14 @@ impl Drawing {
     }
     /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write {
+        where T: Write + ?Sized {
 
         let mut writer = CodePairWriter::new_ascii_writer(writer);
         self.save_internal(&mut writer)
     }
     /// Writes a `Drawing` as binary to anything that implements the `Write` trait.
     pub fn save_binary<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write {
+        where T: Write + ?Sized {
 
         let mut writer = CodePairWriter::new_binary_writer(writer);
         self.save_internal(&mut writer)
@@ -200,7 +200,7 @@ impl Drawing {
     }
     /// Writes a `Drawing` as DXB to anything that implements the `Write` trait.
     pub fn save_dxb<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write {
+        where T: Write + ?Sized {
 
         let mut writer = DxbWriter::new(writer);
         writer.write(self)
