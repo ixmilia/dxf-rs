@@ -135,7 +135,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         if c.name == "Field" {
             if name(c) == "extension_data_groups" && code(c) == 102 {
                 fun.push_str("            extension_data::EXTENSION_DATA_GROUP => {\n");
-                fun.push_str("                let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter, pair.offset)?;\n");
+                fun.push_str("                let group = ExtensionGroup::read_group(pair.assert_string()?, iter, pair.offset)?;\n");
                 fun.push_str("                self.extension_data_groups.push(group);\n");
                 fun.push_str("            },\n");
             }
@@ -158,7 +158,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     }
 
     fun.push_str("            x_data::XDATA_APPLICATIONNAME => {\n");
-    fun.push_str("                let x = XData::read_item(pair.value.assert_string()?, iter)?;\n");
+    fun.push_str("                let x = XData::read_item(pair.assert_string()?, iter)?;\n");
     fun.push_str("                self.x_data.push(x);\n");
     fun.push_str("            },\n");
     fun.push_str("            _ => (), // unknown code, just ignore\n");

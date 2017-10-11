@@ -15,6 +15,7 @@ use self::byteorder::{
 
 use ::{
     CodePairValue,
+    DxfError,
     DxfResult,
 };
 
@@ -54,12 +55,49 @@ impl CodePair {
     pub fn new_bool(code: i32, val: bool) -> Self {
         CodePair::new(code, CodePairValue::Boolean(if val { 1 } else { 0 }), 0)
     }
+    pub fn assert_bool(&self) -> DxfResult<bool> {
+        match self.value {
+            CodePairValue::Boolean(s) => Ok(s != 0),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_i64(&self) -> DxfResult<i64> {
+        match self.value {
+            CodePairValue::Long(l) => Ok(l),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_i32(&self) -> DxfResult<i32> {
+        match self.value {
+            CodePairValue::Integer(i) => Ok(i),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_f64(&self) -> DxfResult<f64> {
+        match self.value {
+            CodePairValue::Double(f) => Ok(f),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_string(&self) -> DxfResult<String> {
+        match self.value {
+            CodePairValue::Str(ref s) => Ok(s.clone()),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_i16(&self) -> DxfResult<i16> {
+        match self.value {
+            CodePairValue::Boolean(s) => Ok(s),
+            CodePairValue::Short(s) => Ok(s),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
 }
 
 impl CodePair {
     pub(crate) fn as_handle(&self) -> DxfResult<u32> {
         let mut bytes = vec![];
-        parse_hex_string(&self.value.assert_string()?, &mut bytes, self.offset)?;
+        parse_hex_string(&self.assert_string()?, &mut bytes, self.offset)?;
         while bytes.len() < 4 {
             bytes.insert(0, 0);
         }

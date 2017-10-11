@@ -39,7 +39,7 @@ impl Header {
                             break;
                         },
                         9 => {
-                            let last_header_variable = pair.value.assert_string()?;
+                            let last_header_variable = pair.assert_string()?;
                             loop {
                                 match iter.next() {
                                     Some(Ok(pair)) => {

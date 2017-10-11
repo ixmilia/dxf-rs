@@ -62,7 +62,7 @@ pub fn get_field_reader(element: &Element) -> String {
         if read_converter.is_empty() {
             read_converter = String::from("{}");
         }
-        let read_cmd = format!("pair.value.{}()?", reader_fun);
+        let read_cmd = format!("pair.{}()?", reader_fun);
         let normalized_read_cmd = if element.name == "Pointer" { String::from("pair.as_handle()?") } else { read_cmd };
         read_converter.replace("{}", &normalized_read_cmd)
     }

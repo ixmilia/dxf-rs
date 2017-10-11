@@ -171,24 +171,24 @@ impl Block {
                         _ => {
                             // specific to the BLOCK
                             match pair.code {
-                                1 => current.xref_path_name = pair.value.assert_string()?,
-                                2 => current.name = pair.value.assert_string()?,
+                                1 => current.xref_path_name = pair.assert_string()?,
+                                2 => current.name = pair.assert_string()?,
                                 3 => (), // another instance of the name
-                                4 => current.description = pair.value.assert_string()?,
+                                4 => current.description = pair.assert_string()?,
                                 5 => current.handle = pair.as_handle()?,
-                                8 => current.layer = pair.value.assert_string()?,
-                                10 => current.base_point.x = pair.value.assert_f64()?,
-                                20 => current.base_point.y = pair.value.assert_f64()?,
-                                30 => current.base_point.z = pair.value.assert_f64()?,
-                                67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()?),
-                                70 => current.flags = pair.value.assert_i16()? as i32,
+                                8 => current.layer = pair.assert_string()?,
+                                10 => current.base_point.x = pair.assert_f64()?,
+                                20 => current.base_point.y = pair.assert_f64()?,
+                                30 => current.base_point.z = pair.assert_f64()?,
+                                67 => current.is_in_paperspace = as_bool(pair.assert_i16()?),
+                                70 => current.flags = pair.assert_i16()? as i32,
                                 330 => current.__owner_handle = pair.as_handle()?,
                                 extension_data::EXTENSION_DATA_GROUP => {
-                                    let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter, pair.offset)?;
+                                    let group = ExtensionGroup::read_group(pair.assert_string()?, iter, pair.offset)?;
                                     current.extension_data_groups.push(group);
                                 },
                                 x_data::XDATA_APPLICATIONNAME => {
-                                    let x = XData::read_item(pair.value.assert_string()?, iter)?;
+                                    let x = XData::read_item(pair.assert_string()?, iter)?;
                                     current.x_data.push(x);
                                 },
                                 _ => (), // unsupported code pair

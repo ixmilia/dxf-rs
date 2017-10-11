@@ -44,9 +44,9 @@ impl Vector {
     }
     pub(crate) fn set(&mut self, pair: &CodePair) -> DxfResult<()> {
         match pair.code {
-            10 => self.x = pair.value.assert_f64()?,
-            20 => self.y = pair.value.assert_f64()?,
-            30 => self.z = pair.value.assert_f64()?,
+            10 => self.x = pair.assert_f64()?,
+            20 => self.y = pair.assert_f64()?,
+            30 => self.z = pair.assert_f64()?,
             _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for vector"))),
         }
 

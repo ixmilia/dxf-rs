@@ -500,7 +500,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match &*pair.value.assert_string()? {
+                    match &*pair.assert_string()? {
                         "EOF" => {
                             iter.put_back(Ok(pair));
                             break;
@@ -548,7 +548,7 @@ impl Drawing {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
-                    if pair.code == 0 && pair.value.assert_string()? == "ENDSEC" {
+                    if pair.code == 0 && pair.assert_string()? == "ENDSEC" {
                         iter.put_back(Ok(pair));
                         break;
                     }
@@ -586,7 +586,7 @@ impl Drawing {
         // get the length; we don't really care about this since we'll just read whatever's there
         let length_pair = next_pair!(iter);
         let _length = match length_pair.code {
-            90 => length_pair.value.assert_i32()? as usize,
+            90 => length_pair.assert_i32()? as usize,
             _ => return Err(DxfError::UnexpectedCode(length_pair.code, length_pair.offset)),
         };
 
@@ -610,7 +610,7 @@ impl Drawing {
                     iter.put_back(Ok(pair));
                     break;
                 },
-                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.value.assert_string()?, &mut data, pair.offset)?; },
+                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?; },
                 Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code, pair.offset)); },
                 Some(Err(e)) => return Err(e),
                 None => break,
@@ -660,7 +660,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*pair.value.assert_string()? {
+                        match &*pair.assert_string()? {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
@@ -693,7 +693,7 @@ impl Drawing {
             match iter.next() {
                 Some(Ok(pair)) => {
                     if pair.code == 0 {
-                        match &*pair.value.assert_string()? {
+                        match &*pair.assert_string()? {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;

@@ -82,23 +82,23 @@ impl SectionGeometrySettings {
             };
 
             match pair.code {
-                1 => { gs.plot_style_name = pair.value.assert_string()?; },
-                2 => { gs.hatch_pattern_name = pair.value.assert_string()?; },
+                1 => { gs.plot_style_name = pair.assert_string()?; },
+                2 => { gs.hatch_pattern_name = pair.assert_string()?; },
                 3 => { break; }, // done reading; value should be "SectionGeometrySettingsEnd" but it doesn't really matter
-                6 => { gs.line_type_name = pair.value.assert_string()?; },
-                8 => { gs.layer_name = pair.value.assert_string()?; },
-                40 => { gs.line_type_scale = pair.value.assert_f64()?; },
-                41 => { gs.hatch_angle = pair.value.assert_f64()?; },
-                42 => { gs.hatch_scale = pair.value.assert_f64()?; },
-                43 => { gs.hatch_spacing = pair.value.assert_f64()?; },
-                63 => { gs.color = Color::from_raw_value(pair.value.assert_i16()?); },
-                70 => { gs.face_transparency = pair.value.assert_i16()?; },
-                71 => { gs.edge_transparency = pair.value.assert_i16()?; },
-                72 => { gs.hatch_pattern_type = pair.value.assert_i16()?; },
-                90 => { gs.section_type = pair.value.assert_i32()?; },
-                91 => { gs.geometry_count = pair.value.assert_i32()?; },
-                92 => { gs.bit_flags = pair.value.assert_i32()?; },
-                370 => { gs.line_weight = pair.value.assert_i16()?; },
+                6 => { gs.line_type_name = pair.assert_string()?; },
+                8 => { gs.layer_name = pair.assert_string()?; },
+                40 => { gs.line_type_scale = pair.assert_f64()?; },
+                41 => { gs.hatch_angle = pair.assert_f64()?; },
+                42 => { gs.hatch_scale = pair.assert_f64()?; },
+                43 => { gs.hatch_spacing = pair.assert_f64()?; },
+                63 => { gs.color = Color::from_raw_value(pair.assert_i16()?); },
+                70 => { gs.face_transparency = pair.assert_i16()?; },
+                71 => { gs.edge_transparency = pair.assert_i16()?; },
+                72 => { gs.hatch_pattern_type = pair.assert_i16()?; },
+                90 => { gs.section_type = pair.assert_i32()?; },
+                91 => { gs.geometry_count = pair.assert_i32()?; },
+                92 => { gs.bit_flags = pair.assert_i32()?; },
+                370 => { gs.line_weight = pair.assert_i16()?; },
                 _ => {
                     // unexpected end; put the pair back and return what we have
                     iter.put_back(Ok(pair));

@@ -199,63 +199,63 @@ impl EntityType {
         match self {
             &mut EntityType::RotatedDimension(ref mut dim) => {
                 match pair.code {
-                    12 => { dim.insertion_point.x = pair.value.assert_f64()?; },
-                    22 => { dim.insertion_point.y = pair.value.assert_f64()?; },
-                    32 => { dim.insertion_point.z = pair.value.assert_f64()?; },
-                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
-                    50 => { dim.rotation_angle = pair.value.assert_f64()?; },
-                    52 => { dim.extension_line_angle = pair.value.assert_f64()?; },
+                    12 => { dim.insertion_point.x = pair.assert_f64()?; },
+                    22 => { dim.insertion_point.y = pair.assert_f64()?; },
+                    32 => { dim.insertion_point.z = pair.assert_f64()?; },
+                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
+                    50 => { dim.rotation_angle = pair.assert_f64()?; },
+                    52 => { dim.extension_line_angle = pair.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::RadialDimension(ref mut dim) => {
                 match pair.code {
-                    15 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
-                    25 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
-                    35 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
-                    40 => { dim.leader_length = pair.value.assert_f64()?; },
+                    15 => { dim.definition_point_2.x = pair.assert_f64()?; },
+                    25 => { dim.definition_point_2.y = pair.assert_f64()?; },
+                    35 => { dim.definition_point_2.z = pair.assert_f64()?; },
+                    40 => { dim.leader_length = pair.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::DiameterDimension(ref mut dim) => {
                 match pair.code {
-                    15 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
-                    25 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
-                    35 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
-                    40 => { dim.leader_length = pair.value.assert_f64()?; },
+                    15 => { dim.definition_point_2.x = pair.assert_f64()?; },
+                    25 => { dim.definition_point_2.y = pair.assert_f64()?; },
+                    35 => { dim.definition_point_2.z = pair.assert_f64()?; },
+                    40 => { dim.leader_length = pair.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::AngularThreePointDimension(ref mut dim) => {
                 match pair.code {
-                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
-                    15 => { dim.definition_point_4.x = pair.value.assert_f64()?; },
-                    25 => { dim.definition_point_4.y = pair.value.assert_f64()?; },
-                    35 => { dim.definition_point_4.z = pair.value.assert_f64()?; },
-                    16 => { dim.definition_point_5.x = pair.value.assert_f64()?; },
-                    26 => { dim.definition_point_5.y = pair.value.assert_f64()?; },
-                    36 => { dim.definition_point_5.z = pair.value.assert_f64()?; },
+                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
+                    15 => { dim.definition_point_4.x = pair.assert_f64()?; },
+                    25 => { dim.definition_point_4.y = pair.assert_f64()?; },
+                    35 => { dim.definition_point_4.z = pair.assert_f64()?; },
+                    16 => { dim.definition_point_5.x = pair.assert_f64()?; },
+                    26 => { dim.definition_point_5.y = pair.assert_f64()?; },
+                    36 => { dim.definition_point_5.z = pair.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
             &mut EntityType::OrdinateDimension(ref mut dim) => {
                 match pair.code {
-                    13 => { dim.definition_point_2.x = pair.value.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.value.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.value.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.value.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.value.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.value.assert_f64()?; },
+                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
+                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
+                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
+                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
+                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
+                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
                     _ => { return Ok(false); },
                 }
             },
@@ -298,7 +298,7 @@ impl Entity {
             match iter.next() {
                 // first code pair must be 0/entity-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    let type_string = pair.value.assert_string()?;
+                    let type_string = pair.assert_string()?;
                     if type_string == "ENDSEC" || type_string == "ENDBLK" {
                         iter.put_back(Ok(pair));
                         return Ok(None);
@@ -326,28 +326,28 @@ impl Entity {
                                             },
                                             None => {
                                                 match pair.code {
-                                                    1 => { dimension_base.text = pair.value.assert_string()?; },
-                                                    2 => { dimension_base.block_name = pair.value.assert_string()?; },
-                                                    3 => { dimension_base.dimension_style_name = pair.value.assert_string()?; },
-                                                    10 => { dimension_base.definition_point_1.x = pair.value.assert_f64()?; },
-                                                    20 => { dimension_base.definition_point_1.y = pair.value.assert_f64()?; },
-                                                    30 => { dimension_base.definition_point_1.z = pair.value.assert_f64()?; },
-                                                    11 => { dimension_base.text_mid_point.x = pair.value.assert_f64()?; },
-                                                    21 => { dimension_base.text_mid_point.y = pair.value.assert_f64()?; },
-                                                    31 => { dimension_base.text_mid_point.z = pair.value.assert_f64()?; },
-                                                    41 => { dimension_base.text_line_spacing_factor = pair.value.assert_f64()?; },
-                                                    42 => { dimension_base.actual_measurement = pair.value.assert_f64()?; },
-                                                    51 => { dimension_base.horizontal_direction_angle = pair.value.assert_f64()?; },
-                                                    53 => { dimension_base.text_rotation_angle = pair.value.assert_f64()?; },
-                                                    70 => { dimension_base.set_dimension_type(pair.value.assert_i16()?)?; },
-                                                    71 => { dimension_base.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.value.assert_i16()?); },
-                                                    72 => { dimension_base.text_line_spacing_style = enum_from_number!(TextLineSpacingStyle, AtLeast, from_i16, pair.value.assert_i16()?); },
-                                                    210 => { dimension_base.normal.x = pair.value.assert_f64()?; },
-                                                    220 => { dimension_base.normal.y = pair.value.assert_f64()?; },
-                                                    230 => { dimension_base.normal.z = pair.value.assert_f64()?; },
-                                                    280 => { dimension_base.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?); },
+                                                    1 => { dimension_base.text = pair.assert_string()?; },
+                                                    2 => { dimension_base.block_name = pair.assert_string()?; },
+                                                    3 => { dimension_base.dimension_style_name = pair.assert_string()?; },
+                                                    10 => { dimension_base.definition_point_1.x = pair.assert_f64()?; },
+                                                    20 => { dimension_base.definition_point_1.y = pair.assert_f64()?; },
+                                                    30 => { dimension_base.definition_point_1.z = pair.assert_f64()?; },
+                                                    11 => { dimension_base.text_mid_point.x = pair.assert_f64()?; },
+                                                    21 => { dimension_base.text_mid_point.y = pair.assert_f64()?; },
+                                                    31 => { dimension_base.text_mid_point.z = pair.assert_f64()?; },
+                                                    41 => { dimension_base.text_line_spacing_factor = pair.assert_f64()?; },
+                                                    42 => { dimension_base.actual_measurement = pair.assert_f64()?; },
+                                                    51 => { dimension_base.horizontal_direction_angle = pair.assert_f64()?; },
+                                                    53 => { dimension_base.text_rotation_angle = pair.assert_f64()?; },
+                                                    70 => { dimension_base.set_dimension_type(pair.assert_i16()?)?; },
+                                                    71 => { dimension_base.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?); },
+                                                    72 => { dimension_base.text_line_spacing_style = enum_from_number!(TextLineSpacingStyle, AtLeast, from_i16, pair.assert_i16()?); },
+                                                    210 => { dimension_base.normal.x = pair.assert_f64()?; },
+                                                    220 => { dimension_base.normal.y = pair.assert_f64()?; },
+                                                    230 => { dimension_base.normal.z = pair.assert_f64()?; },
+                                                    280 => { dimension_base.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?); },
                                                     100 => {
-                                                        match &*pair.value.assert_string()? {
+                                                        match &*pair.assert_string()? {
                                                             "AcDbAlignedDimension" => { dimension_entity = Some(EntityType::RotatedDimension(RotatedDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
                                                             "AcDbRadialDimension" => { dimension_entity = Some(EntityType::RadialDimension(RadialDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
                                                             "AcDbDiametricDimension" => { dimension_entity = Some(EntityType::DiameterDimension(DiameterDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
@@ -478,87 +478,87 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = pair.value.assert_string()?; },
-                        1 => { att.value = pair.value.assert_string()?; },
+                        100 => { last_subclass_marker = pair.assert_string()?; },
+                        1 => { att.value = pair.assert_string()?; },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = pair.value.assert_string()?;
+                                att.x_record_tag = pair.assert_string()?;
                             }
                             else {
-                                att.attribute_tag = pair.value.assert_string()?;
+                                att.attribute_tag = pair.assert_string()?;
                             }
                         },
-                        7 => { att.text_style_name = pair.value.assert_string()?; },
+                        7 => { att.text_style_name = pair.assert_string()?; },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = pair.value.assert_f64()?;
+                                att.alignment_point.x = pair.assert_f64()?;
                             }
                             else {
-                                att.location.x = pair.value.assert_f64()?;
+                                att.location.x = pair.assert_f64()?;
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = pair.value.assert_f64()?;
+                                att.alignment_point.y = pair.assert_f64()?;
                             }
                             else {
-                                att.location.y = pair.value.assert_f64()?;
+                                att.location.y = pair.assert_f64()?;
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = pair.value.assert_f64()?;
+                                att.alignment_point.z = pair.assert_f64()?;
                             }
                             else {
-                                att.location.z = pair.value.assert_f64()?;
+                                att.location.z = pair.assert_f64()?;
                             }
                         },
-                        11 => { att.second_alignment_point.x = pair.value.assert_f64()?; },
-                        21 => { att.second_alignment_point.y = pair.value.assert_f64()?; },
-                        31 => { att.second_alignment_point.z = pair.value.assert_f64()?; },
-                        39 => { att.thickness = pair.value.assert_f64()?; },
+                        11 => { att.second_alignment_point.x = pair.assert_f64()?; },
+                        21 => { att.second_alignment_point.y = pair.assert_f64()?; },
+                        31 => { att.second_alignment_point.z = pair.assert_f64()?; },
+                        39 => { att.thickness = pair.assert_f64()?; },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = pair.value.assert_f64()?;
+                                att.annotation_scale = pair.assert_f64()?;
                             }
                             else {
-                                att.text_height = pair.value.assert_f64()?;
+                                att.text_height = pair.assert_f64()?;
                             }
                         },
-                        41 => { att.relative_x_scale_factor = pair.value.assert_f64()?; },
-                        50 => { att.rotation = pair.value.assert_f64()?; },
-                        51 => { att.oblique_angle = pair.value.assert_f64()?; },
+                        41 => { att.relative_x_scale_factor = pair.assert_f64()?; },
+                        50 => { att.rotation = pair.assert_f64()?; },
+                        51 => { att.oblique_angle = pair.assert_f64()?; },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.value.assert_i16()?),
-                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
-                                    2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
+                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.assert_i16()?),
+                                    1 => att.is_really_locked = as_bool(pair.assert_i16()?),
+                                    2 => att.__secondary_attribute_count = pair.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = pair.value.assert_i16()? as i32;
+                                att.flags = pair.assert_i16()? as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.value.assert_i16()?); },
-                        73 => { att.field_length = pair.value.assert_i16()?; },
-                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.value.assert_i16()?); },
-                        210 => { att.normal.x = pair.value.assert_f64()?; },
-                        220 => { att.normal.y = pair.value.assert_f64()?; },
-                        230 => { att.normal.z = pair.value.assert_f64()?; },
+                        71 => { att.text_generation_flags = pair.assert_i16()? as i32; },
+                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.assert_i16()?); },
+                        73 => { att.field_length = pair.assert_i16()?; },
+                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.assert_i16()?); },
+                        210 => { att.normal.x = pair.assert_f64()?; },
+                        220 => { att.normal.y = pair.assert_f64()?; },
+                        230 => { att.normal.z = pair.assert_f64()?; },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
+                                att.keep_duplicate_records = as_bool(pair.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
+                                att.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
+                                att.is_locked_in_block = as_bool(pair.assert_i16()?);
                             }
                         },
                         340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
@@ -575,88 +575,88 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = pair.value.assert_string()?; },
-                        1 => { att.value = pair.value.assert_string()?; },
+                        100 => { last_subclass_marker = pair.assert_string()?; },
+                        1 => { att.value = pair.assert_string()?; },
                         2 => {
                             if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = pair.value.assert_string()?;
+                                att.x_record_tag = pair.assert_string()?;
                             }
                             else {
-                                att.text_tag = pair.value.assert_string()?;
+                                att.text_tag = pair.assert_string()?;
                             }
                         },
-                        3 => { att.prompt = pair.value.assert_string()?; },
-                        7 => { att.text_style_name = pair.value.assert_string()?; },
+                        3 => { att.prompt = pair.assert_string()?; },
+                        7 => { att.text_style_name = pair.assert_string()?; },
                         10 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = pair.value.assert_f64()?;
+                                att.alignment_point.x = pair.assert_f64()?;
                             }
                             else {
-                                att.location.x = pair.value.assert_f64()?;
+                                att.location.x = pair.assert_f64()?;
                             }
                         },
                         20 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = pair.value.assert_f64()?;
+                                att.alignment_point.y = pair.assert_f64()?;
                             }
                             else {
-                                att.location.y = pair.value.assert_f64()?;
+                                att.location.y = pair.assert_f64()?;
                             }
                         },
                         30 => {
                             if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = pair.value.assert_f64()?;
+                                att.alignment_point.z = pair.assert_f64()?;
                             }
                             else {
-                                att.location.z = pair.value.assert_f64()?;
+                                att.location.z = pair.assert_f64()?;
                             }
                         },
-                        11 => { att.second_alignment_point.x = pair.value.assert_f64()?; },
-                        21 => { att.second_alignment_point.y = pair.value.assert_f64()?; },
-                        31 => { att.second_alignment_point.z = pair.value.assert_f64()?; },
-                        39 => { att.thickness = pair.value.assert_f64()?; },
+                        11 => { att.second_alignment_point.x = pair.assert_f64()?; },
+                        21 => { att.second_alignment_point.y = pair.assert_f64()?; },
+                        31 => { att.second_alignment_point.z = pair.assert_f64()?; },
+                        39 => { att.thickness = pair.assert_f64()?; },
                         40 => {
                             if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = pair.value.assert_f64()?;
+                                att.annotation_scale = pair.assert_f64()?;
                             }
                             else {
-                                att.text_height = pair.value.assert_f64()?;
+                                att.text_height = pair.assert_f64()?;
                             }
                         },
-                        41 => { att.relative_x_scale_factor = pair.value.assert_f64()?; },
-                        50 => { att.rotation = pair.value.assert_f64()?; },
-                        51 => { att.oblique_angle = pair.value.assert_f64()?; },
+                        41 => { att.relative_x_scale_factor = pair.assert_f64()?; },
+                        50 => { att.rotation = pair.assert_f64()?; },
+                        51 => { att.oblique_angle = pair.assert_f64()?; },
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.value.assert_i16()?),
-                                    1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
-                                    2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
+                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.assert_i16()?),
+                                    1 => att.is_really_locked = as_bool(pair.assert_i16()?),
+                                    2 => att.__secondary_attribute_count = pair.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
                                 }
                                 xrec_code_70_count += 1;
                             }
                             else {
-                                att.flags = pair.value.assert_i16()? as i32;
+                                att.flags = pair.assert_i16()? as i32;
                             }
                         },
-                        71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.value.assert_i16()?); },
-                        73 => { att.field_length = pair.value.assert_i16()?; },
-                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.value.assert_i16()?); },
-                        210 => { att.normal.x = pair.value.assert_f64()?; },
-                        220 => { att.normal.y = pair.value.assert_f64()?; },
-                        230 => { att.normal.z = pair.value.assert_f64()?; },
+                        71 => { att.text_generation_flags = pair.assert_i16()? as i32; },
+                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.assert_i16()?); },
+                        73 => { att.field_length = pair.assert_i16()?; },
+                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.assert_i16()?); },
+                        210 => { att.normal.x = pair.assert_f64()?; },
+                        220 => { att.normal.y = pair.assert_f64()?; },
+                        230 => { att.normal.z = pair.assert_f64()?; },
                         280 => {
                             if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
+                                att.keep_duplicate_records = as_bool(pair.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
+                                att.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 is_version_set = true;
                             }
                             else {
-                                att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
+                                att.is_locked_in_block = as_bool(pair.assert_i16()?);
                             }
                         },
                         340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
@@ -673,20 +673,20 @@ impl Entity {
                         10 => {
                             // start a new vertex
                             poly.vertices.push(LwPolylineVertex::default());
-                            vec_last!(poly.vertices).x = pair.value.assert_f64()?;
+                            vec_last!(poly.vertices).x = pair.assert_f64()?;
                         },
-                        20 => { vec_last!(poly.vertices).y = pair.value.assert_f64()?; },
-                        40 => { vec_last!(poly.vertices).starting_width = pair.value.assert_f64()?; },
-                        41 => { vec_last!(poly.vertices).ending_width = pair.value.assert_f64()?; },
-                        42 => { vec_last!(poly.vertices).bulge = pair.value.assert_f64()?; },
-                        91 => { vec_last!(poly.vertices).id = pair.value.assert_i32()?; },
+                        20 => { vec_last!(poly.vertices).y = pair.assert_f64()?; },
+                        40 => { vec_last!(poly.vertices).starting_width = pair.assert_f64()?; },
+                        41 => { vec_last!(poly.vertices).ending_width = pair.assert_f64()?; },
+                        42 => { vec_last!(poly.vertices).bulge = pair.assert_f64()?; },
+                        91 => { vec_last!(poly.vertices).id = pair.assert_i32()?; },
                         // other pairs
-                        39 => { poly.thickness = pair.value.assert_f64()?; },
-                        43 => { poly.constant_width = pair.value.assert_f64()?; },
-                        70 => { poly.flags = pair.value.assert_i16()? as i32; },
-                        210 => { poly.extrusion_direction.x = pair.value.assert_f64()?; },
-                        220 => { poly.extrusion_direction.y = pair.value.assert_f64()?; },
-                        230 => { poly.extrusion_direction.z = pair.value.assert_f64()?; },
+                        39 => { poly.thickness = pair.assert_f64()?; },
+                        43 => { poly.constant_width = pair.assert_f64()?; },
+                        70 => { poly.flags = pair.assert_i16()? as i32; },
+                        210 => { poly.extrusion_direction.x = pair.assert_f64()?; },
+                        220 => { poly.extrusion_direction.y = pair.assert_f64()?; },
+                        230 => { poly.extrusion_direction.z = pair.assert_f64()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -697,55 +697,55 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        10 => { mtext.insertion_point.x = pair.value.assert_f64()?; },
-                        20 => { mtext.insertion_point.y = pair.value.assert_f64()?; },
-                        30 => { mtext.insertion_point.z = pair.value.assert_f64()?; },
-                        40 => { mtext.initial_text_height = pair.value.assert_f64()?; },
-                        41 => { mtext.reference_rectangle_width = pair.value.assert_f64()?; },
-                        71 => { mtext.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.value.assert_i16()?); },
-                        72 => { mtext.drawing_direction = enum_from_number!(DrawingDirection, LeftToRight, from_i16, pair.value.assert_i16()?); },
-                        3 => { mtext.extended_text.push(pair.value.assert_string()?); },
-                        1 => { mtext.text = pair.value.assert_string()?; },
-                        7 => { mtext.text_style_name = pair.value.assert_string()?; },
-                        210 => { mtext.extrusion_direction.x = pair.value.assert_f64()?; },
-                        220 => { mtext.extrusion_direction.y = pair.value.assert_f64()?; },
-                        230 => { mtext.extrusion_direction.z = pair.value.assert_f64()?; },
-                        11 => { mtext.x_axis_direction.x = pair.value.assert_f64()?; },
-                        21 => { mtext.x_axis_direction.y = pair.value.assert_f64()?; },
-                        31 => { mtext.x_axis_direction.z = pair.value.assert_f64()?; },
-                        42 => { mtext.horizontal_width = pair.value.assert_f64()?; },
-                        43 => { mtext.vertical_height = pair.value.assert_f64()?; },
+                        10 => { mtext.insertion_point.x = pair.assert_f64()?; },
+                        20 => { mtext.insertion_point.y = pair.assert_f64()?; },
+                        30 => { mtext.insertion_point.z = pair.assert_f64()?; },
+                        40 => { mtext.initial_text_height = pair.assert_f64()?; },
+                        41 => { mtext.reference_rectangle_width = pair.assert_f64()?; },
+                        71 => { mtext.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?); },
+                        72 => { mtext.drawing_direction = enum_from_number!(DrawingDirection, LeftToRight, from_i16, pair.assert_i16()?); },
+                        3 => { mtext.extended_text.push(pair.assert_string()?); },
+                        1 => { mtext.text = pair.assert_string()?; },
+                        7 => { mtext.text_style_name = pair.assert_string()?; },
+                        210 => { mtext.extrusion_direction.x = pair.assert_f64()?; },
+                        220 => { mtext.extrusion_direction.y = pair.assert_f64()?; },
+                        230 => { mtext.extrusion_direction.z = pair.assert_f64()?; },
+                        11 => { mtext.x_axis_direction.x = pair.assert_f64()?; },
+                        21 => { mtext.x_axis_direction.y = pair.assert_f64()?; },
+                        31 => { mtext.x_axis_direction.z = pair.assert_f64()?; },
+                        42 => { mtext.horizontal_width = pair.assert_f64()?; },
+                        43 => { mtext.vertical_height = pair.assert_f64()?; },
                         50 => {
                             if reading_column_data {
                                 if read_column_count {
-                                    mtext.column_heights.push(pair.value.assert_f64()?);
+                                    mtext.column_heights.push(pair.assert_f64()?);
                                 }
                                 else {
-                                    mtext.column_count = pair.value.assert_f64()? as i32;
+                                    mtext.column_count = pair.assert_f64()? as i32;
                                     read_column_count = true;
                                 }
                             }
                             else {
-                                mtext.rotation_angle = pair.value.assert_f64()?;
+                                mtext.rotation_angle = pair.assert_f64()?;
                             }
                         },
-                        73 => { mtext.line_spacing_style = enum_from_number!(MTextLineSpacingStyle, AtLeast, from_i16, pair.value.assert_i16()?); },
-                        44 => { mtext.line_spacing_factor = pair.value.assert_f64()?; },
-                        90 => { mtext.background_fill_setting = enum_from_number!(BackgroundFillSetting, Off, from_i32, pair.value.assert_i32()?); },
-                        420 => { mtext.background_color_rgb = pair.value.assert_i32()?; },
-                        430 => { mtext.background_color_name = pair.value.assert_string()?; },
-                        45 => { mtext.fill_box_scale = pair.value.assert_f64()?; },
-                        63 => { mtext.background_fill_color = Color::from_raw_value(pair.value.assert_i16()?); },
-                        441 => { mtext.background_fill_color_transparency = pair.value.assert_i32()?; },
+                        73 => { mtext.line_spacing_style = enum_from_number!(MTextLineSpacingStyle, AtLeast, from_i16, pair.assert_i16()?); },
+                        44 => { mtext.line_spacing_factor = pair.assert_f64()?; },
+                        90 => { mtext.background_fill_setting = enum_from_number!(BackgroundFillSetting, Off, from_i32, pair.assert_i32()?); },
+                        420 => { mtext.background_color_rgb = pair.assert_i32()?; },
+                        430 => { mtext.background_color_name = pair.assert_string()?; },
+                        45 => { mtext.fill_box_scale = pair.assert_f64()?; },
+                        63 => { mtext.background_fill_color = Color::from_raw_value(pair.assert_i16()?); },
+                        441 => { mtext.background_fill_color_transparency = pair.assert_i32()?; },
                         75 => {
-                            mtext.column_type = pair.value.assert_i16()?;
+                            mtext.column_type = pair.assert_i16()?;
                             reading_column_data = true;
                         },
-                        76 => { mtext.column_count = pair.value.assert_i16()? as i32; },
-                        78 => { mtext.is_column_flow_reversed = as_bool(pair.value.assert_i16()?); },
-                        79 => { mtext.is_column_auto_height = as_bool(pair.value.assert_i16()?); },
-                        48 => { mtext.column_width = pair.value.assert_f64()?; },
-                        49 => { mtext.column_gutter = pair.value.assert_f64()?; },
+                        76 => { mtext.column_count = pair.assert_i16()? as i32; },
+                        78 => { mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?); },
+                        79 => { mtext.is_column_auto_height = as_bool(pair.assert_i16()?); },
+                        48 => { mtext.column_width = pair.assert_f64()?; },
+                        49 => { mtext.column_gutter = pair.assert_f64()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }

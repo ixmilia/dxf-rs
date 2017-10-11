@@ -206,7 +206,7 @@ fn get_read_command(element: &Element) -> String {
         let expected_type = ExpectedType::get_expected_type(code(element)).unwrap();
         let reader_fun = get_reader_function(&expected_type);
         let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
-        converter.replace("{}", &format!("pair.value.{}()?", reader_fun))
+        converter.replace("{}", &format!("pair.{}()?", reader_fun))
     }
 }
 

@@ -65,7 +65,7 @@ impl SectionTypeSettings {
             };
 
             match pair.code {
-                1 => { ss.destination_file_name = pair.value.assert_string()?; },
+                1 => { ss.destination_file_name = pair.assert_string()?; },
                 2 => {
                     // value should be "SectionGeometrySettings", but it doesn't really matter
                     loop {
@@ -76,8 +76,8 @@ impl SectionTypeSettings {
                     }
                 },
                 3 => (), // value should be "SectionTypeSettingsEnd", but it doesn't really matter
-                90 => { ss.section_type = pair.value.assert_i32()?; },
-                91 => { ss.is_generation_option = as_bool(pair.value.assert_i32()? as i16); },
+                90 => { ss.section_type = pair.assert_i32()?; },
+                91 => { ss.is_generation_option = as_bool(pair.assert_i32()? as i16); },
                 92 => (), // source objects count; we just read as many as we're given
                 93 => (), // generation settings count; we just read as many as we're given
                 330 => { ss.source_object_handles.push(pair.as_handle()?); },

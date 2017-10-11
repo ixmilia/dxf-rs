@@ -23,7 +23,7 @@ pub enum DxfError {
     UnexpectedEnumValue(usize),
     UnexpectedEmptySet,
     ExpectedTableType(usize),
-    WrongValueType,
+    WrongValueType(usize),
     InvalidBinaryFile,
     WrongItemType,
 }
@@ -55,7 +55,7 @@ impl fmt::Display for DxfError {
             &DxfError::UnexpectedEnumValue(o) => write!(formatter, "the specified enum value does not fall into the expected range at line/offset {}", o),
             &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
             &DxfError::ExpectedTableType(o) => write!(formatter, "a 2/<table-type> code pair was expected at line/offset {}", o),
-            &DxfError::WrongValueType => write!(formatter, "the CodePairValue does not contain the requested type"),
+            &DxfError::WrongValueType(o) => write!(formatter, "the CodePairValue does not contain the requested type at line/offset {}", o),
             &DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
             &DxfError::WrongItemType => write!(formatter, "the specified item type is not correct"),
         }
@@ -77,7 +77,7 @@ impl error::Error for DxfError {
             &DxfError::UnexpectedEnumValue(_) => "the specified enum value does not fall into the expected range",
             &DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
             &DxfError::ExpectedTableType(_) => "a 2/<table-type> code pair was expected",
-            &DxfError::WrongValueType => "the CodePairValue does not contain the requested type",
+            &DxfError::WrongValueType(_) => "the CodePairValue does not contain the requested type",
             &DxfError::InvalidBinaryFile => "the binary file is invalid",
             &DxfError::WrongItemType => "the specified item type is not correct",
         }

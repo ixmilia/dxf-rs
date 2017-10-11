@@ -45,7 +45,7 @@ impl ExtensionGroup {
                 None => return Err(DxfError::UnexpectedEndOfInput),
             };
             if pair.code == EXTENSION_DATA_GROUP {
-                let name = pair.value.assert_string()?;
+                let name = pair.assert_string()?;
                 if name == "}" {
                     // end of group
                     break;

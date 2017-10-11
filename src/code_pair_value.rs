@@ -7,11 +7,6 @@ use std::fmt::{
     Formatter,
 };
 
-use ::{
-    DxfError,
-    DxfResult,
-};
-
 /// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
 pub enum CodePairValue {
@@ -21,46 +16,6 @@ pub enum CodePairValue {
     Short(i16),
     Double(f64),
     Str(String),
-}
-
-impl CodePairValue {
-    pub fn assert_bool(&self) -> DxfResult<bool> {
-        match self {
-            &CodePairValue::Boolean(s) => Ok(s != 0),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
-    pub fn assert_i64(&self) -> DxfResult<i64> {
-        match self {
-            &CodePairValue::Long(l) => Ok(l),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
-    pub fn assert_i32(&self) -> DxfResult<i32> {
-        match self {
-            &CodePairValue::Integer(i) => Ok(i),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
-    pub fn assert_f64(&self) -> DxfResult<f64> {
-        match self {
-            &CodePairValue::Double(f) => Ok(f),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
-    pub fn assert_string(&self) -> DxfResult<String> {
-        match self {
-            &CodePairValue::Str(ref s) => Ok(s.clone()),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
-    pub fn assert_i16(&self) -> DxfResult<i16> {
-        match self {
-            &CodePairValue::Boolean(s) => Ok(s),
-            &CodePairValue::Short(s) => Ok(s),
-            _ => Err(DxfError::WrongValueType),
-        }
-    }
 }
 
 // internal visibility only

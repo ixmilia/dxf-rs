@@ -100,7 +100,7 @@ impl XDataItem {
 
         loop {
             match pair.code {
-                XDATA_STRING => return Ok(XDataItem::Str(pair.value.assert_string()?)),
+                XDATA_STRING => return Ok(XDataItem::Str(pair.assert_string()?)),
                 XDATA_CONTROLGROUP => {
                     let mut items = vec![];
                     loop {
@@ -114,7 +114,7 @@ impl XDataItem {
                             Some(Err(e)) => return Err(e),
                             None => return Err(DxfError::UnexpectedEndOfInput),
                         };
-                        if pair.code == XDATA_CONTROLGROUP && pair.value.assert_string()? == "}" {
+                        if pair.code == XDATA_CONTROLGROUP && pair.assert_string()? == "}" {
                             // end of group
                             break;
                         }
@@ -123,22 +123,22 @@ impl XDataItem {
                     }
                     return Ok(XDataItem::ControlGroup(items));
                 },
-                XDATA_LAYER => return Ok(XDataItem::LayerName(pair.value.assert_string()?)),
+                XDATA_LAYER => return Ok(XDataItem::LayerName(pair.assert_string()?)),
                 XDATA_BINARYDATA => {
                     let mut data = vec![];
-                    parse_hex_string(&pair.value.assert_string()?, &mut data, pair.offset)?;
+                    parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?;
                     return Ok(XDataItem::BinaryData(data));
                 },
                 XDATA_HANDLE => return Ok(XDataItem::Handle(pair.as_handle()?)),
-                XDATA_THREEREALS => return Ok(XDataItem::ThreeReals(pair.value.assert_f64()?, XDataItem::read_double(iter, pair.code)?, XDataItem::read_double(iter, pair.code)?)),
-                XDATA_WORLDSPACEDISPLACEMENT => return Ok(XDataItem::WorldSpaceDisplacement(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),
-                XDATA_WORLDSPACEPOSITION => return Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),
-                XDATA_WORLDDIRECTION => return Ok(XDataItem::WorldDirection(XDataItem::read_vector(iter, pair.value.assert_f64()?, pair.code)?)),
-                XDATA_REAL => return Ok(XDataItem::Real(pair.value.assert_f64()?)),
-                XDATA_DISTANCE => return Ok(XDataItem::Distance(pair.value.assert_f64()?)),
-                XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(pair.value.assert_f64()?)),
-                XDATA_INTEGER => return Ok(XDataItem::Integer(pair.value.assert_i16()?)),
-                XDATA_LONG => return Ok(XDataItem::Long(pair.value.assert_i32()?)),
+                XDATA_THREEREALS => return Ok(XDataItem::ThreeReals(pair.assert_f64()?, XDataItem::read_double(iter, pair.code)?, XDataItem::read_double(iter, pair.code)?)),
+                XDATA_WORLDSPACEDISPLACEMENT => return Ok(XDataItem::WorldSpaceDisplacement(XDataItem::read_point(iter, pair.assert_f64()?, pair.code)?)),
+                XDATA_WORLDSPACEPOSITION => return Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(iter, pair.assert_f64()?, pair.code)?)),
+                XDATA_WORLDDIRECTION => return Ok(XDataItem::WorldDirection(XDataItem::read_vector(iter, pair.assert_f64()?, pair.code)?)),
+                XDATA_REAL => return Ok(XDataItem::Real(pair.assert_f64()?)),
+                XDATA_DISTANCE => return Ok(XDataItem::Distance(pair.assert_f64()?)),
+                XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(pair.assert_f64()?)),
+                XDATA_INTEGER => return Ok(XDataItem::Integer(pair.assert_i16()?)),
+                XDATA_LONG => return Ok(XDataItem::Long(pair.assert_i32()?)),
                 _ => return Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
             }
         }
@@ -147,7 +147,7 @@ impl XDataItem {
         where T: Iterator<Item = DxfResult<CodePair>> {
 
         match iter.next() {
-            Some(Ok(ref pair)) if pair.code == expected_code => return Ok(pair.value.assert_f64()?),
+            Some(Ok(ref pair)) if pair.code == expected_code => return Ok(pair.assert_f64()?),
             Some(Ok(pair)) => return Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
             Some(Err(e)) => return Err(e),
             None => return Err(DxfError::UnexpectedEndOfInput),

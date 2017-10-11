@@ -132,7 +132,7 @@ impl Object {
             match iter.next() {
                 // first code pair must be 0/object-type
                 Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    let type_string = pair.value.assert_string()?;
+                    let type_string = pair.assert_string()?;
                     if type_string == "ENDSEC" || type_string == "ENDBLK" {
                         iter.put_back(Ok(pair));
                         return Ok(None);
@@ -276,41 +276,41 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { data.name = pair.value.assert_string()?; },
-                        70 => { data.field = pair.value.assert_i16()?; },
+                        1 => { data.name = pair.assert_string()?; },
+                        70 => { data.field = pair.assert_i16()?; },
                         90 => {
-                            data.column_count = pair.value.assert_i32()? as usize;
+                            data.column_count = pair.assert_i32()? as usize;
                             read_column_count = true;
                         },
                         91 => {
-                            data.row_count = pair.value.assert_i32()? as usize;
+                            data.row_count = pair.assert_i32()? as usize;
                             read_row_count = true;
                         },
 
                         // column headers
-                        2 => { data.column_names.push(pair.value.assert_string()?); },
+                        2 => { data.column_names.push(pair.assert_string()?); },
                         92 => {
-                            _current_column_code = pair.value.assert_i32()?;
+                            _current_column_code = pair.assert_i32()?;
                             current_column += 1;
                             current_row = 0;
                         },
 
                         // column values
-                        3 => { data.set_value(current_row, current_column, DataTableValue::Str(pair.value.assert_string()?)); },
-                        40 => { data.set_value(current_row, current_column, DataTableValue::Double(pair.value.assert_f64()?)); },
-                        71 => { data.set_value(current_row, current_column, DataTableValue::Boolean(as_bool(pair.value.assert_i16()?))); },
-                        93 => { data.set_value(current_row, current_column, DataTableValue::Integer(pair.value.assert_i32()?)); },
-                        10 => { current_2d_point.x = pair.value.assert_f64()?; },
-                        20 => { current_2d_point.y = pair.value.assert_f64()?; },
+                        3 => { data.set_value(current_row, current_column, DataTableValue::Str(pair.assert_string()?)); },
+                        40 => { data.set_value(current_row, current_column, DataTableValue::Double(pair.assert_f64()?)); },
+                        71 => { data.set_value(current_row, current_column, DataTableValue::Boolean(as_bool(pair.assert_i16()?))); },
+                        93 => { data.set_value(current_row, current_column, DataTableValue::Integer(pair.assert_i32()?)); },
+                        10 => { current_2d_point.x = pair.assert_f64()?; },
+                        20 => { current_2d_point.y = pair.assert_f64()?; },
                         30 => {
-                            current_2d_point.z = pair.value.assert_f64()?;
+                            current_2d_point.z = pair.assert_f64()?;
                             data.set_value(current_row, current_column, DataTableValue::Point2D(current_2d_point.clone()));
                             current_2d_point = Point::origin();
                         },
-                        11 => { current_3d_point.x = pair.value.assert_f64()?; },
-                        21 => { current_3d_point.y = pair.value.assert_f64()?; },
+                        11 => { current_3d_point.x = pair.assert_f64()?; },
+                        21 => { current_3d_point.y = pair.assert_f64()?; },
                         31 => {
-                            current_3d_point.z = pair.value.assert_f64()?;
+                            current_3d_point.z = pair.assert_f64()?;
                             data.set_value(current_row, current_column, DataTableValue::Point3D(current_3d_point.clone()));
                             current_3d_point = Point::origin();
                         },
@@ -342,9 +342,9 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { last_entry_name = pair.value.assert_string()?; },
-                        280 => { dict.is_hard_owner = as_bool(pair.value.assert_i16()?); },
-                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
+                        3 => { last_entry_name = pair.assert_string()?; },
+                        280 => { dict.is_hard_owner = as_bool(pair.assert_i16()?); },
+                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?); },
                         350 | 360 => {
                             let handle = pair.as_handle()?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
@@ -358,8 +358,8 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { last_entry_name = pair.value.assert_string()?; },
-                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
+                        3 => { last_entry_name = pair.assert_string()?; },
+                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?); },
                         340 => { dict.default_handle = pair.as_handle()?; },
                         350 | 360 => {
                             let handle = pair.as_handle()?;
@@ -374,7 +374,7 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     if is_reading_plot_settings {
-                        if pair.code == 100 && pair.value.assert_string()? == "AcDbLayout" {
+                        if pair.code == 100 && pair.assert_string()? == "AcDbLayout" {
                             is_reading_plot_settings = false;
                         }
                         else {
@@ -383,33 +383,33 @@ impl Object {
                     }
                     else {
                         match pair.code {
-                            1 => { layout.layout_name = pair.value.assert_string()?; },
-                            10 => { layout.minimum_limits.x = pair.value.assert_f64()?; },
-                            20 => { layout.minimum_limits.y = pair.value.assert_f64()?; },
-                            11 => { layout.maximum_limits.x = pair.value.assert_f64()?; },
-                            21 => { layout.maximum_limits.y = pair.value.assert_f64()?; },
-                            12 => { layout.insertion_base_point.x = pair.value.assert_f64()?; },
-                            22 => { layout.insertion_base_point.y = pair.value.assert_f64()?; },
-                            32 => { layout.insertion_base_point.z = pair.value.assert_f64()?; },
-                            13 => { layout.ucs_origin.x = pair.value.assert_f64()?; },
-                            23 => { layout.ucs_origin.y = pair.value.assert_f64()?; },
-                            33 => { layout.ucs_origin.z = pair.value.assert_f64()?; },
-                            14 => { layout.minimum_extents.x = pair.value.assert_f64()?; },
-                            24 => { layout.minimum_extents.y = pair.value.assert_f64()?; },
-                            34 => { layout.minimum_extents.z = pair.value.assert_f64()?; },
-                            15 => { layout.maximum_extents.x = pair.value.assert_f64()?; },
-                            25 => { layout.maximum_extents.y = pair.value.assert_f64()?; },
-                            35 => { layout.maximum_extents.z = pair.value.assert_f64()?; },
-                            16 => { layout.ucs_x_axis.x = pair.value.assert_f64()?; },
-                            26 => { layout.ucs_x_axis.y = pair.value.assert_f64()?; },
-                            36 => { layout.ucs_x_axis.z = pair.value.assert_f64()?; },
-                            17 => { layout.ucs_y_axis.x = pair.value.assert_f64()?; },
-                            27 => { layout.ucs_y_axis.y = pair.value.assert_f64()?; },
-                            37 => { layout.ucs_y_axis.z = pair.value.assert_f64()?; },
-                            70 => { layout.layout_flags = pair.value.assert_i16()? as i32; },
-                            71 => { layout.tab_order = pair.value.assert_i16()? as i32; },
-                            76 => { layout.ucs_orthographic_type = enum_from_number!(UcsOrthographicType, NotOrthographic, from_i16, pair.value.assert_i16()?); },
-                            146 => { layout.elevation = pair.value.assert_f64()?; },
+                            1 => { layout.layout_name = pair.assert_string()?; },
+                            10 => { layout.minimum_limits.x = pair.assert_f64()?; },
+                            20 => { layout.minimum_limits.y = pair.assert_f64()?; },
+                            11 => { layout.maximum_limits.x = pair.assert_f64()?; },
+                            21 => { layout.maximum_limits.y = pair.assert_f64()?; },
+                            12 => { layout.insertion_base_point.x = pair.assert_f64()?; },
+                            22 => { layout.insertion_base_point.y = pair.assert_f64()?; },
+                            32 => { layout.insertion_base_point.z = pair.assert_f64()?; },
+                            13 => { layout.ucs_origin.x = pair.assert_f64()?; },
+                            23 => { layout.ucs_origin.y = pair.assert_f64()?; },
+                            33 => { layout.ucs_origin.z = pair.assert_f64()?; },
+                            14 => { layout.minimum_extents.x = pair.assert_f64()?; },
+                            24 => { layout.minimum_extents.y = pair.assert_f64()?; },
+                            34 => { layout.minimum_extents.z = pair.assert_f64()?; },
+                            15 => { layout.maximum_extents.x = pair.assert_f64()?; },
+                            25 => { layout.maximum_extents.y = pair.assert_f64()?; },
+                            35 => { layout.maximum_extents.z = pair.assert_f64()?; },
+                            16 => { layout.ucs_x_axis.x = pair.assert_f64()?; },
+                            26 => { layout.ucs_x_axis.y = pair.assert_f64()?; },
+                            36 => { layout.ucs_x_axis.z = pair.assert_f64()?; },
+                            17 => { layout.ucs_y_axis.x = pair.assert_f64()?; },
+                            27 => { layout.ucs_y_axis.y = pair.assert_f64()?; },
+                            37 => { layout.ucs_y_axis.z = pair.assert_f64()?; },
+                            70 => { layout.layout_flags = pair.assert_i16()? as i32; },
+                            71 => { layout.tab_order = pair.assert_i16()? as i32; },
+                            76 => { layout.ucs_orthographic_type = enum_from_number!(UcsOrthographicType, NotOrthographic, from_i16, pair.assert_i16()?); },
+                            146 => { layout.elevation = pair.assert_f64()?; },
                             330 => { layout.__viewport_handle = pair.as_handle()?; },
                             345 => { layout.__table_record_handle = pair.as_handle()?; },
                             346 => { layout.__table_record_base_handle = pair.as_handle()?; },
@@ -439,7 +439,7 @@ impl Object {
                                 // count of lights is ignored since it's implicitly set by reading the values
                             }
                             else {
-                                ll.version = pair.value.assert_i32()?;
+                                ll.version = pair.assert_i32()?;
                                 read_version_number = false;
                             }
                         },
@@ -465,193 +465,193 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { mat.name = pair.value.assert_string()?; },
-                        2 => { mat.description = pair.value.assert_string()?; },
+                        1 => { mat.name = pair.assert_string()?; },
+                        2 => { mat.description = pair.assert_string()?; },
                         3 => {
                             if !read_diffuse_map_file_name {
-                                mat.diffuse_map_file_name = pair.value.assert_string()?;
+                                mat.diffuse_map_file_name = pair.assert_string()?;
                                 read_diffuse_map_file_name = true;
                             }
                             else {
-                                mat.normal_map_file_name = pair.value.assert_string()?;
+                                mat.normal_map_file_name = pair.assert_string()?;
                                 is_reading_normal = true;
                             }
                         },
-                        4 => { mat.normal_map_file_name = pair.value.assert_string()?; },
-                        6 => { mat.reflection_map_file_name = pair.value.assert_string()?; },
-                        7 => { mat.opacity_map_file_name = pair.value.assert_string()?; },
-                        8 => { mat.bump_map_file_name = pair.value.assert_string()?; },
-                        9 => { mat.refraction_map_file_name = pair.value.assert_string()?; },
-                        40 => { mat.ambient_color_factor = pair.value.assert_f64()?; },
-                        41 => { mat.diffuse_color_factor = pair.value.assert_f64()?; },
+                        4 => { mat.normal_map_file_name = pair.assert_string()?; },
+                        6 => { mat.reflection_map_file_name = pair.assert_string()?; },
+                        7 => { mat.opacity_map_file_name = pair.assert_string()?; },
+                        8 => { mat.bump_map_file_name = pair.assert_string()?; },
+                        9 => { mat.refraction_map_file_name = pair.assert_string()?; },
+                        40 => { mat.ambient_color_factor = pair.assert_f64()?; },
+                        41 => { mat.diffuse_color_factor = pair.assert_f64()?; },
                         42 => {
                             if !read_diffuse_map_blend_factor {
-                                mat.diffuse_map_blend_factor = pair.value.assert_f64()?;
+                                mat.diffuse_map_blend_factor = pair.assert_f64()?;
                                 read_diffuse_map_blend_factor = true;
                             }
                             else {
-                                mat.normal_map_blend_factor = pair.value.assert_f64()?;
+                                mat.normal_map_blend_factor = pair.assert_f64()?;
                                 is_reading_normal = true;
                             }
                         },
                         43 => {
                             if is_reading_normal {
-                                mat.__normal_map_transformation_matrix_values.push(pair.value.assert_f64()?);
+                                mat.__normal_map_transformation_matrix_values.push(pair.assert_f64()?);
                             }
                             else {
-                                mat.__diffuse_map_transformation_matrix_values.push(pair.value.assert_f64()?);
+                                mat.__diffuse_map_transformation_matrix_values.push(pair.assert_f64()?);
                             }
                         },
-                        44 => { mat.specular_gloss_factor = pair.value.assert_f64()?; },
-                        45 => { mat.specular_color_factor = pair.value.assert_f64()?; },
-                        46 => { mat.specular_map_blend_factor = pair.value.assert_f64()?; },
-                        47 => { mat.__specular_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
-                        48 => { mat.reflection_map_blend_factor = pair.value.assert_f64()?; },
-                        49 => { mat.__reflection_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
-                        62 => { mat.gen_proc_color_index_value = Color::from_raw_value(pair.value.assert_i16()?); },
-                        70 => { mat.override_ambient_color = as_bool(pair.value.assert_i16()?); },
-                        71 => { mat.override_diffuse_color = as_bool(pair.value.assert_i16()?); },
+                        44 => { mat.specular_gloss_factor = pair.assert_f64()?; },
+                        45 => { mat.specular_color_factor = pair.assert_f64()?; },
+                        46 => { mat.specular_map_blend_factor = pair.assert_f64()?; },
+                        47 => { mat.__specular_map_transformation_matrix_values.push(pair.assert_f64()?); },
+                        48 => { mat.reflection_map_blend_factor = pair.assert_f64()?; },
+                        49 => { mat.__reflection_map_transformation_matrix_values.push(pair.assert_f64()?); },
+                        62 => { mat.gen_proc_color_index_value = Color::from_raw_value(pair.assert_i16()?); },
+                        70 => { mat.override_ambient_color = as_bool(pair.assert_i16()?); },
+                        71 => { mat.override_diffuse_color = as_bool(pair.assert_i16()?); },
                         72 => {
                             if !read_image_file_diffuse_map {
-                                mat.use_image_file_for_diffuse_map = as_bool(pair.value.assert_i16()?);
+                                mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i16()?);
                                 read_image_file_diffuse_map = true;
                             }
                             else {
-                                mat.use_image_file_for_normal_map = as_bool(pair.value.assert_i16()?);
+                                mat.use_image_file_for_normal_map = as_bool(pair.assert_i16()?);
                             }
                         },
                         73 => {
                             if !read_diffuse_map_projection_method {
-                                mat.diffuse_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
+                                mat.diffuse_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
                                 read_diffuse_map_projection_method = true;
                             }
                             else {
-                                mat.normal_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
+                                mat.normal_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
                         74 => {
                             if !read_diffuse_map_tiling_method {
-                                mat.diffuse_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
+                                mat.diffuse_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
                                 read_diffuse_map_tiling_method = true;
                             }
                             else {
-                                mat.normal_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
+                                mat.normal_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
                         75 => {
                             if !read_diffuse_map_auto_transform_method {
-                                mat.diffuse_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
+                                mat.diffuse_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
                                 read_diffuse_map_auto_transform_method = true;
                             }
                             else {
-                                mat.normal_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
+                                mat.normal_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
-                        76 => { mat.override_specular_color = as_bool(pair.value.assert_i16()?); },
-                        77 => { mat.use_image_file_for_specular_map = as_bool(pair.value.assert_i16()?); },
-                        78 => { mat.specular_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
-                        79 => { mat.specular_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
+                        76 => { mat.override_specular_color = as_bool(pair.assert_i16()?); },
+                        77 => { mat.use_image_file_for_specular_map = as_bool(pair.assert_i16()?); },
+                        78 => { mat.specular_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
+                        79 => { mat.specular_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
                         90 => {
                             if !read_ambient_color_value {
-                                mat.ambient_color_value = pair.value.assert_i32()?;
+                                mat.ambient_color_value = pair.assert_i32()?;
                                 read_ambient_color_value = true;
                             }
                             else {
-                                mat.self_illumination = pair.value.assert_i32()?;
+                                mat.self_illumination = pair.assert_i32()?;
                             }
                         },
-                        91 => { mat.diffuse_color_value = pair.value.assert_i32()?; },
-                        92 => { mat.specular_color_value = pair.value.assert_i32()?; },
-                        93 => { mat.illumination_model = pair.value.assert_i32()?; },
-                        94 => { mat.channel_flags = pair.value.assert_i32()?; },
-                        140 => { mat.opacity_factor = pair.value.assert_f64()?; },
-                        141 => { mat.opacity_map_blend_factor = pair.value.assert_f64()?; },
-                        142 => { mat.__opacity_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
-                        143 => { mat.bump_map_blend_factor = pair.value.assert_f64()?; },
-                        144 => { mat.__bump_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
-                        145 => { mat.refraction_index = pair.value.assert_f64()?; },
-                        146 => { mat.refraction_map_blend_factor = pair.value.assert_f64()?; },
-                        147 => { mat.__refraction_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
-                        148 => { mat.translucence = pair.value.assert_f64()?; },
-                        170 => { mat.specular_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
-                        171 => { mat.use_image_file_for_reflection_map = as_bool(pair.value.assert_i16()?); },
-                        172 => { mat.reflection_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
-                        173 => { mat.reflection_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
-                        174 => { mat.reflection_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
-                        175 => { mat.use_image_file_for_opacity_map = as_bool(pair.value.assert_i16()?); },
-                        176 => { mat.opacity_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
-                        177 => { mat.opacity_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
-                        178 => { mat.opacity_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
-                        179 => { mat.use_image_file_for_bump_map = as_bool(pair.value.assert_i16()?); },
+                        91 => { mat.diffuse_color_value = pair.assert_i32()?; },
+                        92 => { mat.specular_color_value = pair.assert_i32()?; },
+                        93 => { mat.illumination_model = pair.assert_i32()?; },
+                        94 => { mat.channel_flags = pair.assert_i32()?; },
+                        140 => { mat.opacity_factor = pair.assert_f64()?; },
+                        141 => { mat.opacity_map_blend_factor = pair.assert_f64()?; },
+                        142 => { mat.__opacity_map_transformation_matrix_values.push(pair.assert_f64()?); },
+                        143 => { mat.bump_map_blend_factor = pair.assert_f64()?; },
+                        144 => { mat.__bump_map_transformation_matrix_values.push(pair.assert_f64()?); },
+                        145 => { mat.refraction_index = pair.assert_f64()?; },
+                        146 => { mat.refraction_map_blend_factor = pair.assert_f64()?; },
+                        147 => { mat.__refraction_map_transformation_matrix_values.push(pair.assert_f64()?); },
+                        148 => { mat.translucence = pair.assert_f64()?; },
+                        170 => { mat.specular_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
+                        171 => { mat.use_image_file_for_reflection_map = as_bool(pair.assert_i16()?); },
+                        172 => { mat.reflection_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
+                        173 => { mat.reflection_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
+                        174 => { mat.reflection_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
+                        175 => { mat.use_image_file_for_opacity_map = as_bool(pair.assert_i16()?); },
+                        176 => { mat.opacity_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
+                        177 => { mat.opacity_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
+                        178 => { mat.opacity_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
+                        179 => { mat.use_image_file_for_bump_map = as_bool(pair.assert_i16()?); },
                         270 => {
                             if !read_bump_map_projection_method {
-                                mat.bump_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
+                                mat.bump_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
                                 read_bump_map_projection_method = true;
                             }
                             else if !read_luminance_mode {
-                                mat.luminance_mode = pair.value.assert_i16()?;
+                                mat.luminance_mode = pair.assert_i16()?;
                                 read_luminance_mode = true;
                             }
                             else {
-                                mat.map_u_tile = pair.value.assert_i16()?;
+                                mat.map_u_tile = pair.assert_i16()?;
                             }
                         },
                         271 => {
                             if !read_bump_map_tiling_method {
-                                mat.bump_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
+                                mat.bump_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
                                 read_bump_map_tiling_method = true;
                             }
                             else if !read_normal_map_method {
-                                mat.normal_map_method = pair.value.assert_i16()?;
+                                mat.normal_map_method = pair.assert_i16()?;
                                 read_normal_map_method = true;
                             }
                             else {
-                                mat.gen_proc_integer_value = pair.value.assert_i16()?;
+                                mat.gen_proc_integer_value = pair.assert_i16()?;
                             }
                         },
                         272 => {
                             if !read_bump_map_auto_transform_method {
-                                mat.bump_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
+                                mat.bump_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
                                 read_bump_map_auto_transform_method = true;
                             }
                             else {
-                                mat.global_illumination_mode = pair.value.assert_i16()?;
+                                mat.global_illumination_mode = pair.assert_i16()?;
                             }
                         },
                         273 => {
                             if !read_use_image_file_for_refraction_map {
-                                mat.use_image_file_for_refraction_map = as_bool(pair.value.assert_i16()?);
+                                mat.use_image_file_for_refraction_map = as_bool(pair.assert_i16()?);
                                 read_use_image_file_for_refraction_map = true;
                             }
                             else {
-                                mat.final_gather_mode = pair.value.assert_i16()?;
+                                mat.final_gather_mode = pair.assert_i16()?;
                             }
                         },
-                        274 => { mat.refraction_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
-                        275 => { mat.refraction_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
-                        276 => { mat.refraction_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
-                        290 => { mat.is_two_sided = pair.value.assert_bool()?; },
-                        291 => { mat.gen_proc_boolean_value = pair.value.assert_bool()?; },
-                        292 => { mat.gen_proc_table_end = pair.value.assert_bool()?; },
-                        293 => { mat.is_anonymous = pair.value.assert_bool()?; },
-                        300 => { mat.gen_proc_name = pair.value.assert_string()?; },
-                        301 => { mat.gen_proc_text_value = pair.value.assert_string()?; },
-                        420 => { mat.gen_proc_color_rgb_value = pair.value.assert_i32()?; },
-                        430 => { mat.gen_proc_color_name = pair.value.assert_string()?; },
-                        460 => { mat.color_bleed_scale = pair.value.assert_f64()?; },
-                        461 => { mat.indirect_dump_scale = pair.value.assert_f64()?; },
-                        462 => { mat.reflectance_scale = pair.value.assert_f64()?; },
-                        463 => { mat.transmittance_scale = pair.value.assert_f64()?; },
-                        464 => { mat.luminance = pair.value.assert_f64()?; },
+                        274 => { mat.refraction_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
+                        275 => { mat.refraction_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
+                        276 => { mat.refraction_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
+                        290 => { mat.is_two_sided = pair.assert_bool()?; },
+                        291 => { mat.gen_proc_boolean_value = pair.assert_bool()?; },
+                        292 => { mat.gen_proc_table_end = pair.assert_bool()?; },
+                        293 => { mat.is_anonymous = pair.assert_bool()?; },
+                        300 => { mat.gen_proc_name = pair.assert_string()?; },
+                        301 => { mat.gen_proc_text_value = pair.assert_string()?; },
+                        420 => { mat.gen_proc_color_rgb_value = pair.assert_i32()?; },
+                        430 => { mat.gen_proc_color_name = pair.assert_string()?; },
+                        460 => { mat.color_bleed_scale = pair.assert_f64()?; },
+                        461 => { mat.indirect_dump_scale = pair.assert_f64()?; },
+                        462 => { mat.reflectance_scale = pair.assert_f64()?; },
+                        463 => { mat.transmittance_scale = pair.assert_f64()?; },
+                        464 => { mat.luminance = pair.assert_f64()?; },
                         465 => {
-                            mat.normal_map_strength = pair.value.assert_f64()?;
+                            mat.normal_map_strength = pair.assert_f64()?;
                             is_reading_normal = true;
                         },
-                        468 => { mat.reflectivity = pair.value.assert_f64()?; },
-                        469 => { mat.gen_proc_real_value = pair.value.assert_f64()?; },
+                        468 => { mat.reflectivity = pair.assert_f64()?; },
+                        469 => { mat.gen_proc_real_value = pair.assert_f64()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -661,23 +661,23 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        2 => { mline.style_name = pair.value.assert_string()?; },
-                        3 => { mline.description = pair.value.assert_string()?; },
-                        6 => { mline.__element_line_types.push(pair.value.assert_string()?); },
-                        49 => { mline.__element_offsets.push(pair.value.assert_f64()?); },
-                        51 => { mline.start_angle = pair.value.assert_f64()?; },
-                        52 => { mline.end_angle = pair.value.assert_f64()?; },
+                        2 => { mline.style_name = pair.assert_string()?; },
+                        3 => { mline.description = pair.assert_string()?; },
+                        6 => { mline.__element_line_types.push(pair.assert_string()?); },
+                        49 => { mline.__element_offsets.push(pair.assert_f64()?); },
+                        51 => { mline.start_angle = pair.assert_f64()?; },
+                        52 => { mline.end_angle = pair.assert_f64()?; },
                         62 => {
                             if read_element_count {
-                                mline.__element_colors.push(Color::from_raw_value(pair.value.assert_i16()?));
+                                mline.__element_colors.push(Color::from_raw_value(pair.assert_i16()?));
                             }
                             else {
-                                mline.fill_color = Color::from_raw_value(pair.value.assert_i16()?);
+                                mline.fill_color = Color::from_raw_value(pair.assert_i16()?);
                             }
                         },
-                        70 => { mline.__flags = pair.value.assert_i16()? as i32; },
+                        70 => { mline.__flags = pair.assert_i16()? as i32; },
                         71 => {
-                            mline.__element_count = pair.value.assert_i16()? as i32;
+                            mline.__element_count = pair.assert_i16()? as i32;
                             read_element_count = true;
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
@@ -697,7 +697,7 @@ impl Object {
                                 }
                             }
                         },
-                        90 => { ss.section_type = pair.value.assert_i32()?; }
+                        90 => { ss.section_type = pair.assert_i32()?; }
                         91 => (), // generation settings count; we just read as many as we're given
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
@@ -740,20 +740,20 @@ impl Object {
                         10 => {
                             // code 10 always starts a new point
                             sf.clip_boundary_definition_points.push(Point::origin());
-                            vec_last!(sf.clip_boundary_definition_points).x = pair.value.assert_f64()?;
+                            vec_last!(sf.clip_boundary_definition_points).x = pair.assert_f64()?;
                         },
-                        20 => { vec_last!(sf.clip_boundary_definition_points).y = pair.value.assert_f64()?; },
-                        30 => { vec_last!(sf.clip_boundary_definition_points).z = pair.value.assert_f64()?; },
-                        11 => { sf.clip_boundary_origin.x = pair.value.assert_f64()?; },
-                        21 => { sf.clip_boundary_origin.y = pair.value.assert_f64()?; },
-                        31 => { sf.clip_boundary_origin.z = pair.value.assert_f64()?; },
+                        20 => { vec_last!(sf.clip_boundary_definition_points).y = pair.assert_f64()?; },
+                        30 => { vec_last!(sf.clip_boundary_definition_points).z = pair.assert_f64()?; },
+                        11 => { sf.clip_boundary_origin.x = pair.assert_f64()?; },
+                        21 => { sf.clip_boundary_origin.y = pair.assert_f64()?; },
+                        31 => { sf.clip_boundary_origin.z = pair.assert_f64()?; },
                         40 => {
                             if !read_front_clipping_plane {
-                                sf.front_clipping_plane_distance = pair.value.assert_f64()?;
+                                sf.front_clipping_plane_distance = pair.assert_f64()?;
                                 read_front_clipping_plane = true;
                             }
                             else {
-                                matrix_list.push(pair.value.assert_f64()?);
+                                matrix_list.push(pair.assert_f64()?);
                                 if matrix_list.len() == 12 {
                                     let mut matrix = TransformationMatrix::default();
                                     matrix.from_vec(&vec![
@@ -773,14 +773,14 @@ impl Object {
                                 }
                             }
                         },
-                        41 => { sf.back_clipping_plane_distance = pair.value.assert_f64()?; },
+                        41 => { sf.back_clipping_plane_distance = pair.assert_f64()?; },
                         70 => (), // boundary point count; we just read as many as we're given
-                        71 => { sf.is_clip_boundary_enabled = as_bool(pair.value.assert_i16()?); },
-                        72 => { sf.is_front_clipping_plane = as_bool(pair.value.assert_i16()?); },
-                        73 => { sf.is_back_clipping_plane = as_bool(pair.value.assert_i16()?); },
-                        210 => { sf.clip_boundary_normal.x = pair.value.assert_f64()?; },
-                        220 => { sf.clip_boundary_normal.y = pair.value.assert_f64()?; },
-                        230 => { sf.clip_boundary_normal.z = pair.value.assert_f64()?; },
+                        71 => { sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?); },
+                        72 => { sf.is_front_clipping_plane = as_bool(pair.assert_i16()?); },
+                        73 => { sf.is_back_clipping_plane = as_bool(pair.assert_i16()?); },
+                        210 => { sf.clip_boundary_normal.x = pair.assert_f64()?; },
+                        220 => { sf.clip_boundary_normal.y = pair.assert_f64()?; },
+                        230 => { sf.clip_boundary_normal.z = pair.assert_f64()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -792,20 +792,20 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { ss.sun_setup_name = pair.value.assert_string()?; },
-                        2 => { ss.description = pair.value.assert_string()?; },
-                        3 => { ss.sheet_set_name = pair.value.assert_string()?; },
-                        4 => { ss.sheet_subset_name = pair.value.assert_string()?; },
-                        40 => { ss.spacing = pair.value.assert_f64()?; },
-                        70 => { ss.output_type = pair.value.assert_i16()?; },
+                        1 => { ss.sun_setup_name = pair.assert_string()?; },
+                        2 => { ss.description = pair.assert_string()?; },
+                        3 => { ss.sheet_set_name = pair.assert_string()?; },
+                        4 => { ss.sheet_subset_name = pair.assert_string()?; },
+                        40 => { ss.spacing = pair.assert_f64()?; },
+                        70 => { ss.output_type = pair.assert_i16()?; },
                         73 => { reading_hours = true; },
-                        74 => { ss.shade_plot_type = pair.value.assert_i16()?; },
-                        75 => { ss.viewports_per_page = pair.value.assert_i16()? as i32; },
-                        76 => { ss.viewport_distribution_row_count = pair.value.assert_i16()? as i32; },
-                        77 => { ss.viewport_distribution_column_count = pair.value.assert_i16()? as i32; },
+                        74 => { ss.shade_plot_type = pair.assert_i16()?; },
+                        75 => { ss.viewports_per_page = pair.assert_i16()? as i32; },
+                        76 => { ss.viewport_distribution_row_count = pair.assert_i16()? as i32; },
+                        77 => { ss.viewport_distribution_column_count = pair.assert_i16()? as i32; },
                         90 => {
                             if !seen_version {
-                                ss.version = pair.value.assert_i32()?;
+                                ss.version = pair.assert_i32()?;
                                 seen_version = true;
                             }
                             else {
@@ -813,32 +813,32 @@ impl Object {
                                 match julian_day {
                                     Some(jd) => {
                                         let date = as_datetime_local(jd as f64);
-                                        let date = date.add(Duration::seconds(pair.value.assert_i32()? as i64));
+                                        let date = date.add(Duration::seconds(pair.assert_i32()? as i64));
                                         ss.dates.push(date);
                                         julian_day = None;
                                     },
                                     None => {
-                                        julian_day = Some(pair.value.assert_i32()?);
+                                        julian_day = Some(pair.assert_i32()?);
                                     },
                                 }
                             }
                         },
-                        93 => { ss.start_time_seconds_past_midnight = pair.value.assert_i32()?; },
-                        94 => { ss.end_time_seconds_past_midnight = pair.value.assert_i32()?; },
-                        95 => { ss.interval_in_seconds = pair.value.assert_i32()?; },
+                        93 => { ss.start_time_seconds_past_midnight = pair.assert_i32()?; },
+                        94 => { ss.end_time_seconds_past_midnight = pair.assert_i32()?; },
+                        95 => { ss.interval_in_seconds = pair.assert_i32()?; },
                         290 => {
                             if !reading_hours {
-                                ss.use_subset = pair.value.assert_bool()?;
+                                ss.use_subset = pair.assert_bool()?;
                                 reading_hours = true;
                             }
                             else {
-                                ss.hours.push(pair.value.assert_i16()? as i32);
+                                ss.hours.push(pair.assert_i16()? as i32);
                             }
                         },
-                        291 => { ss.select_dates_from_calendar = pair.value.assert_bool()?; },
-                        292 => { ss.select_range_of_dates = pair.value.assert_bool()?; },
-                        293 => { ss.lock_viewports = pair.value.assert_bool()?; },
-                        294 => { ss.label_viewports = pair.value.assert_bool()?; },
+                        291 => { ss.select_dates_from_calendar = pair.assert_bool()?; },
+                        292 => { ss.select_range_of_dates = pair.assert_bool()?; },
+                        293 => { ss.lock_viewports = pair.assert_bool()?; },
+                        294 => { ss.label_viewports = pair.assert_bool()?; },
                         340 => { ss.__page_setup_wizard_handle = pair.as_handle()?; },
                         341 => { ss.__view_handle = pair.as_handle()?; },
                         342 => { ss.__visual_style_handle = pair.as_handle()?; },
@@ -852,27 +852,27 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { ts.description = pair.value.assert_string()?; },
+                        3 => { ts.description = pair.assert_string()?; },
                         7 => {
                             iter.put_back(Ok(pair)); // let the TableCellStyle reader parse this
                             if let Some(style) = TableCellStyle::read(iter)? {
                                 ts.cell_styles.push(style);
                             }
                         },
-                        40 => { ts.horizontal_cell_margin = pair.value.assert_f64()?; },
-                        41 => { ts.vertical_cell_margin = pair.value.assert_f64()?; },
-                        70 => { ts.flow_direction = enum_from_number!(FlowDirection, Down, from_i16, pair.value.assert_i16()?); },
-                        71 => { ts.flags = pair.value.assert_i16()? as i32; },
+                        40 => { ts.horizontal_cell_margin = pair.assert_f64()?; },
+                        41 => { ts.vertical_cell_margin = pair.assert_f64()?; },
+                        70 => { ts.flow_direction = enum_from_number!(FlowDirection, Down, from_i16, pair.assert_i16()?); },
+                        71 => { ts.flags = pair.assert_i16()? as i32; },
                         280 => {
                             if !read_version {
-                                ts.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
+                                ts.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 read_version = true;
                             }
                             else {
-                                ts.is_title_suppressed = as_bool(pair.value.assert_i16()?);
+                                ts.is_title_suppressed = as_bool(pair.assert_i16()?);
                             }
                         },
-                        281 => { ts.is_column_heading_suppressed = as_bool(pair.value.assert_i16()?); },
+                        281 => { ts.is_column_heading_suppressed = as_bool(pair.assert_i16()?); },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -886,7 +886,7 @@ impl Object {
                     }
                     else {
                         if pair.code == 280 {
-                            xr.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?);
+                            xr.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?);
                             reading_data = true;
                             continue;
                         }

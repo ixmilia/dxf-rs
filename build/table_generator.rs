@@ -133,7 +133,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("                return Err(DxfError::ExpectedTableType(pair.offset));\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
-    fun.push_str("            match &*pair.value.assert_string()? {\n");
+    fun.push_str("            match &*pair.assert_string()? {\n");
 
     for table in &element.children {
         fun.push_str(&format!("                \"{table_name}\" => read_{collection}(drawing, iter)?,\n", table_name=attr(&table, "TypeString"), collection=attr(&table, "Collection")));
@@ -167,7 +167,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
         fun.push_str("                if pair.code == 0 {\n");
-        fun.push_str(&format!("                    if pair.value.assert_string()? != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
+        fun.push_str(&format!("                    if pair.assert_string()? != \"{table_type}\" {{\n", table_type=attr(&table, "TypeString")));
         fun.push_str("                        iter.put_back(Ok(pair));\n");
         fun.push_str("                        break;\n");
         fun.push_str("                    }\n");
@@ -181,14 +181,14 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                            },\n");
         fun.push_str("                            Some(Ok(pair)) => {\n");
         fun.push_str("                                match pair.code {\n");
-        fun.push_str("                                    2 => item.name = pair.value.assert_string()?,\n");
+        fun.push_str("                                    2 => item.name = pair.assert_string()?,\n");
         fun.push_str("                                    5 => item.handle = pair.as_handle()?,\n");
         fun.push_str("                                    extension_data::EXTENSION_DATA_GROUP => {\n");
-        fun.push_str("                                        let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter, pair.offset)?;\n");
+        fun.push_str("                                        let group = ExtensionGroup::read_group(pair.assert_string()?, iter, pair.offset)?;\n");
         fun.push_str("                                        item.extension_data_groups.push(group);\n");
         fun.push_str("                                    },\n");
         fun.push_str("                                    x_data::XDATA_APPLICATIONNAME => {\n");
-        fun.push_str("                                        let x = XData::read_item(pair.value.assert_string()?, iter)?;\n");
+        fun.push_str("                                        let x = XData::read_item(pair.assert_string()?, iter)?;\n");
         fun.push_str("                                        item.x_data.push(x);\n");
         fun.push_str("                                    },\n");
         fun.push_str("                                    330 => item.__owner_handle = pair.as_handle()?,\n");
