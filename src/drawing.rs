@@ -135,7 +135,7 @@ impl Drawing {
                 let mut iter = put_back(reader);
                 Drawing::read_sections(&mut drawing, &mut iter)?;
                 match iter.next() {
-                    Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "EOF" => Ok(drawing),
+                    Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s), .. })) if s == "EOF" => Ok(drawing),
                     Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
                     Some(Err(e)) => Err(e),
                     None => Ok(drawing),
@@ -507,7 +507,7 @@ impl Drawing {
                         },
                         "SECTION" => {
                             match iter.next() {
-                               Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s) })) => {
+                               Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s), .. })) => {
                                     match &*s {
                                         "HEADER" => drawing.header = Header::read(iter)?,
                                         "CLASSES" => Class::read_classes(drawing, iter)?,
@@ -520,7 +520,7 @@ impl Drawing {
                                     }
 
                                     match iter.next() {
-                                        Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == "ENDSEC" => (),
+                                        Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s), .. })) if s == "ENDSEC" => (),
                                         Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/ENDSEC"))),
                                         Some(Err(e)) => return Err(e),
                                         None => return Err(DxfError::UnexpectedEndOfInput),

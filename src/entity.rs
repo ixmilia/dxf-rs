@@ -259,7 +259,7 @@ impl EntityType {
                     _ => { return Ok(false); },
                 }
             },
-            _ => { return Err(DxfError::UnexpectedEnumValue); },
+            _ => { return Err(DxfError::UnexpectedEnumValue(pair.offset)); },
         }
         Ok(true)
     }

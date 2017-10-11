@@ -143,7 +143,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("            }\n");
     fun.push_str("\n");
     fun.push_str("            match iter.next() {\n");
-    fun.push_str("                Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s) })) if s == \"ENDTAB\" => (),\n");
+    fun.push_str("                Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s), .. })) if s == \"ENDTAB\" => (),\n");
     fun.push_str("                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from(\"expected 0/ENDTAB\"))),\n");
     fun.push_str("                Some(Err(e)) => return Err(e),\n");
     fun.push_str("                None => return Err(DxfError::UnexpectedEndOfInput),\n");

@@ -144,7 +144,7 @@ impl Block {
             match iter.next() {
                 Some(Ok(pair)) => {
                     match pair {
-                        CodePair { code: 0, value: CodePairValue::Str(ref s) } if s == "ENDBLK" => {
+                        CodePair { code: 0, value: CodePairValue::Str(ref s), .. } if s == "ENDBLK" => {
                             // swallow all non-0 code pairs
                             loop {
                                 match iter.next() {

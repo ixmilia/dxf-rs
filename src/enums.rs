@@ -84,7 +84,7 @@ impl AcadVersion {
             "19.1" => Ok(AcadVersion::R2013),
             "19.2" => Ok(AcadVersion::R2013),
             "19.3" => Ok(AcadVersion::R2013),
-            _ => Err(DxfError::UnexpectedEnumValue),
+            _ => Err(DxfError::UnexpectedEnumValue(0)), // offset doesn't matter here because this failure might not come from parsing
         }
     }
     pub fn to_string(&self) -> String {

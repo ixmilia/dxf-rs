@@ -27,6 +27,7 @@ pub(crate) struct DxbReader<T: Read> {
     last_line_point: Point,
     last_trace_p3: Point,
     last_trace_p4: Point,
+    offset: usize,
 }
 
 impl<T: Read> DxbReader<T> {
@@ -40,20 +41,24 @@ impl<T: Read> DxbReader<T> {
             last_line_point: Point::origin(),
             last_trace_p3: Point::origin(),
             last_trace_p4: Point::origin(),
+            offset: 0,
         }
     }
     pub fn load(&mut self) -> DxfResult<Drawing> {
         // swallow the next two bytes
         assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A);
+        self.advance_offset(1);
         assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00);
+        self.advance_offset(1);
 
         let mut block_base = None;
         let mut entities = vec![];
         loop {
             let item_type = match DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(&mut self.reader))) {
                 Some(item_type) => item_type,
-                None => return Err(DxfError::UnexpectedEnumValue),
+                None => return Err(DxfError::UnexpectedEnumValue(self.offset)),
             };
+            self.advance_offset(1);
             match item_type {
                 // entities
                 DxbItemType::Arc => { entities.push(self.read_arc()?); },
@@ -89,7 +94,7 @@ impl<T: Read> DxbReader<T> {
                     let bulge = self.read_u()?;
                     match vec_last!(entities) {
                         &mut Entity { specific: EntityType::Vertex(ref mut v), .. } => { v.bulge = bulge; },
-                        _ => return Err(DxfError::UnexpectedEnumValue),
+                        _ => return Err(DxfError::UnexpectedEnumValue(self.offset)),
                     }
                 },
                 DxbItemType::NumberMode => { self.is_integer_mode = self.read_w()? == 0; },
@@ -101,7 +106,7 @@ impl<T: Read> DxbReader<T> {
                             v.starting_width = starting_width;
                             v.ending_width = ending_width;
                         },
-                        _ => return Err(DxfError::UnexpectedEnumValue),
+                        _ => return Err(DxfError::UnexpectedEnumValue(self.offset)),
                     }
                 },
                 // done
@@ -223,6 +228,7 @@ impl<T: Read> DxbReader<T> {
         let mut value = String::new();
         loop {
             let b = try_option_io_result_into_err!(read_u8(&mut self.reader));
+            self.advance_offset(1);
             if b == 0 {
                 return Ok(value);
             }
@@ -232,33 +238,48 @@ impl<T: Read> DxbReader<T> {
         }
     }
     fn read_a(&mut self) -> DxfResult<f64> {
-        if self.is_integer_mode {
-            Ok(read_i32(&mut self.reader)? as f64 * self.scale_factor / 1000000.0)
+        let value = if self.is_integer_mode {
+            read_i32(&mut self.reader)? as f64 * self.scale_factor / 1000000.0
         }
         else {
-            Ok(read_f32(&mut self.reader)? as f64)
-        }
+            read_f32(&mut self.reader)? as f64
+        };
+        self.advance_offset(4);
+        Ok(value)
     }
     fn read_f(&mut self) -> DxfResult<f64> {
-        Ok(read_f64(&mut self.reader)?)
+        let value = read_f64(&mut self.reader)?;
+        self.advance_offset(8);
+        Ok(value)
     }
     fn read_n(&mut self) -> DxfResult<f64> {
         if self.is_integer_mode {
-            Ok(read_i16(&mut self.reader)? as f64 * self.scale_factor)
+            let value = read_i16(&mut self.reader)? as f64 * self.scale_factor;
+            self.advance_offset(2);
+            Ok(value)
         }
         else {
-            Ok(read_f32(&mut self.reader)? as f64)
+            let value = read_f32(&mut self.reader)? as f64;
+            self.advance_offset(4);
+            Ok(value)
         }
     }
     fn read_u(&mut self) -> DxfResult<f64> {
-        if self.is_integer_mode {
-            Ok(read_i32(&mut self.reader)? as f64 * 65536.0 * self.scale_factor)
+        let value = if self.is_integer_mode {
+            read_i32(&mut self.reader)? as f64 * 65536.0 * self.scale_factor
         }
         else {
-            Ok(read_f32(&mut self.reader)? as f64)
-        }
+            read_f32(&mut self.reader)? as f64
+        };
+        self.advance_offset(4);
+        Ok(value)
     }
     fn read_w(&mut self) -> DxfResult<i32> {
-        Ok((read_i16(&mut self.reader)? as f64 * self.scale_factor) as i32)
+        let value = (read_i16(&mut self.reader)? as f64 * self.scale_factor) as i32;
+        self.advance_offset(2);
+        Ok(value)
+    }
+    fn advance_offset(&mut self, offset: usize) {
+        self.offset + offset;
     }
 }
