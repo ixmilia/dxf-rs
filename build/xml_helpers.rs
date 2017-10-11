@@ -51,15 +51,21 @@ pub fn generate_writer(element: &Element) -> bool {
 }
 
 pub fn get_field_reader(element: &Element) -> String {
-    let expected_type = ExpectedType::get_expected_type(code(&element)).unwrap();
-    let reader_fun = get_reader_function(&expected_type);
-    let mut read_converter = attr(&element, "ReadConverter");
-    if read_converter.is_empty() {
-        read_converter = String::from("{}");
+    let reader_override = attr(&element, "ReaderOverride");
+    if !reader_override.is_empty() {
+        reader_override
     }
-    let read_cmd = format!("pair.value.{}()?", reader_fun);
-    let normalized_read_cmd = if element.name == "Pointer" { format!("as_u32({})?", read_cmd) } else { read_cmd };
-    read_converter.replace("{}", &normalized_read_cmd)
+    else {
+        let expected_type = ExpectedType::get_expected_type(code(&element)).unwrap();
+        let reader_fun = get_reader_function(&expected_type);
+        let mut read_converter = attr(&element, "ReadConverter");
+        if read_converter.is_empty() {
+            read_converter = String::from("{}");
+        }
+        let read_cmd = format!("pair.value.{}()?", reader_fun);
+        let normalized_read_cmd = if element.name == "Pointer" { String::from("pair.as_handle()?") } else { read_cmd };
+        read_converter.replace("{}", &normalized_read_cmd)
+    }
 }
 
 pub fn get_methods_for_pointer_access(pointer: &Element) -> String {

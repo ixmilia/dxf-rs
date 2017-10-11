@@ -80,8 +80,8 @@ impl SectionTypeSettings {
                 91 => { ss.is_generation_option = as_bool(pair.value.assert_i32()? as i16); },
                 92 => (), // source objects count; we just read as many as we're given
                 93 => (), // generation settings count; we just read as many as we're given
-                330 => { ss.source_object_handles.push(as_u32(pair.value.assert_string()?)?); },
-                331 => { ss.destination_object_handle = as_u32(pair.value.assert_string()?)?; },
+                330 => { ss.source_object_handles.push(pair.as_handle()?); },
+                331 => { ss.destination_object_handle = pair.as_handle()?; },
                 _ => {
                     // unexpected end; put the pair back and return what we have
                     iter.put_back(Ok(pair));

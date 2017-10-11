@@ -198,10 +198,16 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
 }
 
 fn get_read_command(element: &Element) -> String {
-    let expected_type = ExpectedType::get_expected_type(code(element)).unwrap();
-    let reader_fun = get_reader_function(&expected_type);
-    let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
-    converter.replace("{}", &format!("pair.value.{}()?", reader_fun))
+    let reader_override = reader_override(&element);
+    if !reader_override.is_empty() {
+        reader_override
+    }
+    else {
+        let expected_type = ExpectedType::get_expected_type(code(element)).unwrap();
+        let reader_fun = get_reader_function(&expected_type);
+        let converter = if read_converter(&element).is_empty() { String::from("{}") } else { read_converter(&element).clone() };
+        converter.replace("{}", &format!("pair.value.{}()?", reader_fun))
+    }
 }
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
@@ -289,6 +295,10 @@ fn mask(element: &Element) -> String {
 
 fn read_converter(element: &Element) -> String {
     attr(element, "ReadConverter")
+}
+
+fn reader_override(element: &Element) -> String {
+    attr(element, "ReaderOverride")
 }
 
 fn write_converter(element: &Element) -> String {

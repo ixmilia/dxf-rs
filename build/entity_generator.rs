@@ -135,7 +135,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         if c.name == "Field" {
             if name(c) == "extension_data_groups" && code(c) == 102 {
                 fun.push_str("            extension_data::EXTENSION_DATA_GROUP => {\n");
-                fun.push_str("                let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;\n");
+                fun.push_str("                let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter, pair.offset)?;\n");
                 fun.push_str("                self.extension_data_groups.push(group);\n");
                 fun.push_str("            },\n");
             }
@@ -153,7 +153,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
             }
         }
         else if c.name == "Pointer" {
-            fun.push_str(&format!("            {code} => {{ self.__{field}_handle = as_u32(pair.value.assert_string()?)? }},\n", code=code(&c), field=name(c)));
+            fun.push_str(&format!("            {code} => {{ self.__{field}_handle = pair.as_handle()? }},\n", code=code(&c), field=name(c)));
         }
     }
 
@@ -413,10 +413,10 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     }
                     else if f.name == "Pointer" {
                         if allow_multiples(&f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle.push(as_u32(pair.value.assert_string()?)?); }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(&f), field=name(&f)));
                         }
                         else {
-                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle = as_u32(pair.value.assert_string()?)?; }},\n", code=code(&f), field=name(&f)));
+                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle = pair.as_handle()?; }},\n", code=code(&f), field=name(&f)));
                         }
                     }
                 }

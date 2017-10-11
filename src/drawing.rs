@@ -610,7 +610,7 @@ impl Drawing {
                     iter.put_back(Ok(pair));
                     break;
                 },
-                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.value.assert_string()?, &mut data)?; },
+                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.value.assert_string()?, &mut data, pair.offset)?; },
                 Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code)); },
                 Some(Err(e)) => return Err(e),
                 None => break,

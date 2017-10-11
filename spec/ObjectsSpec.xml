@@ -7,7 +7,7 @@
 
   -->
   <Object Name="Object" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" />
+    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" />
     <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="x_data" Code="1001" Type="XData" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="owner" Code="330" />
@@ -156,7 +156,7 @@
     <!-- internal properties -->
     <Field Name="__long_value" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="__double_value" Code="140" Type="f64" DefaultValue="0.0" />
-    <Field Name="__id_value" Code="330" Type="u32" DefaultValue="0" ReadConverter="as_u32({})?" WriteConverter="&amp;as_handle({})" />
+    <Field Name="__id_value" Code="330" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" WriteConverter="&amp;as_handle({})" />
     <Field Name="__binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="__binary_data" Code="310" Type="String" DefaultValue="String::new()" />
     <Field Name="__format_string_code301" Code="301" Type="String" DefaultValue="String::new()" />

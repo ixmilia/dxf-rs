@@ -1,12 +1,24 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+extern crate byteorder;
+
 use std::fmt;
 use std::fmt::{
     Debug,
     Formatter,
 };
 
-use ::CodePairValue;
+use self::byteorder::{
+    BigEndian,
+    ByteOrder,
+};
+
+use ::{
+    CodePairValue,
+    DxfResult,
+};
+
+use ::helper_functions::parse_hex_string;
 
 /// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
 /// data itself.
@@ -44,6 +56,17 @@ impl CodePair {
     }
 }
 
+impl CodePair {
+    pub(crate) fn as_handle(&self) -> DxfResult<u32> {
+        let mut bytes = vec![];
+        parse_hex_string(&self.value.assert_string()?, &mut bytes, self.offset)?;
+        while bytes.len() < 4 {
+            bytes.insert(0, 0);
+        }
+        Ok(BigEndian::read_u32(&bytes))
+    }
+}
+
 impl Debug for CodePair {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         write!(formatter, "{}/{:?}", self.code, &self.value)
@@ -54,5 +77,17 @@ impl PartialEq for CodePair {
     fn eq(&self, other: &CodePair) -> bool {
         // not comparing offsets
         self.code == other.code && self.value == other.value
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use CodePair;
+
+    #[test]
+    fn as_handle() {
+        assert_eq!(0x00, CodePair::new_str(0, "0").as_handle().unwrap());
+        assert_eq!(0x01, CodePair::new_str(0, "1").as_handle().unwrap());
+        assert_eq!(0xABCD, CodePair::new_str(0, "ABCD").as_handle().unwrap());
     }
 }

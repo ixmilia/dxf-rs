@@ -561,8 +561,8 @@ impl Entity {
                                 att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
                             }
                         },
-                        340 => { att.__secondary_attributes_handle.push(as_u32(pair.value.assert_string()?)?); },
-                        -1 => { att.__m_text_handle = as_u32(pair.value.assert_string()?)?; },
+                        340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
+                        -1 => { att.__m_text_handle = pair.as_handle()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -659,8 +659,8 @@ impl Entity {
                                 att.is_locked_in_block = as_bool(pair.value.assert_i16()?);
                             }
                         },
-                        340 => { att.__secondary_attributes_handle.push(as_u32(pair.value.assert_string()?)?); },
-                        -1 => { att.__m_text_handle = as_u32(pair.value.assert_string()?)?; },
+                        340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
+                        -1 => { att.__m_text_handle = pair.as_handle()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }

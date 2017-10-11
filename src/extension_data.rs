@@ -28,11 +28,11 @@ pub enum ExtensionGroupItem {
 }
 
 impl ExtensionGroup {
-    pub(crate) fn read_group<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<ExtensionGroup>
+    pub(crate) fn read_group<I>(application_name: String, iter: &mut PutBack<I>, offset: usize) -> DxfResult<ExtensionGroup>
         where I: Iterator<Item = DxfResult<CodePair>> {
 
         if !application_name.starts_with("{") {
-            return Err(DxfError::ParseError);
+            return Err(DxfError::ParseError(offset));
         }
         let mut application_name = application_name.clone();
         application_name.remove(0);
@@ -52,7 +52,7 @@ impl ExtensionGroup {
                 }
                 else if name.starts_with("{") {
                     // nested group
-                    let sub_group = ExtensionGroup::read_group(name, iter)?;
+                    let sub_group = ExtensionGroup::read_group(name, iter, pair.offset)?;
                     items.push(ExtensionGroupItem::Group(sub_group));
                 }
                 else {

@@ -175,16 +175,16 @@ impl Block {
                                 2 => current.name = pair.value.assert_string()?,
                                 3 => (), // another instance of the name
                                 4 => current.description = pair.value.assert_string()?,
-                                5 => current.handle = as_u32(pair.value.assert_string()?)?,
+                                5 => current.handle = pair.as_handle()?,
                                 8 => current.layer = pair.value.assert_string()?,
                                 10 => current.base_point.x = pair.value.assert_f64()?,
                                 20 => current.base_point.y = pair.value.assert_f64()?,
                                 30 => current.base_point.z = pair.value.assert_f64()?,
                                 67 => current.is_in_paperspace = as_bool(pair.value.assert_i16()?),
                                 70 => current.flags = pair.value.assert_i16()? as i32,
-                                330 => current.__owner_handle = as_u32(pair.value.assert_string()?)?,
+                                330 => current.__owner_handle = pair.as_handle()?,
                                 extension_data::EXTENSION_DATA_GROUP => {
-                                    let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter)?;
+                                    let group = ExtensionGroup::read_group(pair.value.assert_string()?, iter, pair.offset)?;
                                     current.extension_data_groups.push(group);
                                 },
                                 x_data::XDATA_APPLICATIONNAME => {

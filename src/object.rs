@@ -156,7 +156,7 @@ impl Object {
                                     }
                                 }
 
-                                obj.post_parse()?;
+                                obj.post_parse(pair.offset)?;
                             }
 
                             return Ok(Some(obj));
@@ -192,7 +192,7 @@ impl Object {
         }
         Ok(())
     }
-    fn post_parse(&mut self) -> DxfResult<()> {
+    fn post_parse(&mut self, entity_offset: usize) -> DxfResult<()> {
         match self.specific {
             ObjectType::AcadProxyObject(ref mut proxy) => {
                 for item in &proxy.__object_ids_a {
@@ -248,7 +248,7 @@ impl Object {
                 // each char in each _hex_data should be added to `data` byte array
                 let mut result = vec![];
                 for s in &vba.__hex_data {
-                    parse_hex_string(s, &mut result)?;
+                    parse_hex_string(s, &mut result, entity_offset)?;
                 }
 
                 vba.data = result;
@@ -316,7 +316,7 @@ impl Object {
                         },
                         330 | 331 | 340 | 350 | 360 => {
                             if read_row_count || read_column_count {
-                                data.set_value(current_row, current_column, DataTableValue::Handle(as_u32(pair.value.assert_string()?)?));
+                                data.set_value(current_row, current_column, DataTableValue::Handle(pair.as_handle()?));
                             }
                             else {
                                 self.common.apply_individual_pair(&pair, iter)?;
@@ -346,7 +346,7 @@ impl Object {
                         280 => { dict.is_hard_owner = as_bool(pair.value.assert_i16()?); },
                         281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
                         350 | 360 => {
-                            let handle = as_u32(pair.value.assert_string()?)?;
+                            let handle = pair.as_handle()?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
@@ -360,9 +360,9 @@ impl Object {
                     match pair.code {
                         3 => { last_entry_name = pair.value.assert_string()?; },
                         281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
-                        340 => { dict.default_handle = as_u32(pair.value.assert_string()?)?; },
+                        340 => { dict.default_handle = pair.as_handle()?; },
                         350 | 360 => {
-                            let handle = as_u32(pair.value.assert_string()?)?;
+                            let handle = pair.as_handle()?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
@@ -410,9 +410,9 @@ impl Object {
                             71 => { layout.tab_order = pair.value.assert_i16()? as i32; },
                             76 => { layout.ucs_orthographic_type = enum_from_number!(UcsOrthographicType, NotOrthographic, from_i16, pair.value.assert_i16()?); },
                             146 => { layout.elevation = pair.value.assert_f64()?; },
-                            330 => { layout.__viewport_handle = as_u32(pair.value.assert_string()?)?; },
-                            345 => { layout.__table_record_handle = as_u32(pair.value.assert_string()?)?; },
-                            346 => { layout.__table_record_base_handle = as_u32(pair.value.assert_string()?)?; },
+                            330 => { layout.__viewport_handle = pair.as_handle()?; },
+                            345 => { layout.__table_record_handle = pair.as_handle()?; },
+                            346 => { layout.__table_record_base_handle = pair.as_handle()?; },
                             _ => { self.common.apply_individual_pair(&pair, iter)?; },
                         }
                     }
@@ -427,7 +427,7 @@ impl Object {
                         5 => {
                             if read_version_number {
                                 // pointer to a new light
-                                ll.__lights_handle.push(as_u32(pair.value.assert_string()?)?);
+                                ll.__lights_handle.push(pair.as_handle()?);
                             }
                             else {
                                 // might still be the handle
@@ -710,20 +710,20 @@ impl Object {
                     match pair.code {
                         5 => {
                             if is_ready_for_sort_handles {
-                                sort.__sort_items_handle.push(as_u32(pair.value.assert_string()?)?);
+                                sort.__sort_items_handle.push(pair.as_handle()?);
                             }
                             else {
-                                self.common.handle = as_u32(pair.value.assert_string()?)?;
+                                self.common.handle = pair.as_handle()?;
                                 is_ready_for_sort_handles = true;
                             }
                         },
                         100 => { is_ready_for_sort_handles = true; },
                         330 => {
-                            self.common.__owner_handle = as_u32(pair.value.assert_string()?)?;
+                            self.common.__owner_handle = pair.as_handle()?;
                             is_ready_for_sort_handles = true;
                         },
                         331 => {
-                            sort.__entities_handle.push(as_u32(pair.value.assert_string()?)?);
+                            sort.__entities_handle.push(pair.as_handle()?);
                             is_ready_for_sort_handles = true;
                         },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
@@ -839,10 +839,10 @@ impl Object {
                         292 => { ss.select_range_of_dates = pair.value.assert_bool()?; },
                         293 => { ss.lock_viewports = pair.value.assert_bool()?; },
                         294 => { ss.label_viewports = pair.value.assert_bool()?; },
-                        340 => { ss.__page_setup_wizard_handle = as_u32(pair.value.assert_string()?)?; },
-                        341 => { ss.__view_handle = as_u32(pair.value.assert_string()?)?; },
-                        342 => { ss.__visual_style_handle = as_u32(pair.value.assert_string()?)?; },
-                        343 => { ss.__text_style_handle = as_u32(pair.value.assert_string()?)?; },
+                        340 => { ss.__page_setup_wizard_handle = pair.as_handle()?; },
+                        341 => { ss.__view_handle = pair.as_handle()?; },
+                        342 => { ss.__visual_style_handle = pair.as_handle()?; },
+                        343 => { ss.__text_style_handle = pair.as_handle()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }

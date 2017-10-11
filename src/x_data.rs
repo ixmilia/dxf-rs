@@ -126,10 +126,10 @@ impl XDataItem {
                 XDATA_LAYER => return Ok(XDataItem::LayerName(pair.value.assert_string()?)),
                 XDATA_BINARYDATA => {
                     let mut data = vec![];
-                    parse_hex_string(&pair.value.assert_string()?, &mut data)?;
+                    parse_hex_string(&pair.value.assert_string()?, &mut data, pair.offset)?;
                     return Ok(XDataItem::BinaryData(data));
                 },
-                XDATA_HANDLE => return Ok(XDataItem::Handle(as_u32(pair.value.assert_string()?)?)),
+                XDATA_HANDLE => return Ok(XDataItem::Handle(pair.as_handle()?)),
                 XDATA_THREEREALS => return Ok(XDataItem::ThreeReals(pair.value.assert_f64()?, XDataItem::read_double(iter, pair.code)?, XDataItem::read_double(iter, pair.code)?)),
                 XDATA_WORLDSPACEDISPLACEMENT => return Ok(XDataItem::WorldSpaceDisplacement(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),
                 XDATA_WORLDSPACEPOSITION => return Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(iter, pair.value.assert_f64()?, pair.code)?)),

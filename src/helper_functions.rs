@@ -5,7 +5,6 @@ use std::io::Read;
 
 extern crate byteorder;
 use self::byteorder::{
-    BigEndian,
     ByteOrder,
     LittleEndian,
 };
@@ -101,30 +100,14 @@ pub(crate) fn as_duration(d: f64) -> Duration {
     Duration::seconds(d as i64)
 }
 
-pub(crate) fn as_u32(s: String) -> DxfResult<u32> {
-    let mut bytes = vec![];
-    parse_hex_string(&s, &mut bytes)?;
-    while bytes.len() < 4 {
-        bytes.insert(0, 0);
-    }
-    Ok(BigEndian::read_u32(&bytes))
-}
-
-#[test]
-fn as_u32_test() {
-    assert_eq!(0x00, as_u32(String::from("0")).unwrap());
-    assert_eq!(0x01, as_u32(String::from("1")).unwrap());
-    assert_eq!(0xABCD, as_u32(String::from("ABCD")).unwrap());
-}
-
 pub(crate) fn as_handle(h: u32) -> String {
     format!("{:X}", h)
 }
 
-pub(crate) fn as_uuid(s: String) -> DxfResult<Uuid> {
+pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
     match Uuid::parse_str(s.as_str()) {
         Ok(uuid) => Ok(uuid),
-        Err(_) => Err(DxfError::ParseError),
+        Err(_) => Err(DxfError::ParseError(offset)),
     }
 }
 
@@ -415,8 +398,8 @@ pub(crate) fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h]))
 }
 
-pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<()> {
-    fn char_to_value(c: char) -> DxfResult<u8> {
+pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>, offset: usize) -> DxfResult<()> {
+    fn char_to_value(c: char, offset: usize) -> DxfResult<u8> {
         let value = match c {
             '0' => 0,
             '1' => 1,
@@ -434,7 +417,7 @@ pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<
             'D' | 'd' => 13,
             'E' | 'e' => 14,
             'F' | 'f' => 15,
-            _ => return Err(DxfError::ParseError),
+            _ => return Err(DxfError::ParseError(offset)),
         };
         Ok(value)
     }
@@ -442,7 +425,7 @@ pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<
     let mut complete_byte = data.len() % 2 != 0; // handles strings with an odd number of bytes
     let mut current_byte = 0u8;
     for c in data.chars() {
-        let value = char_to_value(c)?;
+        let value = char_to_value(c, offset)?;
         if complete_byte {
             let x = current_byte * 16 + value;
             bytes.push(x);
@@ -459,6 +442,6 @@ pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>) -> DxfResult<
 #[test]
 fn parse_hex_string_test() {
     let mut bytes = vec![];
-    parse_hex_string(&String::from("012345"), &mut bytes).unwrap();
+    parse_hex_string(&String::from("012345"), &mut bytes, 0).unwrap();
     assert_eq!(vec![0x01u8, 0x23, 0x45], bytes);
 }
