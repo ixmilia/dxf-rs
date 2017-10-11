@@ -77,6 +77,12 @@ fn read_alternate_version() {
 }
 
 #[test]
+fn read_invalid_version() {
+    let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "AC3.14159"].join("\r\n").as_str());
+    assert_eq!(AcadVersion::R12, file.header.version);
+}
+
+#[test]
 fn read_multi_value_variable() {
     let file = from_section("HEADER", vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"].join("\r\n").as_str());
     assert_eq!(Point::new(1.1, 2.2, 3.3), file.header.minimum_drawing_extents)

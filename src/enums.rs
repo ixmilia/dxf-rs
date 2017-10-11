@@ -87,6 +87,12 @@ impl AcadVersion {
             _ => Err(DxfError::UnexpectedEnumValue(0)), // offset doesn't matter here because this failure might not come from parsing
         }
     }
+    pub(crate) fn from_safe(val: String) -> AcadVersion {
+        match AcadVersion::from(val) {
+            Ok(version) => version,
+            _ => AcadVersion::R12, // default to R12
+        }
+    }
     pub fn to_string(&self) -> String {
         String::from(
             match self {
