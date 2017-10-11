@@ -168,7 +168,7 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                 }
                 else {
                     let read_cmd = get_read_command(&v);
-                    fun.push_str(&format!("verify_code({code}, pair.code)?; self.{field} = {cmd};", code=code(&v), field=field(&v), cmd=read_cmd));
+                    fun.push_str(&format!("verify_code(&pair, {code})?; self.{field} = {cmd};", code=code(&v), field=field(&v), cmd=read_cmd));
                 }
 
                 fun.push_str(" ");

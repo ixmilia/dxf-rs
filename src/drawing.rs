@@ -587,7 +587,7 @@ impl Drawing {
         let length_pair = next_pair!(iter);
         let _length = match length_pair.code {
             90 => length_pair.value.assert_i32()? as usize,
-            _ => return Err(DxfError::UnexpectedCode(length_pair.code)),
+            _ => return Err(DxfError::UnexpectedCode(length_pair.code, length_pair.offset)),
         };
 
         // prepend the BMP header that always seems to be missing from DXF files
@@ -611,7 +611,7 @@ impl Drawing {
                     break;
                 },
                 Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.value.assert_string()?, &mut data, pair.offset)?; },
-                Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code)); },
+                Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code, pair.offset)); },
                 Some(Err(e)) => return Err(e),
                 None => break,
             }

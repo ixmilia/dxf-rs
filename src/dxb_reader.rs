@@ -46,9 +46,9 @@ impl<T: Read> DxbReader<T> {
     }
     pub fn load(&mut self) -> DxfResult<Drawing> {
         // swallow the next two bytes
-        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A);
+        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A, 16);
         self.advance_offset(1);
-        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00);
+        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00, 17);
         self.advance_offset(1);
 
         let mut block_base = None;

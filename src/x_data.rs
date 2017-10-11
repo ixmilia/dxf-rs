@@ -139,7 +139,7 @@ impl XDataItem {
                 XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(pair.value.assert_f64()?)),
                 XDATA_INTEGER => return Ok(XDataItem::Integer(pair.value.assert_i16()?)),
                 XDATA_LONG => return Ok(XDataItem::Long(pair.value.assert_i32()?)),
-                _ => return Err(DxfError::UnexpectedCode(pair.code)),
+                _ => return Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
             }
         }
     }
@@ -148,7 +148,7 @@ impl XDataItem {
 
         match iter.next() {
             Some(Ok(ref pair)) if pair.code == expected_code => return Ok(pair.value.assert_f64()?),
-            Some(Ok(pair)) => return Err(DxfError::UnexpectedCode(pair.code)),
+            Some(Ok(pair)) => return Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
             Some(Err(e)) => return Err(e),
             None => return Err(DxfError::UnexpectedEndOfInput),
         }

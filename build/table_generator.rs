@@ -130,7 +130,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     fun.push_str("    match iter.next() {\n");
     fun.push_str("        Some(Ok(pair)) => {\n");
     fun.push_str("            if pair.code != 2 {\n");
-    fun.push_str("                return Err(DxfError::ExpectedTableType);\n");
+    fun.push_str("                return Err(DxfError::ExpectedTableType(pair.offset));\n");
     fun.push_str("            }\n");
     fun.push_str("\n");
     fun.push_str("            match &*pair.value.assert_string()? {\n");

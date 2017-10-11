@@ -35,8 +35,8 @@ impl<T: Read> CodePairIter<T> {
         match &*self.first_line {
             "AutoCAD Binary DXF" => {
                 // swallow the next two bytes
-                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A);
-                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00);
+                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A, 18);
+                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00, 19);
                 self.read_as_ascii = false;
                 self.offset = 20;
             },
@@ -73,8 +73,8 @@ impl<T: Read> CodePairIter<T> {
             return None;
         }
 
-        let code = try_into_option!(parse_i32(String::from(code_line)));
         let code_offset = self.offset;
+        let code = try_into_option!(parse_i32(String::from(code_line), code_offset));
 
         // Read value.  If no line is available die horribly.
         self.offset += 1;
@@ -90,11 +90,11 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
         let value = match expected_type {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_into_option!(parse_i16(value_line))),
-            ExpectedType::Integer => CodePairValue::Integer(try_into_option!(parse_i32(value_line))),
-            ExpectedType::Long => CodePairValue::Long(try_into_option!(parse_i64(value_line))),
-            ExpectedType::Short => CodePairValue::Short(try_into_option!(parse_i16(value_line))),
-            ExpectedType::Double => CodePairValue::Double(try_into_option!(parse_f64(value_line))),
+            ExpectedType::Boolean => CodePairValue::Boolean(try_into_option!(parse_i16(value_line, self.offset))),
+            ExpectedType::Integer => CodePairValue::Integer(try_into_option!(parse_i32(value_line, self.offset))),
+            ExpectedType::Long => CodePairValue::Long(try_into_option!(parse_i64(value_line, self.offset))),
+            ExpectedType::Short => CodePairValue::Short(try_into_option!(parse_i16(value_line, self.offset))),
+            ExpectedType::Double => CodePairValue::Double(try_into_option!(parse_f64(value_line, self.offset))),
             ExpectedType::Str => CodePairValue::Str(CodePairValue::un_escape_string(&value_line).into_owned()),
         };
 

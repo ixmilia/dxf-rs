@@ -17,16 +17,16 @@ use self::uuid::Uuid;
 
 use enum_primitive::FromPrimitive;
 
-use ::{Color, DxfError, DxfResult};
+use ::{CodePair, Color, DxfError, DxfResult};
 use ::enums::*;
 use ::tables::Layer;
 
-pub(crate) fn verify_code(expected: i32, actual: i32) -> DxfResult<()> {
-    if expected == actual {
+pub(crate) fn verify_code(pair: &CodePair, expected: i32) -> DxfResult<()> {
+    if expected == pair.code {
         Ok(())
     }
     else {
-        Err(DxfError::UnexpectedCode(actual))
+        Err(DxfError::UnexpectedCode(pair.code, pair.offset))
     }
 }
 
@@ -188,55 +188,55 @@ pub(crate) fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
     c != XrefClippingBoundaryVisibility::NotDisplayedNotPlotted
 }
 
-pub(crate) fn parse_f64(s: String) -> DxfResult<f64> {
+pub(crate) fn parse_f64(s: String, offset: usize) -> DxfResult<f64> {
     match s.trim().parse::<f64>() {
         Ok(d) => Ok(d),
-        Err(e) => Err(DxfError::ParseFloatError(e)),
+        Err(e) => Err(DxfError::ParseFloatError(e, offset)),
     }
 }
 
 #[test]
 fn parse_f64_test() {
-    assert_eq!(3.14, parse_f64("  3.14 ".to_string()).unwrap());
+    assert_eq!(3.14, parse_f64("  3.14 ".to_string(), 0).unwrap());
 }
 
-pub(crate) fn parse_i32(s: String) -> DxfResult<i32> {
+pub(crate) fn parse_i32(s: String, offset: usize) -> DxfResult<i32> {
     match s.trim().parse::<i32>() {
         Ok(i) => Ok(i),
-        Err(e) => Err(DxfError::ParseIntError(e)),
+        Err(e) => Err(DxfError::ParseIntError(e, offset)),
     }
 }
 
 #[test]
 fn parse_i32_test() {
-    assert_eq!(2, parse_i32("  2 ".to_string()).unwrap());
+    assert_eq!(2, parse_i32("  2 ".to_string(), 0).unwrap());
 }
 
-pub(crate) fn parse_i64(s: String) -> DxfResult<i64> {
+pub(crate) fn parse_i64(s: String, offset: usize) -> DxfResult<i64> {
     match s.trim().parse::<i64>() {
         Ok(l) => Ok(l),
-        Err(e) => Err(DxfError::ParseIntError(e)),
+        Err(e) => Err(DxfError::ParseIntError(e, offset)),
     }
 }
 
 #[test]
 fn parse_i64_test() {
-    assert_eq!(2, parse_i64("  2 ".to_string()).unwrap());
+    assert_eq!(2, parse_i64("  2 ".to_string(), 0).unwrap());
 }
 
-pub(crate) fn parse_i16(s: String) -> DxfResult<i16> {
+pub(crate) fn parse_i16(s: String, offset: usize) -> DxfResult<i16> {
     match s.trim().parse::<f64>() {
         Ok(s) => Ok(s as i16),
-        Err(e) => Err(DxfError::ParseFloatError(e)),
+        Err(e) => Err(DxfError::ParseFloatError(e, offset)),
     }
 }
 
 #[test]
 fn parse_i16_test() {
-    assert_eq!(2, parse_i16("  2 ".to_string()).unwrap());
+    assert_eq!(2, parse_i16("  2 ".to_string(), 0).unwrap());
 
     // some files write shorts as a double
-    assert_eq!(2, parse_i16(" 2.0 ".to_string()).unwrap());
+    assert_eq!(2, parse_i16(" 2.0 ".to_string(), 0).unwrap());
 }
 
 pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
@@ -327,10 +327,10 @@ macro_rules! try_option_io_result_into_err {
 
 // verifies that an actual value matches the expected value
 macro_rules! assert_or_err {
-    ($actual : expr, $expected : expr) => (
+    ($actual: expr, $expected: expr, $offset: expr) => (
         let actual = $actual;
         if actual != $expected {
-            return Err(DxfError::UnexpectedByte($expected));
+            return Err(DxfError::UnexpectedByte($expected, $offset));
         }
     )
 }
