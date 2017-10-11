@@ -10,7 +10,7 @@
             <Pointer Name="layout" Code="340" MinVersion="R2000" />
 
             <!-- The following three properties aren't well defined in the spec, so this is a best-guess implementation. -->
-            <Field Name="insertion_units" Code="70" Type="Units" DefaultValue="Units::Unitless" ReadConverter="try_result!(Units::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
+            <Field Name="insertion_units" Code="70" Type="Units" DefaultValue="Units::Unitless" ReadConverter="enum_from_number!(Units, Unitless, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2007" />
             <Field Name="explodability" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
             <Field Name="scalability" Code="281" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
 
@@ -40,8 +40,8 @@
             <Field Name="suppress_first_dimension_extension_line" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
             <Field Name="suppress_second_dimension_extension_line" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
             <Field Name="text_above_dimension_line" Code="77" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-            <Field Name="dimension_unit_zero_suppression" Code="78" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="try_result!(UnitZeroSuppression::from_i16({}))" WriteConverter="{} as i16" />
-            <Field Name="dimension_angle_zero_suppression" Code="79" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="try_result!(UnitZeroSuppression::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="dimension_unit_zero_suppression" Code="78" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="enum_from_number!(UnitZeroSuppression, SuppressZeroFeetAndZeroInches, from_i16, {})" WriteConverter="{} as i16" />
+            <Field Name="dimension_angle_zero_suppression" Code="79" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="enum_from_number!(UnitZeroSuppression, SuppressZeroFeetAndZeroInches, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="dimensioning_text_height" Code="140" Type="f64" DefaultValue="0.18" />
             <Field Name="center_mark_size" Code="141" Type="f64" DefaultValue="0.09" />
             <Field Name="dimensioning_tick_size" Code="142" Type="f64" DefaultValue="0.0" />
@@ -61,26 +61,26 @@
             <Field Name="dimension_extension_line_color" Code="177" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color::get_raw_value(&amp;{})" />
             <Field Name="dimension_text_color" Code="178" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="Color::get_raw_value(&amp;{})" />
             <Field Name="angular_dimension_precision" Code="179" Type="i16" DefaultValue="12" MinVersion="R2000" />
-            <Field Name="dimension_unit_format" Code="270" Type="UnitFormat" DefaultValue="UnitFormat::Scientific" ReadConverter="try_result!(UnitFormat::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimension_unit_format" Code="270" Type="UnitFormat" DefaultValue="UnitFormat::Scientific" ReadConverter="enum_from_number!(UnitFormat, Scientific, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
             <Field Name="dimension_unit_tolerance_decimal_places" Code="271" Type="i16" DefaultValue="0" MinVersion="R13" />
             <Field Name="dimension_tolerace_decimal_places" Code="272" Type="i16" DefaultValue="0" MinVersion="R13" />
-            <Field Name="alternate_dimensioning_units" Code="273" Type="UnitFormat" DefaultValue="UnitFormat::Scientific" ReadConverter="try_result!(UnitFormat::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="alternate_dimensioning_units" Code="273" Type="UnitFormat" DefaultValue="UnitFormat::Scientific" ReadConverter="enum_from_number!(UnitFormat, Scientific, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
             <Field Name="alternate_dimensioning_tolerance_decimal_places" Code="274" Type="i16" DefaultValue="0" MinVersion="R13" />
-            <Field Name="dimensioning_angle_format" Code="275" Type="AngleFormat" DefaultValue="AngleFormat::DecimalDegrees" ReadConverter="try_result!(AngleFormat::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimensioning_angle_format" Code="275" Type="AngleFormat" DefaultValue="AngleFormat::DecimalDegrees" ReadConverter="enum_from_number!(AngleFormat, DecimalDegrees, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
             <Field Name="dimension_precision" Code="276" Type="i16" DefaultValue="12" MinVersion="R2000" />
-            <Field Name="dimension_non_angular_units" Code="277" Type="NonAngularUnits" DefaultValue="NonAngularUnits::Scientific" ReadConverter="try_result!(NonAngularUnits::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="dimension_non_angular_units" Code="277" Type="NonAngularUnits" DefaultValue="NonAngularUnits::Scientific" ReadConverter="enum_from_number!(NonAngularUnits, Scientific, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="dimension_decilam_separator_char" Code="278" Type="char" DefaultValue="'.'" ReadConverter="{} as u8 as char" WriteConverter="{} as i16" MinVersion="R2000" />
-            <Field Name="dimension_text_movement_rule" Code="279" Type="DimensionTextMovementRule" DefaultValue="DimensionTextMovementRule::MoveLineWithText" ReadConverter="try_result!(DimensionTextMovementRule::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
-            <Field Name="dimension_text_justification" Code="280" Type="DimensionTextJustification" DefaultValue="DimensionTextJustification::AboveLineCenter" ReadConverter="try_result!(DimensionTextJustification::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimension_text_movement_rule" Code="279" Type="DimensionTextMovementRule" DefaultValue="DimensionTextMovementRule::MoveLineWithText" ReadConverter="enum_from_number!(DimensionTextMovementRule, MoveLineWithText, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="dimension_text_justification" Code="280" Type="DimensionTextJustification" DefaultValue="DimensionTextJustification::AboveLineCenter" ReadConverter="enum_from_number!(DimensionTextJustification, AboveLineCenter, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
             <Field Name="suppress_first_dimension_extension_line" Code="281" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R13" />
             <Field Name="suppress_second_dimension_extension_line" Code="282" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R13" />
-            <Field Name="dimension_tolerance_vertical_justification" Code="283" Type="Justification" DefaultValue="Justification::Top" ReadConverter="try_result!(Justification::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
-            <Field Name="dimension_tolerance_zero_suppression" Code="284" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="try_result!(UnitZeroSuppression::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
-            <Field Name="alternate_dimensioning_zero_suppression" Code="285" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="try_result!(UnitZeroSuppression::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
-            <Field Name="alternate_dimensioning_tolerance_zero_suppression" Code="286" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="try_result!(UnitZeroSuppression::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
-            <Field Name="dimension_text_and_arrow_placement" Code="287" Type="DimensionFit" DefaultValue="DimensionFit::TextAndArrowsOutsideLines" ReadConverter="try_result!(DimensionFit::from_i16({}))" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimension_tolerance_vertical_justification" Code="283" Type="Justification" DefaultValue="Justification::Top" ReadConverter="enum_from_number!(Justification, Top, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimension_tolerance_zero_suppression" Code="284" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="enum_from_number!(UnitZeroSuppression, SuppressZeroFeetAndZeroInches, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="alternate_dimensioning_zero_suppression" Code="285" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="enum_from_number!(UnitZeroSuppression, SuppressZeroFeetAndZeroInches, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="alternate_dimensioning_tolerance_zero_suppression" Code="286" Type="UnitZeroSuppression" DefaultValue="UnitZeroSuppression::SuppressZeroFeetAndZeroInches" ReadConverter="enum_from_number!(UnitZeroSuppression, SuppressZeroFeetAndZeroInches, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
+            <Field Name="dimension_text_and_arrow_placement" Code="287" Type="DimensionFit" DefaultValue="DimensionFit::TextAndArrowsOutsideLines" ReadConverter="enum_from_number!(DimensionFit, TextAndArrowsOutsideLines, from_i16, {})" WriteConverter="{} as i16" MinVersion="R13" />
             <Field Name="dimension_cursor_controls_text_position" Code="288" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R13" />
-            <Field Name="dimension_text_and_arrow_placement" Code="289" Type="DimensionFit" DefaultValue="DimensionFit::TextAndArrowsOutsideLines" ReadConverter="try_result!(DimensionFit::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="dimension_text_and_arrow_placement" Code="289" Type="DimensionFit" DefaultValue="DimensionFit::TextAndArrowsOutsideLines" ReadConverter="enum_from_number!(DimensionFit, TextAndArrowsOutsideLines, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="dimension_text_style" Code="340" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R13" />
             <Field Name="dimension_leader_block_name" Code="341" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2000" />
             <Field Name="arrow_block_name" Code="342" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2000" />
@@ -136,10 +136,10 @@
             <Field Name="origin" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
             <Field Name="x_axis" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
             <Field Name="y_axis" Code="12" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="12,22,32" />
-            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="try_result!(OrthographicViewType::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="enum_from_number!(OrthographicViewType, None, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="elevation" Code="146" Type="f64" DefaultValue="0.0" MinVersion="R2000" />
             <Pointer Name="base_ucs" Code="346" MinVersion="R2000" />
-            <Field Name="orthographic_type" Code="71" Type="OrthographicViewType" DefaultValue="OrthographicViewType::Top" ReadConverter="try_result!(OrthographicViewType::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="orthographic_type" Code="71" Type="OrthographicViewType" DefaultValue="OrthographicViewType::Top" ReadConverter="enum_from_number!(OrthographicViewType, Top, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="orthographic_origin" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" MinVersion="R2000" />
         </TableItem>
     </Table>
@@ -155,7 +155,7 @@
             <Field Name="back_clipping_plane" Code="44" Type="f64" DefaultValue="1.0" />
             <Field Name="twist_angle" Code="50" Type="f64" DefaultValue="0.0" />
             <Field Name="view_mode" Code="71" Type="i16" DefaultValue="0" />
-            <Field Name="render_mode" Code="281" Type="ViewRenderMode" DefaultValue="ViewRenderMode::Classic2D" ReadConverter="try_result!(ViewRenderMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="render_mode" Code="281" Type="ViewRenderMode" DefaultValue="ViewRenderMode::Classic2D" ReadConverter="enum_from_number!(ViewRenderMode, Classic2D, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="is_associated_ucs_present" Code="72" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2000" />
             <Field Name="is_camera_plottable" Code="73" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
             <Pointer Name="background_object" Code="332" MinVersion="R2007" />
@@ -165,7 +165,7 @@
             <Field Name="ucs_origin" Code="110" Type="Point" DefaultValue="Point::origin()" CodeOverrides="110,120,130" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
             <Field Name="ucs_x_axis" Code="111" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="111,121,131" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
             <Field Name="ucs_y_axis" Code="112" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="112,122,132" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
-            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="try_result!(OrthographicViewType::from_i16({}))" WriteConverter="{} as i16" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
+            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="enum_from_number!(OrthographicViewType, None, from_i16, {})" WriteConverter="{} as i16" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
             <Field Name="ucs_elevation" Code="146" Type="f64" DefaultValue="0.0" WriteCondition="item.is_associated_ucs_present" MinVersion="R2000" />
             <Pointer Name="ucs" Code="345" WriteCondition="item.is_associated_ucs_present" MinVersion="R2007" />
             <Pointer Name="base_ucs" Code="346" WriteCondition="item.is_associated_ucs_present" MinVersion="R2007" />
@@ -195,25 +195,25 @@
             <Field Name="ucs_icon" Code="74" Type="i16" DefaultValue="3" />
             <Field Name="snap_on" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R2004" />
             <Field Name="grid_on" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R2004" />
-            <Field Name="snap_style" Code="77" Type="SnapStyle" DefaultValue="SnapStyle::Standard" ReadConverter="try_result!(SnapStyle::from_i16({}))" WriteConverter="{} as i16" MaxVersion="R2004" />
-            <Field Name="snap_isometric_plane" Code="78" Type="SnapIsometricPlane" DefaultValue="SnapIsometricPlane::Left" ReadConverter="try_result!(SnapIsometricPlane::from_i16({}))" WriteConverter="{} as i16" MaxVersion="R2004" />
+            <Field Name="snap_style" Code="77" Type="SnapStyle" DefaultValue="SnapStyle::Standard" ReadConverter="enum_from_number!(SnapStyle, Standard, from_i16, {})" WriteConverter="{} as i16" MaxVersion="R2004" />
+            <Field Name="snap_isometric_plane" Code="78" Type="SnapIsometricPlane" DefaultValue="SnapIsometricPlane::Left" ReadConverter="enum_from_number!(SnapIsometricPlane, Left, from_i16, {})" WriteConverter="{} as i16" MaxVersion="R2004" />
             <Field Name="plot_style_sheet" Code="1" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" MinVersion="R2007" />
-            <Field Name="render_mode" Code="281" Type="ViewRenderMode" DefaultValue="ViewRenderMode::Classic2D" ReadConverter="try_result!(ViewRenderMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2000" />
+            <Field Name="render_mode" Code="281" Type="ViewRenderMode" DefaultValue="ViewRenderMode::Classic2D" ReadConverter="enum_from_number!(ViewRenderMode, Classic2D, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2000" />
             <Field Name="has_own_ucs" Code="65" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2000" MaxVersion="R2004" />
             <Field Name="ucs_origin" Code="110" Type="Point" DefaultValue="Point::origin()" CodeOverrides="110,120,130" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
             <Field Name="ucs_x_axis" Code="111" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="111,121,131" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
             <Field Name="ucs_y_axis" Code="112" Type="Vector" DefaultValue="Vector::y_axis()" CodeOverrides="112,122,132" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
-            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="try_result!(OrthographicViewType::from_i16({}))" WriteConverter="{} as i16" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
+            <Field Name="orthographic_view_type" Code="79" Type="OrthographicViewType" DefaultValue="OrthographicViewType::None" ReadConverter="enum_from_number!(OrthographicViewType, None, from_i16, {})" WriteConverter="{} as i16" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
             <Field Name="ucs_elevation" Code="146" Type="f64" DefaultValue="0.0" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
             <Pointer Name="ucs" Code="345" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
             <Pointer Name="base_ucs" Code="346" WriteCondition="item.has_own_ucs" MinVersion="R2000" />
-            <Field Name="shade_plot_setting" Code="170" Type="ShadeEdgeMode" DefaultValue="ShadeEdgeMode::FacesShadedEdgeNotHighlighted" ReadConverter="try_result!(ShadeEdgeMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
+            <Field Name="shade_plot_setting" Code="170" Type="ShadeEdgeMode" DefaultValue="ShadeEdgeMode::FacesShadedEdgeNotHighlighted" ReadConverter="enum_from_number!(ShadeEdgeMode, FacesShadedEdgeNotHighlighted, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2007" />
             <Field Name="major_grid_lines" Code="61" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
             <Pointer Name="background_object" Code="332" MinVersion="R2007" />
             <Pointer Name="shade_plot_object" Code="333" MinVersion="R2007" />
             <Pointer Name="visual_style_object" Code="348" MinVersion="R2007" />
             <Field Name="is_default_lighting_on" Code="292" Type="bool" DefaultValue="true" MinVersion="R2007" />
-            <Field Name="default_lighting_type" Code="282" Type="DefaultLightingType" DefaultValue="DefaultLightingType::OneDistantLight" ReadConverter="try_result!(DefaultLightingType::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2007" />
+            <Field Name="default_lighting_type" Code="282" Type="DefaultLightingType" DefaultValue="DefaultLightingType::OneDistantLight" ReadConverter="enum_from_number!(DefaultLightingType, OneDistantLight, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2007" />
             <Field Name="brightness" Code="141" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
             <Field Name="contrast" Code="142" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
             <Field Name="ambient_color" Code="62" Type="Color" DefaultValue="Color::from_raw_value(7)" ReadConverter="Color::from_raw_value({})" WriteConverter="Color::get_raw_value(&amp;{})" WriteCondition="item.ambient_color.get_raw_value() != 7" MinVersion="R2007" />

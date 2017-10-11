@@ -50,7 +50,11 @@ impl<T: Read> DxbReader<T> {
         let mut block_base = None;
         let mut entities = vec![];
         loop {
-            match try_result!(DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(&mut self.reader)))) {
+            let item_type = match DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(&mut self.reader))) {
+                Some(item_type) => item_type,
+                None => return Err(DxfError::UnexpectedEnumValue),
+            };
+            match item_type {
                 // entities
                 DxbItemType::Arc => { entities.push(self.read_arc()?); },
                 DxbItemType::Circle => { entities.push(self.read_circle()?); },

@@ -57,7 +57,7 @@ impl DimensionBase {
         self.is_block_reference_referenced_by_this_block_only = (val & 32) == 32;
         self.is_ordinate_x_type = (val & 64) == 64;
         self.is_at_user_defined_location = (val & 128) == 128;
-        self.dimension_type = try_result!(DimensionType::from_i16(val & 0x0F)); // only take the lower 4 bits
+        self.dimension_type = enum_from_number!(DimensionType, Aligned, from_i16, val & 0x0F); // only take the lower 4 bits
         Ok(())
     }
     pub(crate) fn get_dimension_type(&self) -> i16 {
@@ -340,12 +340,12 @@ impl Entity {
                                                     51 => { dimension_base.horizontal_direction_angle = pair.value.assert_f64()?; },
                                                     53 => { dimension_base.text_rotation_angle = pair.value.assert_f64()?; },
                                                     70 => { dimension_base.set_dimension_type(pair.value.assert_i16()?)?; },
-                                                    71 => { dimension_base.attachment_point = try_result!(AttachmentPoint::from_i16(pair.value.assert_i16()?)); },
-                                                    72 => { dimension_base.text_line_spacing_style = try_result!(TextLineSpacingStyle::from_i16(pair.value.assert_i16()?)); },
+                                                    71 => { dimension_base.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.value.assert_i16()?); },
+                                                    72 => { dimension_base.text_line_spacing_style = enum_from_number!(TextLineSpacingStyle, AtLeast, from_i16, pair.value.assert_i16()?); },
                                                     210 => { dimension_base.normal.x = pair.value.assert_f64()?; },
                                                     220 => { dimension_base.normal.y = pair.value.assert_f64()?; },
                                                     230 => { dimension_base.normal.z = pair.value.assert_f64()?; },
-                                                    280 => { dimension_base.version = try_result!(Version::from_i16(pair.value.assert_i16()?)); },
+                                                    280 => { dimension_base.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?); },
                                                     100 => {
                                                         match &*pair.value.assert_string()? {
                                                             "AcDbAlignedDimension" => { dimension_entity = Some(EntityType::RotatedDimension(RotatedDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
@@ -531,7 +531,7 @@ impl Entity {
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
+                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.value.assert_i16()?),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
                                     2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
@@ -543,9 +543,9 @@ impl Entity {
                             }
                         },
                         71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.value.assert_i16()?); },
                         73 => { att.field_length = pair.value.assert_i16()?; },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.value.assert_i16()?); },
                         210 => { att.normal.x = pair.value.assert_f64()?; },
                         220 => { att.normal.y = pair.value.assert_f64()?; },
                         230 => { att.normal.z = pair.value.assert_f64()?; },
@@ -554,7 +554,7 @@ impl Entity {
                                 att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()?));
+                                att.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
                                 is_version_set = true;
                             }
                             else {
@@ -629,7 +629,7 @@ impl Entity {
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = try_result!(MTextFlag::from_i16(pair.value.assert_i16()?)),
+                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.value.assert_i16()?),
                                     1 => att.is_really_locked = as_bool(pair.value.assert_i16()?),
                                     2 => att.__secondary_attribute_count = pair.value.assert_i16()? as i32,
                                     _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
@@ -641,9 +641,9 @@ impl Entity {
                             }
                         },
                         71 => { att.text_generation_flags = pair.value.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = try_result!(HorizontalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.value.assert_i16()?); },
                         73 => { att.field_length = pair.value.assert_i16()?; },
-                        74 => { att.vertical_text_justification = try_result!(VerticalTextJustification::from_i16(pair.value.assert_i16()?)); },
+                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.value.assert_i16()?); },
                         210 => { att.normal.x = pair.value.assert_f64()?; },
                         220 => { att.normal.y = pair.value.assert_f64()?; },
                         230 => { att.normal.z = pair.value.assert_f64()?; },
@@ -652,7 +652,7 @@ impl Entity {
                                 att.keep_duplicate_records = as_bool(pair.value.assert_i16()?);
                             }
                             else if !is_version_set {
-                                att.version = try_result!(Version::from_i16(pair.value.assert_i16()?));
+                                att.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
                                 is_version_set = true;
                             }
                             else {
@@ -702,8 +702,8 @@ impl Entity {
                         30 => { mtext.insertion_point.z = pair.value.assert_f64()?; },
                         40 => { mtext.initial_text_height = pair.value.assert_f64()?; },
                         41 => { mtext.reference_rectangle_width = pair.value.assert_f64()?; },
-                        71 => { mtext.attachment_point = try_result!(AttachmentPoint::from_i16(pair.value.assert_i16()?)); },
-                        72 => { mtext.drawing_direction = try_result!(DrawingDirection::from_i16(pair.value.assert_i16()?)); },
+                        71 => { mtext.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.value.assert_i16()?); },
+                        72 => { mtext.drawing_direction = enum_from_number!(DrawingDirection, LeftToRight, from_i16, pair.value.assert_i16()?); },
                         3 => { mtext.extended_text.push(pair.value.assert_string()?); },
                         1 => { mtext.text = pair.value.assert_string()?; },
                         7 => { mtext.text_style_name = pair.value.assert_string()?; },
@@ -729,9 +729,9 @@ impl Entity {
                                 mtext.rotation_angle = pair.value.assert_f64()?;
                             }
                         },
-                        73 => { mtext.line_spacing_style = try_result!(MTextLineSpacingStyle::from_i16(pair.value.assert_i16()?)); },
+                        73 => { mtext.line_spacing_style = enum_from_number!(MTextLineSpacingStyle, AtLeast, from_i16, pair.value.assert_i16()?); },
                         44 => { mtext.line_spacing_factor = pair.value.assert_f64()?; },
-                        90 => { mtext.background_fill_setting = try_result!(BackgroundFillSetting::from_i32(pair.value.assert_i32()?)); },
+                        90 => { mtext.background_fill_setting = enum_from_number!(BackgroundFillSetting, Off, from_i32, pair.value.assert_i32()?); },
                         420 => { mtext.background_color_rgb = pair.value.assert_i32()?; },
                         430 => { mtext.background_color_name = pair.value.assert_string()?; },
                         45 => { mtext.fill_box_scale = pair.value.assert_f64()?; },

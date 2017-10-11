@@ -179,8 +179,8 @@ pub(crate) fn ensure_positive_or_default_i16(val: &mut i16, default: i16) {
     }
 }
 
-pub(crate) fn clipping_from_bool(b: bool) -> Option<XrefClippingBoundaryVisibility> {
-    XrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 })
+pub(crate) fn clipping_from_bool(b: bool) -> XrefClippingBoundaryVisibility {
+    XrefClippingBoundaryVisibility::from_i16(if b { 1 } else { 0 }).unwrap() // `1` and `0` will always parse so `.unwrap()` is safe
 }
 
 pub(crate) fn bool_from_clipping(c: XrefClippingBoundaryVisibility) -> bool {
@@ -349,12 +349,12 @@ macro_rules! next_pair {
     )
 }
 
-// Used to turn Option<T> into DxfResult<T>.
-macro_rules! try_result {
-    ($expr : expr) => (
-        match $expr {
+// Matches an enum value or returns the default
+macro_rules! enum_from_number {
+    ($enum: ident, $default: ident, $fn: ident, $expr: expr) => (
+        match $enum::$fn($expr) {
             Some(v) => v,
-            None => return Err(DxfError::UnexpectedEnumValue)
+            None => $enum::$default,
         }
     )
 }

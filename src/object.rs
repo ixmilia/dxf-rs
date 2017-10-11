@@ -344,7 +344,7 @@ impl Object {
                     match pair.code {
                         3 => { last_entry_name = pair.value.assert_string()?; },
                         280 => { dict.is_hard_owner = as_bool(pair.value.assert_i16()?); },
-                        281 => { dict.duplicate_record_handling = try_result!(DictionaryDuplicateRecordHandling::from_i16(pair.value.assert_i16()?)); },
+                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
                         350 | 360 => {
                             let handle = as_u32(pair.value.assert_string()?)?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
@@ -359,7 +359,7 @@ impl Object {
                     let pair = next_pair!(iter);
                     match pair.code {
                         3 => { last_entry_name = pair.value.assert_string()?; },
-                        281 => { dict.duplicate_record_handling = try_result!(DictionaryDuplicateRecordHandling::from_i16(pair.value.assert_i16()?)); },
+                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?); },
                         340 => { dict.default_handle = as_u32(pair.value.assert_string()?)?; },
                         350 | 360 => {
                             let handle = as_u32(pair.value.assert_string()?)?;
@@ -408,7 +408,7 @@ impl Object {
                             37 => { layout.ucs_y_axis.z = pair.value.assert_f64()?; },
                             70 => { layout.layout_flags = pair.value.assert_i16()? as i32; },
                             71 => { layout.tab_order = pair.value.assert_i16()? as i32; },
-                            76 => { layout.ucs_orthographic_type = try_result!(UcsOrthographicType::from_i16(pair.value.assert_i16()?)); },
+                            76 => { layout.ucs_orthographic_type = enum_from_number!(UcsOrthographicType, NotOrthographic, from_i16, pair.value.assert_i16()?); },
                             146 => { layout.elevation = pair.value.assert_f64()?; },
                             330 => { layout.__viewport_handle = as_u32(pair.value.assert_string()?)?; },
                             345 => { layout.__table_record_handle = as_u32(pair.value.assert_string()?)?; },
@@ -522,38 +522,38 @@ impl Object {
                         },
                         73 => {
                             if !read_diffuse_map_projection_method {
-                                mat.diffuse_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?));
+                                mat.diffuse_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
                                 read_diffuse_map_projection_method = true;
                             }
                             else {
-                                mat.normal_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?));
+                                mat.normal_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
                         74 => {
                             if !read_diffuse_map_tiling_method {
-                                mat.diffuse_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?));
+                                mat.diffuse_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
                                 read_diffuse_map_tiling_method = true;
                             }
                             else {
-                                mat.normal_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?));
+                                mat.normal_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
                         75 => {
                             if !read_diffuse_map_auto_transform_method {
-                                mat.diffuse_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?));
+                                mat.diffuse_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
                                 read_diffuse_map_auto_transform_method = true;
                             }
                             else {
-                                mat.normal_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?));
+                                mat.normal_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
                                 is_reading_normal = true;
                             }
                         },
                         76 => { mat.override_specular_color = as_bool(pair.value.assert_i16()?); },
                         77 => { mat.use_image_file_for_specular_map = as_bool(pair.value.assert_i16()?); },
-                        78 => { mat.specular_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?)); },
-                        79 => { mat.specular_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?)); },
+                        78 => { mat.specular_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
+                        79 => { mat.specular_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
                         90 => {
                             if !read_ambient_color_value {
                                 mat.ambient_color_value = pair.value.assert_i32()?;
@@ -576,19 +576,19 @@ impl Object {
                         146 => { mat.refraction_map_blend_factor = pair.value.assert_f64()?; },
                         147 => { mat.__refraction_map_transformation_matrix_values.push(pair.value.assert_f64()?); },
                         148 => { mat.translucence = pair.value.assert_f64()?; },
-                        170 => { mat.specular_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?)); },
+                        170 => { mat.specular_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
                         171 => { mat.use_image_file_for_reflection_map = as_bool(pair.value.assert_i16()?); },
-                        172 => { mat.reflection_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?)); },
-                        173 => { mat.reflection_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?)); },
-                        174 => { mat.reflection_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?)); },
+                        172 => { mat.reflection_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
+                        173 => { mat.reflection_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
+                        174 => { mat.reflection_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
                         175 => { mat.use_image_file_for_opacity_map = as_bool(pair.value.assert_i16()?); },
-                        176 => { mat.opacity_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?)); },
-                        177 => { mat.opacity_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?)); },
-                        178 => { mat.opacity_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?)); },
+                        176 => { mat.opacity_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
+                        177 => { mat.opacity_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
+                        178 => { mat.opacity_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
                         179 => { mat.use_image_file_for_bump_map = as_bool(pair.value.assert_i16()?); },
                         270 => {
                             if !read_bump_map_projection_method {
-                                mat.bump_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?));
+                                mat.bump_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?);
                                 read_bump_map_projection_method = true;
                             }
                             else if !read_luminance_mode {
@@ -601,7 +601,7 @@ impl Object {
                         },
                         271 => {
                             if !read_bump_map_tiling_method {
-                                mat.bump_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?));
+                                mat.bump_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?);
                                 read_bump_map_tiling_method = true;
                             }
                             else if !read_normal_map_method {
@@ -614,7 +614,7 @@ impl Object {
                         },
                         272 => {
                             if !read_bump_map_auto_transform_method {
-                                mat.bump_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?));
+                                mat.bump_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?);
                                 read_bump_map_auto_transform_method = true;
                             }
                             else {
@@ -630,9 +630,9 @@ impl Object {
                                 mat.final_gather_mode = pair.value.assert_i16()?;
                             }
                         },
-                        274 => { mat.refraction_map_projection_method = try_result!(MapProjectionMethod::from_i16(pair.value.assert_i16()?)); },
-                        275 => { mat.refraction_map_tiling_method = try_result!(MapTilingMethod::from_i16(pair.value.assert_i16()?)); },
-                        276 => { mat.refraction_map_auto_transform_method = try_result!(MapAutoTransformMethod::from_i16(pair.value.assert_i16()?)); },
+                        274 => { mat.refraction_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.value.assert_i16()?); },
+                        275 => { mat.refraction_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.value.assert_i16()?); },
+                        276 => { mat.refraction_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.value.assert_i16()?); },
                         290 => { mat.is_two_sided = pair.value.assert_bool()?; },
                         291 => { mat.gen_proc_boolean_value = pair.value.assert_bool()?; },
                         292 => { mat.gen_proc_table_end = pair.value.assert_bool()?; },
@@ -861,11 +861,11 @@ impl Object {
                         },
                         40 => { ts.horizontal_cell_margin = pair.value.assert_f64()?; },
                         41 => { ts.vertical_cell_margin = pair.value.assert_f64()?; },
-                        70 => { ts.flow_direction = try_result!(FlowDirection::from_i16(pair.value.assert_i16()?)); },
+                        70 => { ts.flow_direction = enum_from_number!(FlowDirection, Down, from_i16, pair.value.assert_i16()?); },
                         71 => { ts.flags = pair.value.assert_i16()? as i32; },
                         280 => {
                             if !read_version {
-                                ts.version = try_result!(Version::from_i16(pair.value.assert_i16()?));
+                                ts.version = enum_from_number!(Version, R2010, from_i16, pair.value.assert_i16()?);
                                 read_version = true;
                             }
                             else {
@@ -886,7 +886,7 @@ impl Object {
                     }
                     else {
                         if pair.code == 280 {
-                            xr.duplicate_record_handling = try_result!(DictionaryDuplicateRecordHandling::from_i16(pair.value.assert_i16()?));
+                            xr.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.value.assert_i16()?);
                             reading_data = true;
                             continue;
                         }

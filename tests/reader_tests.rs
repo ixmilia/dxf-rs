@@ -74,6 +74,15 @@ fn read_file_with_comments() {
 }
 
 #[test]
+fn enum_out_of_bounds() {
+    let file = from_section("HEADER", vec![
+        "  9", "$DIMZIN",
+        " 70", "     8",
+    ].join("\r\n").trim());
+    assert_eq!(UnitZeroSuppression::SuppressZeroFeetAndZeroInches, file.header.dimension_unit_zero_suppression);
+}
+
+#[test]
 fn round_trip() {
     // drawing with one entity and one layer
     let mut drawing = Drawing::default();

@@ -114,17 +114,17 @@
       <Flag Name="is_fourth_point_reference" Mask="8" />
     </Field>
     <Field Name="is_trans_space" Code="70" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="rotated_dimension_type" Code="71" Type="RotatedDimensionType" DefaultValue="RotatedDimensionType::Parallel" ReadConverter="try_result!(RotatedDimensionType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="rotated_dimension_type" Code="71" Type="RotatedDimensionType" DefaultValue="RotatedDimensionType::Parallel" ReadConverter="enum_from_number!(RotatedDimensionType, Parallel, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="class_name" Code="1" Type="String" DefaultValue='String::from("AcDbOsnapPointRef")' />
-    <Field Name="object_osnap_type" Code="72" Type="ObjectOsnapType" DefaultValue="ObjectOsnapType::None" ReadConverter="try_result!(ObjectOsnapType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="object_osnap_type" Code="72" Type="ObjectOsnapType" DefaultValue="ObjectOsnapType::None" ReadConverter="enum_from_number!(ObjectOsnapType, None, from_i16, {})" WriteConverter="{} as i16" />
     <Pointer Name="main_object" Code="331" />
-    <Field Name="main_object_subentity_type" Code="73" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="main_object_subentity_type" Code="73" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="enum_from_number!(SubentityType, Edge, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="main_object_gs_marker_index" Code="91" Type="i32" DefaultValue="0" />
     <Pointer Name="main_object_xref" Code="301" />
     <Field Name="near_osnap_geometry_parameter" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="osnap_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Pointer Name="intersection_object" Code="332" />
-    <Field Name="intersection_subentity_type" Code="74" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="try_result!(SubentityType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="intersection_subentity_type" Code="74" Type="SubentityType" DefaultValue="SubentityType::Edge" ReadConverter="enum_from_number!(SubentityType, Edge, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="intersection_object_gs_marker_index" Code="92" Type="i32" DefaultValue="0" />
     <Pointer Name="insertion_object_xref" Code="302" />
     <Field Name="has_last_point_reference" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
@@ -197,17 +197,17 @@
 
   -->
   <Object Name="GeoData" SubclassMarker="" TypeString="GEODATA" MinVersion="R2010">
-    <Field Name="version" Code="90" Type="GeoDataVersion" DefaultValue="GeoDataVersion::R2009" ReadConverter="try_result!(GeoDataVersion::from_i32({}))" WriteConverter="{} as i32" />
-    <Field Name="coordinate_type" Code="70" Type="DesignCoordinateType" DefaultValue="DesignCoordinateType::Unknown" ReadConverter="try_result!(DesignCoordinateType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="version" Code="90" Type="GeoDataVersion" DefaultValue="GeoDataVersion::R2009" ReadConverter="enum_from_number!(GeoDataVersion, R2009, from_i32, {})" WriteConverter="{} as i32" />
+    <Field Name="coordinate_type" Code="70" Type="DesignCoordinateType" DefaultValue="DesignCoordinateType::Unknown" ReadConverter="enum_from_number!(DesignCoordinateType, Unknown, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="design_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="reference_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="north_vector" Code="12" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="12,22" />
     <Field Name="horizontal_unit_scale" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="vertical_unit_scale" Code="41" Type="f64" DefaultValue="1.0" />
-    <Field Name="horizontal_units" Code="91" Type="Units" DefaultValue="Units::Unitless" ReadConverter="try_result!(Units::from_i32({}))" WriteConverter="{} as i32" />
-    <Field Name="vertical_units" Code="92" Type="Units" DefaultValue="Units::Unitless" ReadConverter="try_result!(Units::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="horizontal_units" Code="91" Type="Units" DefaultValue="Units::Unitless" ReadConverter="enum_from_number!(Units, Unitless, from_i32, {})" WriteConverter="{} as i32" />
+    <Field Name="vertical_units" Code="92" Type="Units" DefaultValue="Units::Unitless" ReadConverter="enum_from_number!(Units, Unitless, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="up_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="scale_estimation_method" Code="95" Type="ScaleEstimationMethod" DefaultValue="ScaleEstimationMethod::None" ReadConverter="try_result!(ScaleEstimationMethod::from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="scale_estimation_method" Code="95" Type="ScaleEstimationMethod" DefaultValue="ScaleEstimationMethod::None" ReadConverter="enum_from_number!(ScaleEstimationMethod, None, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="use_sea_level_correction" Code="294" Type="bool" DefaultValue="false" />
     <Field Name="user_specified_scale_factor" Code="141" Type="f64" DefaultValue="1.0" />
     <Field Name="sea_level_elevation" Code="142" Type="f64" DefaultValue="0.0" />
@@ -296,7 +296,7 @@
     <Field Name="pixel_width" Code="11" Type="f64" DefaultValue="0.0" />
     <Field Name="pixel_height" Code="12" Type="f64" DefaultValue="0.0" />
     <Field Name="is_image_loaded" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="resolution_units" Code="281" Type="ImageResolutionUnits" DefaultValue="ImageResolutionUnits::NoUnits" ReadConverter="try_result!(ImageResolutionUnits::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="resolution_units" Code="281" Type="ImageResolutionUnits" DefaultValue="ImageResolutionUnits::NoUnits" ReadConverter="enum_from_number!(ImageResolutionUnits, NoUnits, from_i16, {})" WriteConverter="{} as i16" />
   </Object>
   <!--
 
@@ -632,9 +632,9 @@
     <Field Name="overwrite_field_value" Code="295" Type="bool" DefaultValue="false" />
     <Field Name="is_annotative" Code="296" Type="bool" DefaultValue="true" />
     <Field Name="break_gap_size" Code="143" Type="f64" DefaultValue="0.0" />
-    <Field Name="text_attachment_direction" Code="271" Type="TextAttachmentDirection" DefaultValue="TextAttachmentDirection::Horizontal" ReadConverter="try_result!(TextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="bottom_text_attachment_direction" Code="272" Type="BottomTextAttachmentDirection" DefaultValue="BottomTextAttachmentDirection::Center" ReadConverter="try_result!(BottomTextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="top_text_attachment_direction" Code="273" Type="TopTextAttachmentDirection" DefaultValue="TopTextAttachmentDirection::Center" ReadConverter="try_result!(TopTextAttachmentDirection::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="text_attachment_direction" Code="271" Type="TextAttachmentDirection" DefaultValue="TextAttachmentDirection::Horizontal" ReadConverter="enum_from_number!(TextAttachmentDirection, Horizontal, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="bottom_text_attachment_direction" Code="272" Type="BottomTextAttachmentDirection" DefaultValue="BottomTextAttachmentDirection::Center" ReadConverter="enum_from_number!(BottomTextAttachmentDirection, Center, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="top_text_attachment_direction" Code="273" Type="TopTextAttachmentDirection" DefaultValue="TopTextAttachmentDirection::Center" ReadConverter="enum_from_number!(TopTextAttachmentDirection, Center, from_i16, {})" WriteConverter="{} as i16" />
   </Object>
   <!--
 
@@ -726,13 +726,13 @@
       <Flag Name="initializing" Mask="8192" />
       <Flag Name="prev_plot_init" Mask="16384" />
     </Field>
-    <Field Name="plot_paper_units" Code="72" Type="PlotPaperUnits" DefaultValue="PlotPaperUnits::Inches" ReadConverter="try_result!(PlotPaperUnits::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="plot_rotation" Code="73" Type="PlotRotation" DefaultValue="PlotRotation::NoRotation" ReadConverter="try_result!(PlotRotation::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="plot_type" Code="74" Type="PlotType" DefaultValue="PlotType::DrawingExtents" ReadConverter="try_result!(PlotType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="plot_paper_units" Code="72" Type="PlotPaperUnits" DefaultValue="PlotPaperUnits::Inches" ReadConverter="enum_from_number!(PlotPaperUnits, Inches, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="plot_rotation" Code="73" Type="PlotRotation" DefaultValue="PlotRotation::NoRotation" ReadConverter="enum_from_number!(PlotRotation, NoRotation, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="plot_type" Code="74" Type="PlotType" DefaultValue="PlotType::DrawingExtents" ReadConverter="enum_from_number!(PlotType, DrawingExtents, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="current_style_sheet" Code="7" Type="String" DefaultValue="String::new()" />
-    <Field Name="standard_scale" Code="75" Type="StandardScale" DefaultValue="StandardScale::ScaledToFit" ReadConverter="try_result!(StandardScale::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="shade_plot_mode" Code="76" Type="ShadePlotMode" DefaultValue="ShadePlotMode::AsDisplayed" ReadConverter="try_result!(ShadePlotMode::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2004" />
-    <Field Name="shade_plot_resolution_level" Code="77" Type="ShadePlotResolutionLevel" DefaultValue="ShadePlotResolutionLevel::Normal" ReadConverter="try_result!(ShadePlotResolutionLevel::from_i16({}))" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="standard_scale" Code="75" Type="StandardScale" DefaultValue="StandardScale::ScaledToFit" ReadConverter="enum_from_number!(StandardScale, ScaledToFit, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="shade_plot_mode" Code="76" Type="ShadePlotMode" DefaultValue="ShadePlotMode::AsDisplayed" ReadConverter="enum_from_number!(ShadePlotMode, AsDisplayed, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="shade_plot_resolution_level" Code="77" Type="ShadePlotResolutionLevel" DefaultValue="ShadePlotResolutionLevel::Normal" ReadConverter="enum_from_number!(ShadePlotResolutionLevel, Normal, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2004" />
     <Field Name="shade_plot_custom_dpi" Code="78" Type="i32" DefaultValue="100" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2004" />
     <Field Name="standard_scale_value" Code="147" Type="f64" DefaultValue="1.0" />
     <Field Name="paper_image_origin_x" Code="148" Type="f64" DefaultValue="0.0" />
@@ -748,7 +748,7 @@
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="is_display_frame_image" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="is_high_display_quality" Code="71" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="image_units" Code="72" Type="RasterImageUnits" DefaultValue="RasterImageUnits::None" ReadConverter="try_result!(RasterImageUnits::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="image_units" Code="72" Type="RasterImageUnits" DefaultValue="RasterImageUnits::None" ReadConverter="enum_from_number!(RasterImageUnits, None, from_i16, {})" WriteConverter="{} as i16" />
   </Object>
   <!--
 
@@ -766,14 +766,14 @@
     <Field Name="class_version_2" Code="90" Type="i32" DefaultValue="1" />
     <Field Name="minimum_sampling_rate" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="maximum_sampling_rate" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="sampling_filter_type" Code="70" Type="SamplingFilterType" DefaultValue="SamplingFilterType::Box" ReadConverter="try_result!(SamplingFilterType::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="sampling_filter_type" Code="70" Type="SamplingFilterType" DefaultValue="SamplingFilterType::Box" ReadConverter="enum_from_number!(SamplingFilterType, Box, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="filter_width" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="filter_height" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="sampling_contrast_color_red" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="sampling_contrast_color_green" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="sampling_contrast_color_blue" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="sampling_contrast_color_alpha" Code="40" Type="f64" DefaultValue="0.0" />
-    <Field Name="shadow_mode" Code="70" Type="RenderShadowMode" DefaultValue="RenderShadowMode::Simple" ReadConverter="try_result!(RenderShadowMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="shadow_mode" Code="70" Type="RenderShadowMode" DefaultValue="RenderShadowMode::Simple" ReadConverter="enum_from_number!(RenderShadowMode, Simple, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="map_shadows" Code="290" Type="bool" DefaultValue="false" />
     <Field Name="ray_tracing" Code="290" Type="bool" DefaultValue="false" />
     <Field Name="ray_tracing_depth_reflections" Code="90" Type="i32" DefaultValue="0" />
@@ -795,15 +795,15 @@
     <Field Name="final_gather_sample_radius_minimum" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="final_gather_sample_radius_maximum" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="luminance_scale" Code="40" Type="f64" DefaultValue="1.0" />
-    <Field Name="diagnostic_mode" Code="70" Type="RenderDiagnosticMode" DefaultValue="RenderDiagnosticMode::Off" ReadConverter="try_result!(RenderDiagnosticMode::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="diagnostic_grid_mode" Code="70" Type="RenderDiagnosticGridMode" DefaultValue="RenderDiagnosticGridMode::Object" ReadConverter="try_result!(RenderDiagnosticGridMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_mode" Code="70" Type="RenderDiagnosticMode" DefaultValue="RenderDiagnosticMode::Off" ReadConverter="enum_from_number!(RenderDiagnosticMode, Off, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_grid_mode" Code="70" Type="RenderDiagnosticGridMode" DefaultValue="RenderDiagnosticGridMode::Object" ReadConverter="enum_from_number!(RenderDiagnosticGridMode, Object, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="grid_size" Code="40" Type="f64" DefaultValue="1.0" />
-    <Field Name="diagnostic_photon_mode" Code="70" Type="DiagnosticPhotonMode" DefaultValue="DiagnosticPhotonMode::Density" ReadConverter="try_result!(DiagnosticPhotonMode::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="diagnostic_bsp_mode" Code="70" Type="DiagnosticBSPMode" DefaultValue="DiagnosticBSPMode::Depth" ReadConverter="try_result!(DiagnosticBSPMode::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_photon_mode" Code="70" Type="DiagnosticPhotonMode" DefaultValue="DiagnosticPhotonMode::Density" ReadConverter="enum_from_number!(DiagnosticPhotonMode, Density, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="diagnostic_bsp_mode" Code="70" Type="DiagnosticBSPMode" DefaultValue="DiagnosticBSPMode::Depth" ReadConverter="enum_from_number!(DiagnosticBSPMode, Depth, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="export_mi_statistics" Code="290" Type="bool" DefaultValue="false" />
     <Field Name="mi_statistics_file_name" Code="1" Type="String" DefaultValue="String::new()" />
     <Field Name="tile_size" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="tile_order" Code="70" Type="TileOrder" DefaultValue="TileOrder::Hilbert" ReadConverter="try_result!(TileOrder::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="tile_order" Code="70" Type="TileOrder" DefaultValue="TileOrder::Hilbert" ReadConverter="enum_from_number!(TileOrder, Hilbert, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="memory_limit" Code="90" Type="i32" DefaultValue="0" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRenderSettings")' />
@@ -1136,16 +1136,16 @@
   <Object Name="VisualStyle" SubclassMarker="AcDbVisualStyle" TypeString="VISUALSTYLE" MinVersion="R2007">
     <Field Name="description" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="type_code" Code="70" Type="i16" DefaultValue="0" />
-    <Field Name="face_lighting_model" Code="71" Type="FaceLightingModel" DefaultValue="FaceLightingModel::Visible" ReadConverter="try_result!(FaceLightingModel::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="face_lighting_quality" Code="72" Type="FaceLightingQuality" DefaultValue="FaceLightingQuality::PerFace" ReadConverter="try_result!(FaceLightingQuality::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="face_color_mode" Code="73" Type="FaceColorMode" DefaultValue="FaceColorMode::ObjectColor" ReadConverter="try_result!(FaceColorMode::from_i16({}))" WriteConverter="{} as i16" />
-    <Field Name="face_modifier" Code="90" Type="FaceModifier" DefaultValue="FaceModifier::None" ReadConverter="try_result!(FaceModifier:: from_i32({}))" WriteConverter="{} as i32" />
+    <Field Name="face_lighting_model" Code="71" Type="FaceLightingModel" DefaultValue="FaceLightingModel::Visible" ReadConverter="enum_from_number!(FaceLightingModel, Visible, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="face_lighting_quality" Code="72" Type="FaceLightingQuality" DefaultValue="FaceLightingQuality::PerFace" ReadConverter="enum_from_number!(FaceLightingQuality, PerFace, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="face_color_mode" Code="73" Type="FaceColorMode" DefaultValue="FaceColorMode::ObjectColor" ReadConverter="enum_from_number!(FaceColorMode, ObjectColor, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="face_modifier" Code="90" Type="FaceModifier" DefaultValue="FaceModifier::None" ReadConverter="enum_from_number!(FaceModifier, None, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="face_opacity_level" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="face_specular_level" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="color1" Code="62" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="color2" Code="63" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="face_style_mono_color" Code="421" Type="i32" DefaultValue="0" />
-    <Field Name="edge_style_model" Code="74" Type="EdgeStyleModel" DefaultValue="EdgeStyleModel::NoEdges" ReadConverter="try_result!(EdgeStyleModel::from_i16({}))" WriteConverter="{} as i16" />
+    <Field Name="edge_style_model" Code="74" Type="EdgeStyleModel" DefaultValue="EdgeStyleModel::NoEdges" ReadConverter="enum_from_number!(EdgeStyleModel, NoEdges, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="edge_style" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="edge_intersection_color" Code="64" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="edge_obscured_color" Code="65" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
