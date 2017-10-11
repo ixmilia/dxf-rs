@@ -105,10 +105,28 @@ pub(crate) fn as_handle(h: u32) -> String {
 }
 
 pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
-    match Uuid::parse_str(s.as_str()) {
+    let mut reconstructed = String::new();
+    let s = if s.starts_with("{") && s.ends_with("}") {
+        // reconstruct the string without the braces
+        for c in s.chars().skip(1).take(s.len() - 2) {
+            reconstructed.push(c);
+        }
+
+        reconstructed.as_str()
+    }
+    else {
+        s.as_str()
+    };
+    match Uuid::parse_str(s) {
         Ok(uuid) => Ok(uuid),
         Err(_) => Err(DxfError::ParseError(offset)),
     }
+}
+
+#[test]
+fn parse_regular_and_windows_style_uuids_test() {
+    let _regular = as_uuid(String::from("a2a7a23e-975b-4b54-968c-150d4c32a9b6"), 0).unwrap();
+    let _windows = as_uuid(String::from("{a2a7a23e-975b-4b54-968c-150d4c32a9b6}"), 0).unwrap();
 }
 
 pub(crate) fn as_i16(b: bool) -> i16 {
