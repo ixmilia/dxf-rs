@@ -819,6 +819,81 @@ fn write_dimension() {
 }
 
 #[test]
+fn read_insert_with_separate_attributes() {
+    let file = from_section("ENTITIES", vec![
+        "  0", "INSERT",
+        " 66", "0", // no attributes
+        "  0", "ATTRIB", // this is a separate attribute, not tied to the `INSERT` entity
+        "  0", "SEQEND", // this is a separate `SEQEND` entity, not tied to the `INSERT` entity
+    ].join("\r\n").as_str());
+    assert_eq!(3, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Insert(_) => (),
+        _ => panic!("expected an INSERT"),
+    }
+    match file.entities[1].specific {
+        EntityType::Attribute(_) => (),
+        _ => panic!("expected an ATTRIB"),
+    }
+    match file.entities[2].specific {
+        EntityType::Seqend(_) => (),
+        _ => panic!("expected a SEQEND"),
+    }
+}
+
+#[test]
+fn read_insert_with_embedded_attributes() {
+    let file = from_section("ENTITIES", vec![
+        "  0", "INSERT",
+        " 66", "1", // includes attributes
+        "  0", "ATTRIB", // these are embedded attributes tied to the `INSERT` entity
+        "  0", "ATTRIB",
+        "  0", "SEQEND", // this is an embedded `SEQEND` entity tied to the `INSERT` entity
+    ].join("\r\n").as_str());
+    assert_eq!(1, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Insert(ref ins) => assert_eq!(2, ins.attributes.len()),
+        _ => panic!("exepcted an INSERT"),
+    }
+}
+
+#[test]
+fn write_insert_with_embedded_attributes() {
+    let ins = Insert {
+        attributes: vec![Attribute::default()],
+        .. Default::default()
+    };
+    let ent = Entity::new(EntityType::Insert(ins));
+    let mut drawing = Drawing::default();
+    drawing.entities.push(ent);
+    assert_contains(&drawing, vec!["  0", "INSERT"].join("\r\n"));
+    assert_contains(&drawing, vec![
+        "100", "AcDbBlockReference",
+        " 66", "     1", // contains attributes
+    ].join("\r\n"));
+    assert_contains(&drawing, vec!["  0", "ATTRIB"].join("\r\n"));
+    assert_contains(&drawing, vec!["  0", "SEQEND"].join("\r\n"));
+}
+
+#[test]
+fn round_trip_insert_with_attributes() {
+    let ins = Insert {
+        attributes: vec![Attribute::default()],
+        .. Default::default()
+    };
+    let ent = Entity::new(EntityType::Insert(ins));
+    let mut drawing = Drawing::default();
+    drawing.entities.push(ent);
+
+    let drawing = parse_drawing(&to_test_string(&drawing));
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Insert(ref ins) => assert_eq!(1, ins.attributes.len()),
+        _ => panic!("expected an INSERT"),
+    }
+}
+
+#[test]
 fn read_extension_data() {
     let ent = read_entity("LINE", vec![
         "102", "{IXMILIA",

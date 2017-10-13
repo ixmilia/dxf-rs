@@ -473,7 +473,7 @@
 
   -->
   <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
-    <Field Name="has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" DisableWritingDefault="true" />
+    <Field Name="__has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" />
     <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="x_scale_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
@@ -486,6 +486,21 @@
     <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="attributes" Code="10" Type="Attribute" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
+    <WriteOrder>
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' />
+      <WriteSpecificValue Code="66" Value="as_i16(ent.attributes.len() > 0)" />
+      <WriteField Field="name" />
+      <WriteField Field="location" />
+      <WriteField Field="x_scale_factor" />
+      <WriteField Field="y_scale_factor" />
+      <WriteField Field="z_scale_factor" />
+      <WriteField Field="rotation" />
+      <WriteField Field="column_count" />
+      <WriteField Field="row_count" />
+      <WriteField Field="column_spacing" />
+      <WriteField Field="row_spacing" />
+      <WriteField Field="extrusion_direction" />
+    </WriteOrder>
   </Entity>
   <!--
 

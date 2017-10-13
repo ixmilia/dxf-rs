@@ -49,7 +49,7 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
     let mut iter = put_back(iter);
     loop {
         match iter.next() {
-            Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.has_attributes => {
+            Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.__has_attributes => {
                 let mut ins = ins.clone(); // 12 fields
                 loop {
                     match iter.next() {

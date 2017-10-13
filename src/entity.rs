@@ -846,17 +846,30 @@ impl Entity {
 
         match self.specific {
             // TODO: write trailing MText on Attribute and AttributeDefinition
+            EntityType::Insert(ref ins) => {
+                for a in &ins.attributes {
+                    let a = Entity { common: Default::default(), specific: EntityType::Attribute(a.clone()) };
+                    a.write(&version, write_handles, writer, handle_tracker)?;
+                }
+                Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
+            },
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
                     let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
                     v.write(&version, write_handles, writer, handle_tracker)?;
                 }
-                let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
-                seqend.write(&version, write_handles, writer, handle_tracker)?;
+                Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
             },
             _ => (),
         }
 
+        Ok(())
+    }
+    fn write_seqend<T>(version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
+        where T: Write {
+
+        let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
+        seqend.write(&version, write_handles, writer, handle_tracker)?;
         Ok(())
     }
 }
