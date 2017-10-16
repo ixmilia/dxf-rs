@@ -894,6 +894,52 @@ fn round_trip_insert_with_attributes() {
 }
 
 #[test]
+fn read_attribute_with_attached_mtext() {
+    let file = from_section("ENTITIES", vec![
+        "  0", "ATTRIB",
+        "  0", "MTEXT",
+        "  1", "m_text",
+    ].join("\r\n").as_str());
+    assert_eq!(1, file.entities.len());
+    match file.entities[0].specific {
+        EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
+        _ => panic!("exepcted an attribute"),
+    }
+}
+
+#[test]
+fn write_attribute_with_attached_mtext() {
+    let drawing = Drawing {
+        header: Header { version: AcadVersion::R13, .. Default::default() }, // MTEXT is only written on R13+
+        entities: vec![Entity::new(EntityType::Attribute(Default::default()))],
+        .. Default::default()
+    };
+    assert_contains(&drawing, vec!["  0", "ATTRIB"].join("\r\n"));
+    assert_contains(&drawing, vec!["  0", "MTEXT"].join("\r\n"));
+}
+
+#[test]
+fn round_trip_attribute_with_attached_mtext() {
+    let att = Attribute {
+        m_text: MText { text: String::from("m_text"), .. Default::default() },
+        .. Default::default()
+    };
+    let ent = Entity::new(EntityType::Attribute(att));
+    let drawing = Drawing {
+        header: Header { version: AcadVersion::R13, .. Default::default() }, // MTEXT is only written on R13+
+        entities: vec![ent],
+        .. Default::default()
+    };
+
+    let drawing = parse_drawing(&to_test_string(&drawing));
+    assert_eq!(1, drawing.entities.len());
+    match drawing.entities[0].specific {
+        EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
+        _ => panic!("expected a attribute"),
+    }
+}
+
+#[test]
 fn read_extension_data() {
     let ent = read_entity("LINE", vec![
         "102", "{IXMILIA",

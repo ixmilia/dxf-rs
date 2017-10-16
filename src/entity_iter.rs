@@ -46,9 +46,47 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
         Ok(())
     }
 
+    fn get_mtext<I>(iter: &mut PutBack<I>) -> DxfResult<Option<MText>>
+        where I: Iterator<Item = Entity> {
+
+        let m_text = match iter.next() {
+            Some(Entity { specific: EntityType::MText(m), .. }) => Some(m),
+            Some(ent) => { iter.put_back(ent); None },
+            None => None,
+        };
+
+        Ok(m_text)
+    }
+
     let mut iter = put_back(iter);
     loop {
         match iter.next() {
+            Some(Entity { ref common, specific: EntityType::Attribute(ref att) }) => {
+                let mut att = att.clone(); // 27 fields
+                match get_mtext(&mut iter) {
+                    Ok(Some(m_text)) => att.m_text = m_text,
+                    Ok(None) => (),
+                    Err(e) => return Err(e),
+                }
+
+                entities.push(Entity {
+                    common: common.clone(), // 18 fields
+                    specific: EntityType::Attribute(att),
+                });
+            },
+            Some(Entity { ref common, specific: EntityType::AttributeDefinition(ref att) }) => {
+                let mut att = att.clone(); // 27 fields
+                match get_mtext(&mut iter) {
+                    Ok(Some(m_text)) => att.m_text = m_text,
+                    Ok(None) => (),
+                    Err(e) => return Err(e),
+                }
+
+                entities.push(Entity {
+                    common: common.clone(), // 18 fields
+                    specific: EntityType::AttributeDefinition(att),
+                });
+            },
             Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.__has_attributes => {
                 let mut ins = ins.clone(); // 12 fields
                 loop {
@@ -69,7 +107,7 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
                 entities.push(Entity {
                     common: common.clone(), // 18 fields
                     specific: EntityType::Insert(ins),
-                })
+                });
             },
             Some(Entity { common, specific: EntityType::Polyline(poly) }) => {
                 let mut poly = poly.clone(); // 13 fields

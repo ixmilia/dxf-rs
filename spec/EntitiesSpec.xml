@@ -194,7 +194,7 @@
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
-    <Pointer Name="m_text" Code="-1" Type="Entity" SubType="MText" />
+    <Field Name="m_text" Code="-1" Type="MText" DefaultValue="MText::default()" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
       <WriteField Field="thickness" />
@@ -269,7 +269,7 @@
     <Field Name="alignment_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R2007" />
     <Field Name="annotation_scale" Code="40" Type="f64" DefaultValue="1.0" MinVersion="R2007" />
     <Field Name="x_record_tag" Code="2" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
-    <Pointer Name="m_text" Code="-1" Type="Entity" SubType="MText" />
+    <Field Name="m_text" Code="-1" Type="MText" DefaultValue="MText::default()" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
       <WriteField Field="thickness" />

@@ -562,7 +562,6 @@ impl Entity {
                             }
                         },
                         340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
-                        -1 => { att.__m_text_handle = pair.as_handle()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -660,7 +659,6 @@ impl Entity {
                             }
                         },
                         340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
-                        -1 => { att.__m_text_handle = pair.as_handle()?; },
                         _ => { self.common.apply_individual_pair(&pair, iter)?; },
                     }
                 }
@@ -845,7 +843,8 @@ impl Entity {
         where T: Write {
 
         match self.specific {
-            // TODO: write trailing MText on Attribute and AttributeDefinition
+            EntityType::Attribute(ref att) => self.write_attribute_m_text(att.m_text.clone(), &version, write_handles, writer, handle_tracker)?,
+            EntityType::AttributeDefinition(ref att) => self.write_attribute_m_text(att.m_text.clone(), &version, write_handles, writer, handle_tracker)?,
             EntityType::Insert(ref ins) => {
                 for a in &ins.attributes {
                     let a = Entity { common: Default::default(), specific: EntityType::Attribute(a.clone()) };
@@ -863,6 +862,20 @@ impl Entity {
             _ => (),
         }
 
+        Ok(())
+    }
+    fn write_attribute_m_text<T>(&self, m_text: MText, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
+        where T: Write {
+
+        let mut m_text_common = EntityCommon {
+            __owner_handle: self.common.handle,
+            is_in_paper_space: self.common.is_in_paper_space,
+            layer: self.common.layer.clone(),
+            .. Default::default()
+        };
+        let _m_text_handle = handle_tracker.get_entity_handle(&mut m_text_common);
+        let m_text = Entity { common: m_text_common, specific: EntityType::MText(m_text) };
+        m_text.write(&version, write_handles, writer, handle_tracker)?;
         Ok(())
     }
     fn write_seqend<T>(version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
