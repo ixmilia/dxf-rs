@@ -8,6 +8,7 @@ use ::{
 
 /// Represents a simple vector in Cartesian space.
 #[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Vector {
     /// The X component of the vector.
     pub x: f64,

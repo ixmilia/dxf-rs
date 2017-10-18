@@ -59,6 +59,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
     for table in &element.children {
         let mut seen_fields = HashSet::new();
         let table_item = &table.children[0];
+        fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
         fun.push_str(&format!("pub struct {name} {{\n", name=name(&table_item)));
         fun.push_str("    pub name: String,\n");
         fun.push_str("    pub handle: u32,\n");

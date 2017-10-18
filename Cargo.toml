@@ -10,15 +10,23 @@ readme = "README.md"
 keywords = ["AutoCAD", "CAD", "DXB", "DXF"]
 license = "Apache-2.0"
 
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+serialize = ["serde", "serde_derive"]
+
 [dependencies]
 byteorder = "1.0.0"
-chrono = "0.3.0"
+chrono = { version= "0.4.0", features = ["serde"] }
 enum_primitive = "0.1.1"
 image = "0.14.0"
 itertools = "0.6.0"
 num = "0.1.37"
+serde = { version = "1.*.*", optional = true }
+serde_derive = { version = "1.*.*", optional = true }
 time = "0.1.36"
-uuid = { version = "0.4.0", features = ["use_std", "v4"] }
+uuid = { version = "0.5.1", features = ["serde", "use_std", "v4"] }
 
 [build-dependencies]
 xmltree = "0.4.0"

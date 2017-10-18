@@ -61,8 +61,8 @@ pub(crate) fn as_datetime_local(date: f64) -> DateTime<Local> {
     as_datetime(&Local, date)
 }
 
-pub(crate) fn as_datetime_utc(date: f64) -> DateTime<UTC> {
-    as_datetime(&UTC, date)
+pub(crate) fn as_datetime_utc(date: f64) -> DateTime<Utc> {
+    as_datetime(&Utc, date)
 }
 
 #[test]
@@ -82,8 +82,8 @@ pub(crate) fn as_double_local(date: DateTime<Local>) -> f64 {
     as_double(&Local, date)
 }
 
-pub(crate) fn as_double_utc(date: DateTime<UTC>) -> f64 {
-    as_double(&UTC, date)
+pub(crate) fn as_double_utc(date: DateTime<Utc>) -> f64 {
+    as_double(&Utc, date)
 }
 
 #[test]

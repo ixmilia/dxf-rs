@@ -36,6 +36,7 @@ use helper_functions::*;
 //                                                                  GeoMeshPoint
 //------------------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct GeoMeshPoint {
     pub source: Point,
     pub destination: Point,
@@ -54,6 +55,7 @@ impl GeoMeshPoint {
 //                                                             MLineStyleElement
 //------------------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct MLineStyleElement {
     pub offset: f64,
     pub color: Color,

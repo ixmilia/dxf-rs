@@ -14,6 +14,7 @@ use ::helper_functions::*;
 use itertools::PutBack;
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct SectionTypeSettings {
     pub section_type: i32,
     pub is_generation_option: bool,

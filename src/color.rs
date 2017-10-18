@@ -4,6 +4,7 @@ use tables::Layer;
 
 /// Represents an indexed color.
 #[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Color {
     raw_value: i16,
 }

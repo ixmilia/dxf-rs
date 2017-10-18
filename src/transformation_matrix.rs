@@ -2,6 +2,7 @@
 
 /// Applies a transformation to a point.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct TransformationMatrix {
     pub m11: f64,
     pub m12: f64,

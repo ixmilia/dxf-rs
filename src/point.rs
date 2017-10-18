@@ -8,6 +8,7 @@ use ::{
 
 /// Represents a simple point in Cartesian space.
 #[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Point {
     /// The X value of the point.
     pub x: f64,

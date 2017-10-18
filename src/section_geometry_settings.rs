@@ -13,6 +13,7 @@ use ::code_pair_writer::CodePairWriter;
 use itertools::PutBack;
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct SectionGeometrySettings {
     pub section_type: i32,
     pub geometry_count: i32,

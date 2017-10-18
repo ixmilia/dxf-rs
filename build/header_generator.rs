@@ -38,7 +38,7 @@ use enum_primitive::FromPrimitive;
 use std::io::Write;
 
 extern crate chrono;
-use self::chrono::{DateTime, Local, UTC};
+use self::chrono::{DateTime, Local, Utc};
 
 extern crate time;
 use self::time::Duration;
@@ -64,6 +64,7 @@ use self::uuid::Uuid;
 fn generate_struct(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("/// Contains common properties for the DXF file.\n");
+    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct Header {\n");
     for v in &element.children {
         let field_name = field(v);
@@ -77,6 +78,10 @@ fn generate_struct(fun: &mut String, element: &Element) {
                 comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
             }
             fun.push_str(&format!("    /// {}\n", comment));
+            let default_deserializer = skip_serialization_with_default(&v);
+            if !default_deserializer.is_empty() {
+                fun.push_str(&format!("    #[cfg_attr(feature = \"serialize\", serde(skip, default = \"{}\"))]\n", default_deserializer));
+            }
             fun.push_str(&format!("    pub {field}: {typ},\n", field=field(&v), typ=typ(&v)));
         }
     }
@@ -283,6 +288,10 @@ fn load_xml() -> Element {
 
 fn dont_write_default(element: &Element) -> bool {
     attr(element, "DontWriteDefault") == "true"
+}
+
+fn skip_serialization_with_default(element: &Element) -> String {
+    attr(element, "SkipSerializationWithDefault")
 }
 
 fn field(element: &Element) -> String {

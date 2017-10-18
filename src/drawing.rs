@@ -57,6 +57,7 @@ use itertools::{
 };
 
 /// Represents a DXF drawing.
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Drawing {
     /// The drawing's header.  Contains various drawing-specific values and settings.
     pub header: Header,
@@ -87,6 +88,7 @@ pub struct Drawing {
     /// The objects contained by the drawing.
     pub objects: Vec<Object>,
     /// The thumbnail image preview of the drawing.
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub thumbnail: Option<DynamicImage>,
 }
 

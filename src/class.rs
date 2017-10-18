@@ -17,6 +17,7 @@ use itertools::PutBack;
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
 #[derive(Clone)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Class {
     /// Class DXF record name.
     pub record_name: String,

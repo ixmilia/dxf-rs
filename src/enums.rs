@@ -7,6 +7,7 @@ use ::{DxfError, DxfResult};
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Dwf3DPrecision {
     Deviation_1 = 1,
     Deviation_0_5 = 2,
@@ -19,6 +20,7 @@ pub enum Dwf3DPrecision {
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum AcadVersion {
     Version_1_0,
     Version_1_2,
@@ -122,6 +124,7 @@ impl AcadVersion {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum AngleDirection {
     CounterClockwise = 0,
     Clockwise = 1,
@@ -130,6 +133,7 @@ pub enum AngleDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum AngleFormat {
     DecimalDegrees = 0,
     DegreesMinutesSeconds = 1,
@@ -141,6 +145,7 @@ pub enum AngleFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum AttachmentPoint {
     TopLeft = 1,
     TopCenter = 2,
@@ -156,6 +161,7 @@ pub enum AttachmentPoint {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum AttributeVisibility {
     None = 0,
     Normal = 1,
@@ -165,6 +171,7 @@ pub enum AttributeVisibility {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum BackgroundFillSetting {
     Off = 0,
     UseBackgroundFillColor = 1,
@@ -174,6 +181,7 @@ pub enum BackgroundFillSetting {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum BottomTextAttachmentDirection {
     Center = 9,
     UnderlineAndCenter = 10,
@@ -182,6 +190,7 @@ pub enum BottomTextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum CoordinateDisplay {
     Static = 0,
     ContinuousUpdate = 1,
@@ -191,6 +200,7 @@ pub enum CoordinateDisplay {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DefaultLightingType
 {
     OneDistantLight = 0,
@@ -200,6 +210,7 @@ pub enum DefaultLightingType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DesignCoordinateType
 {
     Unknown = 0,
@@ -211,6 +222,7 @@ pub enum DesignCoordinateType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DiagnosticBSPMode
 {
     Depth = 0,
@@ -220,6 +232,7 @@ pub enum DiagnosticBSPMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DiagnosticPhotonMode
 {
     Density = 0,
@@ -229,6 +242,7 @@ pub enum DiagnosticPhotonMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DictionaryDuplicateRecordHandling
 {
     NotApplicable = 0,
@@ -242,6 +256,7 @@ pub enum DictionaryDuplicateRecordHandling
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionArcSymbolDisplayMode {
     SymbolBeforeText = 0,
     SymbolAboveText = 1,
@@ -251,6 +266,7 @@ pub enum DimensionArcSymbolDisplayMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionAssociativity {
     NoAssociationExploded = 0,
     NonAssociativeObjects = 1,
@@ -260,6 +276,7 @@ pub enum DimensionAssociativity {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionFit {
     TextAndArrowsOutsideLines = 0,
     MoveArrowsFirst = 1,
@@ -270,6 +287,7 @@ pub enum DimensionFit {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionFractionFormat {
     HorizontalStacking = 0,
     DiagonalStacking = 1,
@@ -279,6 +297,7 @@ pub enum DimensionFractionFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionTextBackgroundColorMode {
     None = 0,
     UseDrawingBackground = 1,
@@ -288,6 +307,7 @@ pub enum DimensionTextBackgroundColorMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionTextJustification {
     AboveLineCenter = 0,
     AboveLineNextToFirstExtension = 1,
@@ -299,6 +319,7 @@ pub enum DimensionTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionTextMovementRule {
     MoveLineWithText = 0,
     AddLeaderWhenTextIsMoved = 1,
@@ -308,6 +329,7 @@ pub enum DimensionTextMovementRule {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DimensionType {
     RotatedHorizontalOrVertical = 0,
     Aligned = 1,
@@ -321,6 +343,7 @@ pub enum DimensionType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DragMode {
     Off = 0,
     On = 1,
@@ -330,6 +353,7 @@ pub enum DragMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DrawingDirection {
     LeftToRight = 1,
     TopToBottom = 3,
@@ -339,6 +363,7 @@ pub enum DrawingDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DrawingUnits {
     English = 0,
     Metric = 1,
@@ -347,6 +372,7 @@ pub enum DrawingUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum EdgeStyleModel
 {
     NoEdges = 0,
@@ -357,6 +383,7 @@ pub enum EdgeStyleModel
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum EndCapSetting {
     None = 0,
     Round = 1,
@@ -367,6 +394,7 @@ pub enum EndCapSetting {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FaceColorMode
 {
     NoColor = 0,
@@ -381,6 +409,7 @@ pub enum FaceColorMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FaceLightingModel
 {
     Invisible = 0,
@@ -392,6 +421,7 @@ pub enum FaceLightingModel
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FaceLightingQuality
 {
     None = 0,
@@ -402,6 +432,7 @@ pub enum FaceLightingQuality
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FaceModifier
 {
     None = 0,
@@ -412,6 +443,7 @@ pub enum FaceModifier
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FlowDirection
 {
     Down = 0,
@@ -421,6 +453,7 @@ pub enum FlowDirection
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum FontType {
     TTF = 0,
     SHX = 1,
@@ -429,6 +462,7 @@ pub enum FontType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum GeoDataVersion
 {
     R2009 = 1,
@@ -438,6 +472,7 @@ pub enum GeoDataVersion
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum HelixConstraint {
     ConstrainTurnHeight = 0,
     ConstrainTurns = 1,
@@ -447,6 +482,7 @@ pub enum HelixConstraint {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum HorizontalTextJustification {
     Left = 0,
     Center = 1,
@@ -459,6 +495,7 @@ pub enum HorizontalTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ImageClippingBoundaryType {
     Rectangular = 1,
     Polygonal = 2,
@@ -467,6 +504,7 @@ pub enum ImageClippingBoundaryType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ImageResolutionUnits
 {
     NoUnits = 0,
@@ -477,6 +515,7 @@ pub enum ImageResolutionUnits
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum JoinStyle {
     None = 0,
     Round = 1,
@@ -487,6 +526,7 @@ pub enum JoinStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Justification {
     Top = 0,
     Middle = 1,
@@ -496,6 +536,7 @@ pub enum Justification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LayerAndSpatialIndexSaveMode {
     None = 0,
     LayerIndex = 1,
@@ -506,6 +547,7 @@ pub enum LayerAndSpatialIndexSaveMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LeaderCreationAnnotationType {
     WithTextAnnotation = 0,
     WithToleranceAnnotation = 1,
@@ -516,6 +558,7 @@ pub enum LeaderCreationAnnotationType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LeaderHooklineDirection {
     OppositeFromHorizontalVector = 0,
     SameAsHorizontalVector = 1,
@@ -524,6 +567,7 @@ pub enum LeaderHooklineDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LeaderPathType {
     StraightLineSegments = 0,
     Spline = 1,
@@ -532,6 +576,7 @@ pub enum LeaderPathType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LightAttenuationType {
     None = 0,
     InverseLinear = 1,
@@ -541,6 +586,7 @@ pub enum LightAttenuationType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LightType {
     Distant = 1,
     Point = 2,
@@ -550,6 +596,7 @@ pub enum LightType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LineTypeStyle {
     Off = 0,
     Solid = 1,
@@ -568,6 +615,7 @@ pub enum LineTypeStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum LoftedObjectNormalMode {
     Ruled = 0,
     SmoothFit = 1,
@@ -581,6 +629,7 @@ pub enum LoftedObjectNormalMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum MapAutoTransformMethod
 {
     NoAutoTransform = 1,
@@ -591,6 +640,7 @@ pub enum MapAutoTransformMethod
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum MapProjectionMethod
 {
     Planar = 1,
@@ -602,6 +652,7 @@ pub enum MapProjectionMethod
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum MapTilingMethod
 {
     Tile = 1,
@@ -612,6 +663,7 @@ pub enum MapTilingMethod
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum MTextFlag {
     MultilineAttribute = 2,
     ConstantMultilineAttributeDefinition = 4,
@@ -620,6 +672,7 @@ pub enum MTextFlag {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum MTextLineSpacingStyle {
     AtLeast = 1,
     Exact = 2,
@@ -628,6 +681,7 @@ pub enum MTextLineSpacingStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum NonAngularUnits {
     Scientific = 1,
     Decimal = 2,
@@ -640,6 +694,7 @@ pub enum NonAngularUnits {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ObjectOsnapType
 {
     None = 0,
@@ -661,6 +716,7 @@ pub enum ObjectOsnapType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum OleObjectType {
     Link = 1,
     Embedded = 2,
@@ -670,6 +726,7 @@ pub enum OleObjectType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum OrthographicViewType {
     None = 0,
     Top = 1,
@@ -683,6 +740,7 @@ pub enum OrthographicViewType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PickStyle {
     None = 0,
     Group = 1,
@@ -693,6 +751,7 @@ pub enum PickStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PlotPaperUnits
 {
     Inches = 0,
@@ -703,6 +762,7 @@ pub enum PlotPaperUnits
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PlotRotation
 {
     NoRotation = 0,
@@ -714,6 +774,7 @@ pub enum PlotRotation
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PlotStyle {
     ByLayer = 0,
     ByBlock = 1,
@@ -724,6 +785,7 @@ pub enum PlotStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PlotType
 {
     LastScreenDisplay = 0,
@@ -737,6 +799,7 @@ pub enum PlotType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PolylineCurvedAndSmoothSurfaceType {
     None = 0,
     QuadraticBSpline = 5,
@@ -747,6 +810,7 @@ pub enum PolylineCurvedAndSmoothSurfaceType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum PolySketchMode {
     SketchLines = 0,
     SketchPolylines = 1,
@@ -755,6 +819,7 @@ pub enum PolySketchMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RasterImageUnits
 {
     None = 0,
@@ -771,6 +836,7 @@ pub enum RasterImageUnits
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderDestination
 {
     RenderWindow = 0,
@@ -780,6 +846,7 @@ pub enum RenderDestination
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderDiagnosticGridMode
 {
     Object = 0,
@@ -790,6 +857,7 @@ pub enum RenderDiagnosticGridMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderDiagnosticMode
 {
     Off = 0,
@@ -801,6 +869,7 @@ pub enum RenderDiagnosticMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderProcedure
 {
     View = 0,
@@ -811,6 +880,7 @@ pub enum RenderProcedure
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderShadowMode
 {
     Simple = 0,
@@ -821,6 +891,7 @@ pub enum RenderShadowMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RotatedDimensionType
 {
     Parallel = 0,
@@ -830,6 +901,7 @@ pub enum RotatedDimensionType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum SamplingFilterType
 {
     Box = 0,
@@ -842,6 +914,7 @@ pub enum SamplingFilterType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ScaleEstimationMethod
 {
     None = 1,
@@ -853,6 +926,7 @@ pub enum ScaleEstimationMethod
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ShadeEdgeMode {
     FacesShadedEdgeNotHighlighted = 0,
     FacesShadedEdgesHighlightedInBlack = 1,
@@ -863,6 +937,7 @@ pub enum ShadeEdgeMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ShadePlotMode
 {
     AsDisplayed = 0,
@@ -874,6 +949,7 @@ pub enum ShadePlotMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ShadePlotResolutionLevel
 {
     Draft = 0,
@@ -887,6 +963,7 @@ pub enum ShadePlotResolutionLevel
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ShadowMode {
     CastsAndReceivesShadows = 0,
     CastsShadows = 1,
@@ -897,6 +974,7 @@ pub enum ShadowMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ShadowType {
     RayTraced = 0,
     ShadowMaps = 1,
@@ -905,6 +983,7 @@ pub enum ShadowType {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum SnapIsometricPlane {
     Left = 0,
     Top = 1,
@@ -914,6 +993,7 @@ pub enum SnapIsometricPlane {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum SnapStyle {
     Standard = 0,
     Isometric = 1,
@@ -922,6 +1002,7 @@ pub enum SnapStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum SolidHistoryMode {
     None = 0,
     DoesNotOverride = 1,
@@ -931,6 +1012,7 @@ pub enum SolidHistoryMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum StandardScale
 {
@@ -972,6 +1054,7 @@ pub enum StandardScale
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum SubentityType
 {
     Edge = 1,
@@ -981,6 +1064,7 @@ pub enum SubentityType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TextAttachmentDirection {
     Horizontal = 0,
     Vertical = 1,
@@ -989,6 +1073,7 @@ pub enum TextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TextDirection {
     LeftToRight = 0,
     RightToLeft = 1,
@@ -997,6 +1082,7 @@ pub enum TextDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TextLineSpacingStyle {
     AtLeast = 1,
     Exact = 2,
@@ -1005,6 +1091,7 @@ pub enum TextLineSpacingStyle {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TileModeDescriptor {
     InTiledViewport = 0,
     InNonTiledViewport = 1,
@@ -1013,6 +1100,7 @@ pub enum TileModeDescriptor {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TileOrder
 {
     Hilbert = 0,
@@ -1026,6 +1114,7 @@ pub enum TileOrder
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum UcsOrthographicType
 {
     NotOrthographic = 0,
@@ -1040,6 +1129,7 @@ pub enum UcsOrthographicType
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum DrawingTimeZone {
     InternationalDateLineWest = -12000,
@@ -1124,6 +1214,7 @@ pub enum DrawingTimeZone {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum TopTextAttachmentDirection {
     Center = 9,
     OverlineAndCenter = 10,
@@ -1132,6 +1223,7 @@ pub enum TopTextAttachmentDirection {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum UnderlayFrameMode {
     None = 0,
     DisplayAndPlot = 1,
@@ -1141,6 +1233,7 @@ pub enum UnderlayFrameMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum UnitFormat {
     Scientific = 1,
     Decimal = 2,
@@ -1154,6 +1247,7 @@ pub enum UnitFormat {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Units {
     Unitless = 0,
     Inches = 1,
@@ -1180,6 +1274,7 @@ pub enum Units {
 }
 
 #[derive(Clone, Copy, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct ViewMode {
     flags: i32,
 }
@@ -1238,6 +1333,7 @@ impl ViewMode {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ViewRenderMode
 {
     Classic2D = 0,
@@ -1252,6 +1348,7 @@ pub enum ViewRenderMode
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Version {
     R2010 = 0,
 }
@@ -1259,6 +1356,7 @@ pub enum Version {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum VerticalTextJustification {
     Baseline = 0,
     Bottom = 1,
@@ -1269,6 +1367,7 @@ pub enum VerticalTextJustification {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum XrefClippingBoundaryVisibility {
     NotDisplayedNotPlotted = 0,
     DisplayedAndPlotted = 1,
@@ -1278,6 +1377,7 @@ pub enum XrefClippingBoundaryVisibility {
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum UnitZeroSuppression {
     SuppressZeroFeetAndZeroInches = 0,
     IncludeZeroFeetAndZeroInches = 1,

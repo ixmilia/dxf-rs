@@ -28,6 +28,7 @@ use itertools::PutBack;
 
 /// A block is a collection of entities.
 #[derive(Clone)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Block {
     /// The block's handle.
     pub handle: u32,

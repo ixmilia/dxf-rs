@@ -3,6 +3,7 @@
 use ::Point;
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum DataTableValue {
     Boolean(bool),
     Integer(i32),

@@ -9,6 +9,7 @@ use std::fmt::{
 
 /// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum CodePairValue {
     Boolean(i16),
     Integer(i32),

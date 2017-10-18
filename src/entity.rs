@@ -108,6 +108,7 @@ impl Line {
 //------------------------------------------------------------------------------
 /// Represents a single vertex of a `LwPolyline`.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct LwPolylineVertex {
     pub x: f64,
     pub y: f64,

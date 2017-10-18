@@ -11,6 +11,7 @@ use itertools::PutBack;
 
 /// Defines a style for a table's cell.
 #[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct TableCellStyle {
     pub name: String,
     pub text_height: f64,

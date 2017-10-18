@@ -1,6 +1,31 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 //! This crate provides the ability to read and write DXF and DXB CAD files.
+//! 
+//! # Usage
+//!
+//! Put this in your `Cargo.toml`:
+//!
+//! ``` toml
+//! [dependencies]
+//! dxf = "0.2.1"
+//! ```
+//!
+//! Or if you want [serde](https://github.com/serde-rs/serde) support, enable the `serialize` feature:
+//!
+//! ``` toml
+//! [dependencies]
+//! dxf = { version = "0.2.1", features = ["serialize"] }
+//! ```
+//!
+//! > Note that `serde` support is intended to aid in debugging and since the serialized format is heavily
+//! dependent on the layout of the structures, it may change at any time.
+//!
+//! And finally add:
+//!
+//! ``` rust
+//! extern crate dxf;
+//! ```
 //!
 //! # Examples
 //!
@@ -90,10 +115,17 @@
 //! These links were compiled from the archive.org May 9, 2013 snapshot of http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853
 //! (https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853)
 
-#[macro_use] extern crate enum_primitive;
+#[macro_use]
+extern crate enum_primitive;
 
 extern crate image;
 extern crate itertools;
+
+#[cfg(feature = "serialize")]
+#[macro_use]
+extern crate serde_derive;
+#[cfg(feature = "serialize")]
+extern crate serde;
 
 mod code_pair;
 pub use code_pair::CodePair;
