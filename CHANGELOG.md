@@ -1,6 +1,16 @@
 Changelog
 =========
 
+## 0.3.0
+
+- Fall back to default values when enum parsing fails.
+- Track file offsets when reading yielding more actionable errors.
+- Allow parsing of both Windows-style and standard UUIDs.
+- Write trailing attributes on `INSERT` entities.
+- Read/write `ATTRIB`/`ATTDEF` with attached `MTEXT` entities.
+- Add optional [serde](https://github.com/serde-rs/serde) support via the `serialize` feature flag.
+- Remove dependency on deprecated `time` crate.
+
 ## 0.2.1
 
 - Use `image` crate for thumbnail images.
