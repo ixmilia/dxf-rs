@@ -4,8 +4,7 @@ extern crate dxf;
 use self::dxf::*;
 use self::dxf::enums::*;
 
-extern crate chrono;
-use self::chrono::*;
+use std::time::Duration;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -181,5 +180,5 @@ fn write_variable_with_different_codes() {
 #[test]
 fn read_drawing_edit_duration() {
     let file = from_section("HEADER", vec!["  9", "$TDINDWG", " 40", "100.0"].join("\r\n").as_str());
-    assert_eq!(Duration::seconds(100), file.header.time_in_drawing);
+    assert_eq!(Duration::from_secs(100), file.header.time_in_drawing);
 }

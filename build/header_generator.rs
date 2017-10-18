@@ -36,12 +36,10 @@ use enums::*;
 use enum_primitive::FromPrimitive;
 
 use std::io::Write;
+use std::time::Duration;
 
 extern crate chrono;
 use self::chrono::{DateTime, Local, Utc};
-
-extern crate time;
-use self::time::Duration;
 
 extern crate uuid;
 use self::uuid::Uuid;
@@ -78,10 +76,6 @@ fn generate_struct(fun: &mut String, element: &Element) {
                 comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
             }
             fun.push_str(&format!("    /// {}\n", comment));
-            let default_deserializer = skip_serialization_with_default(&v);
-            if !default_deserializer.is_empty() {
-                fun.push_str(&format!("    #[cfg_attr(feature = \"serialize\", serde(skip, default = \"{}\"))]\n", default_deserializer));
-            }
             fun.push_str(&format!("    pub {field}: {typ},\n", field=field(&v), typ=typ(&v)));
         }
     }
@@ -288,10 +282,6 @@ fn load_xml() -> Element {
 
 fn dont_write_default(element: &Element) -> bool {
     attr(element, "DontWriteDefault") == "true"
-}
-
-fn skip_serialization_with_default(element: &Element) -> String {
-    attr(element, "SkipSerializationWithDefault")
 }
 
 fn field(element: &Element) -> String {

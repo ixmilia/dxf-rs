@@ -2,6 +2,7 @@
 
 use std::io;
 use std::io::Read;
+use std::time::Duration as StdDuration;
 
 extern crate byteorder;
 use self::byteorder::{
@@ -10,7 +11,8 @@ use self::byteorder::{
 };
 
 extern crate chrono;
-use self::chrono::*;
+use self::chrono::Duration as ChronoDuration;
+use self::chrono::prelude::*;
 
 extern crate uuid;
 use self::uuid::Uuid;
@@ -34,14 +36,13 @@ pub(crate) fn as_bool(v: i16) -> bool {
     v == 1
 }
 
-fn f64_to_adjusted_duration(f: f64) -> Duration {
+fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {
     let days_since_dublin = f - 2415020.0; // julian dublin offset, e.g., December 31, 1899 12:00AM
-    let seconds = days_since_dublin * 24.0 * 60.0 * 60.0;
+    let secs_per_day = 24i64 * 60 * 60;
+    let seconds = days_since_dublin * secs_per_day as f64;
     // functions consuming this need to use 1900/01/01 instead of 1899/12/31 as a base
     // so we counter the extra day and leap second here
-    Duration::seconds(seconds as i64)
-        - Duration::days(1)
-        + Duration::seconds(1)
+    ChronoDuration::seconds(seconds as i64 - secs_per_day + 1)
 }
 
 fn get_epoch<T>(timezone: &T) -> DateTime<T>
@@ -53,7 +54,7 @@ fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
     where T: TimeZone {
     // dates are represented as the fractional number of days elapsed since December 31, 1899.
     let epoch = get_epoch(timezone);
-    let duration = if date == 0.0 { Duration::seconds(0) } else { f64_to_adjusted_duration(date) };
+    let duration = if date == 0.0 { ChronoDuration::seconds(0) } else { f64_to_adjusted_duration(date) };
     epoch + duration
 }
 
@@ -92,12 +93,12 @@ fn as_double_conversion_test() {
     assert_eq!(2451544.9156828704, as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35)));
 }
 
-pub(crate) fn duration_as_double(duration: Duration) -> f64 {
-    duration.num_seconds() as f64
+pub(crate) fn duration_as_double(duration: StdDuration) -> f64 {
+    duration.as_secs() as f64
 }
 
-pub(crate) fn as_duration(d: f64) -> Duration {
-    Duration::seconds(d as i64)
+pub(crate) fn as_duration(d: f64) -> StdDuration {
+    StdDuration::from_secs(d as u64)
 }
 
 pub(crate) fn as_handle(h: u32) -> String {
