@@ -19,7 +19,7 @@ fn main() {
     json_path.push_str(".json");
 
     let drawing = Drawing::load_file(&dxf_path).unwrap();
-    let json = serde_json::to_string(&drawing).unwrap();
+    let json = serde_json::to_string_pretty(&drawing).unwrap();
 
     let file = File::create(&json_path).unwrap();
     let mut writer = BufWriter::new(file);
