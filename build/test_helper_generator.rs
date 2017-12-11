@@ -50,7 +50,7 @@ fn generate_entity_helpers(fun: &mut String) {
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             let subclass = attr(&c, "SubclassMarker");
             let maxver = max_version(c);
-            let maxver = if maxver.is_empty() { String::from("R2013") } else { maxver };
+            let maxver = if maxver.is_empty() { String::from("R2018") } else { maxver };
             for type_string in &type_strings {
                 fun.push_str(&format!("        (\"{type_string}\", \"{subclass}\", EntityType::{typ}({typ}::default()), AcadVersion::{ver}),\n",
                     type_string=type_string,
@@ -79,7 +79,7 @@ fn generate_object_helpers(fun: &mut String) {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             let maxver = max_version(c);
-            let maxver = if maxver.is_empty() { String::from("R2013") } else { maxver };
+            let maxver = if maxver.is_empty() { String::from("R2018") } else { maxver };
             for type_string in &type_strings {
                 fun.push_str(&format!("        (\"{type_string}\", ObjectType::{typ}({typ}::default()), AcadVersion::{ver}),\n",
                     type_string=type_string,

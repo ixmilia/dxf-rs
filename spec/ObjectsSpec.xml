@@ -70,6 +70,18 @@
   </Object>
   <!--
 
+  ACDBNAVISWORKSMODELDEF
+
+  -->
+  <Object Name="NavisWorksModelDefinition" SubclassMarker="AcDbNavisworksModelDef" TypeString="AcDbNavisworksModelDef" MinVersion="R2018">
+    <Field Name="model_path" Code="1" Type="String" DefaultValue="String::new()" />
+    <Field Name="is_model_loaded_on_drawing_open" Code="290" Type="bool" DefaultValue="false" />
+    <Field Name="minimum_extent" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
+    <Field Name="maximum_extent" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
+    <Field Name="is_host_geometry_drawn" Code="290" Type="bool" DefaultValue="false" />
+  </Object>
+  <!--
+
   DATATABLE
 
   -->
@@ -738,6 +750,65 @@
     <Field Name="paper_image_origin_x" Code="148" Type="f64" DefaultValue="0.0" />
     <Field Name="paper_image_origin_y" Code="149" Type="f64" DefaultValue="0.0" />
     <Pointer Name="shade_plot_object" Code="333" />
+  </Object>
+  <!--
+
+  RAPIDRTRENDERENVIRONMENT
+
+  -->
+  <Object Name="RapidRTRenderEnvironment" SubclassMarker="AcDbIBLBackground" TypeString="RAPIDRTRENDERENVIRONMENT" MinVersion="R2018">
+      <Field Name="subclass_version" Code="90" Type="i32" DefaultValue="0" />
+      <Field Name="is_enabled" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="image_based_lignting_map_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+      <Field Name="rotation_angle" Code="40" Type="f64" DefaultValue="0.0" Comment="Rotation angle in degrees." />
+      <Field Name="is_map_as_background" Code="290" Type="bool" DefaultValue="true" />
+      <Pointer Name="custom_background" Code="340" />
+  </Object>
+  <!--
+
+  RAPIDRTRENDERSETTINGS
+
+  -->
+  <Object Name="RapidRenderSettings" SubclassMarker="AcDbRenderSettings" TypeString="RAPIDRTRENDERSETTINGS" MinVersion="R2018">
+      <Field Name="subclass_version" Code="90" Type="i32" DefaultValue="0" />
+      <Field Name="render_preset_name" Code="1" Type="String" DefaultValue="String::new()" />
+      <Field Name="are_materials_enabled" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="is_texture_sampling_enabled" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="are_back_faces_enabled" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="are_shadows_enabled" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="preview_image_file_name" Code="1" Type="String" DefaultValue="String::new()" />
+      <Field Name="render_preset_description" Code="1" Type="String" DefaultValue="String::new()" />
+      <Field Name="display_index" Code="90" Type="i32" DefaultValue="0" />
+      <Field Name="is_predefined_render_present" Code="290" Type="bool" DefaultValue="true" />
+      <Field Name="render_duration" Code="70" Type="RenderDuration" DefaultValue="RenderDuration::ByTime" ReadConverter="enum_from_number!(RenderDuration, ByTime, from_i16, {})" WriteConverter="{} as i16" />
+      <Field Name="render_level_count_imit" Code="90" Type="i32" DefaultValue="0" />
+      <Field Name="render_time_limit" Code="90" Type="i32" DefaultValue="0" />
+      <Field Name="render_accuracy" Code="70" Type="RenderAccuracy" DefaultValue="RenderAccuracy::Low" ReadConverter="enum_from_number!(RenderAccuracy, Low, from_i16, {})" WriteConverter="{} as i16" />
+      <Field Name="sampling_filter" Code="70" Type="SamplingFilterType" DefaultValue="SamplingFilterType::Box" ReadConverter="enum_from_number!(SamplingFilterType, Box, from_i16, {})" WriteConverter="{} as i16" />
+      <Field Name="filter_width" Code="40" Type="f64" DefaultValue="1.0" />
+      <Field Name="filter_height" Code="40" Type="f64" DefaultValue="1.0" />
+      <WriteOrder>
+          <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRenderSettings")' />
+          <WriteField Field="subclass_version" />
+          <WriteField Field="render_preset_name" />
+          <WriteField Field="are_materials_enabled" />
+          <WriteField Field="is_texture_sampling_enabled" />
+          <WriteField Field="are_back_faces_enabled" />
+          <WriteField Field="are_shadows_enabled" />
+          <WriteField Field="preview_image_file_name" />
+          <WriteField Field="render_preset_description" />
+          <WriteField Field="display_index" />
+          <WriteField Field="is_predefined_render_present" />
+          <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbRapidRTRenderSettings")' />
+          <WriteField Field="subclass_version" />
+          <WriteField Field="render_duration" />
+          <WriteField Field="render_level_count_imit" />
+          <WriteField Field="render_time_limit" />
+          <WriteField Field="render_accuracy" />
+          <WriteField Field="sampling_filter" />
+          <WriteField Field="filter_width" />
+          <WriteField Field="filter_height" />
+      </WriteOrder>
   </Object>
   <!--
 

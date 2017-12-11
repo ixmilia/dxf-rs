@@ -42,6 +42,7 @@ pub enum AcadVersion {
     R2007,
     R2010,
     R2013,
+    R2018,
 }
 
 impl AcadVersion {
@@ -86,6 +87,7 @@ impl AcadVersion {
             "19.1" => Ok(AcadVersion::R2013),
             "19.2" => Ok(AcadVersion::R2013),
             "19.3" => Ok(AcadVersion::R2013),
+            "AC1032" => Ok(AcadVersion::R2018),
             _ => Err(DxfError::UnexpectedEnumValue(0)), // offset doesn't matter here because this failure might not come from parsing
         }
     }
@@ -118,6 +120,7 @@ impl AcadVersion {
                 &AcadVersion::R2007 => "AC1021",
                 &AcadVersion::R2010 => "AC1024",
                 &AcadVersion::R2013 => "AC1027",
+                &AcadVersion::R2018 => "AC1032",
         })
     }
 }
@@ -837,6 +840,17 @@ pub enum RasterImageUnits
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+pub enum RenderAccuracy
+{
+    Low = 0,
+    Draft = 1,
+    High = 2,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum RenderDestination
 {
     RenderWindow = 0,
@@ -864,6 +878,17 @@ pub enum RenderDiagnosticMode
     Grid = 1,
     Photon = 2,
     BSP = 4,
+}
+}
+
+enum_from_primitive! {
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+pub enum RenderDuration
+{
+    ByTime = 0,
+    ByLevel = 1,
+    UntilSatisfactory = 2,
 }
 }
 
@@ -1270,6 +1295,10 @@ pub enum Units {
     AstronomicalUnits = 18,
     LightYears = 19,
     Parsecs = 20,
+    USSurveyFeet = 21,
+    USSurveyInch = 22,
+    USSurveyYard = 23,
+    USSurveyMile = 24,
 }
 }
 
