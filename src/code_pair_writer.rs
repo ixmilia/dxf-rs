@@ -14,24 +14,18 @@ use ::{
     DxfResult,
 };
 
-pub(crate) struct CodePairWriter<T>
-    where T: Write {
+pub(crate) struct CodePairWriter<'a, T>
+    where T: Write + ?Sized + 'a {
 
-    writer: T,
+    writer: &'a mut T,
     as_ascii: bool,
 }
 
-impl<T: Write> CodePairWriter<T> {
-    pub fn new_ascii_writer(writer: T) -> Self {
+impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
+    pub fn new(writer: &'a mut T, as_ascii: bool) -> Self {
         CodePairWriter {
             writer: writer,
-            as_ascii: true,
-        }
-    }
-    pub fn new_binary_writer(writer: T) -> Self {
-        CodePairWriter {
-            writer: writer,
-            as_ascii: false,
+            as_ascii: as_ascii,
         }
     }
     pub fn write_prelude(&mut self) -> DxfResult<()> {

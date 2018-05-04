@@ -51,6 +51,9 @@ impl HandleTracker {
     pub fn get_view_port_handle(&mut self, item: &ViewPort) -> u32 {
         self.get_next_handle(item.handle)
     }
+    pub fn get_current_next_handle(&self) -> u32 {
+        self.next_handle
+    }
     fn get_next_handle(&mut self, existing_handle: u32) -> u32 {
         match existing_handle {
             0 => {

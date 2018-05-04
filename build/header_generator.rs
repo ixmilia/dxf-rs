@@ -210,8 +210,8 @@ fn get_read_command(element: &Element) -> String {
 }
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
-    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write {\n");
+    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>, next_available_handle: u32) -> DxfResult<()>\n");
+    fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     for v in &element.children {
         // prepare writing predicate
@@ -239,7 +239,14 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
         let write_converter = if write_converter(&v).is_empty() { String::from("{}") } else { write_converter(&v).clone() };
         if code(&v) > 0 {
             let expected_type = get_code_pair_type(ExpectedType::get_expected_type(code(&v)).unwrap());
-            let value = write_converter.replace("{}", &format!("self.{}", field(&v)));
+            let field_name = field(&v);
+            let value = if field_name == "next_available_handle" {
+                    String::from("next_available_handle")
+                }
+                else {
+                    format!("self.{}", field_name)
+                };
+            let value = write_converter.replace("{}", &*value);
             fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
                 code=code(&v),
                 value=value,

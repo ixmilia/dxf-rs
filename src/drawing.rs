@@ -44,6 +44,7 @@ use std::fs::File;
 use std::io::{
     BufReader,
     BufWriter,
+    Cursor,
     Read,
     Write,
 };
@@ -156,30 +157,41 @@ impl Drawing {
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
         where T: Write + ?Sized {
 
-        let mut writer = CodePairWriter::new_ascii_writer(writer);
-        self.save_internal(&mut writer)
+        self.save_internal(writer, true)
     }
     /// Writes a `Drawing` as binary to anything that implements the `Write` trait.
     pub fn save_binary<T>(&self, writer: &mut T) -> DxfResult<()>
         where T: Write + ?Sized {
 
-        let mut writer = CodePairWriter::new_binary_writer(writer);
-        self.save_internal(&mut writer)
+        self.save_internal(writer, false)
     }
-    fn save_internal<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
+    fn save_internal<T>(&self, writer: &mut T, as_ascii: bool) -> DxfResult<()>
+        where T: Write + ?Sized {
 
-        writer.write_prelude()?;
-        self.header.write(writer)?;
-        let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        // write to memory while tracking the used handle values
+        let mut buf = Cursor::new(vec![]);
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
-        self.write_classes(writer)?;
-        self.write_tables(write_handles, writer, &mut handle_tracker)?;
-        self.write_blocks(write_handles, writer, &mut handle_tracker)?;
-        self.write_entities(write_handles, writer, &mut handle_tracker)?;
-        self.write_objects(writer, &mut handle_tracker)?;
-        self.write_thumbnail(writer)?;
-        writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
+        {
+            let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii);
+            let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+            self.write_classes(&mut code_pair_writer)?;
+            self.write_tables(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
+            self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
+            self.write_entities(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
+            self.write_objects(&mut code_pair_writer, &mut handle_tracker)?;
+            self.write_thumbnail(&mut code_pair_writer)?;
+            code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
+        }
+
+        // write header to the final location
+        {
+            let mut final_writer = CodePairWriter::new(writer, as_ascii);
+            final_writer.write_prelude()?;
+            self.header.write(&mut final_writer, handle_tracker.get_current_next_handle())?;
+        }
+
+        // copy memory to final location
+        writer.write_all(&*buf.into_inner())?;
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
@@ -193,12 +205,8 @@ impl Drawing {
     fn save_file_internal(&self, file_name: &str, as_ascii: bool) -> DxfResult<()> {
         let path = Path::new(file_name);
         let file = File::create(&path)?;
-        let buf_writer = BufWriter::new(file);
-        let mut writer = match as_ascii {
-            true => CodePairWriter::new_ascii_writer(buf_writer),
-            false => CodePairWriter::new_binary_writer(buf_writer),
-        };
-        self.save_internal(&mut writer)
+        let mut writer = BufWriter::new(file);
+        self.save_internal(&mut writer, as_ascii)
     }
     /// Writes a `Drawing` as DXB to anything that implements the `Write` trait.
     pub fn save_dxb<T>(&self, writer: &mut T) -> DxfResult<()>

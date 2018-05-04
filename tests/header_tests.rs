@@ -2,6 +2,7 @@
 
 extern crate dxf;
 use self::dxf::*;
+use self::dxf::entities::*;
 use self::dxf::enums::*;
 
 use std::time::Duration;
@@ -181,4 +182,27 @@ fn write_variable_with_different_codes() {
 fn read_drawing_edit_duration() {
     let file = from_section("HEADER", vec!["  9", "$TDINDWG", " 40", "100.0"].join("\r\n").as_str());
     assert_eq!(Duration::from_secs(100), file.header.time_in_drawing);
+}
+
+#[test]
+fn write_proper_handseed_on_new_file() {
+    let mut drawing = Drawing::default();
+    drawing.entities.push(Entity::new(EntityType::Line(Line::new(Point::origin(), Point::origin()))));
+    assert_contains(&drawing, vec![
+        "  9", "$HANDSEED",
+        "  5", "2",
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_proper_handseed_on_read_file() {
+    let mut drawing = from_section("HEADER", vec![
+        "  9", "$HANDSEED",
+        "  5", "2",
+    ].join("\r\n").as_str());
+    drawing.entities.push(Entity::new(EntityType::Line(Line::new(Point::origin(), Point::origin()))));
+    assert_contains(&drawing, vec![
+        "  9", "$HANDSEED",
+        "  5", "3",
+    ].join("\r\n"));
 }

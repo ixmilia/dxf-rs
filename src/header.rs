@@ -67,12 +67,12 @@ impl Header {
 
         Ok(header)
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>, next_available_handle: u32) -> DxfResult<()>
+        where T: Write + ?Sized {
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "HEADER"))?;
-        self.write_code_pairs(writer)?;
+        self.write_code_pairs(writer, next_available_handle)?;
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
