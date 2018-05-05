@@ -830,7 +830,7 @@
   POLYLINE
 
   -->
-  <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true">
+  <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true" GenerateWriterFunction="false">
     <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R13" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
@@ -1239,7 +1239,7 @@
   VERTEX
 
   -->
-  <Entity Name="Vertex" SubclassMarker="AcDbVertex" TypeString="VERTEX">
+  <Entity Name="Vertex" SubclassMarker="AcDbVertex" TypeString="VERTEX" GenerateWriterFunction="false">
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="starting_width" Code="40" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="ending_width" Code="41" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />

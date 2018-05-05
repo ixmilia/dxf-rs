@@ -760,8 +760,9 @@ impl Entity {
             self.common.write(version, write_handles, writer, handle_tracker)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(&self.common, version, writer)?;
-                self.post_write(&version, write_handles, writer, handle_tracker)?;
             }
+
+            self.post_write(&version, write_handles, writer, handle_tracker)?;
             for x in &self.common.x_data {
                 x.write(version, writer)?;
             }
@@ -835,6 +836,96 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
                 writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
             },
+            EntityType::Polyline(ref poly) => {
+                let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
+                        "AcDb3dPolyline"
+                    }
+                    else {
+                        "AcDb2dPolyline"
+                    };
+                writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
+                if *version <= AcadVersion::R13 {
+                    writer.write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
+                }
+                if *version >= AcadVersion::R12 {
+                    writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
+                    writer.write_code_pair(&CodePair::new_f64(20, poly.location.y))?;
+                    writer.write_code_pair(&CodePair::new_f64(30, poly.location.z))?;
+                }
+                if poly.thickness != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(39, poly.thickness))?;
+                }
+                if poly.flags != 0 {
+                    writer.write_code_pair(&CodePair::new_i16(70, poly.flags as i16))?;
+                }
+                if poly.default_starting_width != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(40, poly.default_starting_width))?;
+                }
+                if poly.default_ending_width != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(41, poly.default_ending_width))?;
+                }
+                if poly.polygon_mesh_m_vertex_count != 0 {
+                    writer.write_code_pair(&CodePair::new_i16(71, poly.polygon_mesh_m_vertex_count as i16))?;
+                }
+                if poly.polygon_mesh_n_vertex_count != 0 {
+                    writer.write_code_pair(&CodePair::new_i16(72, poly.polygon_mesh_n_vertex_count as i16))?;
+                }
+                if poly.smooth_surface_m_density != 0 {
+                    writer.write_code_pair(&CodePair::new_i16(73, poly.smooth_surface_m_density as i16))?;
+                }
+                if poly.smooth_surface_n_density != 0 {
+                    writer.write_code_pair(&CodePair::new_i16(74, poly.smooth_surface_n_density as i16))?;
+                }
+                if poly.surface_type != PolylineCurvedAndSmoothSurfaceType::None {
+                    writer.write_code_pair(&CodePair::new_i16(75, poly.surface_type as i16))?;
+                }
+                if poly.normal != Vector::z_axis() {
+                    writer.write_code_pair(&CodePair::new_f64(210, poly.normal.x))?;
+                    writer.write_code_pair(&CodePair::new_f64(220, poly.normal.y))?;
+                    writer.write_code_pair(&CodePair::new_f64(230, poly.normal.z))?;
+                }
+            },
+            EntityType::Vertex(ref v) => {
+                writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
+                let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
+                        "AcDb3dPolylineVertex"
+                    }
+                    else {
+                        "AcDb2dVertex"
+                    };
+                writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
+                writer.write_code_pair(&CodePair::new_f64(10, v.location.x))?;
+                writer.write_code_pair(&CodePair::new_f64(20, v.location.y))?;
+                writer.write_code_pair(&CodePair::new_f64(30, v.location.z))?;
+                if v.starting_width != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(40, v.starting_width))?;
+                }
+                if v.ending_width != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(41, v.ending_width))?;
+                }
+                if v.bulge != 0.0 {
+                    writer.write_code_pair(&CodePair::new_f64(42, v.bulge))?;
+                }
+                writer.write_code_pair(&CodePair::new_i16(70, v.flags as i16))?;
+                writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
+                if *version >= AcadVersion::R13 {
+                    if v.polyface_mesh_vertex_index1 != 0 {
+                        writer.write_code_pair(&CodePair::new_i16(71, v.polyface_mesh_vertex_index1 as i16))?;
+                    }
+                    if v.polyface_mesh_vertex_index2 != 0 {
+                        writer.write_code_pair(&CodePair::new_i16(72, v.polyface_mesh_vertex_index2 as i16))?;
+                    }
+                    if v.polyface_mesh_vertex_index3 != 0 {
+                        writer.write_code_pair(&CodePair::new_i16(73, v.polyface_mesh_vertex_index3 as i16))?;
+                    }
+                    if v.polyface_mesh_vertex_index4 != 0 {
+                        writer.write_code_pair(&CodePair::new_i16(74, v.polyface_mesh_vertex_index4 as i16))?;
+                    }
+                }
+                if *version >= AcadVersion::R2010 {
+                    writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
+                }
+            },
             _ => return Ok(false), // no custom writer
         }
 
@@ -855,7 +946,10 @@ impl Entity {
             },
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
-                    let v = Entity { common: Default::default(), specific: EntityType::Vertex(v.clone()) };
+                    let mut v = v.clone();
+                    v.set_is_3d_polyline_vertex(poly.get_is_3d_polyline());
+                    v.set_is_3d_polygon_mesh(poly.get_is_3d_polygon_mesh());
+                    let v = Entity { common: Default::default(), specific: EntityType::Vertex(v) };
                     v.write(&version, write_handles, writer, handle_tracker)?;
                 }
                 Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;

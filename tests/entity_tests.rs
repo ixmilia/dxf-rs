@@ -571,7 +571,7 @@ fn read_empty_polyline_without_seqend_with_trailing_entity() {
 }
 
 #[test]
-fn write_polyline() {
+fn write_2d_polyline() {
     let mut drawing = Drawing::default();
     let poly = Polyline {
         vertices: vec![
@@ -600,6 +600,7 @@ fn write_polyline() {
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",
+        "100", "AcDb2dVertex",
         " 10", "1.1",
         " 20", "2.1",
         " 30", "3.1",
@@ -610,6 +611,7 @@ fn write_polyline() {
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",
+        "100", "AcDb2dVertex",
         " 10", "1.2",
         " 20", "2.2",
         " 30", "3.2",
@@ -620,12 +622,51 @@ fn write_polyline() {
         "100", "AcDbEntity",
         "  8", "0",
         "100", "AcDbVertex",
+        "100", "AcDb2dVertex",
         " 10", "1.3",
         " 20", "2.3",
         " 30", "3.3",
         " 70", "     0",
         " 50", "0.0",
         "  0", "SEQEND", // end sequence
+    ].join("\r\n"));
+}
+
+#[test]
+fn write_3d_polyline() {
+    let mut drawing = Drawing::default();
+    let mut poly = Polyline {
+        vertices: vec![
+            Vertex { location: Point::new(1.1, 2.1, 3.1), .. Default::default() },
+        ],
+        .. Default::default()
+    };
+    poly.set_is_3d_polyline(true);
+    drawing.entities.push(Entity {
+        common: Default::default(),
+        specific: EntityType::Polyline(poly),
+    });
+    assert_contains(&drawing, vec![
+        "  0", "POLYLINE", // polyline
+        "  5", "1",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDb3dPolyline", // 3d = true
+        " 66", "     1",
+        " 10", "0.0",
+        " 20", "0.0",
+        " 30", "0.0",
+        " 70", "     8", // 3d = true
+        "  0", "VERTEX", // vertex 1
+        "  5", "2",
+        "100", "AcDbEntity",
+        "  8", "0",
+        "100", "AcDbVertex",
+        "100", "AcDb3dPolylineVertex", // 3d = true
+        " 10", "1.1",
+        " 20", "2.1",
+        " 30", "3.1",
+        " 70", "    32", // 3d = true
     ].join("\r\n"));
 }
 
