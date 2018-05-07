@@ -44,7 +44,6 @@ use std::fs::File;
 use std::io::{
     BufReader,
     BufWriter,
-    Cursor,
     Read,
     Write,
 };
@@ -169,7 +168,7 @@ impl Drawing {
         where T: Write + ?Sized {
 
         // write to memory while tracking the used handle values
-        let mut buf = Cursor::new(vec![]);
+        let mut buf = vec![];
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         {
             let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii);
@@ -191,7 +190,7 @@ impl Drawing {
         }
 
         // copy memory to final location
-        writer.write_all(&*buf.into_inner())?;
+        writer.write_all(&*buf)?;
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
