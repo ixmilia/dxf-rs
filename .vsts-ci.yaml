@@ -1,0 +1,15 @@
+variables:
+  ContainerImageName: rust:latest
+  VolumeSourceDirectory: '/usr/src/app'
+
+steps:
+- task: Docker@0
+  displayName: cargo test --release
+  inputs:
+    containerregistrytype: 'Container Registry'
+    action: 'Run an image'
+    imageName: '$(ContainerImageName)'
+    volumes: '$(Build.Repository.LocalPath):$(VolumeSourceDirectory)'
+    workDir: '$(VolumeSourceDirectory)'
+    containerCommand: 'cargo test --release'
+    detached: false
