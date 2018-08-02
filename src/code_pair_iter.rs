@@ -112,7 +112,7 @@ impl<T: Read> CodePairIter<T> {
         // If reading a larger code and no data is available, die horribly.
         if code == 255 {
             code = try_from_dxf_result!(read_i16(&mut self.reader)) as i32;
-            self.offset + 2;
+            self.offset += 2;
         }
 
         // Read value.  If no data is available die horribly.

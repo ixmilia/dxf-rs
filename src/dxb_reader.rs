@@ -280,6 +280,6 @@ impl<T: Read> DxbReader<T> {
         Ok(value)
     }
     fn advance_offset(&mut self, offset: usize) {
-        self.offset + offset;
+        self.offset += offset;
     }
 }
