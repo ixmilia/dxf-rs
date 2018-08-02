@@ -11,8 +11,9 @@ use other_helpers::*;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
+use std::path::Path;
 
-pub fn generate_tables() {
+pub fn generate_tables(generated_dir: &Path) {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
@@ -51,7 +52,7 @@ use itertools::PutBack;
     generate_table_reader(&mut fun, &element);
     generate_table_writer(&mut fun, &element);
 
-    let mut file = File::create("src/generated/tables.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("tables.rs")).ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

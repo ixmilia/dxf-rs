@@ -12,8 +12,9 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::iter::Iterator;
+use std::path::Path;
 
-pub fn generate_header() {
+pub fn generate_header(generated_dir: &Path) {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
@@ -55,7 +56,7 @@ use self::uuid::Uuid;
     generate_add_code_pairs(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/generated/header.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("header.rs")).ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

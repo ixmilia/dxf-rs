@@ -8,15 +8,19 @@ mod object_generator;
 mod table_generator;
 mod test_helper_generator;
 
+use std::env;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 
 include!("../src/expected_type.rs");
 
 fn main() {
-    let _ = std::fs::create_dir("src/generated/"); // might fail if it's already there
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let generated_dir = Path::new(&out_dir).join("generated");
+    let _ = std::fs::create_dir(&generated_dir); // might fail if it's already there
 
-    let mut file = File::create("src/generated/mod.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("mod.rs")).ok().unwrap();
     file.write_all("// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 pub mod entities;
@@ -25,10 +29,10 @@ pub mod objects;
 pub mod tables;
 ".as_bytes()).ok().unwrap();
 
-    entity_generator::generate_entities();
-    header_generator::generate_header();
-    object_generator::generate_objects();
-    table_generator::generate_tables();
+    entity_generator::generate_entities(&generated_dir);
+    header_generator::generate_header(&generated_dir);
+    object_generator::generate_objects(&generated_dir);
+    table_generator::generate_tables(&generated_dir);
 
-    test_helper_generator::generate_test_helpers();
+    test_helper_generator::generate_test_helpers(&generated_dir);
 }

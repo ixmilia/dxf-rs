@@ -1,4 +1,2 @@
 Cargo.lock
-src/generated/
-tests/generated/
 target/

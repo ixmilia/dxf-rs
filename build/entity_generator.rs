@@ -12,8 +12,9 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::iter::Iterator;
+use std::path::Path;
 
-pub fn generate_entities() {
+pub fn generate_entities(generated_dir: &Path) {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
@@ -58,7 +59,7 @@ use std::io::Write;
     generate_write(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/generated/entities.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("entities.rs")).ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

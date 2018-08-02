@@ -15,8 +15,9 @@ use std::io::{
     Write,
 };
 use std::iter::Iterator;
+use std::path::Path;
 
-pub fn generate_objects() {
+pub fn generate_objects(generated_dir: &Path) {
     let element = load_xml();
     let mut fun = String::new();
     fun.push_str("
@@ -69,7 +70,7 @@ use self::chrono::{DateTime, Local};
     generate_write(&mut fun, &element);
     fun.push_str("}\n");
 
-    let mut file = File::create("src/generated/objects.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("objects.rs")).ok().unwrap();
     file.write_all(fun.as_bytes()).ok().unwrap();
 }
 

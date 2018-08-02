@@ -8,11 +8,12 @@ use xml_helpers::*;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::iter::Iterator;
+use std::path::Path;
 
-pub fn generate_test_helpers() {
-    let _ = ::std::fs::create_dir("tests/generated/"); // might fail if it's already there
+pub fn generate_test_helpers(generated_dir: &Path) {
+    let _ = ::std::fs::create_dir(generated_dir.join("tests")); // might fail if it's already there
 
-    let mut file = File::create("tests/generated/mod.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("tests/mod.rs")).ok().unwrap();
     file.write_all("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
@@ -29,7 +30,7 @@ use self::dxf::entities::*;
 use self::dxf::objects::*;
 ".trim_left());
     fun.push_str("\n");
-    let mut file = File::create("tests/generated/all_types.rs").ok().unwrap();
+    let mut file = File::create(generated_dir.join("tests/all_types.rs")).ok().unwrap();
     generate_entity_helpers(&mut fun);
     generate_object_helpers(&mut fun);
     file.write_all(fun.as_bytes()).ok().unwrap();
