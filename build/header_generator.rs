@@ -215,6 +215,10 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
     fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     for v in &element.children {
+        if suppress_writing(&v) {
+            continue;
+        }
+
         // prepare writing predicate
         let mut parts = vec![];
         if !min_version(&v).is_empty() {

@@ -38,4 +38,9 @@ pub mod helpers {
         let actual = to_test_string(&drawing);
         assert!(actual.contains(&contents));
     }
+
+    pub fn assert_not_contains(drawing: &Drawing, contents: String) {
+        let actual = to_test_string(&drawing);
+        assert!(!actual.contains(&contents));
+    }
 }

@@ -204,6 +204,10 @@ pub fn name(element: &Element) -> String {
     attr(element, "Name")
 }
 
+pub fn suppress_writing(element: &Element) -> bool {
+    attr(element, "SuppressWriting") == "true"
+}
+
 pub fn typ(element: &Element) -> String {
     attr(element, "Type")
 }
