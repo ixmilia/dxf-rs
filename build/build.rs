@@ -35,4 +35,8 @@ pub mod tables;
     table_generator::generate_tables(&generated_dir);
 
     test_helper_generator::generate_test_helpers(&generated_dir);
+
+    // only watch the `build/` and `spec/` directories
+    println!("cargo:rerun-if-changed=build/");
+    println!("cargo:rerun-if-changed=spec/");
 }
