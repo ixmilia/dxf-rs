@@ -1,17 +1,52 @@
-variables:
-  ContainerImageName: rust:latest
-  VolumeSourceDirectory: '/usr/src/app'
+jobs:
+- job: Windows
+  pool:
+    vmImage: vs2017-win2016
+  strategy:
+    maxParallel: 2
+    matrix:
+      stable:
+        _nightly: false
+      nightly:
+        _nightly: true
+  steps:
+  - task: Rust@1
+    displayName: Prepare
+    inputs:
+      installNightly: $(_nightly)
+  - task: Cargo@1
+    displayName: Build
+    inputs:
+      cargoCommand: build
+      cargoCommandOptions: --release
+  - task: Cargo@1
+    displayName: Test
+    inputs:
+      cargoCommand: test
+      cargoCommandOptions: --release
 
-pool:
-  vmImage: ubuntu-16.04
-steps:
-- task: Docker@0
-  displayName: cargo test --release
-  inputs:
-    containerregistrytype: 'Container Registry'
-    action: 'Run an image'
-    imageName: '$(ContainerImageName)'
-    volumes: '$(Build.Repository.LocalPath):$(VolumeSourceDirectory)'
-    workDir: '$(VolumeSourceDirectory)'
-    containerCommand: 'cargo test --release'
-    detached: false
+- job: Linux
+  pool:
+    vmImage: ubuntu-16.04
+  strategy:
+    maxParallel: 2
+    matrix:
+      stable:
+        _nightly: false
+      nightly:
+        _nightly: true
+  steps:
+  - task: Rust@1
+    displayName: Prepare
+    inputs:
+      installNightly: $(_nightly)
+  - task: Cargo@1
+    displayName: Build
+    inputs:
+      cargoCommand: build
+      cargoCommandOptions: --release
+  - task: Cargo@1
+    displayName: Test
+    inputs:
+      cargoCommand: test
+      cargoCommandOptions: --release
