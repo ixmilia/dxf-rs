@@ -46,7 +46,7 @@ use enums::*;
 use enum_primitive::FromPrimitive;
 use std::io::Write;
 use itertools::PutBack;
-".trim_left());
+".trim_start());
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);
     generate_table_reader(&mut fun, &element);

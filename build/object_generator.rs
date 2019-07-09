@@ -58,7 +58,7 @@ use std::io::Write;
 
 extern crate chrono;
 use self::chrono::{DateTime, Local};
-".trim_left());
+".trim_start());
     fun.push_str("\n");
     generate_base_object(&mut fun, &element);
     generate_object_types(&mut fun, &element);

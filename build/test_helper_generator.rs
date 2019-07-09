@@ -18,7 +18,7 @@ pub fn generate_test_helpers(generated_dir: &Path) {
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 pub mod all_types;
-".trim_left().as_bytes()).ok().unwrap();
+".trim_start().as_bytes()).ok().unwrap();
 
     let mut fun = String::new();
     fun.push_str("
@@ -28,7 +28,7 @@ extern crate dxf;
 use self::dxf::enums::*;
 use self::dxf::entities::*;
 use self::dxf::objects::*;
-".trim_left());
+".trim_start());
     fun.push_str("\n");
     let mut file = File::create(generated_dir.join("tests/all_types.rs")).ok().unwrap();
     generate_entity_helpers(&mut fun);

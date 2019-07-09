@@ -47,7 +47,7 @@ use objects::*;
 
 use itertools::PutBack;
 use std::io::Write;
-".trim_left());
+".trim_start());
     fun.push_str("\n");
     generate_base_entity(&mut fun, &element);
     generate_entity_types(&mut fun, &element);

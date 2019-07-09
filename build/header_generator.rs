@@ -44,7 +44,7 @@ use self::chrono::{DateTime, Local, Utc};
 
 extern crate uuid;
 use self::uuid::Uuid;
-".trim_left());
+".trim_start());
     generate_struct(&mut fun, &element);
 
     generate_default(&mut fun, &element);

@@ -57,7 +57,7 @@ $LUNITS
   9
 $LUPREC
  70
-7".trim_left());
+7".trim_start());
     assert_eq!(16, file.header.maintenance_version);
     assert_eq!(AcadVersion::R13, file.header.version);
     assert_eq!(55.0, file.header.angle_zero_direction);
