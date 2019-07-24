@@ -3,7 +3,7 @@
 extern crate xmltree;
 use self::xmltree::Element;
 use other_helpers::*;
-use ::ExpectedType;
+use ExpectedType;
 
 pub fn attr(element: &Element, name: &str) -> String {
     match &element.attributes.get(name) {
@@ -28,9 +28,11 @@ pub fn codes(element: &Element) -> Vec<i32> {
     let code_overrides = attr(&element, "CodeOverrides");
     if code_overrides.is_empty() {
         return vec![code(&element)];
-    }
-    else {
-        return code_overrides.split(",").map(|c| c.parse::<i32>().unwrap()).collect::<Vec<_>>();
+    } else {
+        return code_overrides
+            .split(",")
+            .map(|c| c.parse::<i32>().unwrap())
+            .collect::<Vec<_>>();
     }
 }
 
@@ -54,8 +56,7 @@ pub fn get_field_reader(element: &Element) -> String {
     let reader_override = attr(&element, "ReaderOverride");
     if !reader_override.is_empty() {
         reader_override
-    }
-    else {
+    } else {
         let expected_type = ExpectedType::get_expected_type(code(&element)).unwrap();
         let reader_fun = get_reader_function(&expected_type);
         let mut read_converter = attr(&element, "ReadConverter");
@@ -63,7 +64,11 @@ pub fn get_field_reader(element: &Element) -> String {
             read_converter = String::from("{}");
         }
         let read_cmd = format!("pair.{}()?", reader_fun);
-        let normalized_read_cmd = if element.name == "Pointer" { String::from("pair.as_handle()?") } else { read_cmd };
+        let normalized_read_cmd = if element.name == "Pointer" {
+            String::from("pair.as_handle()?")
+        } else {
+            read_cmd
+        };
         read_converter.replace("{}", &normalized_read_cmd)
     }
 }
@@ -81,54 +86,89 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
     };
 
     // get method
-    fun.push_str(&format!("    pub fn get_{name}<'a>(&self, drawing: &'a Drawing) -> {return_type} {{\n", name=name(&pointer), return_type=return_type));
+    fun.push_str(&format!(
+        "    pub fn get_{name}<'a>(&self, drawing: &'a Drawing) -> {return_type} {{\n",
+        name = name(&pointer),
+        return_type = return_type
+    ));
     if !typ.is_empty() {
         if allow_multiples(&pointer) {
             if !sub_type.is_empty() {
-                fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| {{\n", field=normalized_field_name));
-                fun.push_str(&format!("            match drawing.get_item_by_handle(h) {{\n"));
-                fun.push_str(&format!("                Some(DrawingItem::{typ}(val)) => {{\n", typ=typ));
+                fun.push_str(&format!(
+                    "        self.{field}.iter().filter_map(|&h| {{\n",
+                    field = normalized_field_name
+                ));
+                fun.push_str(&format!(
+                    "            match drawing.get_item_by_handle(h) {{\n"
+                ));
+                fun.push_str(&format!(
+                    "                Some(DrawingItem::{typ}(val)) => {{\n",
+                    typ = typ
+                ));
                 fun.push_str(&format!("                    match val.specific {{\n"));
-                fun.push_str(&format!("                        {typ}Type::{sub_type}(_) => Some(val),\n", typ=typ, sub_type=sub_type));
+                fun.push_str(&format!(
+                    "                        {typ}Type::{sub_type}(_) => Some(val),\n",
+                    typ = typ,
+                    sub_type = sub_type
+                ));
                 fun.push_str(&format!("                        _ => None,\n"));
                 fun.push_str(&format!("                    }}\n"));
                 fun.push_str(&format!("                }},\n"));
                 fun.push_str(&format!("                _ => None,\n"));
                 fun.push_str(&format!("            }}\n"));
                 fun.push_str("        }).collect()\n");
-            }
-            else {
-                fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| {{\n", field=normalized_field_name));
-                fun.push_str(&format!("            match drawing.get_item_by_handle(h) {{\n"));
-                fun.push_str(&format!("                Some(DrawingItem::{typ}(val)) => Some(val),\n", typ=typ));
+            } else {
+                fun.push_str(&format!(
+                    "        self.{field}.iter().filter_map(|&h| {{\n",
+                    field = normalized_field_name
+                ));
+                fun.push_str(&format!(
+                    "            match drawing.get_item_by_handle(h) {{\n"
+                ));
+                fun.push_str(&format!(
+                    "                Some(DrawingItem::{typ}(val)) => Some(val),\n",
+                    typ = typ
+                ));
                 fun.push_str(&format!("                _ => None,\n"));
                 fun.push_str(&format!("            }}\n"));
                 fun.push_str("        }).collect()\n");
             }
-        }
-        else {
-            fun.push_str(&format!("        match drawing.get_item_by_handle(self.{field}) {{\n", field=normalized_field_name));
+        } else {
+            fun.push_str(&format!(
+                "        match drawing.get_item_by_handle(self.{field}) {{\n",
+                field = normalized_field_name
+            ));
             if !sub_type.is_empty() {
-                fun.push_str(&format!("            Some(DrawingItem::{typ}(val)) => {{\n", typ=typ));
+                fun.push_str(&format!(
+                    "            Some(DrawingItem::{typ}(val)) => {{\n",
+                    typ = typ
+                ));
                 fun.push_str("                match val.specific {\n");
-                fun.push_str(&format!("                    {typ}Type::{sub_type}(_) => Some(val),\n", typ=typ, sub_type=sub_type));
+                fun.push_str(&format!(
+                    "                    {typ}Type::{sub_type}(_) => Some(val),\n",
+                    typ = typ,
+                    sub_type = sub_type
+                ));
                 fun.push_str("                    _ => None,\n");
                 fun.push_str("                }\n");
                 fun.push_str("            },\n");
-            }
-            else {
-                fun.push_str(&format!("            Some(DrawingItem::{typ}(val)) => Some(val),\n", typ=typ));
+            } else {
+                fun.push_str(&format!(
+                    "            Some(DrawingItem::{typ}(val)) => Some(val),\n",
+                    typ = typ
+                ));
             }
             fun.push_str("            _ => None,\n");
             fun.push_str("        }\n");
         }
-    }
-    else {
+    } else {
         if allow_multiples(&pointer) {
             fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| drawing.get_item_by_handle(h)).collect()\n", field=normalized_field_name));
-        }
-        else {
-            fun.push_str(&format!("        drawing.get_item_by_handle(self.{field})\n", field=normalized_field_name));
+        } else {
+            fun.push_str(&format!(
+                "        drawing.get_item_by_handle(self.{field})\n",
+                field = normalized_field_name
+            ));
         }
     }
 
@@ -147,21 +187,23 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                 fun.push_str("        }\n");
                 fun.push_str("\n");
                 fun.push_str("        Ok(())\n");
-            },
+            }
             (false, true) => {
                 // we know the high level type
                 fun.push_str(&format!("    pub fn add_{name}<'a>(&mut self, item: &'a mut {typ}, drawing: &'a mut Drawing) {{\n", name=name(&pointer), typ=typ));
                 fun.push_str(&format!("        self.{field}.push(drawing.assign_and_get_handle(&mut DrawingItemMut::{typ}(item)));\n", field=normalized_field_name, typ=typ));
-            },
+            }
             (true, true) => {
                 // we don't know what type this should be
                 fun.push_str(&format!("    pub fn add_{name}<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {{\n", name=name(&pointer)));
-                fun.push_str(&format!("        self.{field}.push(drawing.assign_and_get_handle(item));\n", field=normalized_field_name));
-            },
+                fun.push_str(&format!(
+                    "        self.{field}.push(drawing.assign_and_get_handle(item));\n",
+                    field = normalized_field_name
+                ));
+            }
             (true, false) => panic!("a specific type was specified without a high level type"),
         }
-    }
-    else {
+    } else {
         match (typ.is_empty(), sub_type.is_empty()) {
             (false, false) => {
                 // we know the very specific type and should fail if it's not correct
@@ -173,17 +215,20 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                 fun.push_str("        }\n");
                 fun.push_str("\n");
                 fun.push_str("        Ok(())\n");
-            },
+            }
             (false, true) => {
                 // we know the high level type
                 fun.push_str(&format!("    pub fn set_{name}<'a>(&mut self, item: &'a mut {typ}, drawing: &'a mut Drawing) {{\n", name=name(&pointer), typ=typ));
                 fun.push_str(&format!("        self.{field} = drawing.assign_and_get_handle(&mut DrawingItemMut::{typ}(item));\n", field=normalized_field_name, typ=typ));
-            },
+            }
             (true, true) => {
                 // we don't know what type this should be
                 fun.push_str(&format!("    pub fn set_{name}<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {{\n", name=name(&pointer)));
-                fun.push_str(&format!("        self.{field} = drawing.assign_and_get_handle(item);\n", field=normalized_field_name));
-            },
+                fun.push_str(&format!(
+                    "        self.{field} = drawing.assign_and_get_handle(item);\n",
+                    field = normalized_field_name
+                ));
+            }
             (true, false) => panic!("a specific type was specified without a high level type"),
         }
     }

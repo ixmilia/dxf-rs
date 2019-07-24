@@ -5,29 +5,25 @@ use std::io::Read;
 use std::time::Duration as StdDuration;
 
 extern crate byteorder;
-use self::byteorder::{
-    ByteOrder,
-    LittleEndian,
-};
+use self::byteorder::{ByteOrder, LittleEndian};
 
 extern crate chrono;
-use self::chrono::Duration as ChronoDuration;
 use self::chrono::prelude::*;
+use self::chrono::Duration as ChronoDuration;
 
 extern crate uuid;
 use self::uuid::Uuid;
 
 use enum_primitive::FromPrimitive;
 
-use ::{CodePair, Color, DxfError, DxfResult};
-use ::enums::*;
-use ::tables::Layer;
+use enums::*;
+use tables::Layer;
+use {CodePair, Color, DxfError, DxfResult};
 
 pub(crate) fn verify_code(pair: &CodePair, expected: i32) -> DxfResult<()> {
     if expected == pair.code {
         Ok(())
-    }
-    else {
+    } else {
         Err(DxfError::UnexpectedCode(pair.code, pair.offset))
     }
 }
@@ -46,15 +42,23 @@ fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {
 }
 
 fn get_epoch<T>(timezone: &T) -> DateTime<T>
-    where T: TimeZone {
+where
+    T: TimeZone,
+{
     timezone.ymd(1900, 1, 1).and_hms(0, 0, 0)
 }
 
 fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
-    where T: TimeZone {
+where
+    T: TimeZone,
+{
     // dates are represented as the fractional number of days elapsed since December 31, 1899.
     let epoch = get_epoch(timezone);
-    let duration = if date == 0.0 { ChronoDuration::seconds(0) } else { f64_to_adjusted_duration(date) };
+    let duration = if date == 0.0 {
+        ChronoDuration::seconds(0)
+    } else {
+        f64_to_adjusted_duration(date)
+    };
     epoch + duration
 }
 
@@ -69,11 +73,16 @@ pub(crate) fn as_datetime_utc(date: f64) -> DateTime<Utc> {
 #[test]
 fn as_datetime_conversion_test() {
     // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
-    assert_eq!(Local.ymd(1999, 12, 31).and_hms(21, 58, 35), as_datetime_local(2451544.91568287));
+    assert_eq!(
+        Local.ymd(1999, 12, 31).and_hms(21, 58, 35),
+        as_datetime_local(2451544.91568287)
+    );
 }
 
 fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
-    where T: TimeZone {
+where
+    T: TimeZone,
+{
     let epoch = get_epoch(timezone);
     let duration = date.signed_duration_since(epoch);
     (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
@@ -90,7 +99,10 @@ pub(crate) fn as_double_utc(date: DateTime<Utc>) -> f64 {
 #[test]
 fn as_double_conversion_test() {
     // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
-    assert_eq!(2451544.9156828704, as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35)));
+    assert_eq!(
+        2451544.9156828704,
+        as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35))
+    );
 }
 
 pub(crate) fn duration_as_double(duration: StdDuration) -> f64 {
@@ -114,8 +126,7 @@ pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
         }
 
         reconstructed.as_str()
-    }
-    else {
+    } else {
         s.as_str()
     };
     match Uuid::parse_str(s) {
@@ -131,15 +142,25 @@ fn parse_regular_and_windows_style_uuids_test() {
 }
 
 pub(crate) fn as_i16(b: bool) -> i16 {
-    if b { 1 } else { 0 }
+    if b {
+        1
+    } else {
+        0
+    }
 }
 
 pub(crate) fn uuid_string(u: &Uuid) -> String {
     format!("{}", u)
 }
 
-pub(crate) fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
-    where F: Fn(f64, f64, f64) -> T {
+pub(crate) fn combine_points_2<F, T>(
+    v1: &mut Vec<f64>,
+    v2: &mut Vec<f64>,
+    result: &mut Vec<T>,
+    comb: F,
+) where
+    F: Fn(f64, f64, f64) -> T,
+{
     for (x, y) in v1.drain(..).zip(v2.drain(..)) {
         result.push(comb(x, y, 0.0));
     }
@@ -147,8 +168,15 @@ pub(crate) fn combine_points_2<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, resul
     v2.clear();
 }
 
-pub(crate) fn combine_points_3<F, T>(v1: &mut Vec<f64>, v2: &mut Vec<f64>, v3: &mut Vec<f64>, result: &mut Vec<T>, comb: F)
-    where F: Fn(f64, f64, f64) -> T {
+pub(crate) fn combine_points_3<F, T>(
+    v1: &mut Vec<f64>,
+    v2: &mut Vec<f64>,
+    v3: &mut Vec<f64>,
+    result: &mut Vec<T>,
+    comb: F,
+) where
+    F: Fn(f64, f64, f64) -> T,
+{
     for (x, (y, z)) in v1.drain(..).zip(v2.drain(..).zip(v3.drain(..))) {
         result.push(comb(x, y, z))
     }
@@ -246,8 +274,9 @@ pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
 }
 
 pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
-    where T: Read + ?Sized {
-
+where
+    T: Read + ?Sized,
+{
     let mut result = String::new();
     let bytes = reader.bytes();
     for (i, c) in bytes.enumerate() {
@@ -259,7 +288,9 @@ pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
             (0, 0xFE) | (1, 0xFF) => (),
             _ => {
                 let c = c as char;
-                if c == '\n' { break; }
+                if c == '\n' {
+                    break;
+                }
                 result.push(c);
             }
         }
@@ -280,95 +311,95 @@ pub(crate) fn read_u8<T: Read + ?Sized>(reader: &mut T) -> Option<io::Result<u8>
     };
     match size {
         0 => None,
-        _ => Some(Ok(buf[0]))
+        _ => Some(Ok(buf[0])),
     }
 }
 
 // safely unwrap an Option<io::Result<T>>
 macro_rules! try_from_option_io_result {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr {
             Some(Ok(v)) => v,
             Some(Err(e)) => return Err(DxfError::IoError(e)),
             None => return Err(DxfError::UnexpectedEndOfInput),
         }
-    )
+    };
 }
 
 // used to turn Result<T> into Option<Result<T>>.
 macro_rules! try_into_option {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr {
             Ok(v) => v,
             Err(e) => return Some(Err(e)),
         }
-    )
+    };
 }
 
 // safely unwrap an Option<DxfResult<T>>
 macro_rules! try_from_dxf_result {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr {
             Ok(v) => v,
             Err(e) => return Some(Err(e)),
         }
-    )
+    };
 }
 
 // safely unwrap an Option<io::Result<T>> into Err()
 macro_rules! try_option_io_result_into_err {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr {
             Some(Ok(v)) => v,
             Some(Err(e)) => return Err(DxfError::IoError(e)),
             None => return Err(DxfError::UnexpectedEndOfInput),
         }
-    )
+    };
 }
 
 // verifies that an actual value matches the expected value
 macro_rules! assert_or_err {
-    ($actual: expr, $expected: expr, $offset: expr) => (
+    ($actual: expr, $expected: expr, $offset: expr) => {
         let actual = $actual;
         if actual != $expected {
             return Err(DxfError::UnexpectedByte($expected, $offset));
         }
-    )
+    };
 }
 
 // returns the next CodePair that's not 0, or bails out early
 macro_rules! next_pair {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr.next() {
             Some(Ok(pair @ CodePair { code: 0, .. })) => {
                 $expr.put_back(Ok(pair));
                 return Ok(true);
-            },
+            }
             Some(Ok(pair)) => pair,
             Some(Err(e)) => return Err(e),
             None => return Ok(true),
         }
-    )
+    };
 }
 
 // Matches an enum value or returns the default
 macro_rules! enum_from_number {
-    ($enum: ident, $default: ident, $fn: ident, $expr: expr) => (
+    ($enum: ident, $default: ident, $fn: ident, $expr: expr) => {
         match $enum::$fn($expr) {
             Some(v) => v,
             None => $enum::$default,
         }
-    )
+    };
 }
 
 // Used to safely access the last element in a Vec<T>
 macro_rules! vec_last {
-    ($expr : expr) => (
+    ($expr : expr) => {
         match $expr.len() {
             0 => return Err(DxfError::UnexpectedEmptySet),
             l => &mut $expr[l - 1],
         }
-    )
+    };
 }
 
 pub(crate) fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
@@ -448,8 +479,7 @@ pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>, offset: usize
         if complete_byte {
             let x = current_byte * 16 + value;
             bytes.push(x);
-        }
-        else {
+        } else {
             current_byte = value;
         }
         complete_byte = !complete_byte;

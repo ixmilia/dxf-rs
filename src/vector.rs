@@ -1,10 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use ::{
-    CodePair,
-    DxfError,
-    DxfResult,
-};
+use {CodePair, DxfError, DxfResult};
 
 /// Represents a simple vector in Cartesian space.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -21,11 +17,7 @@ pub struct Vector {
 impl Vector {
     /// Creates a new `Vector` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
-        Vector {
-            x: x,
-            y: y,
-            z: z,
-        }
+        Vector { x: x, y: y, z: z }
     }
     /// Returns a new zero vector representing (0, 0, 0).
     pub fn zero() -> Vector {
@@ -48,7 +40,12 @@ impl Vector {
             10 => self.x = pair.assert_f64()?,
             20 => self.y = pair.assert_f64()?,
             30 => self.z = pair.assert_f64()?,
-            _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for vector"))),
+            _ => {
+                return Err(DxfError::UnexpectedCodePair(
+                    pair.clone(),
+                    String::from("expected code [10, 20, 30] for vector"),
+                ))
+            }
         }
 
         Ok(())

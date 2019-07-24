@@ -1,15 +1,11 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use std::io::Write;
 use itertools::PutBack;
+use std::io::Write;
 
-use ::{
-    CodePair,
-    DxfError,
-    DxfResult,
-};
+use {CodePair, DxfError, DxfResult};
 
-use ::code_pair_writer::CodePairWriter;
+use code_pair_writer::CodePairWriter;
 
 pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 
@@ -30,9 +26,14 @@ pub enum ExtensionGroupItem {
 }
 
 impl ExtensionGroup {
-    pub(crate) fn read_group<I>(application_name: String, iter: &mut PutBack<I>, offset: usize) -> DxfResult<ExtensionGroup>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    pub(crate) fn read_group<I>(
+        application_name: String,
+        iter: &mut PutBack<I>,
+        offset: usize,
+    ) -> DxfResult<ExtensionGroup>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         if !application_name.starts_with("{") {
             return Err(DxfError::ParseError(offset));
         }
@@ -51,30 +52,37 @@ impl ExtensionGroup {
                 if name == "}" {
                     // end of group
                     break;
-                }
-                else if name.starts_with("{") {
+                } else if name.starts_with("{") {
                     // nested group
                     let sub_group = ExtensionGroup::read_group(name, iter, pair.offset)?;
                     items.push(ExtensionGroupItem::Group(sub_group));
+                } else {
+                    return Err(DxfError::UnexpectedCodePair(
+                        pair,
+                        String::from("expected an extension start or end pair"),
+                    ));
                 }
-                else {
-                    return Err(DxfError::UnexpectedCodePair(pair, String::from("expected an extension start or end pair")));
-                }
-            }
-            else {
+            } else {
                 items.push(ExtensionGroupItem::CodePair(pair));
             }
         }
-        Ok(ExtensionGroup { application_name: application_name, items: items })
+        Ok(ExtensionGroup {
+            application_name: application_name,
+            items: items,
+        })
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
-
+    where
+        T: Write,
+    {
         if self.items.len() > 0 {
             let mut full_group_name = String::new();
             full_group_name.push('{');
             full_group_name.push_str(&self.application_name);
-            writer.write_code_pair(&CodePair::new_string(EXTENSION_DATA_GROUP, &full_group_name))?;
+            writer.write_code_pair(&CodePair::new_string(
+                EXTENSION_DATA_GROUP,
+                &full_group_name,
+            ))?;
             for item in &self.items {
                 match item {
                     &ExtensionGroupItem::CodePair(ref pair) => writer.write_code_pair(pair)?,

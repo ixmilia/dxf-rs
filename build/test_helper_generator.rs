@@ -13,7 +13,9 @@ use std::path::Path;
 pub fn generate_test_helpers(generated_dir: &Path) {
     let _ = ::std::fs::create_dir(generated_dir.join("tests")); // might fail if it's already there
 
-    let mut file = File::create(generated_dir.join("tests/mod.rs")).ok().unwrap();
+    let mut file = File::create(generated_dir.join("tests/mod.rs"))
+        .ok()
+        .unwrap();
     file.write_all("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
@@ -30,7 +32,9 @@ use self::dxf::entities::*;
 use self::dxf::objects::*;
 ".trim_start());
     fun.push_str("\n");
-    let mut file = File::create(generated_dir.join("tests/all_types.rs")).ok().unwrap();
+    let mut file = File::create(generated_dir.join("tests/all_types.rs"))
+        .ok()
+        .unwrap();
     generate_entity_helpers(&mut fun);
     generate_object_helpers(&mut fun);
     file.write_all(fun.as_bytes()).ok().unwrap();
@@ -51,7 +55,11 @@ fn generate_entity_helpers(fun: &mut String) {
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             let subclass = attr(&c, "SubclassMarker");
             let maxver = max_version(c);
-            let maxver = if maxver.is_empty() { String::from("R2018") } else { maxver };
+            let maxver = if maxver.is_empty() {
+                String::from("R2018")
+            } else {
+                maxver
+            };
             for type_string in &type_strings {
                 fun.push_str(&format!("        (\"{type_string}\", \"{subclass}\", EntityType::{typ}({typ}::default()), AcadVersion::{ver}),\n",
                     type_string=type_string,
@@ -73,14 +81,20 @@ fn generate_object_helpers(fun: &mut String) {
 
     fun.push_str("#[cfg(test)]\n");
     fun.push_str("#[allow(dead_code)]\n");
-    fun.push_str("pub fn get_all_object_types() -> Vec<(&'static str, ObjectType, AcadVersion)> {\n");
+    fun.push_str(
+        "pub fn get_all_object_types() -> Vec<(&'static str, ObjectType, AcadVersion)> {\n",
+    );
     fun.push_str("    vec![\n");
     for c in &element.children {
         if name(c) != "Object" {
             let type_string = attr(&c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             let maxver = max_version(c);
-            let maxver = if maxver.is_empty() { String::from("R2018") } else { maxver };
+            let maxver = if maxver.is_empty() {
+                String::from("R2018")
+            } else {
+                maxver
+            };
             for type_string in &type_strings {
                 fun.push_str(&format!("        (\"{type_string}\", ObjectType::{typ}({typ}::default()), AcadVersion::{ver}),\n",
                     type_string=type_string,

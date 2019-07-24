@@ -1,9 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
-use self::dxf::*;
 use self::dxf::entities::*;
 use self::dxf::enums::*;
+use self::dxf::*;
 
 use std::time::Duration;
 
@@ -12,12 +12,18 @@ use test_helpers::helpers::*;
 
 #[test]
 fn empty_header() {
-    let _file = parse_drawing(vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"].join("\n").as_str());
+    let _file = parse_drawing(
+        vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"]
+            .join("\n")
+            .as_str(),
+    );
 }
 
 #[test]
 fn specific_header_values() {
-    let file = from_section("HEADER", "
+    let file = from_section(
+        "HEADER",
+        "
   9
 $ACADMAINTVER
  70
@@ -57,12 +63,17 @@ $LUNITS
   9
 $LUPREC
  70
-7".trim_start());
+7"
+        .trim_start(),
+    );
     assert_eq!(16, file.header.maintenance_version);
     assert_eq!(AcadVersion::R13, file.header.version);
     assert_eq!(55.0, file.header.angle_zero_direction);
     assert_eq!(AngleDirection::Clockwise, file.header.angle_direction);
-    assert_eq!(AttributeVisibility::Normal, file.header.attribute_visibility);
+    assert_eq!(
+        AttributeVisibility::Normal,
+        file.header.attribute_visibility
+    );
     assert_eq!(AngleFormat::Radians, file.header.angle_unit_format);
     assert_eq!(7, file.header.angle_unit_precision);
     assert_eq!("<current layer>", file.header.current_layer);
@@ -72,27 +83,49 @@ $LUPREC
 
 #[test]
 fn read_alternate_version() {
-    let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "15.05"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["  9", "$ACADVER", "  1", "15.05"]
+            .join("\r\n")
+            .as_str(),
+    );
     assert_eq!(AcadVersion::R2000, file.header.version);
 }
 
 #[test]
 fn read_invalid_version() {
-    let file = from_section("HEADER", vec!["  9", "$ACADVER", "  1", "AC3.14159"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["  9", "$ACADVER", "  1", "AC3.14159"]
+            .join("\r\n")
+            .as_str(),
+    );
     assert_eq!(AcadVersion::R12, file.header.version);
 }
 
 #[test]
 fn read_multi_value_variable() {
-    let file = from_section("HEADER", vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"].join("\r\n").as_str());
-    assert_eq!(Point::new(1.1, 2.2, 3.3), file.header.minimum_drawing_extents)
+    let file = from_section(
+        "HEADER",
+        vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"]
+            .join("\r\n")
+            .as_str(),
+    );
+    assert_eq!(
+        Point::new(1.1, 2.2, 3.3),
+        file.header.minimum_drawing_extents
+    )
 }
 
 #[test]
 fn write_multiple_value_variable() {
     let mut file = Drawing::default();
     file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
-    assert!(to_test_string(&file).contains(vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"].join("\r\n").as_str()));
+    assert!(to_test_string(&file).contains(
+        vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"]
+            .join("\r\n")
+            .as_str()
+    ));
 }
 
 #[test]
@@ -117,7 +150,10 @@ fn normalize_header() {
 
 #[test]
 fn read_header_flags() {
-    let file = from_section("HEADER", vec!["9", "$OSMODE", "70", "12"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["9", "$OSMODE", "70", "12"].join("\r\n").as_str(),
+    );
     assert!(!file.header.get_end_point_snap());
     assert!(!file.header.get_mid_point_snap());
     assert!(file.header.get_center_snap());
@@ -155,11 +191,21 @@ fn write_header_flags() {
 #[test]
 fn read_variable_with_different_codes() {
     // read $CMLSTYLE as code 7
-    let file = from_section("HEADER", vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"]
+            .join("\r\n")
+            .as_str(),
+    );
     assert_eq!("cml-style-7", file.header.current_multiline_style);
 
     // read $CMLSTYLE as code 2
-    let file = from_section("HEADER", vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"]
+            .join("\r\n")
+            .as_str(),
+    );
     assert_eq!("cml-style-2", file.header.current_multiline_style);
 }
 
@@ -169,50 +215,62 @@ fn write_variable_with_different_codes() {
     let mut file = Drawing::default();
     file.header.version = AcadVersion::R13;
     file.header.current_multiline_style = String::from("cml-style-7");
-    assert_contains(&file, vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"));
+    assert_contains(
+        &file,
+        vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"),
+    );
 
     // R14+ writes $CMLSTYLE as a code 2
     let mut file = Drawing::default();
     file.header.version = AcadVersion::R14;
     file.header.current_multiline_style = String::from("cml-style-2");
-    assert_contains(&file, vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"));
+    assert_contains(
+        &file,
+        vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"),
+    );
 }
 
 #[test]
 fn read_drawing_edit_duration() {
-    let file = from_section("HEADER", vec!["  9", "$TDINDWG", " 40", "100.0"].join("\r\n").as_str());
+    let file = from_section(
+        "HEADER",
+        vec!["  9", "$TDINDWG", " 40", "100.0"]
+            .join("\r\n")
+            .as_str(),
+    );
     assert_eq!(Duration::from_secs(100), file.header.time_in_drawing);
 }
 
 #[test]
 fn write_proper_handseed_on_new_file() {
     let mut drawing = Drawing::default();
-    drawing.entities.push(Entity::new(EntityType::Line(Line::new(Point::origin(), Point::origin()))));
-    assert_contains(&drawing, vec![
-        "  9", "$HANDSEED",
-        "  5", "2",
-    ].join("\r\n"));
+    drawing
+        .entities
+        .push(Entity::new(EntityType::Line(Line::new(
+            Point::origin(),
+            Point::origin(),
+        ))));
+    assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "2"].join("\r\n"));
 }
 
 #[test]
 fn write_proper_handseed_on_read_file() {
-    let mut drawing = from_section("HEADER", vec![
-        "  9", "$HANDSEED",
-        "  5", "2",
-    ].join("\r\n").as_str());
-    drawing.entities.push(Entity::new(EntityType::Line(Line::new(Point::origin(), Point::origin()))));
-    assert_contains(&drawing, vec![
-        "  9", "$HANDSEED",
-        "  5", "3",
-    ].join("\r\n"));
+    let mut drawing = from_section(
+        "HEADER",
+        vec!["  9", "$HANDSEED", "  5", "2"].join("\r\n").as_str(),
+    );
+    drawing
+        .entities
+        .push(Entity::new(EntityType::Line(Line::new(
+            Point::origin(),
+            Point::origin(),
+        ))));
+    assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "3"].join("\r\n"));
 }
 
 #[test]
 fn dont_write_suppressed_variables() {
     let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2004;
-    assert_not_contains(&drawing, vec![
-        "  9", "$HIDETEXT",
-        "290", "0",
-    ].join("\r\n"));
+    assert_not_contains(&drawing, vec!["  9", "$HIDETEXT", "290", "0"].join("\r\n"));
 }

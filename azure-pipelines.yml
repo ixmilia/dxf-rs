@@ -33,3 +33,13 @@ jobs:
   - template: ci/azure-test.yml
     parameters:
       rustToolchain: $(rustToolchain)
+
+- job: Formatting
+  pool:
+    vmImage: ubuntu-16.04
+  container: 'rust:latest'
+  steps:
+  - script: rustup component add rustfmt
+    displayName: Install rustfmt
+  - script: cargo fmt --all -- --check
+    displayName: Run rustfmt

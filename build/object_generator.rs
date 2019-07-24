@@ -3,17 +3,14 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ::ExpectedType;
+use ExpectedType;
 
-use xml_helpers::*;
 use other_helpers::*;
+use xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{
-    BufReader,
-    Write,
-};
+use std::io::{BufReader, Write};
 use std::iter::Iterator;
 use std::path::Path;
 
@@ -76,24 +73,42 @@ use self::chrono::{DateTime, Local};
 
 fn generate_base_object(fun: &mut String, element: &Element) {
     let object = &element.children[0];
-    if name(&object) != "Object" { panic!("Expected first object to be 'Object'."); }
+    if name(&object) != "Object" {
+        panic!("Expected first object to be 'Object'.");
+    }
     fun.push_str("#[derive(Clone)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct ObjectCommon {\n");
     for c in &object.children {
-        let t = if allow_multiples(&c) { format!("Vec<{}>", typ(c)) } else { typ(c) };
+        let t = if allow_multiples(&c) {
+            format!("Vec<{}>", typ(c))
+        } else {
+            typ(c)
+        };
         if !comment(&c).is_empty() {
             fun.push_str(&format!("    /// {}\n", comment(&c)));
         }
         match &*c.name {
             "Field" => {
-                fun.push_str(&format!("    pub {name}: {typ},\n", name=name(c), typ=t));
-            },
+                fun.push_str(&format!(
+                    "    pub {name}: {typ},\n",
+                    name = name(c),
+                    typ = t
+                ));
+            }
             "Pointer" => {
-                let typ = if allow_multiples(&c) { "Vec<u32>" } else { "u32" };
+                let typ = if allow_multiples(&c) {
+                    "Vec<u32>"
+                } else {
+                    "u32"
+                };
                 fun.push_str("    #[doc(hidden)]\n");
-                fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(c), typ=typ));
-            },
+                fun.push_str(&format!(
+                    "    pub __{name}_handle: {typ},\n",
+                    name = name(c),
+                    typ = typ
+                ));
+            }
             "WriteOrder" => (),
             _ => panic!("unexpected element under Object: {}", c.name),
         }
@@ -116,11 +131,18 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     for c in &object.children {
         match &*c.name {
             "Field" => {
-                fun.push_str(&format!("            {name}: {val},\n", name=name(c), val=default_value(&c)));
-            },
+                fun.push_str(&format!(
+                    "            {name}: {val},\n",
+                    name = name(c),
+                    val = default_value(&c)
+                ));
+            }
             "Pointer" => {
-                fun.push_str(&format!("            __{name}_handle: 0,\n", name=name(c)));
-            },
+                fun.push_str(&format!(
+                    "            __{name}_handle: 0,\n",
+                    name = name(c)
+                ));
+            }
             "WriteOrder" => (),
             _ => panic!("unexpected element under Object: {}", c.name),
         }
@@ -152,22 +174,27 @@ fn generate_base_object(fun: &mut String, element: &Element) {
                 fun.push_str("                let group = ExtensionGroup::read_group(pair.assert_string()?, iter, pair.offset)?;\n");
                 fun.push_str("                self.extension_data_groups.push(group);\n");
                 fun.push_str("            },\n");
-            }
-            else if name(c) == "x_data" && code(c) == 1001 {
+            } else if name(c) == "x_data" && code(c) == 1001 {
                 // handled below: x_data::XDATA_APPLICATIONNAME
-            }
-            else {
+            } else {
                 let read_fun = if allow_multiples(&c) {
                     format!(".push({})", get_field_reader(&c))
-                }
-                else {
+                } else {
                     format!(" = {}", get_field_reader(&c))
                 };
-                fun.push_str(&format!("            {code} => {{ self.{field}{read_fun} }},\n", code=code(c), field=name(c), read_fun=read_fun));
+                fun.push_str(&format!(
+                    "            {code} => {{ self.{field}{read_fun} }},\n",
+                    code = code(c),
+                    field = name(c),
+                    read_fun = read_fun
+                ));
             }
-        }
-        else if c.name == "Pointer" {
-            fun.push_str(&format!("            {code} => {{ self.__{field}_handle = pair.as_handle()? }},\n", code=code(&c), field=name(c)));
+        } else if c.name == "Pointer" {
+            fun.push_str(&format!(
+                "            {code} => {{ self.__{field}_handle = pair.as_handle()? }},\n",
+                code = code(&c),
+                field = name(c)
+            ));
         }
     }
 
@@ -201,9 +228,11 @@ fn generate_object_types(fun: &mut String, element: &Element) {
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub enum ObjectType {\n");
     for c in &element.children {
-        if c.name != "Object" { panic!("expected top level object"); }
+        if c.name != "Object" {
+            panic!("expected top level object");
+        }
         if name(c) != "Object" {
-            fun.push_str(&format!("    {typ}({typ}),\n", typ=name(c)));
+            fun.push_str(&format!("    {typ}({typ}),\n", typ = name(c)));
         }
     }
 
@@ -212,14 +241,20 @@ fn generate_object_types(fun: &mut String, element: &Element) {
 
     // individual structs
     for c in &element.children {
-        if c.name != "Object" { panic!("expected top level object"); }
+        if c.name != "Object" {
+            panic!("expected top level object");
+        }
         if name(c) != "Object" {
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
             fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
-            fun.push_str(&format!("pub struct {typ} {{\n", typ=name(c)));
+            fun.push_str(&format!("pub struct {typ} {{\n", typ = name(c)));
             for f in &c.children {
-                let t = if allow_multiples(&f) { format!("Vec<{}>", typ(f)) } else { typ(f) };
+                let t = if allow_multiples(&f) {
+                    format!("Vec<{}>", typ(f))
+                } else {
+                    typ(f)
+                };
                 let is_private = name(f).starts_with("_");
                 if !comment(&f).is_empty() {
                     fun.push_str(&format!("    /// {}\n", comment(&f)));
@@ -229,13 +264,25 @@ fn generate_object_types(fun: &mut String, element: &Element) {
                 }
                 match &*f.name {
                     "Field" => {
-                        fun.push_str(&format!("    pub {name}: {typ},\n", name=name(f), typ=t));
-                    },
+                        fun.push_str(&format!(
+                            "    pub {name}: {typ},\n",
+                            name = name(f),
+                            typ = t
+                        ));
+                    }
                     "Pointer" => {
-                        let typ = if allow_multiples(&f) { "Vec<u32>" } else { "u32" };
+                        let typ = if allow_multiples(&f) {
+                            "Vec<u32>"
+                        } else {
+                            "u32"
+                        };
                         fun.push_str("    #[doc(hidden)]\n");
-                        fun.push_str(&format!("    pub __{name}_handle: {typ},\n", name=name(f), typ=typ));
-                    },
+                        fun.push_str(&format!(
+                            "    pub __{name}_handle: {typ},\n",
+                            name = name(f),
+                            typ = typ
+                        ));
+                    }
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Object", f.name),
                 }
@@ -245,18 +292,26 @@ fn generate_object_types(fun: &mut String, element: &Element) {
             fun.push_str("\n");
 
             // implementation
-            fun.push_str(&format!("impl Default for {typ} {{\n", typ=name(c)));
-            fun.push_str(&format!("    fn default() -> {typ} {{\n", typ=name(c)));
-            fun.push_str(&format!("        {typ} {{\n", typ=name(c)));
+            fun.push_str(&format!("impl Default for {typ} {{\n", typ = name(c)));
+            fun.push_str(&format!("    fn default() -> {typ} {{\n", typ = name(c)));
+            fun.push_str(&format!("        {typ} {{\n", typ = name(c)));
             for f in &c.children {
                 match &*f.name {
                     "Field" => {
-                        fun.push_str(&format!("            {name}: {val},\n", name=name(f), val=default_value(&f)));
-                    },
+                        fun.push_str(&format!(
+                            "            {name}: {val},\n",
+                            name = name(f),
+                            val = default_value(&f)
+                        ));
+                    }
                     "Pointer" => {
                         let val = if allow_multiples(&f) { "vec![]" } else { "0" };
-                        fun.push_str(&format!("            __{name}_handle: {val},\n", name=name(f), val=val));
-                    },
+                        fun.push_str(&format!(
+                            "            __{name}_handle: {val},\n",
+                            name = name(f),
+                            val = val
+                        ));
+                    }
                     "WriteOrder" => (),
                     _ => panic!("unexpected element {} under Object", f.name),
                 }
@@ -282,15 +337,33 @@ fn generate_implementation(fun: &mut String, element: &Element) {
                 if flag.name == "Flag" {
                     let flag_name = name(&flag);
                     let mask = attr(&flag, "Mask");
-                    implementation.push_str(&format!("    pub fn get_{name}(&self) -> bool {{\n", name=flag_name));
-                    implementation.push_str(&format!("        self.{name} & {mask} != 0\n", name=name(&field), mask=mask));
+                    implementation.push_str(&format!(
+                        "    pub fn get_{name}(&self) -> bool {{\n",
+                        name = flag_name
+                    ));
+                    implementation.push_str(&format!(
+                        "        self.{name} & {mask} != 0\n",
+                        name = name(&field),
+                        mask = mask
+                    ));
                     implementation.push_str("    }\n");
-                    implementation.push_str(&format!("    pub fn set_{name}(&mut self, val: bool) {{\n", name=flag_name));
+                    implementation.push_str(&format!(
+                        "    pub fn set_{name}(&mut self, val: bool) {{\n",
+                        name = flag_name
+                    ));
                     implementation.push_str("        if val {\n");
-                    implementation.push_str(&format!("            self.{name} |= {mask};\n", name=name(&field), mask=mask));
+                    implementation.push_str(&format!(
+                        "            self.{name} |= {mask};\n",
+                        name = name(&field),
+                        mask = mask
+                    ));
                     implementation.push_str("        }\n");
                     implementation.push_str("        else {\n");
-                    implementation.push_str(&format!("            self.{name} &= !{mask};\n", name=name(&field), mask=mask));
+                    implementation.push_str(&format!(
+                        "            self.{name} &= !{mask};\n",
+                        name = name(&field),
+                        mask = mask
+                    ));
                     implementation.push_str("        }\n");
                     implementation.push_str("    }\n");
                 }
@@ -306,7 +379,7 @@ fn generate_implementation(fun: &mut String, element: &Element) {
     }
 
     if !implementation.is_empty() {
-        fun.push_str(&format!("impl {typ} {{\n", typ=name(&element)));
+        fun.push_str(&format!("impl {typ} {{\n", typ = name(&element)));
         fun.push_str(&implementation);
         fun.push_str("}\n");
         fun.push_str("\n");
@@ -314,7 +387,9 @@ fn generate_implementation(fun: &mut String, element: &Element) {
 }
 
 fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
-    fun.push_str("    pub(crate) fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n");
+    fun.push_str(
+        "    pub(crate) fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n",
+    );
     fun.push_str("        match self {\n");
     for object in &element.children {
         if name(&object) != "Object" {
@@ -325,8 +400,16 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
             if !max_version(&object).is_empty() {
                 predicates.push(format!("*version <= AcadVersion::{}", max_version(&object)));
             }
-            let predicate = if predicates.len() == 0 { String::from("true") } else { predicates.join(" && ") };
-            fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ {predicate} }},\n", typ=name(&object), predicate=predicate));
+            let predicate = if predicates.len() == 0 {
+                String::from("true")
+            } else {
+                predicates.join(" && ")
+            };
+            fun.push_str(&format!(
+                "            &ObjectType::{typ}(_) => {{ {predicate} }},\n",
+                typ = name(&object),
+                predicate = predicate
+            ));
         }
     }
     fun.push_str("        }\n");
@@ -357,7 +440,11 @@ fn generate_type_string(fun: &mut String, element: &Element) {
         let type_string = attr(&c, "TypeString");
         let type_strings = type_string.split(',').collect::<Vec<_>>();
         if name(c) != "Object" && !type_string.is_empty() {
-            fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ \"{type_string}\" }},\n", typ=name(c), type_string=type_strings[0]));
+            fun.push_str(&format!(
+                "            &ObjectType::{typ}(_) => {{ \"{type_string}\" }},\n",
+                typ = name(c),
+                type_string = type_strings[0]
+            ));
         }
     }
     fun.push_str("        }\n");
@@ -366,14 +453,26 @@ fn generate_type_string(fun: &mut String, element: &Element) {
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     let mut unused_readers = vec![];
-    fun.push_str("    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n");
+    fun.push_str(
+        "    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n",
+    );
     fun.push_str("        match self {\n");
     for c in &element.children {
-        if c.name != "Object" { panic!("expected top level object"); }
+        if c.name != "Object" {
+            panic!("expected top level object");
+        }
         if name(c) != "Object" {
             if generate_reader_function(&c) {
-                let obj = if name(&c) == "PlaceHolder" || name(&c) == "ObjectPointer" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
-                fun.push_str(&format!("            &mut ObjectType::{typ}(ref mut {obj}) => {{\n", typ=name(c), obj=obj));
+                let obj = if name(&c) == "PlaceHolder" || name(&c) == "ObjectPointer" {
+                    "_obj"
+                } else {
+                    "obj"
+                }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
+                fun.push_str(&format!(
+                    "            &mut ObjectType::{typ}(ref mut {obj}) => {{\n",
+                    typ = name(c),
+                    obj = obj
+                ));
                 fun.push_str("                match pair.code {\n");
                 let mut seen_codes = HashSet::new();
                 for f in &c.children {
@@ -387,12 +486,15 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                     1 => {
                                         let read_fun = if allow_multiples(&f) {
                                             format!(".push({})", reader)
-                                        }
-                                        else {
+                                        } else {
                                             format!(" = {}", reader)
                                         };
-                                        format!("obj.{field}{read_fun}", field=name(&f), read_fun=read_fun)
-                                    },
+                                        format!(
+                                            "obj.{field}{read_fun}",
+                                            field = name(&f),
+                                            read_fun = read_fun
+                                        )
+                                    }
                                     _ => {
                                         let suffix = match i {
                                             0 => "x",
@@ -400,18 +502,25 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                             2 => "z",
                                             _ => panic!("impossible"),
                                         };
-                                        format!("obj.{field}.{suffix} = {reader}", field=name(&f), suffix=suffix, reader=reader)
+                                        format!(
+                                            "obj.{field}.{suffix} = {reader}",
+                                            field = name(&f),
+                                            suffix = suffix,
+                                            reader = reader
+                                        )
                                     }
                                 };
-                                fun.push_str(&format!("                    {code} => {{ {cmd}; }},\n", code=cd, cmd=write_cmd));
+                                fun.push_str(&format!(
+                                    "                    {code} => {{ {cmd}; }},\n",
+                                    code = cd,
+                                    cmd = write_cmd
+                                ));
                             }
                         }
-                    }
-                    else if f.name == "Pointer" {
+                    } else if f.name == "Pointer" {
                         if allow_multiples(&f) {
                             fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(&f), field=name(&f)));
-                        }
-                        else {
+                        } else {
                             fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle = pair.as_handle()?; }},\n", code=code(&f), field=name(&f)));
                         }
                     }
@@ -420,8 +529,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                 fun.push_str("                    _ => return Ok(false),\n");
                 fun.push_str("                }\n");
                 fun.push_str("            },\n");
-            }
-            else {
+            } else {
                 // ensure no read converters were specified (because they won't be used)
                 for f in &c.children {
                     if f.name == "Field" && !attr(&f, "ReadConverter").is_empty() {
@@ -451,15 +559,22 @@ fn generate_write(fun: &mut String, element: &Element) {
     for object in &element.children {
         if name(&object) != "Object" {
             if generate_writer_function(&object) {
-                let obj = if name(&object) == "PlaceHolder" || name(&object) == "ObjectPointer" { "_obj" } else { "obj" }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
-                fun.push_str(&format!("            &ObjectType::{typ}(ref {obj}) => {{\n", typ=name(&object), obj=obj));
+                let obj = if name(&object) == "PlaceHolder" || name(&object) == "ObjectPointer" {
+                    "_obj"
+                } else {
+                    "obj"
+                }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
+                fun.push_str(&format!(
+                    "            &ObjectType::{typ}(ref {obj}) => {{\n",
+                    typ = name(&object),
+                    obj = obj
+                ));
                 for line in generate_write_code_pairs(&object) {
                     fun.push_str(&format!("                {}\n", line));
                 }
 
                 fun.push_str("            },\n");
-            }
-            else {
+            } else {
                 // ensure no write converters were specified (because they won't be used)
                 for f in &element.children {
                     if f.name == "Field" && !attr(&f, "WriteConverter").is_empty() {
@@ -507,7 +622,10 @@ fn generate_write_code_pairs(object: &Element) -> Vec<String> {
     // no order given, use declaration order
     let subclass = attr(&object, "SubclassMarker");
     if !subclass.is_empty() {
-        commands.push(format!("writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\"))?;", subclass=subclass));
+        commands.push(format!(
+            "writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\"))?;",
+            subclass = subclass
+        ));
     }
     for field in &object.children {
         if generate_writer(&field) {
@@ -516,7 +634,7 @@ fn generate_write_code_pairs(object: &Element) -> Vec<String> {
                     for line in get_write_lines_for_field(&field, vec![]) {
                         commands.push(line);
                     }
-                },
+                }
                 _ => panic!("unexpected item {} in object", field.name),
             }
         }
@@ -524,31 +642,52 @@ fn generate_write_code_pairs(object: &Element) -> Vec<String> {
     return commands;
 }
 
-fn generate_write_code_pairs_for_write_order(object: &Element, write_command: &Element) -> Vec<String> {
+fn generate_write_code_pairs_for_write_order(
+    object: &Element,
+    write_command: &Element,
+) -> Vec<String> {
     let mut commands = vec![];
     match &*write_command.name {
         "WriteField" => {
             let field_name = write_command.attributes.get("Field").unwrap();
             let field = get_field_with_name(&object, &field_name);
-            let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", field_name) } else { field_name.clone() };
+            let normalized_field_name = if field.name == "Pointer" {
+                format!("__{}_handle", field_name)
+            } else {
+                field_name.clone()
+            };
             let mut write_conditions = vec![attr(&write_command, "WriteCondition")];
             if !attr(&write_command, "DontWriteIfValueIs").is_empty() {
-                write_conditions.push(format!("obj.{} != {}", normalized_field_name, attr(&write_command, "DontWriteIfValueIs")));
+                write_conditions.push(format!(
+                    "obj.{} != {}",
+                    normalized_field_name,
+                    attr(&write_command, "DontWriteIfValueIs")
+                ));
             }
             for line in get_write_lines_for_field(&field, write_conditions) {
                 commands.push(line);
             }
-        },
+        }
         "WriteSpecificValue" => {
             let mut predicates = vec![];
             if !min_version(&write_command).is_empty() {
-                predicates.push(format!("*version >= AcadVersion::{}", min_version(&write_command)));
+                predicates.push(format!(
+                    "*version >= AcadVersion::{}",
+                    min_version(&write_command)
+                ));
             }
             if !max_version(&write_command).is_empty() {
-                predicates.push(format!("*version <= AcadVersion::{}", max_version(&write_command)));
+                predicates.push(format!(
+                    "*version <= AcadVersion::{}",
+                    max_version(&write_command)
+                ));
             }
             if !attr(&write_command, "DontWriteIfValueIs").is_empty() {
-                predicates.push(format!("{} != {}", attr(&write_command, "Value"), attr(&write_command, "DontWriteIfValueIs")));
+                predicates.push(format!(
+                    "{} != {}",
+                    attr(&write_command, "Value"),
+                    attr(&write_command, "DontWriteIfValueIs")
+                ));
             }
             let code = code(&write_command);
             let expected_type = ExpectedType::get_expected_type(code).unwrap();
@@ -557,11 +696,17 @@ fn generate_write_code_pairs_for_write_order(object: &Element, write_command: &E
                 commands.push(format!("if {} {{", predicates.join(" && ")));
             }
             let indent = if predicates.len() > 0 { "    " } else { "" };
-            commands.push(format!("{indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;", indent=indent, typ=typ, code=code, val=attr(&write_command, "Value")));
+            commands.push(format!(
+                "{indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;",
+                indent = indent,
+                typ = typ,
+                code = code,
+                val = attr(&write_command, "Value")
+            ));
             if predicates.len() > 0 {
                 commands.push(String::from("}"));
             }
-        },
+        }
         "Foreach" => {
             commands.push(format!("for item in &{} {{", attr(&write_command, "Field")));
             for write_command in &write_command.children {
@@ -570,14 +715,16 @@ fn generate_write_code_pairs_for_write_order(object: &Element, write_command: &E
                 }
             }
             commands.push(String::from("}"));
-        },
+        }
         "WriteExtensionData" => {
             commands.push(String::from("if *version >= AcadVersion::R14 {"));
-            commands.push(String::from("    for group in &self.extension_data_groups {"));
+            commands.push(String::from(
+                "    for group in &self.extension_data_groups {",
+            ));
             commands.push(String::from("        group.write(writer)?;"));
             commands.push(String::from("    }"));
             commands.push(String::from("}"));
-        },
+        }
         _ => panic!("unexpected write command {}", write_command.name),
     }
 
@@ -594,7 +741,11 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         predicates.push(format!("*version <= AcadVersion::{}", max_version(&field)));
     }
     if disable_writing_default(&field) {
-        predicates.push(format!("obj.{field} != {default}", field=name(&field), default=default_value(&field)));
+        predicates.push(format!(
+            "obj.{field} != {default}",
+            field = name(&field),
+            default = default_value(&field)
+        ));
     }
     for wc in write_conditions {
         if !wc.is_empty() {
@@ -616,14 +767,31 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         let write_converter = get_write_converter(&field);
         let to_write = write_converter.replace("{}", val);
         let typ = get_code_pair_type(expected_type);
-        let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
-        commands.push(format!("{indent}for v in &obj.{field} {{", indent=indent, field=normalized_field_name));
-        commands.push(format!("{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {to_write}))?;", indent=indent, typ=typ, code=codes(&field)[0], to_write=to_write));
-        commands.push(format!("{indent}}}", indent=indent));
-    }
-    else {
+        let normalized_field_name = if field.name == "Pointer" {
+            format!("__{}_handle", name(&field))
+        } else {
+            name(&field)
+        };
+        commands.push(format!(
+            "{indent}for v in &obj.{field} {{",
+            indent = indent,
+            field = normalized_field_name
+        ));
+        commands.push(format!(
+            "{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {to_write}))?;",
+            indent = indent,
+            typ = typ,
+            code = codes(&field)[0],
+            to_write = to_write
+        ));
+        commands.push(format!("{indent}}}", indent = indent));
+    } else {
         for command in get_code_pairs_for_field(&field) {
-            commands.push(format!("{indent}writer.write_code_pair(&{command})?;", indent=indent, command=command));
+            commands.push(format!(
+                "{indent}writer.write_code_pair(&{command})?;",
+                indent = indent,
+                command = command
+            ));
         }
     }
 
@@ -637,9 +805,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
 fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
     let codes = codes(&field);
     match codes.len() {
-        1 => {
-            vec![get_code_pair_for_field_and_code(codes[0], &field, None)]
-        },
+        1 => vec![get_code_pair_for_field_and_code(codes[0], &field, None)],
         _ => {
             let mut pairs = vec![];
             for (i, &cd) in codes.iter().enumerate() {
@@ -671,8 +837,7 @@ fn get_write_converter_with_code(code: i32, field: &Element) -> String {
     if write_converter.is_empty() {
         if typ == "string" {
             write_converter = String::from("&{}");
-        }
-        else {
+        } else {
             write_converter = String::from("{}");
         }
     }
@@ -684,17 +849,25 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     let expected_type = ExpectedType::get_expected_type(code).unwrap();
     let typ = get_code_pair_type(expected_type);
     let write_converter = get_write_converter_with_code(code, &field);
-    let normalized_field_name = if field.name == "Pointer" { format!("__{}_handle", name(&field)) } else { name(&field) };
-    let mut field_access = format!("obj.{field}", field=normalized_field_name);
+    let normalized_field_name = if field.name == "Pointer" {
+        format!("__{}_handle", name(&field))
+    } else {
+        name(&field)
+    };
+    let mut field_access = format!("obj.{field}", field = normalized_field_name);
     if let Some(suffix) = suffix {
         field_access = format!("{}.{}", field_access, suffix);
     }
     let writer = write_converter.replace("{}", &field_access);
     if name(&field) == "handle" && code == 5 {
         String::from("CodePair::new_string(5, &as_handle(if self.handle == 0 { handle_tracker.get_object_handle(&self) } else { self.handle }))")
-    }
-    else {
-        format!("CodePair::new_{typ}({code}, {writer})", typ=typ, code=code, writer=writer)
+    } else {
+        format!(
+            "CodePair::new_{typ}({code}, {writer})",
+            typ = typ,
+            code = code,
+            writer = writer
+        )
     }
 }
 

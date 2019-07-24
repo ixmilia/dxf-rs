@@ -2,35 +2,24 @@
 
 // other implementation is in `generated/objects.rs`
 
+use enum_primitive::FromPrimitive;
+use itertools::{Itertools, PutBack};
 use std::io::Write;
 use std::ops::Add;
-use enum_primitive::FromPrimitive;
-use itertools::{
-    Itertools,
-    PutBack,
-};
 
 extern crate chrono;
 use self::chrono::Duration;
 
-use ::{
-    CodePair,
-    Color,
-    DataTableValue,
-    DxfError,
-    DxfResult,
-    Point,
-    SectionTypeSettings,
-    TableCellStyle,
-    TransformationMatrix,
+use {
+    CodePair, Color, DataTableValue, DxfError, DxfResult, Point, SectionTypeSettings,
+    TableCellStyle, TransformationMatrix,
 };
 
 use code_pair_writer::CodePairWriter;
 use enums::*;
 use handle_tracker::HandleTracker;
-use objects::*;
 use helper_functions::*;
-
+use objects::*;
 
 //------------------------------------------------------------------------------
 //                                                                  GeoMeshPoint
@@ -128,8 +117,9 @@ impl Object {
         // no object-specific values to set
     }
     pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Object>>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         loop {
             match iter.next() {
                 // first code pair must be 0/object-type
@@ -151,7 +141,7 @@ impl Object {
                                             // new object or ENDSEC
                                             iter.put_back(Ok(pair));
                                             break;
-                                        },
+                                        }
                                         Some(Ok(pair)) => obj.apply_code_pair(&pair, iter)?,
                                         Some(Err(e)) => return Err(e),
                                         None => return Err(DxfError::UnexpectedEndOfInput),
@@ -162,16 +152,16 @@ impl Object {
                             }
 
                             return Ok(Some(obj));
-                        },
+                        }
                         None => {
                             // swallow unsupported object
                             loop {
-                               match iter.next() {
+                                match iter.next() {
                                     Some(Ok(pair @ CodePair { code: 0, .. })) => {
                                         // found another object or ENDSEC
                                         iter.put_back(Ok(pair));
                                         break;
-                                    },
+                                    }
                                     Some(Ok(_)) => (), // part of the unsupported object
                                     Some(Err(e)) => return Err(e),
                                     None => return Err(DxfError::UnexpectedEndOfInput),
@@ -179,16 +169,22 @@ impl Object {
                             }
                         }
                     }
-                },
-                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/object-type or 0/ENDSEC"))),
+                }
+                Some(Ok(pair)) => {
+                    return Err(DxfError::UnexpectedCodePair(
+                        pair,
+                        String::from("expected 0/object-type or 0/ENDSEC"),
+                    ))
+                }
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
         }
     }
     fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         if !self.specific.try_apply_code_pair(&pair)? {
             self.common.apply_individual_pair(&pair, iter)?;
         }
@@ -213,39 +209,78 @@ impl Object {
                 proxy.__object_ids_b.clear();
                 proxy.__object_ids_c.clear();
                 proxy.__object_ids_d.clear();
-            },
+            }
             ObjectType::GeoData(ref mut geo) => {
                 let mut source_points = vec![];
                 let mut destination_points = vec![];
-                combine_points_2(&mut geo.__source_mesh_x_points, &mut geo.__source_mesh_y_points, &mut source_points, Point::new);
-                combine_points_2(&mut geo.__destination_mesh_x_points, &mut geo.__destination_mesh_y_points, &mut destination_points, Point::new);
+                combine_points_2(
+                    &mut geo.__source_mesh_x_points,
+                    &mut geo.__source_mesh_y_points,
+                    &mut source_points,
+                    Point::new,
+                );
+                combine_points_2(
+                    &mut geo.__destination_mesh_x_points,
+                    &mut geo.__destination_mesh_y_points,
+                    &mut destination_points,
+                    Point::new,
+                );
                 for (s, d) in source_points.drain(..).zip(destination_points.drain(..)) {
                     geo.geo_mesh_points.push(GeoMeshPoint::new(s, d));
                 }
 
-                combine_points_3(&mut geo.__face_point_index_x, &mut geo.__face_point_index_y, &mut geo.__face_point_index_z, &mut geo.face_indices, Point::new);
-            },
+                combine_points_3(
+                    &mut geo.__face_point_index_x,
+                    &mut geo.__face_point_index_y,
+                    &mut geo.__face_point_index_z,
+                    &mut geo.face_indices,
+                    Point::new,
+                );
+            }
             ObjectType::Material(ref mut material) => {
-                material.diffuse_map_transformation_matrix.from_vec(&material.__diffuse_map_transformation_matrix_values);
-                material.specular_map_transformation_matrix.from_vec(&material.__specular_map_transformation_matrix_values);
-                material.reflection_map_transformation_matrix.from_vec(&material.__reflection_map_transformation_matrix_values);
-                material.opacity_map_transformation_matrix.from_vec(&material.__opacity_map_transformation_matrix_values);
-                material.bump_map_transformation_matrix.from_vec(&material.__bump_map_transformation_matrix_values);
-                material.refraction_map_transformation_matrix.from_vec(&material.__refraction_map_transformation_matrix_values);
-                material.normal_map_transformation_matrix.from_vec(&material.__normal_map_transformation_matrix_values);
+                material
+                    .diffuse_map_transformation_matrix
+                    .from_vec(&material.__diffuse_map_transformation_matrix_values);
+                material
+                    .specular_map_transformation_matrix
+                    .from_vec(&material.__specular_map_transformation_matrix_values);
+                material
+                    .reflection_map_transformation_matrix
+                    .from_vec(&material.__reflection_map_transformation_matrix_values);
+                material
+                    .opacity_map_transformation_matrix
+                    .from_vec(&material.__opacity_map_transformation_matrix_values);
+                material
+                    .bump_map_transformation_matrix
+                    .from_vec(&material.__bump_map_transformation_matrix_values);
+                material
+                    .refraction_map_transformation_matrix
+                    .from_vec(&material.__refraction_map_transformation_matrix_values);
+                material
+                    .normal_map_transformation_matrix
+                    .from_vec(&material.__normal_map_transformation_matrix_values);
                 material.__diffuse_map_transformation_matrix_values.clear();
                 material.__specular_map_transformation_matrix_values.clear();
-                material.__reflection_map_transformation_matrix_values.clear();
+                material
+                    .__reflection_map_transformation_matrix_values
+                    .clear();
                 material.__opacity_map_transformation_matrix_values.clear();
                 material.__bump_map_transformation_matrix_values.clear();
-                material.__refraction_map_transformation_matrix_values.clear();
+                material
+                    .__refraction_map_transformation_matrix_values
+                    .clear();
                 material.__normal_map_transformation_matrix_values.clear();
-            },
+            }
             ObjectType::MLineStyle(ref mut mline) => {
-                for (o, (c, l)) in mline.__element_offsets.drain(..).zip(mline.__element_colors.drain(..).zip(mline.__element_line_types.drain(..))) {
+                for (o, (c, l)) in mline.__element_offsets.drain(..).zip(
+                    mline
+                        .__element_colors
+                        .drain(..)
+                        .zip(mline.__element_line_types.drain(..)),
+                ) {
                     mline.elements.push(MLineStyleElement::new(o, c, l));
                 }
-            },
+            }
             ObjectType::VbaProject(ref mut vba) => {
                 // each char in each _hex_data should be added to `data` byte array
                 let mut result = vec![];
@@ -255,15 +290,16 @@ impl Object {
 
                 vba.data = result;
                 vba.__hex_data.clear();
-            },
+            }
             _ => (),
         }
 
         Ok(())
     }
     fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         match self.specific {
             ObjectType::DataTable(ref mut data) => {
                 let mut read_column_count = false;
@@ -278,54 +314,105 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { data.name = pair.assert_string()?; },
-                        70 => { data.field = pair.assert_i16()?; },
+                        1 => {
+                            data.name = pair.assert_string()?;
+                        }
+                        70 => {
+                            data.field = pair.assert_i16()?;
+                        }
                         90 => {
                             data.column_count = pair.assert_i32()? as usize;
                             read_column_count = true;
-                        },
+                        }
                         91 => {
                             data.row_count = pair.assert_i32()? as usize;
                             read_row_count = true;
-                        },
+                        }
 
                         // column headers
-                        2 => { data.column_names.push(pair.assert_string()?); },
+                        2 => {
+                            data.column_names.push(pair.assert_string()?);
+                        }
                         92 => {
                             _current_column_code = pair.assert_i32()?;
                             current_column += 1;
                             current_row = 0;
-                        },
+                        }
 
                         // column values
-                        3 => { data.set_value(current_row, current_column, DataTableValue::Str(pair.assert_string()?)); },
-                        40 => { data.set_value(current_row, current_column, DataTableValue::Double(pair.assert_f64()?)); },
-                        71 => { data.set_value(current_row, current_column, DataTableValue::Boolean(as_bool(pair.assert_i16()?))); },
-                        93 => { data.set_value(current_row, current_column, DataTableValue::Integer(pair.assert_i32()?)); },
-                        10 => { current_2d_point.x = pair.assert_f64()?; },
-                        20 => { current_2d_point.y = pair.assert_f64()?; },
+                        3 => {
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Str(pair.assert_string()?),
+                            );
+                        }
+                        40 => {
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Double(pair.assert_f64()?),
+                            );
+                        }
+                        71 => {
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Boolean(as_bool(pair.assert_i16()?)),
+                            );
+                        }
+                        93 => {
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Integer(pair.assert_i32()?),
+                            );
+                        }
+                        10 => {
+                            current_2d_point.x = pair.assert_f64()?;
+                        }
+                        20 => {
+                            current_2d_point.y = pair.assert_f64()?;
+                        }
                         30 => {
                             current_2d_point.z = pair.assert_f64()?;
-                            data.set_value(current_row, current_column, DataTableValue::Point2D(current_2d_point.clone()));
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Point2D(current_2d_point.clone()),
+                            );
                             current_2d_point = Point::origin();
-                        },
-                        11 => { current_3d_point.x = pair.assert_f64()?; },
-                        21 => { current_3d_point.y = pair.assert_f64()?; },
+                        }
+                        11 => {
+                            current_3d_point.x = pair.assert_f64()?;
+                        }
+                        21 => {
+                            current_3d_point.y = pair.assert_f64()?;
+                        }
                         31 => {
                             current_3d_point.z = pair.assert_f64()?;
-                            data.set_value(current_row, current_column, DataTableValue::Point3D(current_3d_point.clone()));
+                            data.set_value(
+                                current_row,
+                                current_column,
+                                DataTableValue::Point3D(current_3d_point.clone()),
+                            );
                             current_3d_point = Point::origin();
-                        },
+                        }
                         330 | 331 | 340 | 350 | 360 => {
                             if read_row_count || read_column_count {
-                                data.set_value(current_row, current_column, DataTableValue::Handle(pair.as_handle()?));
-                            }
-                            else {
+                                data.set_value(
+                                    current_row,
+                                    current_column,
+                                    DataTableValue::Handle(pair.as_handle()?),
+                                );
+                            } else {
                                 self.common.apply_individual_pair(&pair, iter)?;
                             }
                         }
 
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
 
                     if read_row_count && read_column_count && !created_table {
@@ -338,39 +425,65 @@ impl Object {
                         created_table = true;
                     }
                 }
-            },
+            }
             ObjectType::Dictionary(ref mut dict) => {
                 let mut last_entry_name = String::new();
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { last_entry_name = pair.assert_string()?; },
-                        280 => { dict.is_hard_owner = as_bool(pair.assert_i16()?); },
-                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?); },
+                        3 => {
+                            last_entry_name = pair.assert_string()?;
+                        }
+                        280 => {
+                            dict.is_hard_owner = as_bool(pair.assert_i16()?);
+                        }
+                        281 => {
+                            dict.duplicate_record_handling = enum_from_number!(
+                                DictionaryDuplicateRecordHandling,
+                                NotApplicable,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
                         350 | 360 => {
                             let handle = pair.as_handle()?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
-                        },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::DictionaryWithDefault(ref mut dict) => {
                 let mut last_entry_name = String::new();
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { last_entry_name = pair.assert_string()?; },
-                        281 => { dict.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?); },
-                        340 => { dict.default_handle = pair.as_handle()?; },
+                        3 => {
+                            last_entry_name = pair.assert_string()?;
+                        }
+                        281 => {
+                            dict.duplicate_record_handling = enum_from_number!(
+                                DictionaryDuplicateRecordHandling,
+                                NotApplicable,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        340 => {
+                            dict.default_handle = pair.as_handle()?;
+                        }
                         350 | 360 => {
                             let handle = pair.as_handle()?;
                             dict.value_handles.insert(last_entry_name.clone(), handle);
-                        },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::Layout(ref mut layout) => {
                 let mut is_reading_plot_settings = true;
                 loop {
@@ -378,77 +491,142 @@ impl Object {
                     if is_reading_plot_settings {
                         if pair.code == 100 && pair.assert_string()? == "AcDbLayout" {
                             is_reading_plot_settings = false;
-                        }
-                        else {
+                        } else {
                             self.common.apply_individual_pair(&pair, iter)?;
                         }
-                    }
-                    else {
+                    } else {
                         match pair.code {
-                            1 => { layout.layout_name = pair.assert_string()?; },
-                            10 => { layout.minimum_limits.x = pair.assert_f64()?; },
-                            20 => { layout.minimum_limits.y = pair.assert_f64()?; },
-                            11 => { layout.maximum_limits.x = pair.assert_f64()?; },
-                            21 => { layout.maximum_limits.y = pair.assert_f64()?; },
-                            12 => { layout.insertion_base_point.x = pair.assert_f64()?; },
-                            22 => { layout.insertion_base_point.y = pair.assert_f64()?; },
-                            32 => { layout.insertion_base_point.z = pair.assert_f64()?; },
-                            13 => { layout.ucs_origin.x = pair.assert_f64()?; },
-                            23 => { layout.ucs_origin.y = pair.assert_f64()?; },
-                            33 => { layout.ucs_origin.z = pair.assert_f64()?; },
-                            14 => { layout.minimum_extents.x = pair.assert_f64()?; },
-                            24 => { layout.minimum_extents.y = pair.assert_f64()?; },
-                            34 => { layout.minimum_extents.z = pair.assert_f64()?; },
-                            15 => { layout.maximum_extents.x = pair.assert_f64()?; },
-                            25 => { layout.maximum_extents.y = pair.assert_f64()?; },
-                            35 => { layout.maximum_extents.z = pair.assert_f64()?; },
-                            16 => { layout.ucs_x_axis.x = pair.assert_f64()?; },
-                            26 => { layout.ucs_x_axis.y = pair.assert_f64()?; },
-                            36 => { layout.ucs_x_axis.z = pair.assert_f64()?; },
-                            17 => { layout.ucs_y_axis.x = pair.assert_f64()?; },
-                            27 => { layout.ucs_y_axis.y = pair.assert_f64()?; },
-                            37 => { layout.ucs_y_axis.z = pair.assert_f64()?; },
-                            70 => { layout.layout_flags = pair.assert_i16()? as i32; },
-                            71 => { layout.tab_order = pair.assert_i16()? as i32; },
-                            76 => { layout.ucs_orthographic_type = enum_from_number!(UcsOrthographicType, NotOrthographic, from_i16, pair.assert_i16()?); },
-                            146 => { layout.elevation = pair.assert_f64()?; },
-                            330 => { layout.__viewport_handle = pair.as_handle()?; },
-                            345 => { layout.__table_record_handle = pair.as_handle()?; },
-                            346 => { layout.__table_record_base_handle = pair.as_handle()?; },
-                            _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                            1 => {
+                                layout.layout_name = pair.assert_string()?;
+                            }
+                            10 => {
+                                layout.minimum_limits.x = pair.assert_f64()?;
+                            }
+                            20 => {
+                                layout.minimum_limits.y = pair.assert_f64()?;
+                            }
+                            11 => {
+                                layout.maximum_limits.x = pair.assert_f64()?;
+                            }
+                            21 => {
+                                layout.maximum_limits.y = pair.assert_f64()?;
+                            }
+                            12 => {
+                                layout.insertion_base_point.x = pair.assert_f64()?;
+                            }
+                            22 => {
+                                layout.insertion_base_point.y = pair.assert_f64()?;
+                            }
+                            32 => {
+                                layout.insertion_base_point.z = pair.assert_f64()?;
+                            }
+                            13 => {
+                                layout.ucs_origin.x = pair.assert_f64()?;
+                            }
+                            23 => {
+                                layout.ucs_origin.y = pair.assert_f64()?;
+                            }
+                            33 => {
+                                layout.ucs_origin.z = pair.assert_f64()?;
+                            }
+                            14 => {
+                                layout.minimum_extents.x = pair.assert_f64()?;
+                            }
+                            24 => {
+                                layout.minimum_extents.y = pair.assert_f64()?;
+                            }
+                            34 => {
+                                layout.minimum_extents.z = pair.assert_f64()?;
+                            }
+                            15 => {
+                                layout.maximum_extents.x = pair.assert_f64()?;
+                            }
+                            25 => {
+                                layout.maximum_extents.y = pair.assert_f64()?;
+                            }
+                            35 => {
+                                layout.maximum_extents.z = pair.assert_f64()?;
+                            }
+                            16 => {
+                                layout.ucs_x_axis.x = pair.assert_f64()?;
+                            }
+                            26 => {
+                                layout.ucs_x_axis.y = pair.assert_f64()?;
+                            }
+                            36 => {
+                                layout.ucs_x_axis.z = pair.assert_f64()?;
+                            }
+                            17 => {
+                                layout.ucs_y_axis.x = pair.assert_f64()?;
+                            }
+                            27 => {
+                                layout.ucs_y_axis.y = pair.assert_f64()?;
+                            }
+                            37 => {
+                                layout.ucs_y_axis.z = pair.assert_f64()?;
+                            }
+                            70 => {
+                                layout.layout_flags = pair.assert_i16()? as i32;
+                            }
+                            71 => {
+                                layout.tab_order = pair.assert_i16()? as i32;
+                            }
+                            76 => {
+                                layout.ucs_orthographic_type = enum_from_number!(
+                                    UcsOrthographicType,
+                                    NotOrthographic,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
+                            }
+                            146 => {
+                                layout.elevation = pair.assert_f64()?;
+                            }
+                            330 => {
+                                layout.__viewport_handle = pair.as_handle()?;
+                            }
+                            345 => {
+                                layout.__table_record_handle = pair.as_handle()?;
+                            }
+                            346 => {
+                                layout.__table_record_base_handle = pair.as_handle()?;
+                            }
+                            _ => {
+                                self.common.apply_individual_pair(&pair, iter)?;
+                            }
                         }
                     }
                 }
-            },
+            }
             ObjectType::LightList(ref mut ll) => {
                 let mut read_version_number = false;
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { }, // don't worry about the light's name; it'll be read from the light entity directly
+                        1 => {} // don't worry about the light's name; it'll be read from the light entity directly
                         5 => {
                             if read_version_number {
                                 // pointer to a new light
                                 ll.__lights_handle.push(pair.as_handle()?);
-                            }
-                            else {
+                            } else {
                                 // might still be the handle
                                 self.common.apply_individual_pair(&pair, iter)?;;
                             }
-                        },
+                        }
                         90 => {
                             if read_version_number {
                                 // count of lights is ignored since it's implicitly set by reading the values
-                            }
-                            else {
+                            } else {
                                 ll.version = pair.assert_i32()?;
                                 read_version_number = false;
                             }
-                        },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::Material(ref mut mat) => {
                 let mut read_diffuse_map_file_name = false;
                 let mut is_reading_normal = false;
@@ -467,225 +645,469 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { mat.name = pair.assert_string()?; },
-                        2 => { mat.description = pair.assert_string()?; },
+                        1 => {
+                            mat.name = pair.assert_string()?;
+                        }
+                        2 => {
+                            mat.description = pair.assert_string()?;
+                        }
                         3 => {
                             if !read_diffuse_map_file_name {
                                 mat.diffuse_map_file_name = pair.assert_string()?;
                                 read_diffuse_map_file_name = true;
-                            }
-                            else {
+                            } else {
                                 mat.normal_map_file_name = pair.assert_string()?;
                                 is_reading_normal = true;
                             }
-                        },
-                        4 => { mat.normal_map_file_name = pair.assert_string()?; },
-                        6 => { mat.reflection_map_file_name = pair.assert_string()?; },
-                        7 => { mat.opacity_map_file_name = pair.assert_string()?; },
-                        8 => { mat.bump_map_file_name = pair.assert_string()?; },
-                        9 => { mat.refraction_map_file_name = pair.assert_string()?; },
-                        40 => { mat.ambient_color_factor = pair.assert_f64()?; },
-                        41 => { mat.diffuse_color_factor = pair.assert_f64()?; },
+                        }
+                        4 => {
+                            mat.normal_map_file_name = pair.assert_string()?;
+                        }
+                        6 => {
+                            mat.reflection_map_file_name = pair.assert_string()?;
+                        }
+                        7 => {
+                            mat.opacity_map_file_name = pair.assert_string()?;
+                        }
+                        8 => {
+                            mat.bump_map_file_name = pair.assert_string()?;
+                        }
+                        9 => {
+                            mat.refraction_map_file_name = pair.assert_string()?;
+                        }
+                        40 => {
+                            mat.ambient_color_factor = pair.assert_f64()?;
+                        }
+                        41 => {
+                            mat.diffuse_color_factor = pair.assert_f64()?;
+                        }
                         42 => {
                             if !read_diffuse_map_blend_factor {
                                 mat.diffuse_map_blend_factor = pair.assert_f64()?;
                                 read_diffuse_map_blend_factor = true;
-                            }
-                            else {
+                            } else {
                                 mat.normal_map_blend_factor = pair.assert_f64()?;
                                 is_reading_normal = true;
                             }
-                        },
+                        }
                         43 => {
                             if is_reading_normal {
-                                mat.__normal_map_transformation_matrix_values.push(pair.assert_f64()?);
+                                mat.__normal_map_transformation_matrix_values
+                                    .push(pair.assert_f64()?);
+                            } else {
+                                mat.__diffuse_map_transformation_matrix_values
+                                    .push(pair.assert_f64()?);
                             }
-                            else {
-                                mat.__diffuse_map_transformation_matrix_values.push(pair.assert_f64()?);
-                            }
-                        },
-                        44 => { mat.specular_gloss_factor = pair.assert_f64()?; },
-                        45 => { mat.specular_color_factor = pair.assert_f64()?; },
-                        46 => { mat.specular_map_blend_factor = pair.assert_f64()?; },
-                        47 => { mat.__specular_map_transformation_matrix_values.push(pair.assert_f64()?); },
-                        48 => { mat.reflection_map_blend_factor = pair.assert_f64()?; },
-                        49 => { mat.__reflection_map_transformation_matrix_values.push(pair.assert_f64()?); },
-                        62 => { mat.gen_proc_color_index_value = Color::from_raw_value(pair.assert_i16()?); },
-                        70 => { mat.override_ambient_color = as_bool(pair.assert_i16()?); },
-                        71 => { mat.override_diffuse_color = as_bool(pair.assert_i16()?); },
+                        }
+                        44 => {
+                            mat.specular_gloss_factor = pair.assert_f64()?;
+                        }
+                        45 => {
+                            mat.specular_color_factor = pair.assert_f64()?;
+                        }
+                        46 => {
+                            mat.specular_map_blend_factor = pair.assert_f64()?;
+                        }
+                        47 => {
+                            mat.__specular_map_transformation_matrix_values
+                                .push(pair.assert_f64()?);
+                        }
+                        48 => {
+                            mat.reflection_map_blend_factor = pair.assert_f64()?;
+                        }
+                        49 => {
+                            mat.__reflection_map_transformation_matrix_values
+                                .push(pair.assert_f64()?);
+                        }
+                        62 => {
+                            mat.gen_proc_color_index_value =
+                                Color::from_raw_value(pair.assert_i16()?);
+                        }
+                        70 => {
+                            mat.override_ambient_color = as_bool(pair.assert_i16()?);
+                        }
+                        71 => {
+                            mat.override_diffuse_color = as_bool(pair.assert_i16()?);
+                        }
                         72 => {
                             if !read_image_file_diffuse_map {
                                 mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i16()?);
                                 read_image_file_diffuse_map = true;
-                            }
-                            else {
+                            } else {
                                 mat.use_image_file_for_normal_map = as_bool(pair.assert_i16()?);
                             }
-                        },
+                        }
                         73 => {
                             if !read_diffuse_map_projection_method {
-                                mat.diffuse_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
+                                mat.diffuse_map_projection_method = enum_from_number!(
+                                    MapProjectionMethod,
+                                    Planar,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_diffuse_map_projection_method = true;
-                            }
-                            else {
-                                mat.normal_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
+                            } else {
+                                mat.normal_map_projection_method = enum_from_number!(
+                                    MapProjectionMethod,
+                                    Planar,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 is_reading_normal = true;
                             }
-                        },
+                        }
                         74 => {
                             if !read_diffuse_map_tiling_method {
-                                mat.diffuse_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                                mat.diffuse_map_tiling_method = enum_from_number!(
+                                    MapTilingMethod,
+                                    Tile,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_diffuse_map_tiling_method = true;
-                            }
-                            else {
-                                mat.normal_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                            } else {
+                                mat.normal_map_tiling_method = enum_from_number!(
+                                    MapTilingMethod,
+                                    Tile,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 is_reading_normal = true;
                             }
-                        },
+                        }
                         75 => {
                             if !read_diffuse_map_auto_transform_method {
-                                mat.diffuse_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
+                                mat.diffuse_map_auto_transform_method = enum_from_number!(
+                                    MapAutoTransformMethod,
+                                    NoAutoTransform,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_diffuse_map_auto_transform_method = true;
-                            }
-                            else {
-                                mat.normal_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
+                            } else {
+                                mat.normal_map_auto_transform_method = enum_from_number!(
+                                    MapAutoTransformMethod,
+                                    NoAutoTransform,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 is_reading_normal = true;
                             }
-                        },
-                        76 => { mat.override_specular_color = as_bool(pair.assert_i16()?); },
-                        77 => { mat.use_image_file_for_specular_map = as_bool(pair.assert_i16()?); },
-                        78 => { mat.specular_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
-                        79 => { mat.specular_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
+                        }
+                        76 => {
+                            mat.override_specular_color = as_bool(pair.assert_i16()?);
+                        }
+                        77 => {
+                            mat.use_image_file_for_specular_map = as_bool(pair.assert_i16()?);
+                        }
+                        78 => {
+                            mat.specular_map_projection_method = enum_from_number!(
+                                MapProjectionMethod,
+                                Planar,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        79 => {
+                            mat.specular_map_tiling_method = enum_from_number!(
+                                MapTilingMethod,
+                                Tile,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
                         90 => {
                             if !read_ambient_color_value {
                                 mat.ambient_color_value = pair.assert_i32()?;
                                 read_ambient_color_value = true;
-                            }
-                            else {
+                            } else {
                                 mat.self_illumination = pair.assert_i32()?;
                             }
-                        },
-                        91 => { mat.diffuse_color_value = pair.assert_i32()?; },
-                        92 => { mat.specular_color_value = pair.assert_i32()?; },
-                        93 => { mat.illumination_model = pair.assert_i32()?; },
-                        94 => { mat.channel_flags = pair.assert_i32()?; },
-                        140 => { mat.opacity_factor = pair.assert_f64()?; },
-                        141 => { mat.opacity_map_blend_factor = pair.assert_f64()?; },
-                        142 => { mat.__opacity_map_transformation_matrix_values.push(pair.assert_f64()?); },
-                        143 => { mat.bump_map_blend_factor = pair.assert_f64()?; },
-                        144 => { mat.__bump_map_transformation_matrix_values.push(pair.assert_f64()?); },
-                        145 => { mat.refraction_index = pair.assert_f64()?; },
-                        146 => { mat.refraction_map_blend_factor = pair.assert_f64()?; },
-                        147 => { mat.__refraction_map_transformation_matrix_values.push(pair.assert_f64()?); },
-                        148 => { mat.translucence = pair.assert_f64()?; },
-                        170 => { mat.specular_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
-                        171 => { mat.use_image_file_for_reflection_map = as_bool(pair.assert_i16()?); },
-                        172 => { mat.reflection_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
-                        173 => { mat.reflection_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
-                        174 => { mat.reflection_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
-                        175 => { mat.use_image_file_for_opacity_map = as_bool(pair.assert_i16()?); },
-                        176 => { mat.opacity_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
-                        177 => { mat.opacity_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
-                        178 => { mat.opacity_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
-                        179 => { mat.use_image_file_for_bump_map = as_bool(pair.assert_i16()?); },
+                        }
+                        91 => {
+                            mat.diffuse_color_value = pair.assert_i32()?;
+                        }
+                        92 => {
+                            mat.specular_color_value = pair.assert_i32()?;
+                        }
+                        93 => {
+                            mat.illumination_model = pair.assert_i32()?;
+                        }
+                        94 => {
+                            mat.channel_flags = pair.assert_i32()?;
+                        }
+                        140 => {
+                            mat.opacity_factor = pair.assert_f64()?;
+                        }
+                        141 => {
+                            mat.opacity_map_blend_factor = pair.assert_f64()?;
+                        }
+                        142 => {
+                            mat.__opacity_map_transformation_matrix_values
+                                .push(pair.assert_f64()?);
+                        }
+                        143 => {
+                            mat.bump_map_blend_factor = pair.assert_f64()?;
+                        }
+                        144 => {
+                            mat.__bump_map_transformation_matrix_values
+                                .push(pair.assert_f64()?);
+                        }
+                        145 => {
+                            mat.refraction_index = pair.assert_f64()?;
+                        }
+                        146 => {
+                            mat.refraction_map_blend_factor = pair.assert_f64()?;
+                        }
+                        147 => {
+                            mat.__refraction_map_transformation_matrix_values
+                                .push(pair.assert_f64()?);
+                        }
+                        148 => {
+                            mat.translucence = pair.assert_f64()?;
+                        }
+                        170 => {
+                            mat.specular_map_auto_transform_method = enum_from_number!(
+                                MapAutoTransformMethod,
+                                NoAutoTransform,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        171 => {
+                            mat.use_image_file_for_reflection_map = as_bool(pair.assert_i16()?);
+                        }
+                        172 => {
+                            mat.reflection_map_projection_method = enum_from_number!(
+                                MapProjectionMethod,
+                                Planar,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        173 => {
+                            mat.reflection_map_tiling_method = enum_from_number!(
+                                MapTilingMethod,
+                                Tile,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        174 => {
+                            mat.reflection_map_auto_transform_method = enum_from_number!(
+                                MapAutoTransformMethod,
+                                NoAutoTransform,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        175 => {
+                            mat.use_image_file_for_opacity_map = as_bool(pair.assert_i16()?);
+                        }
+                        176 => {
+                            mat.opacity_map_projection_method = enum_from_number!(
+                                MapProjectionMethod,
+                                Planar,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        177 => {
+                            mat.opacity_map_tiling_method = enum_from_number!(
+                                MapTilingMethod,
+                                Tile,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        178 => {
+                            mat.opacity_map_auto_transform_method = enum_from_number!(
+                                MapAutoTransformMethod,
+                                NoAutoTransform,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        179 => {
+                            mat.use_image_file_for_bump_map = as_bool(pair.assert_i16()?);
+                        }
                         270 => {
                             if !read_bump_map_projection_method {
-                                mat.bump_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?);
+                                mat.bump_map_projection_method = enum_from_number!(
+                                    MapProjectionMethod,
+                                    Planar,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_bump_map_projection_method = true;
-                            }
-                            else if !read_luminance_mode {
+                            } else if !read_luminance_mode {
                                 mat.luminance_mode = pair.assert_i16()?;
                                 read_luminance_mode = true;
-                            }
-                            else {
+                            } else {
                                 mat.map_u_tile = pair.assert_i16()?;
                             }
-                        },
+                        }
                         271 => {
                             if !read_bump_map_tiling_method {
-                                mat.bump_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                                mat.bump_map_tiling_method = enum_from_number!(
+                                    MapTilingMethod,
+                                    Tile,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_bump_map_tiling_method = true;
-                            }
-                            else if !read_normal_map_method {
+                            } else if !read_normal_map_method {
                                 mat.normal_map_method = pair.assert_i16()?;
                                 read_normal_map_method = true;
-                            }
-                            else {
+                            } else {
                                 mat.gen_proc_integer_value = pair.assert_i16()?;
                             }
-                        },
+                        }
                         272 => {
                             if !read_bump_map_auto_transform_method {
-                                mat.bump_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?);
+                                mat.bump_map_auto_transform_method = enum_from_number!(
+                                    MapAutoTransformMethod,
+                                    NoAutoTransform,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                );
                                 read_bump_map_auto_transform_method = true;
-                            }
-                            else {
+                            } else {
                                 mat.global_illumination_mode = pair.assert_i16()?;
                             }
-                        },
+                        }
                         273 => {
                             if !read_use_image_file_for_refraction_map {
                                 mat.use_image_file_for_refraction_map = as_bool(pair.assert_i16()?);
                                 read_use_image_file_for_refraction_map = true;
-                            }
-                            else {
+                            } else {
                                 mat.final_gather_mode = pair.assert_i16()?;
                             }
-                        },
-                        274 => { mat.refraction_map_projection_method = enum_from_number!(MapProjectionMethod, Planar, from_i16, pair.assert_i16()?); },
-                        275 => { mat.refraction_map_tiling_method = enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?); },
-                        276 => { mat.refraction_map_auto_transform_method = enum_from_number!(MapAutoTransformMethod, NoAutoTransform, from_i16, pair.assert_i16()?); },
-                        290 => { mat.is_two_sided = pair.assert_bool()?; },
-                        291 => { mat.gen_proc_boolean_value = pair.assert_bool()?; },
-                        292 => { mat.gen_proc_table_end = pair.assert_bool()?; },
-                        293 => { mat.is_anonymous = pair.assert_bool()?; },
-                        300 => { mat.gen_proc_name = pair.assert_string()?; },
-                        301 => { mat.gen_proc_text_value = pair.assert_string()?; },
-                        420 => { mat.gen_proc_color_rgb_value = pair.assert_i32()?; },
-                        430 => { mat.gen_proc_color_name = pair.assert_string()?; },
-                        460 => { mat.color_bleed_scale = pair.assert_f64()?; },
-                        461 => { mat.indirect_dump_scale = pair.assert_f64()?; },
-                        462 => { mat.reflectance_scale = pair.assert_f64()?; },
-                        463 => { mat.transmittance_scale = pair.assert_f64()?; },
-                        464 => { mat.luminance = pair.assert_f64()?; },
+                        }
+                        274 => {
+                            mat.refraction_map_projection_method = enum_from_number!(
+                                MapProjectionMethod,
+                                Planar,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        275 => {
+                            mat.refraction_map_tiling_method = enum_from_number!(
+                                MapTilingMethod,
+                                Tile,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        276 => {
+                            mat.refraction_map_auto_transform_method = enum_from_number!(
+                                MapAutoTransformMethod,
+                                NoAutoTransform,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        290 => {
+                            mat.is_two_sided = pair.assert_bool()?;
+                        }
+                        291 => {
+                            mat.gen_proc_boolean_value = pair.assert_bool()?;
+                        }
+                        292 => {
+                            mat.gen_proc_table_end = pair.assert_bool()?;
+                        }
+                        293 => {
+                            mat.is_anonymous = pair.assert_bool()?;
+                        }
+                        300 => {
+                            mat.gen_proc_name = pair.assert_string()?;
+                        }
+                        301 => {
+                            mat.gen_proc_text_value = pair.assert_string()?;
+                        }
+                        420 => {
+                            mat.gen_proc_color_rgb_value = pair.assert_i32()?;
+                        }
+                        430 => {
+                            mat.gen_proc_color_name = pair.assert_string()?;
+                        }
+                        460 => {
+                            mat.color_bleed_scale = pair.assert_f64()?;
+                        }
+                        461 => {
+                            mat.indirect_dump_scale = pair.assert_f64()?;
+                        }
+                        462 => {
+                            mat.reflectance_scale = pair.assert_f64()?;
+                        }
+                        463 => {
+                            mat.transmittance_scale = pair.assert_f64()?;
+                        }
+                        464 => {
+                            mat.luminance = pair.assert_f64()?;
+                        }
                         465 => {
                             mat.normal_map_strength = pair.assert_f64()?;
                             is_reading_normal = true;
-                        },
-                        468 => { mat.reflectivity = pair.assert_f64()?; },
-                        469 => { mat.gen_proc_real_value = pair.assert_f64()?; },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        468 => {
+                            mat.reflectivity = pair.assert_f64()?;
+                        }
+                        469 => {
+                            mat.gen_proc_real_value = pair.assert_f64()?;
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::MLineStyle(ref mut mline) => {
                 let mut read_element_count = false;
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        2 => { mline.style_name = pair.assert_string()?; },
-                        3 => { mline.description = pair.assert_string()?; },
-                        6 => { mline.__element_line_types.push(pair.assert_string()?); },
-                        49 => { mline.__element_offsets.push(pair.assert_f64()?); },
-                        51 => { mline.start_angle = pair.assert_f64()?; },
-                        52 => { mline.end_angle = pair.assert_f64()?; },
+                        2 => {
+                            mline.style_name = pair.assert_string()?;
+                        }
+                        3 => {
+                            mline.description = pair.assert_string()?;
+                        }
+                        6 => {
+                            mline.__element_line_types.push(pair.assert_string()?);
+                        }
+                        49 => {
+                            mline.__element_offsets.push(pair.assert_f64()?);
+                        }
+                        51 => {
+                            mline.start_angle = pair.assert_f64()?;
+                        }
+                        52 => {
+                            mline.end_angle = pair.assert_f64()?;
+                        }
                         62 => {
                             if read_element_count {
-                                mline.__element_colors.push(Color::from_raw_value(pair.assert_i16()?));
-                            }
-                            else {
+                                mline
+                                    .__element_colors
+                                    .push(Color::from_raw_value(pair.assert_i16()?));
+                            } else {
                                 mline.fill_color = Color::from_raw_value(pair.assert_i16()?);
                             }
-                        },
-                        70 => { mline.__flags = pair.assert_i16()? as i32; },
+                        }
+                        70 => {
+                            mline.__flags = pair.assert_i16()? as i32;
+                        }
                         71 => {
                             mline.__element_count = pair.assert_i16()? as i32;
                             read_element_count = true;
-                        },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::SectionSettings(ref mut ss) => {
                 loop {
                     let pair = next_pair!(iter);
@@ -698,13 +1120,17 @@ impl Object {
                                     None => break,
                                 }
                             }
-                        },
-                        90 => { ss.section_type = pair.assert_i32()?; }
+                        }
+                        90 => {
+                            ss.section_type = pair.assert_i32()?;
+                        }
                         91 => (), // generation settings count; we just read as many as we're given
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::SortentsTable(ref mut sort) => {
                 let mut is_ready_for_sort_handles = false;
                 loop {
@@ -713,25 +1139,28 @@ impl Object {
                         5 => {
                             if is_ready_for_sort_handles {
                                 sort.__sort_items_handle.push(pair.as_handle()?);
-                            }
-                            else {
+                            } else {
                                 self.common.handle = pair.as_handle()?;
                                 is_ready_for_sort_handles = true;
                             }
-                        },
-                        100 => { is_ready_for_sort_handles = true; },
+                        }
+                        100 => {
+                            is_ready_for_sort_handles = true;
+                        }
                         330 => {
                             self.common.__owner_handle = pair.as_handle()?;
                             is_ready_for_sort_handles = true;
-                        },
+                        }
                         331 => {
                             sort.__entities_handle.push(pair.as_handle()?);
                             is_ready_for_sort_handles = true;
-                        },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::SpatialFilter(ref mut sf) => {
                 let mut read_front_clipping_plane = false;
                 let mut set_inverse_matrix = false;
@@ -743,50 +1172,86 @@ impl Object {
                             // code 10 always starts a new point
                             sf.clip_boundary_definition_points.push(Point::origin());
                             vec_last!(sf.clip_boundary_definition_points).x = pair.assert_f64()?;
-                        },
-                        20 => { vec_last!(sf.clip_boundary_definition_points).y = pair.assert_f64()?; },
-                        30 => { vec_last!(sf.clip_boundary_definition_points).z = pair.assert_f64()?; },
-                        11 => { sf.clip_boundary_origin.x = pair.assert_f64()?; },
-                        21 => { sf.clip_boundary_origin.y = pair.assert_f64()?; },
-                        31 => { sf.clip_boundary_origin.z = pair.assert_f64()?; },
+                        }
+                        20 => {
+                            vec_last!(sf.clip_boundary_definition_points).y = pair.assert_f64()?;
+                        }
+                        30 => {
+                            vec_last!(sf.clip_boundary_definition_points).z = pair.assert_f64()?;
+                        }
+                        11 => {
+                            sf.clip_boundary_origin.x = pair.assert_f64()?;
+                        }
+                        21 => {
+                            sf.clip_boundary_origin.y = pair.assert_f64()?;
+                        }
+                        31 => {
+                            sf.clip_boundary_origin.z = pair.assert_f64()?;
+                        }
                         40 => {
                             if !read_front_clipping_plane {
                                 sf.front_clipping_plane_distance = pair.assert_f64()?;
                                 read_front_clipping_plane = true;
-                            }
-                            else {
+                            } else {
                                 matrix_list.push(pair.assert_f64()?);
                                 if matrix_list.len() == 12 {
                                     let mut matrix = TransformationMatrix::default();
                                     matrix.from_vec(&vec![
-                                        matrix_list[0], matrix_list[1], matrix_list[2], 0.0,
-                                        matrix_list[3], matrix_list[4], matrix_list[5], 0.0,
-                                        matrix_list[6], matrix_list[7], matrix_list[8], 0.0,
-                                        matrix_list[9], matrix_list[10], matrix_list[11], 0.0,
+                                        matrix_list[0],
+                                        matrix_list[1],
+                                        matrix_list[2],
+                                        0.0,
+                                        matrix_list[3],
+                                        matrix_list[4],
+                                        matrix_list[5],
+                                        0.0,
+                                        matrix_list[6],
+                                        matrix_list[7],
+                                        matrix_list[8],
+                                        0.0,
+                                        matrix_list[9],
+                                        matrix_list[10],
+                                        matrix_list[11],
+                                        0.0,
                                     ]);
                                     matrix_list.clear();
                                     if !set_inverse_matrix {
                                         sf.inverse_transformation_matrix = matrix;
                                         set_inverse_matrix = true;
-                                    }
-                                    else {
+                                    } else {
                                         sf.transformation_matrix = matrix;
                                     }
                                 }
                             }
-                        },
-                        41 => { sf.back_clipping_plane_distance = pair.assert_f64()?; },
+                        }
+                        41 => {
+                            sf.back_clipping_plane_distance = pair.assert_f64()?;
+                        }
                         70 => (), // boundary point count; we just read as many as we're given
-                        71 => { sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?); },
-                        72 => { sf.is_front_clipping_plane = as_bool(pair.assert_i16()?); },
-                        73 => { sf.is_back_clipping_plane = as_bool(pair.assert_i16()?); },
-                        210 => { sf.clip_boundary_normal.x = pair.assert_f64()?; },
-                        220 => { sf.clip_boundary_normal.y = pair.assert_f64()?; },
-                        230 => { sf.clip_boundary_normal.z = pair.assert_f64()?; },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        71 => {
+                            sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?);
+                        }
+                        72 => {
+                            sf.is_front_clipping_plane = as_bool(pair.assert_i16()?);
+                        }
+                        73 => {
+                            sf.is_back_clipping_plane = as_bool(pair.assert_i16()?);
+                        }
+                        210 => {
+                            sf.clip_boundary_normal.x = pair.assert_f64()?;
+                        }
+                        220 => {
+                            sf.clip_boundary_normal.y = pair.assert_f64()?;
+                        }
+                        230 => {
+                            sf.clip_boundary_normal.z = pair.assert_f64()?;
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::SunStudy(ref mut ss) => {
                 let mut seen_version = false;
                 let mut reading_hours = false;
@@ -794,101 +1259,169 @@ impl Object {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        1 => { ss.sun_setup_name = pair.assert_string()?; },
-                        2 => { ss.description = pair.assert_string()?; },
-                        3 => { ss.sheet_set_name = pair.assert_string()?; },
-                        4 => { ss.sheet_subset_name = pair.assert_string()?; },
-                        40 => { ss.spacing = pair.assert_f64()?; },
-                        70 => { ss.output_type = pair.assert_i16()?; },
-                        73 => { reading_hours = true; },
-                        74 => { ss.shade_plot_type = pair.assert_i16()?; },
-                        75 => { ss.viewports_per_page = pair.assert_i16()? as i32; },
-                        76 => { ss.viewport_distribution_row_count = pair.assert_i16()? as i32; },
-                        77 => { ss.viewport_distribution_column_count = pair.assert_i16()? as i32; },
+                        1 => {
+                            ss.sun_setup_name = pair.assert_string()?;
+                        }
+                        2 => {
+                            ss.description = pair.assert_string()?;
+                        }
+                        3 => {
+                            ss.sheet_set_name = pair.assert_string()?;
+                        }
+                        4 => {
+                            ss.sheet_subset_name = pair.assert_string()?;
+                        }
+                        40 => {
+                            ss.spacing = pair.assert_f64()?;
+                        }
+                        70 => {
+                            ss.output_type = pair.assert_i16()?;
+                        }
+                        73 => {
+                            reading_hours = true;
+                        }
+                        74 => {
+                            ss.shade_plot_type = pair.assert_i16()?;
+                        }
+                        75 => {
+                            ss.viewports_per_page = pair.assert_i16()? as i32;
+                        }
+                        76 => {
+                            ss.viewport_distribution_row_count = pair.assert_i16()? as i32;
+                        }
+                        77 => {
+                            ss.viewport_distribution_column_count = pair.assert_i16()? as i32;
+                        }
                         90 => {
                             if !seen_version {
                                 ss.version = pair.assert_i32()?;
                                 seen_version = true;
-                            }
-                            else {
+                            } else {
                                 // after the version, 90 pairs come in julian_day/seconds_past_midnight duals
                                 match julian_day {
                                     Some(jd) => {
                                         let date = as_datetime_local(jd as f64);
-                                        let date = date.add(Duration::seconds(pair.assert_i32()? as i64));
+                                        let date =
+                                            date.add(Duration::seconds(pair.assert_i32()? as i64));
                                         ss.dates.push(date);
                                         julian_day = None;
-                                    },
+                                    }
                                     None => {
                                         julian_day = Some(pair.assert_i32()?);
-                                    },
+                                    }
                                 }
                             }
-                        },
-                        93 => { ss.start_time_seconds_past_midnight = pair.assert_i32()?; },
-                        94 => { ss.end_time_seconds_past_midnight = pair.assert_i32()?; },
-                        95 => { ss.interval_in_seconds = pair.assert_i32()?; },
+                        }
+                        93 => {
+                            ss.start_time_seconds_past_midnight = pair.assert_i32()?;
+                        }
+                        94 => {
+                            ss.end_time_seconds_past_midnight = pair.assert_i32()?;
+                        }
+                        95 => {
+                            ss.interval_in_seconds = pair.assert_i32()?;
+                        }
                         290 => {
                             if !reading_hours {
                                 ss.use_subset = pair.assert_bool()?;
                                 reading_hours = true;
-                            }
-                            else {
+                            } else {
                                 ss.hours.push(pair.assert_i16()? as i32);
                             }
-                        },
-                        291 => { ss.select_dates_from_calendar = pair.assert_bool()?; },
-                        292 => { ss.select_range_of_dates = pair.assert_bool()?; },
-                        293 => { ss.lock_viewports = pair.assert_bool()?; },
-                        294 => { ss.label_viewports = pair.assert_bool()?; },
-                        340 => { ss.__page_setup_wizard_handle = pair.as_handle()?; },
-                        341 => { ss.__view_handle = pair.as_handle()?; },
-                        342 => { ss.__visual_style_handle = pair.as_handle()?; },
-                        343 => { ss.__text_style_handle = pair.as_handle()?; },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        291 => {
+                            ss.select_dates_from_calendar = pair.assert_bool()?;
+                        }
+                        292 => {
+                            ss.select_range_of_dates = pair.assert_bool()?;
+                        }
+                        293 => {
+                            ss.lock_viewports = pair.assert_bool()?;
+                        }
+                        294 => {
+                            ss.label_viewports = pair.assert_bool()?;
+                        }
+                        340 => {
+                            ss.__page_setup_wizard_handle = pair.as_handle()?;
+                        }
+                        341 => {
+                            ss.__view_handle = pair.as_handle()?;
+                        }
+                        342 => {
+                            ss.__visual_style_handle = pair.as_handle()?;
+                        }
+                        343 => {
+                            ss.__text_style_handle = pair.as_handle()?;
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::TableStyle(ref mut ts) => {
                 let mut read_version = false;
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        3 => { ts.description = pair.assert_string()?; },
+                        3 => {
+                            ts.description = pair.assert_string()?;
+                        }
                         7 => {
                             iter.put_back(Ok(pair)); // let the TableCellStyle reader parse this
                             if let Some(style) = TableCellStyle::read(iter)? {
                                 ts.cell_styles.push(style);
                             }
-                        },
-                        40 => { ts.horizontal_cell_margin = pair.assert_f64()?; },
-                        41 => { ts.vertical_cell_margin = pair.assert_f64()?; },
-                        70 => { ts.flow_direction = enum_from_number!(FlowDirection, Down, from_i16, pair.assert_i16()?); },
-                        71 => { ts.flags = pair.assert_i16()? as i32; },
+                        }
+                        40 => {
+                            ts.horizontal_cell_margin = pair.assert_f64()?;
+                        }
+                        41 => {
+                            ts.vertical_cell_margin = pair.assert_f64()?;
+                        }
+                        70 => {
+                            ts.flow_direction = enum_from_number!(
+                                FlowDirection,
+                                Down,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        71 => {
+                            ts.flags = pair.assert_i16()? as i32;
+                        }
                         280 => {
                             if !read_version {
-                                ts.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                                ts.version =
+                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 read_version = true;
-                            }
-                            else {
+                            } else {
                                 ts.is_title_suppressed = as_bool(pair.assert_i16()?);
                             }
-                        },
-                        281 => { ts.is_column_heading_suppressed = as_bool(pair.assert_i16()?); },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        281 => {
+                            ts.is_column_heading_suppressed = as_bool(pair.assert_i16()?);
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             ObjectType::XRecordObject(ref mut xr) => {
                 let mut reading_data = false;
                 loop {
                     let pair = next_pair!(iter);
                     if reading_data {
                         xr.data_pairs.push(pair);
-                    }
-                    else {
+                    } else {
                         if pair.code == 280 {
-                            xr.duplicate_record_handling = enum_from_number!(DictionaryDuplicateRecordHandling, NotApplicable, from_i16, pair.assert_i16()?);
+                            xr.duplicate_record_handling = enum_from_number!(
+                                DictionaryDuplicateRecordHandling,
+                                NotApplicable,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
                             reading_data = true;
                             continue;
                         }
@@ -898,22 +1431,30 @@ impl Object {
                         }
 
                         match pair.code {
-                            100 => { continue; }, // value should be "AcDbXrecord", but it doesn't really matter
+                            100 => {
+                                continue;
+                            } // value should be "AcDbXrecord", but it doesn't really matter
                             5 | 105 => (), // these codes aren't allowed here
                             _ => {
                                 xr.data_pairs.push(pair);
                                 reading_data = true;
-                            },
+                            }
                         }
                     }
                 }
-            },
+            }
             _ => return Ok(false), // no custom reader
         }
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    pub(crate) fn write<T>(
+        &self,
+        version: &AcadVersion,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
             self.common.write(version, writer, handle_tracker)?;
@@ -928,9 +1469,14 @@ impl Object {
 
         Ok(())
     }
-    fn apply_custom_writer<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<bool>
-        where T: Write {
-
+    fn apply_custom_writer<T>(
+        &self,
+        version: &AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
         match self.specific {
             ObjectType::DataTable(ref data) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDataTable"))?;
@@ -951,37 +1497,54 @@ impl Object {
                     };
                     if let Some(column_code) = column_code {
                         writer.write_code_pair(&CodePair::new_i32(92, column_code))?;
-                        writer.write_code_pair(&CodePair::new_string(2, &data.column_names[col]))?;
+                        writer
+                            .write_code_pair(&CodePair::new_string(2, &data.column_names[col]))?;
                         for row in 0..data.row_count {
                             match &data.values[row][col] {
-                                &Some(DataTableValue::Boolean(val)) => { writer.write_code_pair(&CodePair::new_i16(71, as_i16(val)))?; },
-                                &Some(DataTableValue::Integer(val)) => { writer.write_code_pair(&CodePair::new_i32(93, val))?; },
-                                &Some(DataTableValue::Double(val)) => { writer.write_code_pair(&CodePair::new_f64(40, val))?; },
-                                &Some(DataTableValue::Str(ref val)) => { writer.write_code_pair(&CodePair::new_string(3, val))?; },
+                                &Some(DataTableValue::Boolean(val)) => {
+                                    writer.write_code_pair(&CodePair::new_i16(71, as_i16(val)))?;
+                                }
+                                &Some(DataTableValue::Integer(val)) => {
+                                    writer.write_code_pair(&CodePair::new_i32(93, val))?;
+                                }
+                                &Some(DataTableValue::Double(val)) => {
+                                    writer.write_code_pair(&CodePair::new_f64(40, val))?;
+                                }
+                                &Some(DataTableValue::Str(ref val)) => {
+                                    writer.write_code_pair(&CodePair::new_string(3, val))?;
+                                }
                                 &Some(DataTableValue::Point2D(ref val)) => {
                                     writer.write_code_pair(&CodePair::new_f64(10, val.x))?;
                                     writer.write_code_pair(&CodePair::new_f64(20, val.y))?;
                                     writer.write_code_pair(&CodePair::new_f64(30, val.z))?;
-                                },
+                                }
                                 &Some(DataTableValue::Point3D(ref val)) => {
                                     writer.write_code_pair(&CodePair::new_f64(11, val.x))?;
                                     writer.write_code_pair(&CodePair::new_f64(21, val.y))?;
                                     writer.write_code_pair(&CodePair::new_f64(31, val.z))?;
-                                },
-                                &Some(DataTableValue::Handle(val)) => { writer.write_code_pair(&CodePair::new_string(331, &as_handle(val)))?; },
+                                }
+                                &Some(DataTableValue::Handle(val)) => {
+                                    writer.write_code_pair(&CodePair::new_string(
+                                        331,
+                                        &as_handle(val),
+                                    ))?;
+                                }
                                 &None => (),
                             }
                         }
                     }
                 }
-            },
+            }
             ObjectType::Dictionary(ref dict) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
                 if *version >= AcadVersion::R2000 && !dict.is_hard_owner {
                     writer.write_code_pair(&CodePair::new_i16(280, as_i16(dict.is_hard_owner)))?;
                 }
                 if *version >= AcadVersion::R2000 {
-                    writer.write_code_pair(&CodePair::new_i16(281, dict.duplicate_record_handling as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        281,
+                        dict.duplicate_record_handling as i16,
+                    ))?;
                 }
                 let code = if dict.is_hard_owner { 360 } else { 350 };
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
@@ -990,20 +1553,24 @@ impl Object {
                         writer.write_code_pair(&CodePair::new_string(code, &as_handle(*value)))?;
                     }
                 }
-            },
+            }
             ObjectType::DictionaryWithDefault(ref dict) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
                 if *version >= AcadVersion::R2000 {
-                    writer.write_code_pair(&CodePair::new_i16(281, dict.duplicate_record_handling as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        281,
+                        dict.duplicate_record_handling as i16,
+                    ))?;
                 }
-                writer.write_code_pair(&CodePair::new_string(340, &as_handle(dict.default_handle)))?;
+                writer
+                    .write_code_pair(&CodePair::new_string(340, &as_handle(dict.default_handle)))?;
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
                     if let Some(value) = dict.value_handles.get(key) {
                         writer.write_code_pair(&CodePair::new_string(3, key))?;
                         writer.write_code_pair(&CodePair::new_string(350, &as_handle(*value)))?;
                     }
                 }
-            },
+            }
             ObjectType::LightList(ref ll) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbLightList"))?;
                 writer.write_code_pair(&CodePair::new_i32(90, ll.version))?;
@@ -1012,17 +1579,19 @@ impl Object {
                     writer.write_code_pair(&CodePair::new_string(5, &as_handle(*light)))?;
                     writer.write_code_pair(&CodePair::new_string(1, &String::new()))?; // TODO: write the light's real name
                 }
-            },
+            }
             ObjectType::SectionSettings(ref ss) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbSectionSettings"))?;
                 writer.write_code_pair(&CodePair::new_i32(90, ss.section_type))?;
-                writer.write_code_pair(&CodePair::new_i32(91, ss.geometry_settings.len() as i32))?;
+                writer
+                    .write_code_pair(&CodePair::new_i32(91, ss.geometry_settings.len() as i32))?;
                 for settings in &ss.geometry_settings {
                     settings.write(writer)?;
                 }
-            },
+            }
             ObjectType::SunStudy(ref ss) => {
-                writer.write_code_pair(&CodePair::new_string(100, &String::from("AcDbSunStudy")))?;
+                writer
+                    .write_code_pair(&CodePair::new_string(100, &String::from("AcDbSunStudy")))?;
                 writer.write_code_pair(&CodePair::new_i32(90, ss.version))?;
                 writer.write_code_pair(&CodePair::new_string(1, &ss.sun_setup_name))?;
                 writer.write_code_pair(&CodePair::new_string(2, &ss.description))?;
@@ -1033,43 +1602,70 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_bool(291, ss.select_dates_from_calendar))?;
                 writer.write_code_pair(&CodePair::new_i32(91, ss.dates.len() as i32))?;
                 for item in &ss.dates {
-                    writer.write_code_pair(&CodePair::new_i32(90, as_double_local(*item) as i32))?;
+                    writer
+                        .write_code_pair(&CodePair::new_i32(90, as_double_local(*item) as i32))?;
                 }
                 writer.write_code_pair(&CodePair::new_bool(292, ss.select_range_of_dates))?;
-                writer.write_code_pair(&CodePair::new_i32(93, ss.start_time_seconds_past_midnight))?;
-                writer.write_code_pair(&CodePair::new_i32(94, ss.end_time_seconds_past_midnight))?;
+                writer
+                    .write_code_pair(&CodePair::new_i32(93, ss.start_time_seconds_past_midnight))?;
+                writer
+                    .write_code_pair(&CodePair::new_i32(94, ss.end_time_seconds_past_midnight))?;
                 writer.write_code_pair(&CodePair::new_i32(95, ss.interval_in_seconds))?;
                 writer.write_code_pair(&CodePair::new_i16(73, ss.hours.len() as i16))?;
                 for v in &ss.hours {
                     writer.write_code_pair(&CodePair::new_i16(290, *v as i16))?;
                 }
-                writer.write_code_pair(&CodePair::new_string(340, &as_handle(ss.__page_setup_wizard_handle)))?;
+                writer.write_code_pair(&CodePair::new_string(
+                    340,
+                    &as_handle(ss.__page_setup_wizard_handle),
+                ))?;
                 writer.write_code_pair(&CodePair::new_string(341, &as_handle(ss.__view_handle)))?;
-                writer.write_code_pair(&CodePair::new_string(342, &as_handle(ss.__visual_style_handle)))?;
+                writer.write_code_pair(&CodePair::new_string(
+                    342,
+                    &as_handle(ss.__visual_style_handle),
+                ))?;
                 writer.write_code_pair(&CodePair::new_i16(74, ss.shade_plot_type))?;
                 writer.write_code_pair(&CodePair::new_i16(75, ss.viewports_per_page as i16))?;
-                writer.write_code_pair(&CodePair::new_i16(76, ss.viewport_distribution_row_count as i16))?;
-                writer.write_code_pair(&CodePair::new_i16(77, ss.viewport_distribution_column_count as i16))?;
+                writer.write_code_pair(&CodePair::new_i16(
+                    76,
+                    ss.viewport_distribution_row_count as i16,
+                ))?;
+                writer.write_code_pair(&CodePair::new_i16(
+                    77,
+                    ss.viewport_distribution_column_count as i16,
+                ))?;
                 writer.write_code_pair(&CodePair::new_f64(40, ss.spacing))?;
                 writer.write_code_pair(&CodePair::new_bool(293, ss.lock_viewports))?;
                 writer.write_code_pair(&CodePair::new_bool(294, ss.label_viewports))?;
-                writer.write_code_pair(&CodePair::new_string(343, &as_handle(ss.__text_style_handle)))?;
-            },
+                writer.write_code_pair(&CodePair::new_string(
+                    343,
+                    &as_handle(ss.__text_style_handle),
+                ))?;
+            }
             ObjectType::XRecordObject(ref xr) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbXrecord"))?;
-                writer.write_code_pair(&CodePair::new_i16(280, xr.duplicate_record_handling as i16))?;
+                writer.write_code_pair(&CodePair::new_i16(
+                    280,
+                    xr.duplicate_record_handling as i16,
+                ))?;
                 for pair in &xr.data_pairs {
                     writer.write_code_pair(&pair)?;
                 }
-            },
+            }
             _ => return Ok(false), // no custom writer
         }
 
         Ok(true)
     }
-    fn post_write<T>(&self, _version: &AcadVersion, _writer: &mut CodePairWriter<T>, _handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn post_write<T>(
+        &self,
+        _version: &AcadVersion,
+        _writer: &mut CodePairWriter<T>,
+        _handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         match self.specific {
             _ => (),
         }

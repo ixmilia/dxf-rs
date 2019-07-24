@@ -3,23 +3,13 @@
 extern crate byteorder;
 
 use std::fmt;
-use std::fmt::{
-    Debug,
-    Formatter,
-};
+use std::fmt::{Debug, Formatter};
 
-use self::byteorder::{
-    BigEndian,
-    ByteOrder,
-};
+use self::byteorder::{BigEndian, ByteOrder};
 
-use ::{
-    CodePairValue,
-    DxfError,
-    DxfResult,
-};
+use {CodePairValue, DxfError, DxfResult};
 
-use ::helper_functions::parse_hex_string;
+use helper_functions::parse_hex_string;
 
 /// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
 /// data itself.
@@ -33,7 +23,11 @@ pub struct CodePair {
 
 impl CodePair {
     pub fn new(code: i32, val: CodePairValue, offset: usize) -> Self {
-        CodePair { code: code, value: val, offset: offset }
+        CodePair {
+            code: code,
+            value: val,
+            offset: offset,
+        }
     }
     pub fn new_str(code: i32, val: &str) -> Self {
         CodePair::new(code, CodePairValue::Str(val.to_string()), 0)

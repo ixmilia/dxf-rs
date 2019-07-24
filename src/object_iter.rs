@@ -1,11 +1,8 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 use itertools::PutBack;
-use ::{
-    CodePair,
-    DxfResult,
-};
-use ::objects::Object;
+use objects::Object;
+use {CodePair, DxfResult};
 
 pub(crate) struct ObjectIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
     pub iter: &'a mut PutBack<I>,

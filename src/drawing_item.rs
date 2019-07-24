@@ -1,9 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use ::Block;
 use entities::*;
 use objects::*;
 use tables::*;
+use Block;
 
 pub enum DrawingItem<'a> {
     AppId(&'a AppId),
@@ -77,10 +77,14 @@ impl<'a> DrawingItemMut<'a> {
             &mut DrawingItemMut::Block(ref mut b) => b.handle = handle,
             &mut DrawingItemMut::BlockRecord(ref mut br) => br.handle = handle,
             &mut DrawingItemMut::DimStyle(ref mut ds) => ds.handle = handle,
-            &mut DrawingItemMut::Entity(&mut Entity { ref mut common, .. }) => common.handle = handle,
+            &mut DrawingItemMut::Entity(&mut Entity { ref mut common, .. }) => {
+                common.handle = handle
+            }
             &mut DrawingItemMut::Layer(ref mut l) => l.handle = handle,
             &mut DrawingItemMut::LineType(ref mut l) => l.handle = handle,
-            &mut DrawingItemMut::Object(&mut Object { ref mut common, .. }) => common.handle = handle,
+            &mut DrawingItemMut::Object(&mut Object { ref mut common, .. }) => {
+                common.handle = handle
+            }
             &mut DrawingItemMut::Style(ref mut s) => s.handle = handle,
             &mut DrawingItemMut::Ucs(ref mut u) => u.handle = handle,
             &mut DrawingItemMut::View(ref mut v) => v.handle = handle,

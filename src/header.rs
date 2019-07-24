@@ -2,16 +2,12 @@
 
 // other implementation is in `generated/header.rs`
 
-use std::io::Write;
 use itertools::PutBack;
+use std::io::Write;
 
-use ::{
-    CodePair,
-    DxfError,
-    DxfResult,
-};
-use ::helper_functions::*;
 use code_pair_writer::CodePairWriter;
+use helper_functions::*;
+use {CodePair, DxfError, DxfResult};
 
 pub use generated::header::*;
 
@@ -27,8 +23,9 @@ impl Header {
         default_if_empty(&mut self.file_name, ".");
     }
     pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         let mut header = Header::default();
         loop {
             match iter.next() {
@@ -37,7 +34,7 @@ impl Header {
                         0 => {
                             iter.put_back(Ok(pair));
                             break;
-                        },
+                        }
                         9 => {
                             let last_header_variable = pair.assert_string()?;
                             loop {
@@ -47,19 +44,19 @@ impl Header {
                                             // ENDSEC or a new header variable
                                             iter.put_back(Ok(pair));
                                             break;
+                                        } else {
+                                            header
+                                                .set_header_value(&last_header_variable, &pair)?;
                                         }
-                                        else {
-                                            header.set_header_value(&last_header_variable, &pair)?;
-                                        }
-                                    },
+                                    }
                                     Some(Err(e)) => return Err(e),
                                     None => break,
                                 }
                             }
-                        },
+                        }
                         _ => return Err(DxfError::UnexpectedCodePair(pair, String::from(""))),
                     }
-                },
+                }
                 Some(Err(e)) => return Err(e),
                 None => break,
             }
@@ -67,9 +64,14 @@ impl Header {
 
         Ok(header)
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>, next_available_handle: u32) -> DxfResult<()>
-        where T: Write + ?Sized {
-
+    pub(crate) fn write<T>(
+        &self,
+        writer: &mut CodePairWriter<T>,
+        next_available_handle: u32,
+    ) -> DxfResult<()>
+    where
+        T: Write + ?Sized,
+    {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "HEADER"))?;
         self.write_code_pairs(writer, next_available_handle)?;

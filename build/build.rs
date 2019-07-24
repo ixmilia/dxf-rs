@@ -1,12 +1,12 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-mod other_helpers;
-mod xml_helpers;
 mod entity_generator;
 mod header_generator;
 mod object_generator;
+mod other_helpers;
 mod table_generator;
 mod test_helper_generator;
+mod xml_helpers;
 
 use std::env;
 use std::fs::File;

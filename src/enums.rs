@@ -2,7 +2,7 @@
 
 extern crate num;
 
-use ::{DxfError, DxfResult};
+use {DxfError, DxfResult};
 
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
@@ -98,29 +98,28 @@ impl AcadVersion {
         }
     }
     pub fn to_string(&self) -> String {
-        String::from(
-            match self {
-                &AcadVersion::Version_1_0 => "MC0.0",
-                &AcadVersion::Version_1_2 => "AC1.2",
-                &AcadVersion::Version_1_40 => "AC1.40",
-                &AcadVersion::Version_2_05 => "AC1.50",
-                &AcadVersion::Version_2_10 => "AC2.10",
-                &AcadVersion::Version_2_21 => "AC2.21",
-                &AcadVersion::Version_2_22 => "AC2.22",
-                &AcadVersion::Version_2_5 => "AC1002",
-                &AcadVersion::Version_2_6 => "AC1003",
-                &AcadVersion::R9 => "AC1004",
-                &AcadVersion::R10 => "AC1006",
-                &AcadVersion::R11 => "AC1009",
-                &AcadVersion::R12 => "AC1009",
-                &AcadVersion::R13 => "AC1012",
-                &AcadVersion::R14 => "AC1014",
-                &AcadVersion::R2000 => "AC1015",
-                &AcadVersion::R2004 => "AC1018",
-                &AcadVersion::R2007 => "AC1021",
-                &AcadVersion::R2010 => "AC1024",
-                &AcadVersion::R2013 => "AC1027",
-                &AcadVersion::R2018 => "AC1032",
+        String::from(match self {
+            &AcadVersion::Version_1_0 => "MC0.0",
+            &AcadVersion::Version_1_2 => "AC1.2",
+            &AcadVersion::Version_1_40 => "AC1.40",
+            &AcadVersion::Version_2_05 => "AC1.50",
+            &AcadVersion::Version_2_10 => "AC2.10",
+            &AcadVersion::Version_2_21 => "AC2.21",
+            &AcadVersion::Version_2_22 => "AC2.22",
+            &AcadVersion::Version_2_5 => "AC1002",
+            &AcadVersion::Version_2_6 => "AC1003",
+            &AcadVersion::R9 => "AC1004",
+            &AcadVersion::R10 => "AC1006",
+            &AcadVersion::R11 => "AC1009",
+            &AcadVersion::R12 => "AC1009",
+            &AcadVersion::R13 => "AC1012",
+            &AcadVersion::R14 => "AC1014",
+            &AcadVersion::R2000 => "AC1015",
+            &AcadVersion::R2004 => "AC1018",
+            &AcadVersion::R2007 => "AC1021",
+            &AcadVersion::R2010 => "AC1024",
+            &AcadVersion::R2013 => "AC1027",
+            &AcadVersion::R2018 => "AC1032",
         })
     }
 }
@@ -1310,9 +1309,7 @@ pub struct ViewMode {
 
 impl ViewMode {
     pub fn from_i16(val: i16) -> Self {
-        ViewMode {
-            flags: val as i32,
-        }
+        ViewMode { flags: val as i32 }
     }
     pub fn get_raw(&self) -> i32 {
         self.flags
@@ -1323,8 +1320,7 @@ impl ViewMode {
     fn set_flag(&mut self, mask: i32, val: bool) {
         if val {
             self.flags |= mask;
-        }
-        else {
+        } else {
             self.flags &= !mask
         }
     }

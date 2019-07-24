@@ -2,22 +2,15 @@
 
 // other implementation is in `generated/entities.rs`
 
-use std::io::Write;
 use enum_primitive::FromPrimitive;
 use itertools::PutBack;
+use std::io::Write;
 
-use ::{
-    CodePair,
-    Color,
-    DxfError,
-    DxfResult,
-    Point,
-    Vector,
-};
+use {CodePair, Color, DxfError, DxfResult, Point, Vector};
 
 use code_pair_writer::CodePairWriter;
-use enums::*;
 use entities::*;
+use enums::*;
 use handle_tracker::HandleTracker;
 use helper_functions::*;
 
@@ -31,7 +24,7 @@ impl Arc {
             radius: radius,
             start_angle: start,
             end_angle: end,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -44,7 +37,7 @@ impl Circle {
         Circle {
             center: center,
             radius: radius,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -79,13 +72,18 @@ impl DimensionBase {
 //                                                                        Face3D
 //------------------------------------------------------------------------------
 impl Face3D {
-    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+    pub fn new(
+        first_corner: Point,
+        second_corner: Point,
+        third_corner: Point,
+        fourth_corner: Point,
+    ) -> Self {
         Face3D {
             first_corner: first_corner,
             second_corner: second_corner,
             third_corner: third_corner,
             fourth_corner: fourth_corner,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -98,7 +96,7 @@ impl Line {
         Line {
             p1: p1,
             p2: p2,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -125,7 +123,7 @@ impl ModelPoint {
     pub fn new(p: Point) -> Self {
         ModelPoint {
             location: p,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -146,7 +144,8 @@ impl ProxyEntity {
         self.__object_drawing_format as i32 >> 4
     }
     pub fn set_object_mainenance_release_version(&mut self, version: i32) {
-        self.__object_drawing_format = (version << 4) as u32 + (self.__object_drawing_format & 0xFFFF);
+        self.__object_drawing_format =
+            (version << 4) as u32 + (self.__object_drawing_format & 0xFFFF);
     }
 }
 
@@ -154,13 +153,18 @@ impl ProxyEntity {
 //                                                                         Solid
 //------------------------------------------------------------------------------
 impl Solid {
-    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+    pub fn new(
+        first_corner: Point,
+        second_corner: Point,
+        third_corner: Point,
+        fourth_corner: Point,
+    ) -> Self {
         Solid {
             first_corner: first_corner,
             second_corner: second_corner,
             third_corner: third_corner,
             fourth_corner: fourth_corner,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -169,13 +173,18 @@ impl Solid {
 //                                                                         Trace
 //------------------------------------------------------------------------------
 impl Trace {
-    pub fn new(first_corner: Point, second_corner: Point, third_corner: Point, fourth_corner: Point) -> Self {
+    pub fn new(
+        first_corner: Point,
+        second_corner: Point,
+        third_corner: Point,
+        fourth_corner: Point,
+    ) -> Self {
         Trace {
             first_corner: first_corner,
             second_corner: second_corner,
             third_corner: third_corner,
             fourth_corner: fourth_corner,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -187,7 +196,7 @@ impl Vertex {
     pub fn new(location: Point) -> Self {
         Vertex {
             location: location,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -198,69 +207,145 @@ impl Vertex {
 impl EntityType {
     fn apply_dimension_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {
         match self {
-            &mut EntityType::RotatedDimension(ref mut dim) => {
-                match pair.code {
-                    12 => { dim.insertion_point.x = pair.assert_f64()?; },
-                    22 => { dim.insertion_point.y = pair.assert_f64()?; },
-                    32 => { dim.insertion_point.z = pair.assert_f64()?; },
-                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
-                    50 => { dim.rotation_angle = pair.assert_f64()?; },
-                    52 => { dim.extension_line_angle = pair.assert_f64()?; },
-                    _ => { return Ok(false); },
+            &mut EntityType::RotatedDimension(ref mut dim) => match pair.code {
+                12 => {
+                    dim.insertion_point.x = pair.assert_f64()?;
+                }
+                22 => {
+                    dim.insertion_point.y = pair.assert_f64()?;
+                }
+                32 => {
+                    dim.insertion_point.z = pair.assert_f64()?;
+                }
+                13 => {
+                    dim.definition_point_2.x = pair.assert_f64()?;
+                }
+                23 => {
+                    dim.definition_point_2.y = pair.assert_f64()?;
+                }
+                33 => {
+                    dim.definition_point_2.z = pair.assert_f64()?;
+                }
+                14 => {
+                    dim.definition_point_3.x = pair.assert_f64()?;
+                }
+                24 => {
+                    dim.definition_point_3.y = pair.assert_f64()?;
+                }
+                34 => {
+                    dim.definition_point_3.z = pair.assert_f64()?;
+                }
+                50 => {
+                    dim.rotation_angle = pair.assert_f64()?;
+                }
+                52 => {
+                    dim.extension_line_angle = pair.assert_f64()?;
+                }
+                _ => {
+                    return Ok(false);
                 }
             },
-            &mut EntityType::RadialDimension(ref mut dim) => {
-                match pair.code {
-                    15 => { dim.definition_point_2.x = pair.assert_f64()?; },
-                    25 => { dim.definition_point_2.y = pair.assert_f64()?; },
-                    35 => { dim.definition_point_2.z = pair.assert_f64()?; },
-                    40 => { dim.leader_length = pair.assert_f64()?; },
-                    _ => { return Ok(false); },
+            &mut EntityType::RadialDimension(ref mut dim) => match pair.code {
+                15 => {
+                    dim.definition_point_2.x = pair.assert_f64()?;
+                }
+                25 => {
+                    dim.definition_point_2.y = pair.assert_f64()?;
+                }
+                35 => {
+                    dim.definition_point_2.z = pair.assert_f64()?;
+                }
+                40 => {
+                    dim.leader_length = pair.assert_f64()?;
+                }
+                _ => {
+                    return Ok(false);
                 }
             },
-            &mut EntityType::DiameterDimension(ref mut dim) => {
-                match pair.code {
-                    15 => { dim.definition_point_2.x = pair.assert_f64()?; },
-                    25 => { dim.definition_point_2.y = pair.assert_f64()?; },
-                    35 => { dim.definition_point_2.z = pair.assert_f64()?; },
-                    40 => { dim.leader_length = pair.assert_f64()?; },
-                    _ => { return Ok(false); },
+            &mut EntityType::DiameterDimension(ref mut dim) => match pair.code {
+                15 => {
+                    dim.definition_point_2.x = pair.assert_f64()?;
+                }
+                25 => {
+                    dim.definition_point_2.y = pair.assert_f64()?;
+                }
+                35 => {
+                    dim.definition_point_2.z = pair.assert_f64()?;
+                }
+                40 => {
+                    dim.leader_length = pair.assert_f64()?;
+                }
+                _ => {
+                    return Ok(false);
                 }
             },
-            &mut EntityType::AngularThreePointDimension(ref mut dim) => {
-                match pair.code {
-                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
-                    15 => { dim.definition_point_4.x = pair.assert_f64()?; },
-                    25 => { dim.definition_point_4.y = pair.assert_f64()?; },
-                    35 => { dim.definition_point_4.z = pair.assert_f64()?; },
-                    16 => { dim.definition_point_5.x = pair.assert_f64()?; },
-                    26 => { dim.definition_point_5.y = pair.assert_f64()?; },
-                    36 => { dim.definition_point_5.z = pair.assert_f64()?; },
-                    _ => { return Ok(false); },
+            &mut EntityType::AngularThreePointDimension(ref mut dim) => match pair.code {
+                13 => {
+                    dim.definition_point_2.x = pair.assert_f64()?;
+                }
+                23 => {
+                    dim.definition_point_2.y = pair.assert_f64()?;
+                }
+                33 => {
+                    dim.definition_point_2.z = pair.assert_f64()?;
+                }
+                14 => {
+                    dim.definition_point_3.x = pair.assert_f64()?;
+                }
+                24 => {
+                    dim.definition_point_3.y = pair.assert_f64()?;
+                }
+                34 => {
+                    dim.definition_point_3.z = pair.assert_f64()?;
+                }
+                15 => {
+                    dim.definition_point_4.x = pair.assert_f64()?;
+                }
+                25 => {
+                    dim.definition_point_4.y = pair.assert_f64()?;
+                }
+                35 => {
+                    dim.definition_point_4.z = pair.assert_f64()?;
+                }
+                16 => {
+                    dim.definition_point_5.x = pair.assert_f64()?;
+                }
+                26 => {
+                    dim.definition_point_5.y = pair.assert_f64()?;
+                }
+                36 => {
+                    dim.definition_point_5.z = pair.assert_f64()?;
+                }
+                _ => {
+                    return Ok(false);
                 }
             },
-            &mut EntityType::OrdinateDimension(ref mut dim) => {
-                match pair.code {
-                    13 => { dim.definition_point_2.x = pair.assert_f64()?; },
-                    23 => { dim.definition_point_2.y = pair.assert_f64()?; },
-                    33 => { dim.definition_point_2.z = pair.assert_f64()?; },
-                    14 => { dim.definition_point_3.x = pair.assert_f64()?; },
-                    24 => { dim.definition_point_3.y = pair.assert_f64()?; },
-                    34 => { dim.definition_point_3.z = pair.assert_f64()?; },
-                    _ => { return Ok(false); },
+            &mut EntityType::OrdinateDimension(ref mut dim) => match pair.code {
+                13 => {
+                    dim.definition_point_2.x = pair.assert_f64()?;
+                }
+                23 => {
+                    dim.definition_point_2.y = pair.assert_f64()?;
+                }
+                33 => {
+                    dim.definition_point_2.z = pair.assert_f64()?;
+                }
+                14 => {
+                    dim.definition_point_3.x = pair.assert_f64()?;
+                }
+                24 => {
+                    dim.definition_point_3.y = pair.assert_f64()?;
+                }
+                34 => {
+                    dim.definition_point_3.z = pair.assert_f64()?;
+                }
+                _ => {
+                    return Ok(false);
                 }
             },
-            _ => { return Err(DxfError::UnexpectedEnumValue(pair.offset)); },
+            _ => {
+                return Err(DxfError::UnexpectedEnumValue(pair.offset));
+            }
         }
         Ok(true)
     }
@@ -293,8 +378,9 @@ impl Entity {
         // no entity-specific values to set
     }
     pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Entity>>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         'new_entity: loop {
             match iter.next() {
                 // first code pair must be 0/entity-type
@@ -317,61 +403,190 @@ impl Entity {
                                         // new entity or ENDSEC
                                         iter.put_back(Ok(pair));
                                         break;
-                                    },
+                                    }
                                     Some(Ok(pair)) => {
                                         match dimension_entity {
                                             Some(ref mut dim) => {
                                                 if !dim.apply_dimension_code_pair(&pair)? {
                                                     common.apply_individual_pair(&pair, iter)?;
                                                 }
-                                            },
+                                            }
                                             None => {
                                                 match pair.code {
-                                                    1 => { dimension_base.text = pair.assert_string()?; },
-                                                    2 => { dimension_base.block_name = pair.assert_string()?; },
-                                                    3 => { dimension_base.dimension_style_name = pair.assert_string()?; },
-                                                    10 => { dimension_base.definition_point_1.x = pair.assert_f64()?; },
-                                                    20 => { dimension_base.definition_point_1.y = pair.assert_f64()?; },
-                                                    30 => { dimension_base.definition_point_1.z = pair.assert_f64()?; },
-                                                    11 => { dimension_base.text_mid_point.x = pair.assert_f64()?; },
-                                                    21 => { dimension_base.text_mid_point.y = pair.assert_f64()?; },
-                                                    31 => { dimension_base.text_mid_point.z = pair.assert_f64()?; },
-                                                    41 => { dimension_base.text_line_spacing_factor = pair.assert_f64()?; },
-                                                    42 => { dimension_base.actual_measurement = pair.assert_f64()?; },
-                                                    51 => { dimension_base.horizontal_direction_angle = pair.assert_f64()?; },
-                                                    53 => { dimension_base.text_rotation_angle = pair.assert_f64()?; },
-                                                    70 => { dimension_base.set_dimension_type(pair.assert_i16()?)?; },
-                                                    71 => { dimension_base.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?); },
-                                                    72 => { dimension_base.text_line_spacing_style = enum_from_number!(TextLineSpacingStyle, AtLeast, from_i16, pair.assert_i16()?); },
-                                                    210 => { dimension_base.normal.x = pair.assert_f64()?; },
-                                                    220 => { dimension_base.normal.y = pair.assert_f64()?; },
-                                                    230 => { dimension_base.normal.z = pair.assert_f64()?; },
-                                                    280 => { dimension_base.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?); },
+                                                    1 => {
+                                                        dimension_base.text =
+                                                            pair.assert_string()?;
+                                                    }
+                                                    2 => {
+                                                        dimension_base.block_name =
+                                                            pair.assert_string()?;
+                                                    }
+                                                    3 => {
+                                                        dimension_base.dimension_style_name =
+                                                            pair.assert_string()?;
+                                                    }
+                                                    10 => {
+                                                        dimension_base.definition_point_1.x =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    20 => {
+                                                        dimension_base.definition_point_1.y =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    30 => {
+                                                        dimension_base.definition_point_1.z =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    11 => {
+                                                        dimension_base.text_mid_point.x =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    21 => {
+                                                        dimension_base.text_mid_point.y =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    31 => {
+                                                        dimension_base.text_mid_point.z =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    41 => {
+                                                        dimension_base.text_line_spacing_factor =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    42 => {
+                                                        dimension_base.actual_measurement =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    51 => {
+                                                        dimension_base.horizontal_direction_angle =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    53 => {
+                                                        dimension_base.text_rotation_angle =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    70 => {
+                                                        dimension_base.set_dimension_type(
+                                                            pair.assert_i16()?,
+                                                        )?;
+                                                    }
+                                                    71 => {
+                                                        dimension_base.attachment_point = enum_from_number!(
+                                                            AttachmentPoint,
+                                                            TopLeft,
+                                                            from_i16,
+                                                            pair.assert_i16()?
+                                                        );
+                                                    }
+                                                    72 => {
+                                                        dimension_base.text_line_spacing_style = enum_from_number!(
+                                                            TextLineSpacingStyle,
+                                                            AtLeast,
+                                                            from_i16,
+                                                            pair.assert_i16()?
+                                                        );
+                                                    }
+                                                    210 => {
+                                                        dimension_base.normal.x =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    220 => {
+                                                        dimension_base.normal.y =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    230 => {
+                                                        dimension_base.normal.z =
+                                                            pair.assert_f64()?;
+                                                    }
+                                                    280 => {
+                                                        dimension_base.version = enum_from_number!(
+                                                            Version,
+                                                            R2010,
+                                                            from_i16,
+                                                            pair.assert_i16()?
+                                                        );
+                                                    }
                                                     100 => {
                                                         match &*pair.assert_string()? {
-                                                            "AcDbAlignedDimension" => { dimension_entity = Some(EntityType::RotatedDimension(RotatedDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
-                                                            "AcDbRadialDimension" => { dimension_entity = Some(EntityType::RadialDimension(RadialDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
-                                                            "AcDbDiametricDimension" => { dimension_entity = Some(EntityType::DiameterDimension(DiameterDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
-                                                            "AcDb3PointAngularDimension" => { dimension_entity = Some(EntityType::AngularThreePointDimension(AngularThreePointDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
-                                                            "AcDbOrdinateDimension" => { dimension_entity = Some(EntityType::OrdinateDimension(OrdinateDimension { dimension_base: dimension_base.clone(), .. Default::default() })); },
-                                                            _ => {}, // unexpected dimension type
+                                                            "AcDbAlignedDimension" => {
+                                                                dimension_entity = Some(
+                                                                    EntityType::RotatedDimension(
+                                                                        RotatedDimension {
+                                                                            dimension_base:
+                                                                                dimension_base
+                                                                                    .clone(),
+                                                                            ..Default::default()
+                                                                        },
+                                                                    ),
+                                                                );
+                                                            }
+                                                            "AcDbRadialDimension" => {
+                                                                dimension_entity = Some(
+                                                                    EntityType::RadialDimension(
+                                                                        RadialDimension {
+                                                                            dimension_base:
+                                                                                dimension_base
+                                                                                    .clone(),
+                                                                            ..Default::default()
+                                                                        },
+                                                                    ),
+                                                                );
+                                                            }
+                                                            "AcDbDiametricDimension" => {
+                                                                dimension_entity = Some(
+                                                                    EntityType::DiameterDimension(
+                                                                        DiameterDimension {
+                                                                            dimension_base:
+                                                                                dimension_base
+                                                                                    .clone(),
+                                                                            ..Default::default()
+                                                                        },
+                                                                    ),
+                                                                );
+                                                            }
+                                                            "AcDb3PointAngularDimension" => {
+                                                                dimension_entity = Some(EntityType::AngularThreePointDimension(AngularThreePointDimension { dimension_base: dimension_base.clone(), .. Default::default() }));
+                                                            }
+                                                            "AcDbOrdinateDimension" => {
+                                                                dimension_entity = Some(
+                                                                    EntityType::OrdinateDimension(
+                                                                        OrdinateDimension {
+                                                                            dimension_base:
+                                                                                dimension_base
+                                                                                    .clone(),
+                                                                            ..Default::default()
+                                                                        },
+                                                                    ),
+                                                                );
+                                                            }
+                                                            _ => {} // unexpected dimension type
                                                         }
-                                                    },
-                                                    _ => { common.apply_individual_pair(&pair, iter)?; },
+                                                    }
+                                                    _ => {
+                                                        common
+                                                            .apply_individual_pair(&pair, iter)?;
+                                                    }
                                                 }
-                                            },
+                                            }
                                         }
-                                    },
+                                    }
                                     Some(Err(e)) => return Err(e),
                                     None => return Err(DxfError::UnexpectedEndOfInput),
                                 }
                             }
 
                             match dimension_entity {
-                                Some(dim) => { return Ok(Some(Entity { common: common, specific: dim })); },
-                                None => { continue 'new_entity; }, // unsuccessful dimension match
+                                Some(dim) => {
+                                    return Ok(Some(Entity {
+                                        common: common,
+                                        specific: dim,
+                                    }));
+                                }
+                                None => {
+                                    continue 'new_entity;
+                                } // unsuccessful dimension match
                             }
-                        },
+                        }
                         _ => {
                             match EntityType::from_type_string(&type_string) {
                                 Some(e) => {
@@ -384,8 +599,10 @@ impl Entity {
                                                     // new entity or ENDSEC
                                                     iter.put_back(Ok(pair));
                                                     break;
-                                                },
-                                                Some(Ok(pair)) => entity.apply_code_pair(&pair, iter)?,
+                                                }
+                                                Some(Ok(pair)) => {
+                                                    entity.apply_code_pair(&pair, iter)?
+                                                }
                                                 Some(Err(e)) => return Err(e),
                                                 None => return Err(DxfError::UnexpectedEndOfInput),
                                             }
@@ -395,16 +612,16 @@ impl Entity {
                                     }
 
                                     return Ok(Some(entity));
-                                },
+                                }
                                 None => {
                                     // swallow unsupported entity
                                     loop {
-                                    match iter.next() {
+                                        match iter.next() {
                                             Some(Ok(pair @ CodePair { code: 0, .. })) => {
                                                 // found another entity or ENDSEC
                                                 iter.put_back(Ok(pair));
                                                 break;
-                                            },
+                                            }
                                             Some(Ok(_)) => (), // part of the unsupported entity
                                             Some(Err(e)) => return Err(e),
                                             None => return Err(DxfError::UnexpectedEndOfInput),
@@ -414,16 +631,22 @@ impl Entity {
                             }
                         }
                     }
-                },
-                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/entity-type or 0/ENDSEC"))),
+                }
+                Some(Ok(pair)) => {
+                    return Err(DxfError::UnexpectedCodePair(
+                        pair,
+                        String::from("expected 0/entity-type or 0/ENDSEC"),
+                    ))
+                }
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
         }
     }
     fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         if !self.specific.try_apply_code_pair(&pair)? {
             self.common.apply_individual_pair(&pair, iter)?;
         }
@@ -432,44 +655,118 @@ impl Entity {
     fn post_parse(&mut self) -> DxfResult<()> {
         match self.specific {
             EntityType::Image(ref mut image) => {
-                combine_points_2(&mut image.__clipping_vertices_x, &mut image.__clipping_vertices_y, &mut image.clipping_vertices, Point::new);
-            },
+                combine_points_2(
+                    &mut image.__clipping_vertices_x,
+                    &mut image.__clipping_vertices_y,
+                    &mut image.clipping_vertices,
+                    Point::new,
+                );
+            }
             EntityType::Leader(ref mut leader) => {
-                combine_points_3(&mut leader.__vertices_x, &mut leader.__vertices_y, &mut leader.__vertices_z, &mut leader.vertices, Point::new);
-            },
+                combine_points_3(
+                    &mut leader.__vertices_x,
+                    &mut leader.__vertices_y,
+                    &mut leader.__vertices_z,
+                    &mut leader.vertices,
+                    Point::new,
+                );
+            }
             EntityType::MLine(ref mut mline) => {
-                combine_points_3(&mut mline.__vertices_x, &mut mline.__vertices_y, &mut mline.__vertices_z, &mut mline.vertices, Point::new);
-                combine_points_3(&mut mline.__segment_direction_x, &mut mline.__segment_direction_y, &mut mline.__segment_direction_z, &mut mline.segment_directions, Vector::new);
-                combine_points_3(&mut mline.__miter_direction_x, &mut mline.__miter_direction_y, &mut mline.__miter_direction_z, &mut mline.miter_directions, Vector::new);
-            },
+                combine_points_3(
+                    &mut mline.__vertices_x,
+                    &mut mline.__vertices_y,
+                    &mut mline.__vertices_z,
+                    &mut mline.vertices,
+                    Point::new,
+                );
+                combine_points_3(
+                    &mut mline.__segment_direction_x,
+                    &mut mline.__segment_direction_y,
+                    &mut mline.__segment_direction_z,
+                    &mut mline.segment_directions,
+                    Vector::new,
+                );
+                combine_points_3(
+                    &mut mline.__miter_direction_x,
+                    &mut mline.__miter_direction_y,
+                    &mut mline.__miter_direction_z,
+                    &mut mline.miter_directions,
+                    Vector::new,
+                );
+            }
             EntityType::Section(ref mut section) => {
-                combine_points_3(&mut section.__vertices_x, &mut section.__vertices_y, &mut section.__vertices_z, &mut section.vertices, Point::new);
-                combine_points_3(&mut section.__back_line_vertices_x, &mut section.__back_line_vertices_y, &mut section.__back_line_vertices_z, &mut section.back_line_vertices, Point::new);
-            },
+                combine_points_3(
+                    &mut section.__vertices_x,
+                    &mut section.__vertices_y,
+                    &mut section.__vertices_z,
+                    &mut section.vertices,
+                    Point::new,
+                );
+                combine_points_3(
+                    &mut section.__back_line_vertices_x,
+                    &mut section.__back_line_vertices_y,
+                    &mut section.__back_line_vertices_z,
+                    &mut section.back_line_vertices,
+                    Point::new,
+                );
+            }
             EntityType::Spline(ref mut spline) => {
-                combine_points_3(&mut spline.__control_point_x, &mut spline.__control_point_y, &mut spline.__control_point_z, &mut spline.control_points, Point::new);
-                combine_points_3(&mut spline.__fit_point_x, &mut spline.__fit_point_y, &mut spline.__fit_point_z, &mut spline.fit_points, Point::new);
-            },
+                combine_points_3(
+                    &mut spline.__control_point_x,
+                    &mut spline.__control_point_y,
+                    &mut spline.__control_point_z,
+                    &mut spline.control_points,
+                    Point::new,
+                );
+                combine_points_3(
+                    &mut spline.__fit_point_x,
+                    &mut spline.__fit_point_y,
+                    &mut spline.__fit_point_z,
+                    &mut spline.fit_points,
+                    Point::new,
+                );
+            }
             EntityType::DgnUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
-            },
+                combine_points_2(
+                    &mut underlay.__point_x,
+                    &mut underlay.__point_y,
+                    &mut underlay.points,
+                    Point::new,
+                );
+            }
             EntityType::DwfUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
-            },
+                combine_points_2(
+                    &mut underlay.__point_x,
+                    &mut underlay.__point_y,
+                    &mut underlay.points,
+                    Point::new,
+                );
+            }
             EntityType::PdfUnderlay(ref mut underlay) => {
-                combine_points_2(&mut underlay.__point_x, &mut underlay.__point_y, &mut underlay.points, Point::new);
-            },
+                combine_points_2(
+                    &mut underlay.__point_x,
+                    &mut underlay.__point_y,
+                    &mut underlay.points,
+                    Point::new,
+                );
+            }
             EntityType::Wipeout(ref mut wo) => {
-                combine_points_2(&mut wo.__clipping_vertices_x, &mut wo.__clipping_vertices_y, &mut wo.clipping_vertices, Point::new);
-            },
+                combine_points_2(
+                    &mut wo.__clipping_vertices_x,
+                    &mut wo.__clipping_vertices_y,
+                    &mut wo.clipping_vertices,
+                    Point::new,
+                );
+            }
             _ => (),
         }
 
         Ok(())
     }
     fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         match self.specific {
             EntityType::Attribute(ref mut att) => {
                 let xrecord_text = "AcDbXrecord";
@@ -479,94 +776,149 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = pair.assert_string()?; },
-                        1 => { att.value = pair.assert_string()?; },
+                        100 => {
+                            last_subclass_marker = pair.assert_string()?;
+                        }
+                        1 => {
+                            att.value = pair.assert_string()?;
+                        }
                         2 => {
                             if last_subclass_marker == xrecord_text {
                                 att.x_record_tag = pair.assert_string()?;
-                            }
-                            else {
+                            } else {
                                 att.attribute_tag = pair.assert_string()?;
                             }
-                        },
-                        7 => { att.text_style_name = pair.assert_string()?; },
+                        }
+                        7 => {
+                            att.text_style_name = pair.assert_string()?;
+                        }
                         10 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.x = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.x = pair.assert_f64()?;
                             }
-                        },
+                        }
                         20 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.y = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.y = pair.assert_f64()?;
                             }
-                        },
+                        }
                         30 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.z = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.z = pair.assert_f64()?;
                             }
-                        },
-                        11 => { att.second_alignment_point.x = pair.assert_f64()?; },
-                        21 => { att.second_alignment_point.y = pair.assert_f64()?; },
-                        31 => { att.second_alignment_point.z = pair.assert_f64()?; },
-                        39 => { att.thickness = pair.assert_f64()?; },
+                        }
+                        11 => {
+                            att.second_alignment_point.x = pair.assert_f64()?;
+                        }
+                        21 => {
+                            att.second_alignment_point.y = pair.assert_f64()?;
+                        }
+                        31 => {
+                            att.second_alignment_point.z = pair.assert_f64()?;
+                        }
+                        39 => {
+                            att.thickness = pair.assert_f64()?;
+                        }
                         40 => {
                             if last_subclass_marker == xrecord_text {
                                 att.annotation_scale = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.text_height = pair.assert_f64()?;
                             }
-                        },
-                        41 => { att.relative_x_scale_factor = pair.assert_f64()?; },
-                        50 => { att.rotation = pair.assert_f64()?; },
-                        51 => { att.oblique_angle = pair.assert_f64()?; },
+                        }
+                        41 => {
+                            att.relative_x_scale_factor = pair.assert_f64()?;
+                        }
+                        50 => {
+                            att.rotation = pair.assert_f64()?;
+                        }
+                        51 => {
+                            att.oblique_angle = pair.assert_f64()?;
+                        }
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.assert_i16()?),
+                                    0 => {
+                                        att.m_text_flag = enum_from_number!(
+                                            MTextFlag,
+                                            MultilineAttribute,
+                                            from_i16,
+                                            pair.assert_i16()?
+                                        )
+                                    }
                                     1 => att.is_really_locked = as_bool(pair.assert_i16()?),
-                                    2 => att.__secondary_attribute_count = pair.assert_i16()? as i32,
-                                    _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
+                                    2 => {
+                                        att.__secondary_attribute_count = pair.assert_i16()? as i32
+                                    }
+                                    _ => {
+                                        return Err(DxfError::UnexpectedCodePair(
+                                            pair,
+                                            String::new(),
+                                        ))
+                                    }
                                 }
                                 xrec_code_70_count += 1;
-                            }
-                            else {
+                            } else {
                                 att.flags = pair.assert_i16()? as i32;
                             }
-                        },
-                        71 => { att.text_generation_flags = pair.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.assert_i16()?); },
-                        73 => { att.field_length = pair.assert_i16()?; },
-                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.assert_i16()?); },
-                        210 => { att.normal.x = pair.assert_f64()?; },
-                        220 => { att.normal.y = pair.assert_f64()?; },
-                        230 => { att.normal.z = pair.assert_f64()?; },
+                        }
+                        71 => {
+                            att.text_generation_flags = pair.assert_i16()? as i32;
+                        }
+                        72 => {
+                            att.horizontal_text_justification = enum_from_number!(
+                                HorizontalTextJustification,
+                                Left,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        73 => {
+                            att.field_length = pair.assert_i16()?;
+                        }
+                        74 => {
+                            att.vertical_text_justification = enum_from_number!(
+                                VerticalTextJustification,
+                                Baseline,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        210 => {
+                            att.normal.x = pair.assert_f64()?;
+                        }
+                        220 => {
+                            att.normal.y = pair.assert_f64()?;
+                        }
+                        230 => {
+                            att.normal.z = pair.assert_f64()?;
+                        }
                         280 => {
                             if last_subclass_marker == xrecord_text {
                                 att.keep_duplicate_records = as_bool(pair.assert_i16()?);
-                            }
-                            else if !is_version_set {
-                                att.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                            } else if !is_version_set {
+                                att.version =
+                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 is_version_set = true;
-                            }
-                            else {
+                            } else {
                                 att.is_locked_in_block = as_bool(pair.assert_i16()?);
                             }
-                        },
-                        340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        340 => {
+                            att.__secondary_attributes_handle.push(pair.as_handle()?);
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             EntityType::AttributeDefinition(ref mut att) => {
                 let xrecord_text = "AcDbXrecord";
                 let mut last_subclass_marker = String::new();
@@ -575,95 +927,152 @@ impl Entity {
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        100 => { last_subclass_marker = pair.assert_string()?; },
-                        1 => { att.value = pair.assert_string()?; },
+                        100 => {
+                            last_subclass_marker = pair.assert_string()?;
+                        }
+                        1 => {
+                            att.value = pair.assert_string()?;
+                        }
                         2 => {
                             if last_subclass_marker == xrecord_text {
                                 att.x_record_tag = pair.assert_string()?;
-                            }
-                            else {
+                            } else {
                                 att.text_tag = pair.assert_string()?;
                             }
-                        },
-                        3 => { att.prompt = pair.assert_string()?; },
-                        7 => { att.text_style_name = pair.assert_string()?; },
+                        }
+                        3 => {
+                            att.prompt = pair.assert_string()?;
+                        }
+                        7 => {
+                            att.text_style_name = pair.assert_string()?;
+                        }
                         10 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.x = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.x = pair.assert_f64()?;
                             }
-                        },
+                        }
                         20 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.y = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.y = pair.assert_f64()?;
                             }
-                        },
+                        }
                         30 => {
                             if last_subclass_marker == xrecord_text {
                                 att.alignment_point.z = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.location.z = pair.assert_f64()?;
                             }
-                        },
-                        11 => { att.second_alignment_point.x = pair.assert_f64()?; },
-                        21 => { att.second_alignment_point.y = pair.assert_f64()?; },
-                        31 => { att.second_alignment_point.z = pair.assert_f64()?; },
-                        39 => { att.thickness = pair.assert_f64()?; },
+                        }
+                        11 => {
+                            att.second_alignment_point.x = pair.assert_f64()?;
+                        }
+                        21 => {
+                            att.second_alignment_point.y = pair.assert_f64()?;
+                        }
+                        31 => {
+                            att.second_alignment_point.z = pair.assert_f64()?;
+                        }
+                        39 => {
+                            att.thickness = pair.assert_f64()?;
+                        }
                         40 => {
                             if last_subclass_marker == xrecord_text {
                                 att.annotation_scale = pair.assert_f64()?;
-                            }
-                            else {
+                            } else {
                                 att.text_height = pair.assert_f64()?;
                             }
-                        },
-                        41 => { att.relative_x_scale_factor = pair.assert_f64()?; },
-                        50 => { att.rotation = pair.assert_f64()?; },
-                        51 => { att.oblique_angle = pair.assert_f64()?; },
+                        }
+                        41 => {
+                            att.relative_x_scale_factor = pair.assert_f64()?;
+                        }
+                        50 => {
+                            att.rotation = pair.assert_f64()?;
+                        }
+                        51 => {
+                            att.oblique_angle = pair.assert_f64()?;
+                        }
                         70 => {
                             if last_subclass_marker == xrecord_text {
                                 match xrec_code_70_count {
-                                    0 => att.m_text_flag = enum_from_number!(MTextFlag, MultilineAttribute, from_i16, pair.assert_i16()?),
+                                    0 => {
+                                        att.m_text_flag = enum_from_number!(
+                                            MTextFlag,
+                                            MultilineAttribute,
+                                            from_i16,
+                                            pair.assert_i16()?
+                                        )
+                                    }
                                     1 => att.is_really_locked = as_bool(pair.assert_i16()?),
-                                    2 => att.__secondary_attribute_count = pair.assert_i16()? as i32,
-                                    _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
+                                    2 => {
+                                        att.__secondary_attribute_count = pair.assert_i16()? as i32
+                                    }
+                                    _ => {
+                                        return Err(DxfError::UnexpectedCodePair(
+                                            pair,
+                                            String::new(),
+                                        ))
+                                    }
                                 }
                                 xrec_code_70_count += 1;
-                            }
-                            else {
+                            } else {
                                 att.flags = pair.assert_i16()? as i32;
                             }
-                        },
-                        71 => { att.text_generation_flags = pair.assert_i16()? as i32; },
-                        72 => { att.horizontal_text_justification = enum_from_number!(HorizontalTextJustification, Left, from_i16, pair.assert_i16()?); },
-                        73 => { att.field_length = pair.assert_i16()?; },
-                        74 => { att.vertical_text_justification = enum_from_number!(VerticalTextJustification, Baseline, from_i16, pair.assert_i16()?); },
-                        210 => { att.normal.x = pair.assert_f64()?; },
-                        220 => { att.normal.y = pair.assert_f64()?; },
-                        230 => { att.normal.z = pair.assert_f64()?; },
+                        }
+                        71 => {
+                            att.text_generation_flags = pair.assert_i16()? as i32;
+                        }
+                        72 => {
+                            att.horizontal_text_justification = enum_from_number!(
+                                HorizontalTextJustification,
+                                Left,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        73 => {
+                            att.field_length = pair.assert_i16()?;
+                        }
+                        74 => {
+                            att.vertical_text_justification = enum_from_number!(
+                                VerticalTextJustification,
+                                Baseline,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        210 => {
+                            att.normal.x = pair.assert_f64()?;
+                        }
+                        220 => {
+                            att.normal.y = pair.assert_f64()?;
+                        }
+                        230 => {
+                            att.normal.z = pair.assert_f64()?;
+                        }
                         280 => {
                             if last_subclass_marker == xrecord_text {
                                 att.keep_duplicate_records = as_bool(pair.assert_i16()?);
-                            }
-                            else if !is_version_set {
-                                att.version = enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                            } else if !is_version_set {
+                                att.version =
+                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
                                 is_version_set = true;
-                            }
-                            else {
+                            } else {
                                 att.is_locked_in_block = as_bool(pair.assert_i16()?);
                             }
-                        },
-                        340 => { att.__secondary_attributes_handle.push(pair.as_handle()?); },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        340 => {
+                            att.__secondary_attributes_handle.push(pair.as_handle()?);
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             EntityType::LwPolyline(ref mut poly) => {
                 loop {
                     let pair = next_pair!(iter);
@@ -673,91 +1082,205 @@ impl Entity {
                             // start a new vertex
                             poly.vertices.push(LwPolylineVertex::default());
                             vec_last!(poly.vertices).x = pair.assert_f64()?;
-                        },
-                        20 => { vec_last!(poly.vertices).y = pair.assert_f64()?; },
-                        40 => { vec_last!(poly.vertices).starting_width = pair.assert_f64()?; },
-                        41 => { vec_last!(poly.vertices).ending_width = pair.assert_f64()?; },
-                        42 => { vec_last!(poly.vertices).bulge = pair.assert_f64()?; },
-                        91 => { vec_last!(poly.vertices).id = pair.assert_i32()?; },
+                        }
+                        20 => {
+                            vec_last!(poly.vertices).y = pair.assert_f64()?;
+                        }
+                        40 => {
+                            vec_last!(poly.vertices).starting_width = pair.assert_f64()?;
+                        }
+                        41 => {
+                            vec_last!(poly.vertices).ending_width = pair.assert_f64()?;
+                        }
+                        42 => {
+                            vec_last!(poly.vertices).bulge = pair.assert_f64()?;
+                        }
+                        91 => {
+                            vec_last!(poly.vertices).id = pair.assert_i32()?;
+                        }
                         // other pairs
-                        39 => { poly.thickness = pair.assert_f64()?; },
-                        43 => { poly.constant_width = pair.assert_f64()?; },
-                        70 => { poly.flags = pair.assert_i16()? as i32; },
-                        210 => { poly.extrusion_direction.x = pair.assert_f64()?; },
-                        220 => { poly.extrusion_direction.y = pair.assert_f64()?; },
-                        230 => { poly.extrusion_direction.z = pair.assert_f64()?; },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        39 => {
+                            poly.thickness = pair.assert_f64()?;
+                        }
+                        43 => {
+                            poly.constant_width = pair.assert_f64()?;
+                        }
+                        70 => {
+                            poly.flags = pair.assert_i16()? as i32;
+                        }
+                        210 => {
+                            poly.extrusion_direction.x = pair.assert_f64()?;
+                        }
+                        220 => {
+                            poly.extrusion_direction.y = pair.assert_f64()?;
+                        }
+                        230 => {
+                            poly.extrusion_direction.z = pair.assert_f64()?;
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             EntityType::MText(ref mut mtext) => {
                 let mut reading_column_data = false;
                 let mut read_column_count = false;
                 loop {
                     let pair = next_pair!(iter);
                     match pair.code {
-                        10 => { mtext.insertion_point.x = pair.assert_f64()?; },
-                        20 => { mtext.insertion_point.y = pair.assert_f64()?; },
-                        30 => { mtext.insertion_point.z = pair.assert_f64()?; },
-                        40 => { mtext.initial_text_height = pair.assert_f64()?; },
-                        41 => { mtext.reference_rectangle_width = pair.assert_f64()?; },
-                        71 => { mtext.attachment_point = enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?); },
-                        72 => { mtext.drawing_direction = enum_from_number!(DrawingDirection, LeftToRight, from_i16, pair.assert_i16()?); },
-                        3 => { mtext.extended_text.push(pair.assert_string()?); },
-                        1 => { mtext.text = pair.assert_string()?; },
-                        7 => { mtext.text_style_name = pair.assert_string()?; },
-                        210 => { mtext.extrusion_direction.x = pair.assert_f64()?; },
-                        220 => { mtext.extrusion_direction.y = pair.assert_f64()?; },
-                        230 => { mtext.extrusion_direction.z = pair.assert_f64()?; },
-                        11 => { mtext.x_axis_direction.x = pair.assert_f64()?; },
-                        21 => { mtext.x_axis_direction.y = pair.assert_f64()?; },
-                        31 => { mtext.x_axis_direction.z = pair.assert_f64()?; },
-                        42 => { mtext.horizontal_width = pair.assert_f64()?; },
-                        43 => { mtext.vertical_height = pair.assert_f64()?; },
+                        10 => {
+                            mtext.insertion_point.x = pair.assert_f64()?;
+                        }
+                        20 => {
+                            mtext.insertion_point.y = pair.assert_f64()?;
+                        }
+                        30 => {
+                            mtext.insertion_point.z = pair.assert_f64()?;
+                        }
+                        40 => {
+                            mtext.initial_text_height = pair.assert_f64()?;
+                        }
+                        41 => {
+                            mtext.reference_rectangle_width = pair.assert_f64()?;
+                        }
+                        71 => {
+                            mtext.attachment_point = enum_from_number!(
+                                AttachmentPoint,
+                                TopLeft,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        72 => {
+                            mtext.drawing_direction = enum_from_number!(
+                                DrawingDirection,
+                                LeftToRight,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        3 => {
+                            mtext.extended_text.push(pair.assert_string()?);
+                        }
+                        1 => {
+                            mtext.text = pair.assert_string()?;
+                        }
+                        7 => {
+                            mtext.text_style_name = pair.assert_string()?;
+                        }
+                        210 => {
+                            mtext.extrusion_direction.x = pair.assert_f64()?;
+                        }
+                        220 => {
+                            mtext.extrusion_direction.y = pair.assert_f64()?;
+                        }
+                        230 => {
+                            mtext.extrusion_direction.z = pair.assert_f64()?;
+                        }
+                        11 => {
+                            mtext.x_axis_direction.x = pair.assert_f64()?;
+                        }
+                        21 => {
+                            mtext.x_axis_direction.y = pair.assert_f64()?;
+                        }
+                        31 => {
+                            mtext.x_axis_direction.z = pair.assert_f64()?;
+                        }
+                        42 => {
+                            mtext.horizontal_width = pair.assert_f64()?;
+                        }
+                        43 => {
+                            mtext.vertical_height = pair.assert_f64()?;
+                        }
                         50 => {
                             if reading_column_data {
                                 if read_column_count {
                                     mtext.column_heights.push(pair.assert_f64()?);
-                                }
-                                else {
+                                } else {
                                     mtext.column_count = pair.assert_f64()? as i32;
                                     read_column_count = true;
                                 }
-                            }
-                            else {
+                            } else {
                                 mtext.rotation_angle = pair.assert_f64()?;
                             }
-                        },
-                        73 => { mtext.line_spacing_style = enum_from_number!(MTextLineSpacingStyle, AtLeast, from_i16, pair.assert_i16()?); },
-                        44 => { mtext.line_spacing_factor = pair.assert_f64()?; },
-                        90 => { mtext.background_fill_setting = enum_from_number!(BackgroundFillSetting, Off, from_i32, pair.assert_i32()?); },
-                        420 => { mtext.background_color_rgb = pair.assert_i32()?; },
-                        430 => { mtext.background_color_name = pair.assert_string()?; },
-                        45 => { mtext.fill_box_scale = pair.assert_f64()?; },
-                        63 => { mtext.background_fill_color = Color::from_raw_value(pair.assert_i16()?); },
-                        441 => { mtext.background_fill_color_transparency = pair.assert_i32()?; },
+                        }
+                        73 => {
+                            mtext.line_spacing_style = enum_from_number!(
+                                MTextLineSpacingStyle,
+                                AtLeast,
+                                from_i16,
+                                pair.assert_i16()?
+                            );
+                        }
+                        44 => {
+                            mtext.line_spacing_factor = pair.assert_f64()?;
+                        }
+                        90 => {
+                            mtext.background_fill_setting = enum_from_number!(
+                                BackgroundFillSetting,
+                                Off,
+                                from_i32,
+                                pair.assert_i32()?
+                            );
+                        }
+                        420 => {
+                            mtext.background_color_rgb = pair.assert_i32()?;
+                        }
+                        430 => {
+                            mtext.background_color_name = pair.assert_string()?;
+                        }
+                        45 => {
+                            mtext.fill_box_scale = pair.assert_f64()?;
+                        }
+                        63 => {
+                            mtext.background_fill_color = Color::from_raw_value(pair.assert_i16()?);
+                        }
+                        441 => {
+                            mtext.background_fill_color_transparency = pair.assert_i32()?;
+                        }
                         75 => {
                             mtext.column_type = pair.assert_i16()?;
                             reading_column_data = true;
-                        },
-                        76 => { mtext.column_count = pair.assert_i16()? as i32; },
-                        78 => { mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?); },
-                        79 => { mtext.is_column_auto_height = as_bool(pair.assert_i16()?); },
-                        48 => { mtext.column_width = pair.assert_f64()?; },
-                        49 => { mtext.column_gutter = pair.assert_f64()?; },
-                        _ => { self.common.apply_individual_pair(&pair, iter)?; },
+                        }
+                        76 => {
+                            mtext.column_count = pair.assert_i16()? as i32;
+                        }
+                        78 => {
+                            mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?);
+                        }
+                        79 => {
+                            mtext.is_column_auto_height = as_bool(pair.assert_i16()?);
+                        }
+                        48 => {
+                            mtext.column_width = pair.assert_f64()?;
+                        }
+                        49 => {
+                            mtext.column_gutter = pair.assert_f64()?;
+                        }
+                        _ => {
+                            self.common.apply_individual_pair(&pair, iter)?;
+                        }
                     }
                 }
-            },
+            }
             _ => return Ok(false), // no custom reader
         }
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    pub(crate) fn write<T>(
+        &self,
+        version: &AcadVersion,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, write_handles, writer, handle_tracker)?;
+            self.common
+                .write(version, write_handles, writer, handle_tracker)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(&self.common, version, writer)?;
             }
@@ -770,9 +1293,14 @@ impl Entity {
 
         Ok(())
     }
-    fn apply_custom_writer<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<bool>
-        where T: Write {
-
+    fn apply_custom_writer<T>(
+        &self,
+        version: &AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
@@ -793,7 +1321,7 @@ impl Entity {
                 if version >= &AcadVersion::R13 {
                     writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
                 }
-            },
+            }
             EntityType::RadialDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
@@ -801,7 +1329,7 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
                 writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
                 writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
-            },
+            }
             EntityType::DiameterDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
@@ -809,7 +1337,7 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
                 writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
                 writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
-            },
+            }
             EntityType::AngularThreePointDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
                 writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
@@ -825,7 +1353,7 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x))?;
                 writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y))?;
                 writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z))?;
-            },
+            }
             EntityType::OrdinateDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
@@ -835,17 +1363,18 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
                 writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
                 writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-            },
+            }
             EntityType::Polyline(ref poly) => {
-                let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
-                        "AcDb3dPolyline"
-                    }
-                    else {
-                        "AcDb2dPolyline"
-                    };
+                let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh()
+                {
+                    "AcDb3dPolyline"
+                } else {
+                    "AcDb2dPolyline"
+                };
                 writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
                 if *version <= AcadVersion::R13 {
-                    writer.write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
+                    writer
+                        .write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
                 }
                 if *version >= AcadVersion::R12 {
                     writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
@@ -865,16 +1394,28 @@ impl Entity {
                     writer.write_code_pair(&CodePair::new_f64(41, poly.default_ending_width))?;
                 }
                 if poly.polygon_mesh_m_vertex_count != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(71, poly.polygon_mesh_m_vertex_count as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        71,
+                        poly.polygon_mesh_m_vertex_count as i16,
+                    ))?;
                 }
                 if poly.polygon_mesh_n_vertex_count != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(72, poly.polygon_mesh_n_vertex_count as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        72,
+                        poly.polygon_mesh_n_vertex_count as i16,
+                    ))?;
                 }
                 if poly.smooth_surface_m_density != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(73, poly.smooth_surface_m_density as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        73,
+                        poly.smooth_surface_m_density as i16,
+                    ))?;
                 }
                 if poly.smooth_surface_n_density != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(74, poly.smooth_surface_n_density as i16))?;
+                    writer.write_code_pair(&CodePair::new_i16(
+                        74,
+                        poly.smooth_surface_n_density as i16,
+                    ))?;
                 }
                 if poly.surface_type != PolylineCurvedAndSmoothSurfaceType::None {
                     writer.write_code_pair(&CodePair::new_i16(75, poly.surface_type as i16))?;
@@ -884,15 +1425,15 @@ impl Entity {
                     writer.write_code_pair(&CodePair::new_f64(220, poly.normal.y))?;
                     writer.write_code_pair(&CodePair::new_f64(230, poly.normal.z))?;
                 }
-            },
+            }
             EntityType::Vertex(ref v) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
-                let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
-                        "AcDb3dPolylineVertex"
-                    }
-                    else {
-                        "AcDb2dVertex"
-                    };
+                let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh()
+                {
+                    "AcDb3dPolylineVertex"
+                } else {
+                    "AcDb2dVertex"
+                };
                 writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
                 writer.write_code_pair(&CodePair::new_f64(10, v.location.x))?;
                 writer.write_code_pair(&CodePair::new_f64(20, v.location.y))?;
@@ -910,73 +1451,130 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
                 if *version >= AcadVersion::R13 {
                     if v.polyface_mesh_vertex_index1 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(71, v.polyface_mesh_vertex_index1 as i16))?;
+                        writer.write_code_pair(&CodePair::new_i16(
+                            71,
+                            v.polyface_mesh_vertex_index1 as i16,
+                        ))?;
                     }
                     if v.polyface_mesh_vertex_index2 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(72, v.polyface_mesh_vertex_index2 as i16))?;
+                        writer.write_code_pair(&CodePair::new_i16(
+                            72,
+                            v.polyface_mesh_vertex_index2 as i16,
+                        ))?;
                     }
                     if v.polyface_mesh_vertex_index3 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(73, v.polyface_mesh_vertex_index3 as i16))?;
+                        writer.write_code_pair(&CodePair::new_i16(
+                            73,
+                            v.polyface_mesh_vertex_index3 as i16,
+                        ))?;
                     }
                     if v.polyface_mesh_vertex_index4 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(74, v.polyface_mesh_vertex_index4 as i16))?;
+                        writer.write_code_pair(&CodePair::new_i16(
+                            74,
+                            v.polyface_mesh_vertex_index4 as i16,
+                        ))?;
                     }
                 }
                 if *version >= AcadVersion::R2010 {
                     writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
                 }
-            },
+            }
             _ => return Ok(false), // no custom writer
         }
 
         Ok(true)
     }
-    fn post_write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn post_write<T>(
+        &self,
+        version: &AcadVersion,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         match self.specific {
-            EntityType::Attribute(ref att) => self.write_attribute_m_text(att.m_text.clone(), &version, write_handles, writer, handle_tracker)?,
-            EntityType::AttributeDefinition(ref att) => self.write_attribute_m_text(att.m_text.clone(), &version, write_handles, writer, handle_tracker)?,
+            EntityType::Attribute(ref att) => self.write_attribute_m_text(
+                att.m_text.clone(),
+                &version,
+                write_handles,
+                writer,
+                handle_tracker,
+            )?,
+            EntityType::AttributeDefinition(ref att) => self.write_attribute_m_text(
+                att.m_text.clone(),
+                &version,
+                write_handles,
+                writer,
+                handle_tracker,
+            )?,
             EntityType::Insert(ref ins) => {
                 for a in &ins.attributes {
-                    let a = Entity { common: Default::default(), specific: EntityType::Attribute(a.clone()) };
+                    let a = Entity {
+                        common: Default::default(),
+                        specific: EntityType::Attribute(a.clone()),
+                    };
                     a.write(&version, write_handles, writer, handle_tracker)?;
                 }
                 Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
-            },
+            }
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
                     let mut v = v.clone();
                     v.set_is_3d_polyline_vertex(poly.get_is_3d_polyline());
                     v.set_is_3d_polygon_mesh(poly.get_is_3d_polygon_mesh());
-                    let v = Entity { common: Default::default(), specific: EntityType::Vertex(v) };
+                    let v = Entity {
+                        common: Default::default(),
+                        specific: EntityType::Vertex(v),
+                    };
                     v.write(&version, write_handles, writer, handle_tracker)?;
                 }
                 Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
-            },
+            }
             _ => (),
         }
 
         Ok(())
     }
-    fn write_attribute_m_text<T>(&self, m_text: MText, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn write_attribute_m_text<T>(
+        &self,
+        m_text: MText,
+        version: &AcadVersion,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         let mut m_text_common = EntityCommon {
             __owner_handle: self.common.handle,
             is_in_paper_space: self.common.is_in_paper_space,
             layer: self.common.layer.clone(),
-            .. Default::default()
+            ..Default::default()
         };
         let _m_text_handle = handle_tracker.get_entity_handle(&mut m_text_common);
-        let m_text = Entity { common: m_text_common, specific: EntityType::MText(m_text) };
+        let m_text = Entity {
+            common: m_text_common,
+            specific: EntityType::MText(m_text),
+        };
         m_text.write(&version, write_handles, writer, handle_tracker)?;
         Ok(())
     }
-    fn write_seqend<T>(version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
-        let seqend = Entity { common: Default::default(), specific: EntityType::Seqend(Default::default()) };
+    fn write_seqend<T>(
+        version: &AcadVersion,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
+        let seqend = Entity {
+            common: Default::default(),
+            specific: EntityType::Seqend(Default::default()),
+        };
         seqend.write(&version, write_handles, writer, handle_tracker)?;
         Ok(())
     }

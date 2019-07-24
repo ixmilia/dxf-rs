@@ -5,7 +5,7 @@ use std::fmt;
 use std::io;
 use std::num;
 
-use ::image;
+use image;
 
 use CodePair;
 
@@ -47,15 +47,48 @@ impl fmt::Display for DxfError {
             &DxfError::ImageError(ref e) => write!(formatter, "{}", e),
             &DxfError::ParseFloatError(ref e, o) => write!(formatter, "{} at line/offset {}", e, o),
             &DxfError::ParseIntError(ref e, o) => write!(formatter, "{} at line/offset {}", e, o),
-            &DxfError::ParseError(o) => write!(formatter, "there was a general parsing error at line/offset {}", o),
-            &DxfError::UnexpectedCode(c, o) => write!(formatter, "an unexpected code '{}' was encountered at line/offset {}", c, o),
-            &DxfError::UnexpectedCodePair(ref cp, ref s) => write!(formatter, "the code pair '{:?}' was not expected at this time: {} at line/offset {}", cp, s, cp.offset),
-            &DxfError::UnexpectedByte(ref b, o) => write!(formatter, "the byte '0x{:02x}' was not expected at this time at line/offset {}", b, o),
-            &DxfError::UnexpectedEndOfInput => write!(formatter, "the input unexpectedly ended before the drawing was completely loaded"),
-            &DxfError::UnexpectedEnumValue(o) => write!(formatter, "the specified enum value does not fall into the expected range at line/offset {}", o),
-            &DxfError::UnexpectedEmptySet => write!(formatter, "the set was not expected to be empty"),
-            &DxfError::ExpectedTableType(o) => write!(formatter, "a 2/<table-type> code pair was expected at line/offset {}", o),
-            &DxfError::WrongValueType(o) => write!(formatter, "the CodePairValue does not contain the requested type at line/offset {}", o),
+            &DxfError::ParseError(o) => write!(
+                formatter,
+                "there was a general parsing error at line/offset {}",
+                o
+            ),
+            &DxfError::UnexpectedCode(c, o) => write!(
+                formatter,
+                "an unexpected code '{}' was encountered at line/offset {}",
+                c, o
+            ),
+            &DxfError::UnexpectedCodePair(ref cp, ref s) => write!(
+                formatter,
+                "the code pair '{:?}' was not expected at this time: {} at line/offset {}",
+                cp, s, cp.offset
+            ),
+            &DxfError::UnexpectedByte(ref b, o) => write!(
+                formatter,
+                "the byte '0x{:02x}' was not expected at this time at line/offset {}",
+                b, o
+            ),
+            &DxfError::UnexpectedEndOfInput => write!(
+                formatter,
+                "the input unexpectedly ended before the drawing was completely loaded"
+            ),
+            &DxfError::UnexpectedEnumValue(o) => write!(
+                formatter,
+                "the specified enum value does not fall into the expected range at line/offset {}",
+                o
+            ),
+            &DxfError::UnexpectedEmptySet => {
+                write!(formatter, "the set was not expected to be empty")
+            }
+            &DxfError::ExpectedTableType(o) => write!(
+                formatter,
+                "a 2/<table-type> code pair was expected at line/offset {}",
+                o
+            ),
+            &DxfError::WrongValueType(o) => write!(
+                formatter,
+                "the CodePairValue does not contain the requested type at line/offset {}",
+                o
+            ),
             &DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
             &DxfError::WrongItemType => write!(formatter, "the specified item type is not correct"),
         }
@@ -73,8 +106,12 @@ impl error::Error for DxfError {
             &DxfError::UnexpectedCode(_, _) => "an unexpected code was encountered",
             &DxfError::UnexpectedCodePair(_, _) => "an unexpected code pair was encountered",
             &DxfError::UnexpectedByte(_, _) => "an unexpected byte was encountered",
-            &DxfError::UnexpectedEndOfInput => "the input unexpectedly ended before the drawing was completely loaded",
-            &DxfError::UnexpectedEnumValue(_) => "the specified enum value does not fall into the expected range",
+            &DxfError::UnexpectedEndOfInput => {
+                "the input unexpectedly ended before the drawing was completely loaded"
+            }
+            &DxfError::UnexpectedEnumValue(_) => {
+                "the specified enum value does not fall into the expected range"
+            }
             &DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
             &DxfError::ExpectedTableType(_) => "a 2/<table-type> code pair was expected",
             &DxfError::WrongValueType(_) => "the CodePairValue does not contain the requested type",

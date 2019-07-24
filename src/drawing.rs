@@ -1,38 +1,26 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate byteorder;
-use self::byteorder::{
-    ByteOrder,
-    LittleEndian,
-    WriteBytesExt,
-};
+use self::byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 
 extern crate image;
 use self::image::DynamicImage;
 
+use drawing_item::{DrawingItem, DrawingItemMut};
 use entities::*;
 use enums::*;
 use header::*;
 use objects::*;
 use tables::*;
-use drawing_item::{
-    DrawingItem,
-    DrawingItemMut,
-};
 
-use ::{
-    CodePair,
-    CodePairValue,
-    DxfError,
-    DxfResult,
-};
+use {CodePair, CodePairValue, DxfError, DxfResult};
 
-use ::dxb_reader::DxbReader;
-use ::dxb_writer::DxbWriter;
-use ::entity_iter::EntityIter;
-use ::handle_tracker::HandleTracker;
-use ::helper_functions::*;
-use ::object_iter::ObjectIter;
+use dxb_reader::DxbReader;
+use dxb_writer::DxbWriter;
+use entity_iter::EntityIter;
+use handle_tracker::HandleTracker;
+use helper_functions::*;
+use object_iter::ObjectIter;
 
 use block::Block;
 use class::Class;
@@ -41,20 +29,12 @@ use code_pair_iter::CodePairIter;
 use code_pair_writer::CodePairWriter;
 
 use std::fs::File;
-use std::io::{
-    BufReader,
-    BufWriter,
-    Read,
-    Write,
-};
+use std::io::{BufReader, BufWriter, Read, Write};
 
+use itertools::{put_back, PutBack};
 use std::collections::HashSet;
 use std::iter::Iterator;
 use std::path::Path;
-use itertools::{
-    PutBack,
-    put_back,
-};
 
 /// Represents a DXF drawing.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -118,8 +98,9 @@ impl Default for Drawing {
 impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: &mut T) -> DxfResult<Drawing>
-        where T: Read + ?Sized {
-
+    where
+        T: Read + ?Sized,
+    {
         let first_line = match read_line(reader) {
             Some(Ok(line)) => line,
             Some(Err(e)) => return Err(e),
@@ -129,7 +110,7 @@ impl Drawing {
             "AutoCAD DXB 1.0" => {
                 let mut reader = DxbReader::new(reader);
                 reader.load()
-            },
+            }
             _ => {
                 let reader = CodePairIter::new(reader, first_line);
                 let mut drawing = Drawing::default();
@@ -137,8 +118,15 @@ impl Drawing {
                 let mut iter = put_back(reader);
                 Drawing::read_sections(&mut drawing, &mut iter)?;
                 match iter.next() {
-                    Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s), .. })) if s == "EOF" => Ok(drawing),
-                    Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/EOF"))),
+                    Some(Ok(CodePair {
+                        code: 0,
+                        value: CodePairValue::Str(ref s),
+                        ..
+                    })) if s == "EOF" => Ok(drawing),
+                    Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(
+                        pair,
+                        String::from("expected 0/EOF"),
+                    )),
                     Some(Err(e)) => Err(e),
                     None => Ok(drawing),
                 }
@@ -154,25 +142,29 @@ impl Drawing {
     }
     /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write + ?Sized {
-
+    where
+        T: Write + ?Sized,
+    {
         self.save_internal(writer, true)
     }
     /// Writes a `Drawing` as binary to anything that implements the `Write` trait.
     pub fn save_binary<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write + ?Sized {
-
+    where
+        T: Write + ?Sized,
+    {
         self.save_internal(writer, false)
     }
     fn save_internal<T>(&self, writer: &mut T, as_ascii: bool) -> DxfResult<()>
-        where T: Write + ?Sized {
-
+    where
+        T: Write + ?Sized,
+    {
         // write to memory while tracking the used handle values
         let mut buf = vec![];
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         {
             let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii);
-            let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+            let write_handles =
+                self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
             self.write_classes(&mut code_pair_writer)?;
             self.write_tables(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
             self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
@@ -186,7 +178,8 @@ impl Drawing {
         {
             let mut final_writer = CodePairWriter::new(writer, as_ascii);
             final_writer.write_prelude()?;
-            self.header.write(&mut final_writer, handle_tracker.get_current_next_handle())?;
+            self.header
+                .write(&mut final_writer, handle_tracker.get_current_next_handle())?;
         }
 
         // copy memory to final location
@@ -209,8 +202,9 @@ impl Drawing {
     }
     /// Writes a `Drawing` as DXB to anything that implements the `Write` trait.
     pub fn save_dxb<T>(&self, writer: &mut T) -> DxfResult<()>
-        where T: Write + ?Sized {
-
+    where
+        T: Write + ?Sized,
+    {
         let mut writer = DxbWriter::new(writer);
         writer.write(self)
     }
@@ -413,8 +407,9 @@ impl Drawing {
 // private implementation
 impl Drawing {
     fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
-
+    where
+        T: Write,
+    {
         if self.classes.len() == 0 {
             return Ok(());
         }
@@ -428,18 +423,30 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn write_tables<T>(
+        &self,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
         write_tables(&self, write_handles, writer, handle_tracker)?;
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn write_blocks<T>(
+        &self,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         if self.blocks.len() == 0 {
             return Ok(());
         }
@@ -453,9 +460,15 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_entities<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn write_entities<T>(
+        &self,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
         for e in &self.entities {
@@ -465,9 +478,14 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    fn write_objects<T>(
+        &self,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
         for o in &self.objects {
@@ -478,8 +496,9 @@ impl Drawing {
         Ok(())
     }
     fn write_thumbnail<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
-
+    where
+        T: Write,
+    {
         if &self.header.version >= &AcadVersion::R2000 {
             match self.thumbnail {
                 Some(ref i) => {
@@ -497,53 +516,84 @@ impl Drawing {
                         writer.write_code_pair(&CodePair::new_string(310, &line))?;
                     }
                     writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-                },
+                }
                 None => (), // nothing to write
             }
         } // */
         Ok(())
     }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         loop {
             match iter.next() {
-                Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    match &*pair.assert_string()? {
-                        "EOF" => {
-                            iter.put_back(Ok(pair));
-                            break;
-                        },
-                        "SECTION" => {
-                            match iter.next() {
-                               Some(Ok(CodePair { code: 2, value: CodePairValue::Str(s), .. })) => {
-                                    match &*s {
-                                        "HEADER" => drawing.header = Header::read(iter)?,
-                                        "CLASSES" => Class::read_classes(drawing, iter)?,
-                                        "TABLES" => drawing.read_section_item(iter, "TABLE", read_specific_table)?,
-                                        "BLOCKS" => drawing.read_section_item(iter, "BLOCK", Block::read_block)?,
-                                        "ENTITIES" => drawing.read_entities(iter)?,
-                                        "OBJECTS" => drawing.read_objects(iter)?,
-                                        "THUMBNAILIMAGE" => { let _ = drawing.read_thumbnail(iter)?; },
-                                        _ => Drawing::swallow_section(iter)?,
-                                    }
+                Some(Ok(pair @ CodePair { code: 0, .. })) => match &*pair.assert_string()? {
+                    "EOF" => {
+                        iter.put_back(Ok(pair));
+                        break;
+                    }
+                    "SECTION" => match iter.next() {
+                        Some(Ok(CodePair {
+                            code: 2,
+                            value: CodePairValue::Str(s),
+                            ..
+                        })) => {
+                            match &*s {
+                                "HEADER" => drawing.header = Header::read(iter)?,
+                                "CLASSES" => Class::read_classes(drawing, iter)?,
+                                "TABLES" => {
+                                    drawing.read_section_item(iter, "TABLE", read_specific_table)?
+                                }
+                                "BLOCKS" => {
+                                    drawing.read_section_item(iter, "BLOCK", Block::read_block)?
+                                }
+                                "ENTITIES" => drawing.read_entities(iter)?,
+                                "OBJECTS" => drawing.read_objects(iter)?,
+                                "THUMBNAILIMAGE" => {
+                                    let _ = drawing.read_thumbnail(iter)?;
+                                }
+                                _ => Drawing::swallow_section(iter)?,
+                            }
 
-                                    match iter.next() {
-                                        Some(Ok(CodePair { code: 0, value: CodePairValue::Str(ref s), .. })) if s == "ENDSEC" => (),
-                                        Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/ENDSEC"))),
-                                        Some(Err(e)) => return Err(e),
-                                        None => return Err(DxfError::UnexpectedEndOfInput),
-                                    }
-                                },
-                                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 2/<section-name>"))),
+                            match iter.next() {
+                                Some(Ok(CodePair {
+                                    code: 0,
+                                    value: CodePairValue::Str(ref s),
+                                    ..
+                                })) if s == "ENDSEC" => (),
+                                Some(Ok(pair)) => {
+                                    return Err(DxfError::UnexpectedCodePair(
+                                        pair,
+                                        String::from("expected 0/ENDSEC"),
+                                    ))
+                                }
                                 Some(Err(e)) => return Err(e),
                                 None => return Err(DxfError::UnexpectedEndOfInput),
                             }
-                        },
-                        _ => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/SECTION"))),
+                        }
+                        Some(Ok(pair)) => {
+                            return Err(DxfError::UnexpectedCodePair(
+                                pair,
+                                String::from("expected 2/<section-name>"),
+                            ))
+                        }
+                        Some(Err(e)) => return Err(e),
+                        None => return Err(DxfError::UnexpectedEndOfInput),
+                    },
+                    _ => {
+                        return Err(DxfError::UnexpectedCodePair(
+                            pair,
+                            String::from("expected 0/SECTION"),
+                        ))
                     }
                 },
-                Some(Ok(pair)) => return Err(DxfError::UnexpectedCodePair(pair, String::from("expected 0/SECTION or 0/EOF"))),
+                Some(Ok(pair)) => {
+                    return Err(DxfError::UnexpectedCodePair(
+                        pair,
+                        String::from("expected 0/SECTION or 0/EOF"),
+                    ))
+                }
                 Some(Err(e)) => return Err(e),
                 None => break, // ideally should have been 0/EOF
             }
@@ -552,8 +602,9 @@ impl Drawing {
         Ok(())
     }
     fn swallow_section<I>(iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -561,7 +612,7 @@ impl Drawing {
                         iter.put_back(Ok(pair));
                         break;
                     }
-                },
+                }
                 Some(Err(e)) => return Err(e),
                 None => break,
             }
@@ -570,15 +621,17 @@ impl Drawing {
         Ok(())
     }
     fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         let mut iter = EntityIter { iter: iter };
         iter.read_entities_into_vec(&mut self.entities)?;
         Ok(())
     }
     fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         let mut iter = put_back(ObjectIter { iter: iter });
         loop {
             match iter.next() {
@@ -590,22 +643,28 @@ impl Drawing {
         Ok(())
     }
     fn read_thumbnail<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         // get the length; we don't really care about this since we'll just read whatever's there
         let length_pair = next_pair!(iter);
         let _length = match length_pair.code {
             90 => length_pair.assert_i32()? as usize,
-            _ => return Err(DxfError::UnexpectedCode(length_pair.code, length_pair.offset)),
+            _ => {
+                return Err(DxfError::UnexpectedCode(
+                    length_pair.code,
+                    length_pair.offset,
+                ))
+            }
         };
 
         // prepend the BMP header that always seems to be missing from DXF files
-        let mut data : Vec<u8> = vec![
+        let mut data: Vec<u8> = vec![
             'B' as u8, 'M' as u8, // magic number
             0x00, 0x00, 0x00, 0x00, // file length (calculated later)
             0x00, 0x00, // reserved
             0x00, 0x00, // reserved
-            0x00, 0x00, 0x00, 0x00 // image data offset (calculated later)
+            0x00, 0x00, 0x00, 0x00, // image data offset (calculated later)
         ];
         let header_length = data.len();
         let file_length_offset = 2;
@@ -618,9 +677,13 @@ impl Drawing {
                     // likely 0/ENDSEC
                     iter.put_back(Ok(pair));
                     break;
-                },
-                Some(Ok(pair @ CodePair { code: 310, .. })) => { parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?; },
-                Some(Ok(pair)) => { return Err(DxfError::UnexpectedCode(pair.code, pair.offset)); },
+                }
+                Some(Ok(pair @ CodePair { code: 310, .. })) => {
+                    parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?;
+                }
+                Some(Ok(pair)) => {
+                    return Err(DxfError::UnexpectedCode(pair.code, pair.offset));
+                }
                 Some(Err(e)) => return Err(e),
                 None => break,
             }
@@ -641,10 +704,11 @@ impl Drawing {
         let palette_size = match dib_header_size {
             40 => {
                 // BITMAPINFOHEADER
-                let bpp = LittleEndian::read_u16(&data[header_length + 14 ..]) as usize;
-                let palette_color_count = LittleEndian::read_u32(&data[header_length + 32 ..]) as usize;
+                let bpp = LittleEndian::read_u16(&data[header_length + 14..]) as usize;
+                let palette_color_count =
+                    LittleEndian::read_u32(&data[header_length + 32..]) as usize;
                 bpp * palette_color_count
-            },
+            }
             _ => return Ok(false),
         };
 
@@ -661,10 +725,16 @@ impl Drawing {
         self.thumbnail = Some(image);
         Ok(true)
     }
-    fn read_section_item<I, F>(&mut self, iter: &mut PutBack<I>, item_type: &str, callback: F) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>>,
-              F: Fn(&mut Drawing, &mut PutBack<I>) -> DxfResult<()> {
-
+    fn read_section_item<I, F>(
+        &mut self,
+        iter: &mut PutBack<I>,
+        item_type: &str,
+        callback: F,
+    ) -> DxfResult<()>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+        F: Fn(&mut Drawing, &mut PutBack<I>) -> DxfResult<()>,
+    {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -673,21 +743,19 @@ impl Drawing {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
-                            },
+                            }
                             val => {
                                 if val == item_type {
                                     callback(self, iter)?;
-                                }
-                                else {
+                                } else {
                                     return Err(DxfError::UnexpectedCodePair(pair, String::new()));
                                 }
-                            },
+                            }
                         }
-                    }
-                    else {
+                    } else {
                         return Err(DxfError::UnexpectedCodePair(pair, String::new()));
                     }
-                },
+                }
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
@@ -696,8 +764,9 @@ impl Drawing {
         Ok(())
     }
     pub(crate) fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -706,7 +775,7 @@ impl Drawing {
                             "TABLE" | "ENDSEC" | "ENDTAB" => {
                                 iter.put_back(Ok(pair));
                                 break;
-                            },
+                            }
                             _ => (), // swallow the code pair
                         }
                     }
@@ -754,7 +823,7 @@ impl Drawing {
                 existing_app_ids.insert(name.clone());
                 self.app_ids.push(AppId {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -767,10 +836,7 @@ impl Drawing {
         }
 
         // prepare block records that should exist
-        let should_exist = vec![
-            String::from("*MODEL_SPACE"),
-            String::from("*PAPER_SPACE"),
-        ];
+        let should_exist = vec![String::from("*MODEL_SPACE"), String::from("*PAPER_SPACE")];
 
         // ensure all block records that should exist do
         for name in &should_exist {
@@ -778,7 +844,7 @@ impl Drawing {
                 existing_block_records.insert(name.clone());
                 self.block_records.push(BlockRecord {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -808,7 +874,9 @@ impl Drawing {
         let mut existing_mline_styles = HashSet::new();
         for obj in &self.objects {
             match &obj.specific {
-                &ObjectType::MLineStyle(ref ml) => add_to_existing(&mut existing_mline_styles, &ml.style_name),
+                &ObjectType::MLineStyle(ref ml) => {
+                    add_to_existing(&mut existing_mline_styles, &ml.style_name)
+                }
                 _ => (),
             }
         }
@@ -826,10 +894,11 @@ impl Drawing {
         for name in &to_add {
             if !existing_mline_styles.contains(name) {
                 existing_mline_styles.insert(name.clone());
-                self.objects.push(Object::new(ObjectType::MLineStyle(MLineStyle {
-                    style_name: name.clone(),
-                    .. Default::default()
-                })));
+                self.objects
+                    .push(Object::new(ObjectType::MLineStyle(MLineStyle {
+                        style_name: name.clone(),
+                        ..Default::default()
+                    })));
             }
         }
     }
@@ -846,13 +915,25 @@ impl Drawing {
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
         for ent in &self.entities {
             match &ent.specific {
-                &EntityType::RotatedDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
-                &EntityType::RadialDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
-                &EntityType::DiameterDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
-                &EntityType::AngularThreePointDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
-                &EntityType::OrdinateDimension(ref d) => add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name),
+                &EntityType::RotatedDimension(ref d) => {
+                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
+                }
+                &EntityType::RadialDimension(ref d) => {
+                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
+                }
+                &EntityType::DiameterDimension(ref d) => {
+                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
+                }
+                &EntityType::AngularThreePointDimension(ref d) => {
+                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
+                }
+                &EntityType::OrdinateDimension(ref d) => {
+                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
+                }
                 &EntityType::Leader(ref l) => add_to_existing(&mut to_add, &l.dimension_style_name),
-                &EntityType::Tolerance(ref t) => add_to_existing(&mut to_add, &t.dimension_style_name),
+                &EntityType::Tolerance(ref t) => {
+                    add_to_existing(&mut to_add, &t.dimension_style_name)
+                }
                 _ => (),
             }
         }
@@ -863,7 +944,7 @@ impl Drawing {
                 existing_dim_styles.insert(name.clone());
                 self.dim_styles.push(DimStyle {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -894,12 +975,12 @@ impl Drawing {
                     for layer_name in &l.layer_names {
                         add_to_existing(&mut to_add, &layer_name);
                     }
-                },
+                }
                 &ObjectType::LayerIndex(ref l) => {
                     for layer_name in &l.layer_names {
                         add_to_existing(&mut to_add, &layer_name);
                     }
-                },
+                }
                 _ => (),
             }
         }
@@ -910,7 +991,7 @@ impl Drawing {
                 existing_layers.insert(name.clone());
                 self.layers.push(Layer {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -942,7 +1023,9 @@ impl Drawing {
         }
         for obj in &self.objects {
             match &obj.specific {
-                &ObjectType::MLineStyle(ref style) => add_to_existing(&mut to_add, &style.style_name),
+                &ObjectType::MLineStyle(ref style) => {
+                    add_to_existing(&mut to_add, &style.style_name)
+                }
                 _ => (),
             }
         }
@@ -953,7 +1036,7 @@ impl Drawing {
                 existing_line_types.insert(name.clone());
                 self.line_types.push(LineType {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -971,9 +1054,13 @@ impl Drawing {
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
         for entity in &self.entities {
             match &entity.specific {
-                &EntityType::ArcAlignedText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::ArcAlignedText(ref e) => {
+                    add_to_existing(&mut to_add, &e.text_style_name)
+                }
                 &EntityType::Attribute(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                &EntityType::AttributeDefinition(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                &EntityType::AttributeDefinition(ref e) => {
+                    add_to_existing(&mut to_add, &e.text_style_name)
+                }
                 &EntityType::MText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
                 &EntityType::Text(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
                 _ => (),
@@ -992,7 +1079,7 @@ impl Drawing {
                 existing_styles.insert(name.clone());
                 self.styles.push(Style {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -1014,7 +1101,7 @@ impl Drawing {
                 existing_view_ports.insert(name.clone());
                 self.view_ports.push(ViewPort {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -1030,7 +1117,9 @@ impl Drawing {
         let mut to_add = HashSet::new();
         for obj in &self.objects {
             match &obj.specific {
-                &ObjectType::PlotSettings(ref ps) => add_to_existing(&mut to_add, &ps.plot_view_name),
+                &ObjectType::PlotSettings(ref ps) => {
+                    add_to_existing(&mut to_add, &ps.plot_view_name)
+                }
                 _ => (),
             }
         }
@@ -1041,7 +1130,7 @@ impl Drawing {
                 existing_views.insert(name.clone());
                 self.views.push(View {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }
@@ -1068,7 +1157,7 @@ impl Drawing {
                 existing_ucs.insert(name.clone());
                 self.ucss.push(Ucs {
                     name: name.clone(),
-                    .. Default::default()
+                    ..Default::default()
                 });
             }
         }

@@ -3,20 +3,14 @@
 use std::io::Write;
 
 extern crate byteorder;
-use self::byteorder::{
-    LittleEndian,
-    WriteBytesExt,
-};
+use self::byteorder::{LittleEndian, WriteBytesExt};
 
-use ::{
-    CodePair,
-    CodePairValue,
-    DxfResult,
-};
+use {CodePair, CodePairValue, DxfResult};
 
 pub(crate) struct CodePairWriter<'a, T>
-    where T: Write + ?Sized + 'a {
-
+where
+    T: Write + ?Sized + 'a,
+{
     writer: &'a mut T,
     as_ascii: bool,
 }
@@ -32,10 +26,11 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
         match self.as_ascii {
             true => (),
             false => {
-                self.writer.write_fmt(format_args!("AutoCAD Binary DXF\r\n"))?;
+                self.writer
+                    .write_fmt(format_args!("AutoCAD Binary DXF\r\n"))?;
                 self.writer.write_u8(0x1A)?;
                 self.writer.write_u8(0x00)?;
-            },
+            }
         }
 
         Ok(())
@@ -47,8 +42,10 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
         }
     }
     fn write_ascii_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
-        self.writer.write_fmt(format_args!("{: >3}\r\n", pair.code))?;
-        self.writer.write_fmt(format_args!("{:?}\r\n", &pair.value))?;
+        self.writer
+            .write_fmt(format_args!("{: >3}\r\n", pair.code))?;
+        self.writer
+            .write_fmt(format_args!("{:?}\r\n", &pair.value))?;
         Ok(())
     }
     fn write_binary_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
@@ -56,8 +53,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
         if pair.code >= 255 {
             self.writer.write_u8(255)?;
             self.writer.write_i16::<LittleEndian>(pair.code as i16)?;
-        }
-        else {
+        } else {
             self.writer.write_u8(pair.code as u8)?;
         }
 
@@ -74,7 +70,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
                 }
 
                 self.writer.write_u8(0)?;
-            },
+            }
         }
 
         Ok(())

@@ -1,21 +1,28 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
-use self::dxf::*;
 use self::dxf::enums::*;
+use self::dxf::*;
 
 mod test_helpers;
 use test_helpers::helpers::*;
 
 fn read_single_class(version_str: &str, body: Vec<&str>) -> Class {
     let mut lines = vec![
-        "0", "SECTION",
-        "2", "HEADER",
-        "9", "$ACADVER",
-        "1", version_str,
-        "0", "ENDSEC",
-        "0", "SECTION",
-        "2", "CLASSES",
+        "0",
+        "SECTION",
+        "2",
+        "HEADER",
+        "9",
+        "$ACADVER",
+        "1",
+        version_str,
+        "0",
+        "ENDSEC",
+        "0",
+        "SECTION",
+        "2",
+        "CLASSES",
     ];
     for line in body {
         lines.push(line);
@@ -31,26 +38,35 @@ fn read_single_class(version_str: &str, body: Vec<&str>) -> Class {
 
 #[test]
 fn read_empty_classes_section() {
-    let drawing = parse_drawing(vec![
-        "0", "SECTION",
-        "2", "CLASSES",
-        "0", "ENDSEC",
-        "0", "EOF",
-    ].join("\n").as_str());
+    let drawing = parse_drawing(
+        vec!["0", "SECTION", "2", "CLASSES", "0", "ENDSEC", "0", "EOF"]
+            .join("\n")
+            .as_str(),
+    );
     assert_eq!(0, drawing.classes.len());
 }
 
 #[test]
 fn read_single_class_r13() {
-    let class = read_single_class("AC1012", vec![
-        "0", "record-name",
-        "1", "class-name",
-        "2", "application-name",
-        "90", "42",
-        "91", "43",
-        "280", "1",
-        "281", "1",
-    ]);
+    let class = read_single_class(
+        "AC1012",
+        vec![
+            "0",
+            "record-name",
+            "1",
+            "class-name",
+            "2",
+            "application-name",
+            "90",
+            "42",
+            "91",
+            "43",
+            "280",
+            "1",
+            "281",
+            "1",
+        ],
+    );
     assert_eq!("record-name", class.record_name);
     assert_eq!("class-name", class.class_name);
     assert_eq!("application-name", class.application_name);
@@ -63,16 +79,27 @@ fn read_single_class_r13() {
 
 #[test]
 fn read_single_class_r14() {
-    let class = read_single_class("AC1015", vec![
-        "0", "CLASS",
-        "1", "record-name",
-        "2", "class-name",
-        "3", "application-name",
-        "90", "42",
-        "91", "43",
-        "280", "1",
-        "281", "1",
-    ]);
+    let class = read_single_class(
+        "AC1015",
+        vec![
+            "0",
+            "CLASS",
+            "1",
+            "record-name",
+            "2",
+            "class-name",
+            "3",
+            "application-name",
+            "90",
+            "42",
+            "91",
+            "43",
+            "280",
+            "1",
+            "281",
+            "1",
+        ],
+    );
     assert_eq!("record-name", class.record_name);
     assert_eq!("class-name", class.class_name);
     assert_eq!("application-name", class.application_name);
@@ -85,37 +112,47 @@ fn read_single_class_r14() {
 
 #[test]
 fn read_multiple_classes_r13() {
-    let drawing = parse_drawing(vec![
-        "0", "SECTION",
-        "2", "HEADER",
-        "9", "$ACADVER",
-        "1", "AC1012",
-        "0", "ENDSEC",
-        "0", "SECTION",
-        "2", "CLASSES",
-        "0", "some class 1",
-        "0", "some class 2",
-        "0", "ENDSEC",
-        "0", "EOF",
-    ].join("\n").as_str());
+    let drawing = parse_drawing(
+        vec![
+            "0",
+            "SECTION",
+            "2",
+            "HEADER",
+            "9",
+            "$ACADVER",
+            "1",
+            "AC1012",
+            "0",
+            "ENDSEC",
+            "0",
+            "SECTION",
+            "2",
+            "CLASSES",
+            "0",
+            "some class 1",
+            "0",
+            "some class 2",
+            "0",
+            "ENDSEC",
+            "0",
+            "EOF",
+        ]
+        .join("\n")
+        .as_str(),
+    );
     assert_eq!(2, drawing.classes.len());
 }
 
 #[test]
 fn read_multiple_classes_r14() {
-    let drawing = parse_drawing(vec![
-        "0", "SECTION",
-        "2", "HEADER",
-        "9", "$ACADVER",
-        "1", "AC1014",
-        "0", "ENDSEC",
-        "0", "SECTION",
-        "2", "CLASSES",
-        "0", "CLASS",
-        "0", "CLASS",
-        "0", "ENDSEC",
-        "0", "EOF",
-    ].join("\n").as_str());
+    let drawing = parse_drawing(
+        vec![
+            "0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1014", "0", "ENDSEC", "0",
+            "SECTION", "2", "CLASSES", "0", "CLASS", "0", "CLASS", "0", "ENDSEC", "0", "EOF",
+        ]
+        .join("\n")
+        .as_str(),
+    );
     assert_eq!(2, drawing.classes.len());
 }
 
@@ -141,17 +178,30 @@ fn write_class_r13() {
         is_entity: true,
     };
     drawing.classes.push(class);
-    assert_contains(&drawing, vec![
-        "  0", "SECTION",
-        "  2", "CLASSES",
-        "  0", "record-name",
-        "  1", "class-name",
-        "  2", "application-name",
-        " 90", "       42",
-        "280", "     1",
-        "281", "     1",
-        "  0", "ENDSEC",
-    ].join("\r\n"));
+    assert_contains(
+        &drawing,
+        vec![
+            "  0",
+            "SECTION",
+            "  2",
+            "CLASSES",
+            "  0",
+            "record-name",
+            "  1",
+            "class-name",
+            "  2",
+            "application-name",
+            " 90",
+            "       42",
+            "280",
+            "     1",
+            "281",
+            "     1",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n"),
+    );
 }
 
 #[test]
@@ -169,16 +219,30 @@ fn write_class_r14() {
         is_entity: true,
     };
     drawing.classes.push(class);
-    assert_contains(&drawing, vec![
-        "  0", "SECTION",
-        "  2", "CLASSES",
-        "  0", "CLASS",
-        "  1", "record-name",
-        "  2", "class-name",
-        "  3", "application-name",
-        " 90", "       43",
-        "280", "     1",
-        "281", "     1",
-        "  0", "ENDSEC",
-    ].join("\r\n"));
+    assert_contains(
+        &drawing,
+        vec![
+            "  0",
+            "SECTION",
+            "  2",
+            "CLASSES",
+            "  0",
+            "CLASS",
+            "  1",
+            "record-name",
+            "  2",
+            "class-name",
+            "  3",
+            "application-name",
+            " 90",
+            "       43",
+            "280",
+            "     1",
+            "281",
+            "     1",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n"),
+    );
 }

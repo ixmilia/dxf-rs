@@ -1,12 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use ::{
-    CodePair,
-    CodePairValue,
-    DxfError,
-    DxfResult,
-    ExpectedType,
-};
+use {CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
 
 use helper_functions::*;
 use std::io::Read;
@@ -28,22 +22,30 @@ impl<T: Read> CodePairIter<T> {
             read_first_line: false,
             read_as_ascii: true,
             binary_detection_complete: false,
-            offset: 0
+            offset: 0,
         }
     }
     fn detect_binary_or_ascii_file(&mut self) -> DxfResult<()> {
         match &*self.first_line {
             "AutoCAD Binary DXF" => {
                 // swallow the next two bytes
-                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A, 18);
-                assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00, 19);
+                assert_or_err!(
+                    try_option_io_result_into_err!(read_u8(&mut self.reader)),
+                    0x1A,
+                    18
+                );
+                assert_or_err!(
+                    try_option_io_result_into_err!(read_u8(&mut self.reader)),
+                    0x00,
+                    19
+                );
                 self.read_as_ascii = false;
                 self.offset = 20;
-            },
+            }
             _ => {
                 self.read_as_ascii = true;
                 self.offset = 1;
-            },
+            }
         }
         self.binary_detection_complete = true;
         Ok(())
@@ -58,14 +60,14 @@ impl<T: Read> CodePairIter<T> {
                     Some(Err(e)) => return Some(Err(e)),
                     None => return None,
                 }
-            },
+            }
             false => {
                 self.read_first_line = true;
 
                 // .clone() is fine because it'll only ever be called once and the only valid
                 // values that might be cloned are: "0" and "999"; all others are errors.
                 self.first_line.clone()
-            },
+            }
         };
         let code_line = code_line.trim();
         if code_line.is_empty() {
@@ -90,12 +92,24 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
         let value = match expected_type {
-            ExpectedType::Boolean => CodePairValue::Boolean(try_into_option!(parse_i16(value_line, self.offset))),
-            ExpectedType::Integer => CodePairValue::Integer(try_into_option!(parse_i32(value_line, self.offset))),
-            ExpectedType::Long => CodePairValue::Long(try_into_option!(parse_i64(value_line, self.offset))),
-            ExpectedType::Short => CodePairValue::Short(try_into_option!(parse_i16(value_line, self.offset))),
-            ExpectedType::Double => CodePairValue::Double(try_into_option!(parse_f64(value_line, self.offset))),
-            ExpectedType::Str => CodePairValue::Str(CodePairValue::un_escape_string(&value_line).into_owned()),
+            ExpectedType::Boolean => {
+                CodePairValue::Boolean(try_into_option!(parse_i16(value_line, self.offset)))
+            }
+            ExpectedType::Integer => {
+                CodePairValue::Integer(try_into_option!(parse_i32(value_line, self.offset)))
+            }
+            ExpectedType::Long => {
+                CodePairValue::Long(try_into_option!(parse_i64(value_line, self.offset)))
+            }
+            ExpectedType::Short => {
+                CodePairValue::Short(try_into_option!(parse_i16(value_line, self.offset)))
+            }
+            ExpectedType::Double => {
+                CodePairValue::Double(try_into_option!(parse_f64(value_line, self.offset)))
+            }
+            ExpectedType::Str => {
+                CodePairValue::Str(CodePairValue::un_escape_string(&value_line).into_owned())
+            }
         };
 
         Some(Ok(CodePair::new(code, value, code_offset)))
@@ -121,11 +135,26 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
         let (value, read_bytes) = match expected_type {
-            ExpectedType::Boolean => (CodePairValue::Boolean(try_from_dxf_result!(read_i16(&mut self.reader))), 2),
-            ExpectedType::Integer => (CodePairValue::Integer(try_from_dxf_result!(read_i32(&mut self.reader))), 4),
-            ExpectedType::Long => (CodePairValue::Long(try_from_dxf_result!(read_i64(&mut self.reader))), 8),
-            ExpectedType::Short => (CodePairValue::Short(try_from_dxf_result!(read_i16(&mut self.reader))), 2),
-            ExpectedType::Double => (CodePairValue::Double(try_from_dxf_result!(read_f64(&mut self.reader))), 8),
+            ExpectedType::Boolean => (
+                CodePairValue::Boolean(try_from_dxf_result!(read_i16(&mut self.reader))),
+                2,
+            ),
+            ExpectedType::Integer => (
+                CodePairValue::Integer(try_from_dxf_result!(read_i32(&mut self.reader))),
+                4,
+            ),
+            ExpectedType::Long => (
+                CodePairValue::Long(try_from_dxf_result!(read_i64(&mut self.reader))),
+                8,
+            ),
+            ExpectedType::Short => (
+                CodePairValue::Short(try_from_dxf_result!(read_i16(&mut self.reader))),
+                2,
+            ),
+            ExpectedType::Double => (
+                CodePairValue::Double(try_from_dxf_result!(read_f64(&mut self.reader))),
+                8,
+            ),
             ExpectedType::Str => {
                 let mut s = String::new();
                 loop {
@@ -136,8 +165,11 @@ impl<T: Read> CodePairIter<T> {
                         None => return Some(Err(DxfError::UnexpectedEndOfInput)),
                     }
                 }
-                (CodePairValue::Str(CodePairValue::un_escape_string(&s).into_owned()), s.len())
-            },
+                (
+                    CodePairValue::Str(CodePairValue::un_escape_string(&s).into_owned()),
+                    s.len(),
+                )
+            }
         };
         self.offset += read_bytes;
 

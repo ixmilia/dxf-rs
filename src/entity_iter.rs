@@ -1,14 +1,8 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use itertools::{
-    PutBack,
-    put_back,
-};
-use ::{
-    CodePair,
-    DxfResult,
-};
-use ::entities::*;
+use entities::*;
+use itertools::{put_back, PutBack};
+use {CodePair, DxfResult};
 
 pub(crate) struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
     pub iter: &'a mut PutBack<I>,
@@ -32,13 +26,18 @@ impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> EntityIter<'a, I> {
 }
 
 pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> DxfResult<()>
-    where I: Iterator<Item = Entity> {
-
+where
+    I: Iterator<Item = Entity>,
+{
     fn swallow_seqend<I>(iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = Entity> {
-
+    where
+        I: Iterator<Item = Entity>,
+    {
         match iter.next() {
-            Some(Entity { specific: EntityType::Seqend(_), .. }) => (),
+            Some(Entity {
+                specific: EntityType::Seqend(_),
+                ..
+            }) => (),
             Some(ent) => iter.put_back(ent),
             None => (),
         }
@@ -47,11 +46,18 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
     }
 
     fn get_mtext<I>(iter: &mut PutBack<I>) -> DxfResult<Option<MText>>
-        where I: Iterator<Item = Entity> {
-
+    where
+        I: Iterator<Item = Entity>,
+    {
         let m_text = match iter.next() {
-            Some(Entity { specific: EntityType::MText(m), .. }) => Some(m),
-            Some(ent) => { iter.put_back(ent); None },
+            Some(Entity {
+                specific: EntityType::MText(m),
+                ..
+            }) => Some(m),
+            Some(ent) => {
+                iter.put_back(ent);
+                None
+            }
             None => None,
         };
 
@@ -61,7 +67,10 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
     let mut iter = put_back(iter);
     loop {
         match iter.next() {
-            Some(Entity { ref common, specific: EntityType::Attribute(ref att) }) => {
+            Some(Entity {
+                ref common,
+                specific: EntityType::Attribute(ref att),
+            }) => {
                 let mut att = att.clone(); // 27 fields
                 match get_mtext(&mut iter) {
                     Ok(Some(m_text)) => att.m_text = m_text,
@@ -73,8 +82,11 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
                     common: common.clone(), // 18 fields
                     specific: EntityType::Attribute(att),
                 });
-            },
-            Some(Entity { ref common, specific: EntityType::AttributeDefinition(ref att) }) => {
+            }
+            Some(Entity {
+                ref common,
+                specific: EntityType::AttributeDefinition(ref att),
+            }) => {
                 let mut att = att.clone(); // 27 fields
                 match get_mtext(&mut iter) {
                     Ok(Some(m_text)) => att.m_text = m_text,
@@ -86,17 +98,23 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
                     common: common.clone(), // 18 fields
                     specific: EntityType::AttributeDefinition(att),
                 });
-            },
-            Some(Entity { ref common, specific: EntityType::Insert(ref ins) }) if ins.__has_attributes => {
+            }
+            Some(Entity {
+                ref common,
+                specific: EntityType::Insert(ref ins),
+            }) if ins.__has_attributes => {
                 let mut ins = ins.clone(); // 12 fields
                 loop {
                     match iter.next() {
-                        Some(Entity { specific: EntityType::Attribute(att), .. }) => ins.attributes.push(att),
+                        Some(Entity {
+                            specific: EntityType::Attribute(att),
+                            ..
+                        }) => ins.attributes.push(att),
                         Some(ent) => {
                             // stop gathering on any non-ATTRIBUTE
                             iter.put_back(ent);
                             break;
-                        },
+                        }
                         None => break,
                     }
                 }
@@ -108,17 +126,23 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
                     common: common.clone(), // 18 fields
                     specific: EntityType::Insert(ins),
                 });
-            },
-            Some(Entity { common, specific: EntityType::Polyline(poly) }) => {
+            }
+            Some(Entity {
+                common,
+                specific: EntityType::Polyline(poly),
+            }) => {
                 let mut poly = poly.clone(); // 13 fields
                 loop {
                     match iter.next() {
-                        Some(Entity { specific: EntityType::Vertex(vertex), .. }) => poly.vertices.push(vertex),
+                        Some(Entity {
+                            specific: EntityType::Vertex(vertex),
+                            ..
+                        }) => poly.vertices.push(vertex),
                         Some(ent) => {
                             // stop gathering on any non-VERTEX
                             iter.put_back(ent);
                             break;
-                        },
+                        }
                         None => break,
                     }
                 }
@@ -130,7 +154,7 @@ pub(crate) fn collect_entities<I>(iter: &mut I, entities: &mut Vec<Entity>) -> D
                     common: common.clone(), // 18 fields
                     specific: EntityType::Polyline(poly),
                 });
-            },
+            }
             Some(entity) => entities.push(entity),
             None => break,
         }

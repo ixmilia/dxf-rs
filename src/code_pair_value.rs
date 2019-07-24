@@ -2,10 +2,7 @@
 
 use std::borrow::Cow;
 use std::fmt;
-use std::fmt::{
-    Debug,
-    Formatter,
-};
+use std::fmt::{Debug, Formatter};
 
 /// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
@@ -70,15 +67,13 @@ impl CodePairValue {
                         0x5E => result.push(' '),
                         _ => panic!("this should never happen"),
                     }
-                }
-                else {
+                } else {
                     result.push(c);
                 }
             }
 
             Cow::Owned(result)
-        }
-        else {
+        } else {
             Cow::Borrowed(val)
         }
     }
@@ -136,8 +131,7 @@ impl CodePairValue {
                             };
 
                             result.push(c as char);
-                        }
-                        else {
+                        } else {
                             result.push(c);
                         }
                     }
@@ -145,8 +139,7 @@ impl CodePairValue {
             }
 
             Cow::Owned(result)
-        }
-        else {
+        } else {
             Cow::Borrowed(val)
         }
     }

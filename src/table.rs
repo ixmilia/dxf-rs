@@ -1,8 +1,8 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use ::Color;
+use helper_functions::*;
 use tables::*;
-use ::helper_functions::*;
+use Color;
 
 //------------------------------------------------------------------------------
 //                                                                         Layer

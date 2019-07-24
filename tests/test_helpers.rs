@@ -6,7 +6,7 @@ extern crate dxf;
 #[allow(dead_code)]
 pub mod helpers {
     use dxf::*;
-    use ::std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
+    use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
     pub fn unwrap_drawing(result: DxfResult<Drawing>) -> Drawing {
         match result {
@@ -20,7 +20,18 @@ pub mod helpers {
     }
 
     pub fn from_section(section: &str, body: &str) -> Drawing {
-        let text = vec!["0", "SECTION", "2", section, body.trim(), "0", "ENDSEC", "0", "EOF"].join("\n");
+        let text = vec![
+            "0",
+            "SECTION",
+            "2",
+            section,
+            body.trim(),
+            "0",
+            "ENDSEC",
+            "0",
+            "EOF",
+        ]
+        .join("\n");
         parse_drawing(text.trim())
     }
 
@@ -29,7 +40,10 @@ pub mod helpers {
         drawing.save(&mut buf).ok().unwrap();
         buf.seek(SeekFrom::Start(0)).ok().unwrap();
         let reader = BufReader::new(&mut buf);
-        let contents = reader.lines().map(|l| l.unwrap()).fold(String::new(), |a, l| a + l.as_str() + "\r\n");
+        let contents = reader
+            .lines()
+            .map(|l| l.unwrap())
+            .fold(String::new(), |a, l| a + l.as_str() + "\r\n");
         println!("{}", contents); // will only be displayed on the console if the test fails
         contents
     }

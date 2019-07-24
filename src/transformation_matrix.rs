@@ -30,7 +30,7 @@ impl TransformationMatrix {
             m22: 1.0,
             m33: 1.0,
             m44: 1.0,
-            .. Default::default()
+            ..Default::default()
         }
     }
 }
@@ -57,38 +57,14 @@ impl TransformationMatrix {
     }
     pub(crate) fn get_values(&self) -> Vec<f64> {
         vec![
-            self.m11,
-            self.m12,
-            self.m13,
-            self.m14,
-            self.m21,
-            self.m22,
-            self.m23,
-            self.m24,
-            self.m31,
-            self.m32,
-            self.m33,
-            self.m34,
-            self.m41,
-            self.m42,
-            self.m43,
-            self.m44,
+            self.m11, self.m12, self.m13, self.m14, self.m21, self.m22, self.m23, self.m24,
+            self.m31, self.m32, self.m33, self.m34, self.m41, self.m42, self.m43, self.m44,
         ]
     }
     pub(crate) fn get_4x3_values_row_major(&self) -> Vec<f64> {
         vec![
-            self.m11,
-            self.m21,
-            self.m31,
-            self.m12,
-            self.m22,
-            self.m32,
-            self.m13,
-            self.m23,
-            self.m33,
-            self.m14,
-            self.m24,
-            self.m34,
+            self.m11, self.m21, self.m31, self.m12, self.m22, self.m32, self.m13, self.m23,
+            self.m33, self.m14, self.m24, self.m34,
         ]
     }
 }
@@ -98,8 +74,7 @@ impl TransformationMatrix {
     fn get_value_or_default(values: &Vec<f64>, index: usize) -> f64 {
         if values.len() > index {
             values[index]
-        }
-        else {
+        } else {
             0.0
         }
     }

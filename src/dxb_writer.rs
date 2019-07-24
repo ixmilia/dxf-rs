@@ -3,18 +3,12 @@
 use std::io::Write;
 
 extern crate byteorder;
-use self::byteorder::{
-    LittleEndian,
-    WriteBytesExt,
-};
+use self::byteorder::{LittleEndian, WriteBytesExt};
 
-use ::{
-    Drawing,
-    DxfResult,
-};
+use {Drawing, DxfResult};
 
-use ::dxb_item_type::DxbItemType;
-use ::entities::*;
+use dxb_item_type::DxbItemType;
+use entities::*;
 
 use itertools::Itertools;
 
@@ -24,9 +18,7 @@ pub(crate) struct DxbWriter<T: Write> {
 
 impl<T: Write> DxbWriter<T> {
     pub fn new(writer: T) -> Self {
-        DxbWriter {
-            writer: writer,
-        }
+        DxbWriter { writer: writer }
     }
     pub fn write(&mut self, drawing: &Drawing) -> DxfResult<()> {
         // write sentinel
@@ -54,9 +46,11 @@ impl<T: Write> DxbWriter<T> {
 
         if writing_block {
             self.write_entities(&drawing.blocks[0].entities)?;
-        }
-        else {
-            let groups = drawing.entities.iter().group_by(|&e| e.common.layer.clone());
+        } else {
+            let groups = drawing
+                .entities
+                .iter()
+                .group_by(|&e| e.common.layer.clone());
             for (layer, entities) in &groups {
                 self.write_item_type(&DxbItemType::NewLayer)?;
                 self.write_null_terminated_string(&*layer)?;
@@ -67,7 +61,7 @@ impl<T: Write> DxbWriter<T> {
                             last_color = c;
                             self.write_item_type(&DxbItemType::NewColor)?;
                             self.write_w(last_color)?;
-                        },
+                        }
                     }
                     self.write_entity(&entity)?;
                 }
@@ -86,16 +80,36 @@ impl<T: Write> DxbWriter<T> {
     }
     fn write_entity(&mut self, entity: &Entity) -> DxfResult<()> {
         match &entity.specific {
-            &EntityType::Arc(ref arc) => { self.write_arc(&arc)?; },
-            &EntityType::Circle(ref circle) => { self.write_circle(&circle)?; },
-            &EntityType::Face3D(ref face) => { self.write_face(&face)?; },
-            &EntityType::Line(ref line) => { self.write_line(&line)?; },
-            &EntityType::ModelPoint(ref point) => { self.write_point(&point)?; },
-            &EntityType::Polyline(ref poly) => { self.write_polyline(&poly)?; },
-            &EntityType::Seqend(_) => { self.write_seqend()?; },
-            &EntityType::Solid(ref solid) => { self.write_solid(&solid)?; },
-            &EntityType::Trace(ref trace) => { self.write_trace(&trace)?; },
-            &EntityType::Vertex(ref vertex) => { self.write_vertex(&vertex)?; },
+            &EntityType::Arc(ref arc) => {
+                self.write_arc(&arc)?;
+            }
+            &EntityType::Circle(ref circle) => {
+                self.write_circle(&circle)?;
+            }
+            &EntityType::Face3D(ref face) => {
+                self.write_face(&face)?;
+            }
+            &EntityType::Line(ref line) => {
+                self.write_line(&line)?;
+            }
+            &EntityType::ModelPoint(ref point) => {
+                self.write_point(&point)?;
+            }
+            &EntityType::Polyline(ref poly) => {
+                self.write_polyline(&poly)?;
+            }
+            &EntityType::Seqend(_) => {
+                self.write_seqend()?;
+            }
+            &EntityType::Solid(ref solid) => {
+                self.write_solid(&solid)?;
+            }
+            &EntityType::Trace(ref trace) => {
+                self.write_trace(&trace)?;
+            }
+            &EntityType::Vertex(ref vertex) => {
+                self.write_vertex(&vertex)?;
+            }
             _ => (),
         }
         Ok(())

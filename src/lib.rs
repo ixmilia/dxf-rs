@@ -1,7 +1,7 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 //! This crate provides the ability to read and write DXF and DXB CAD files.
-//! 
+//!
 //! # Usage
 //!
 //! Put this in your `Cargo.toml`:
@@ -157,10 +157,7 @@ mod drawing;
 pub use drawing::Drawing;
 
 mod drawing_item;
-pub use drawing_item::{
-    DrawingItem,
-    DrawingItemMut,
-};
+pub use drawing_item::{DrawingItem, DrawingItemMut};
 
 mod section_geometry_settings;
 pub use section_geometry_settings::SectionGeometrySettings;
@@ -217,10 +214,7 @@ mod entity;
 pub use entity::LwPolylineVertex;
 
 mod object;
-pub use object::{
-    GeoMeshPoint,
-    MLineStyleElement,
-};
+pub use object::{GeoMeshPoint, MLineStyleElement};
 
 mod dxf_error;
 pub use dxf_error::DxfError;

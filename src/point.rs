@@ -1,10 +1,6 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use ::{
-    CodePair,
-    DxfError,
-    DxfResult,
-};
+use {CodePair, DxfError, DxfResult};
 
 /// Represents a simple point in Cartesian space.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -21,11 +17,7 @@ pub struct Point {
 impl Point {
     /// Creates a new `Point` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Point {
-        Point{
-            x: x,
-            y: y,
-            z: z,
-        }
+        Point { x: x, y: y, z: z }
     }
     /// Returns a point representing the origin of (0, 0, 0).
     pub fn origin() -> Point {
@@ -36,7 +28,12 @@ impl Point {
             10 => self.x = pair.assert_f64()?,
             20 => self.y = pair.assert_f64()?,
             30 => self.z = pair.assert_f64()?,
-            _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from("expected code [10, 20, 30] for point"))),
+            _ => {
+                return Err(DxfError::UnexpectedCodePair(
+                    pair.clone(),
+                    String::from("expected code [10, 20, 30] for point"),
+                ))
+            }
         }
 
         Ok(())

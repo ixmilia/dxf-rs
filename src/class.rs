@@ -2,12 +2,7 @@
 
 use std::io::Write;
 
-use ::{
-    CodePair,
-    Drawing,
-    DxfError,
-    DxfResult,
-};
+use {CodePair, Drawing, DxfError, DxfResult};
 
 use code_pair_writer::CodePairWriter;
 use enums::*;
@@ -127,8 +122,9 @@ impl Default for Class {
 // internal visibility only
 impl Class {
     pub(crate) fn read_classes<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -137,11 +133,11 @@ impl Class {
                             "ENDSEC" => {
                                 iter.put_back(Ok(pair));
                                 break;
-                            },
+                            }
                             typ => Class::read_class(typ, drawing, iter)?,
                         }
                     }
-                },
+                }
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
@@ -149,9 +145,14 @@ impl Class {
 
         Ok(())
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-        where T: Write {
-
+    pub(crate) fn write<T>(
+        &self,
+        version: &AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         if version >= &AcadVersion::R14 {
             writer.write_code_pair(&CodePair::new_str(0, "CLASS"))?;
             writer.write_code_pair(&CodePair::new_string(1, &self.record_name))?;
@@ -161,15 +162,17 @@ impl Class {
             if version >= &AcadVersion::R2004 {
                 writer.write_code_pair(&CodePair::new_i32(91, self.instance_count as i32))?;
             }
-        }
-        else {
+        } else {
             writer.write_code_pair(&CodePair::new_string(0, &self.record_name))?;
             writer.write_code_pair(&CodePair::new_string(1, &self.class_name))?;
             writer.write_code_pair(&CodePair::new_string(2, &self.application_name))?;
             writer.write_code_pair(&CodePair::new_i32(90, self.version_number))?;
         }
 
-        writer.write_code_pair(&CodePair::new_i16(280, as_i16(!self.was_class_loaded_with_file)))?;
+        writer.write_code_pair(&CodePair::new_i16(
+            280,
+            as_i16(!self.was_class_loaded_with_file),
+        ))?;
         writer.write_code_pair(&CodePair::new_i16(281, as_i16(self.is_entity)))?;
 
         Ok(())
@@ -179,8 +182,9 @@ impl Class {
 // private implementation
 impl Class {
     fn read_class<I>(typ: &str, drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         let mut class = Class::default();
 
         // R13 has alternate values for the code pairs
@@ -190,46 +194,41 @@ impl Class {
 
         loop {
             match iter.next() {
-                Some(Ok(pair)) => {
-                    match pair.code {
-                        0 => {
-                            iter.put_back(Ok(pair));
-                            break;
-                        },
-                        1 => {
-                            if drawing.header.version <= AcadVersion::R13 {
-                                class.class_name = pair.assert_string()?;
-                            }
-                            else {
-                                class.record_name = pair.assert_string()?;
-                            }
-                        },
-                        2 => {
-                            if drawing.header.version <= AcadVersion::R13 {
-                                class.application_name = pair.assert_string()?;
-                            }
-                            else {
-                                class.class_name = pair.assert_string()?;
-                            }
-                        },
-                        3 => {
-                            if drawing.header.version >= AcadVersion::R14 {
-                                class.application_name = pair.assert_string()?;
-                            }
-                        },
-                        90 => {
-                            if drawing.header.version <= AcadVersion::R13 {
-                                class.version_number = pair.assert_i32()?;
-                            }
-                            else {
-                                class.proxy_capability_flags = pair.assert_i32()?;
-                            }
-                        },
-                        91 => class.instance_count = pair.assert_i32()? as usize,
-                        280 => class.was_class_loaded_with_file = !as_bool(pair.assert_i16()?),
-                        281 => class.is_entity = as_bool(pair.assert_i16()?),
-                        _ => (),
+                Some(Ok(pair)) => match pair.code {
+                    0 => {
+                        iter.put_back(Ok(pair));
+                        break;
                     }
+                    1 => {
+                        if drawing.header.version <= AcadVersion::R13 {
+                            class.class_name = pair.assert_string()?;
+                        } else {
+                            class.record_name = pair.assert_string()?;
+                        }
+                    }
+                    2 => {
+                        if drawing.header.version <= AcadVersion::R13 {
+                            class.application_name = pair.assert_string()?;
+                        } else {
+                            class.class_name = pair.assert_string()?;
+                        }
+                    }
+                    3 => {
+                        if drawing.header.version >= AcadVersion::R14 {
+                            class.application_name = pair.assert_string()?;
+                        }
+                    }
+                    90 => {
+                        if drawing.header.version <= AcadVersion::R13 {
+                            class.version_number = pair.assert_i32()?;
+                        } else {
+                            class.proxy_capability_flags = pair.assert_i32()?;
+                        }
+                    }
+                    91 => class.instance_count = pair.assert_i32()? as usize,
+                    280 => class.was_class_loaded_with_file = !as_bool(pair.assert_i16()?),
+                    281 => class.is_entity = as_bool(pair.assert_i16()?),
+                    _ => (),
                 },
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
@@ -245,8 +244,7 @@ impl Class {
     fn set_flag(&mut self, mask: i32, val: bool) {
         if val {
             self.proxy_capability_flags |= mask;
-        }
-        else {
+        } else {
             self.proxy_capability_flags &= !mask;
         }
     }

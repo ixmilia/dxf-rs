@@ -2,26 +2,18 @@
 
 use std::io::Write;
 
-use ::{
-    CodePair,
-    CodePairValue,
-    Drawing,
-    DrawingItem,
-    DrawingItemMut,
-    DxfError,
-    DxfResult,
-    ExtensionGroup,
-    Point,
-    XData,
+use {
+    CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
+    ExtensionGroup, Point, XData,
 };
 
 use code_pair_writer::CodePairWriter;
 use entities::Entity;
 use entity_iter::EntityIter;
 use enums::*;
+use extension_data;
 use handle_tracker::HandleTracker;
 use helper_functions::*;
-use extension_data;
 use x_data;
 
 use itertools::PutBack;
@@ -134,8 +126,9 @@ impl Default for Block {
 // internal visibility only
 impl Block {
     pub(crate) fn read_block<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
-        where I: Iterator<Item = DxfResult<CodePair>> {
-
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
         // match code pair:
         //   0/ENDBLK -> swallow code pairs and return
         //   0/* -> read entity and add to collection
@@ -145,7 +138,11 @@ impl Block {
             match iter.next() {
                 Some(Ok(pair)) => {
                     match pair {
-                        CodePair { code: 0, value: CodePairValue::Str(ref s), .. } if s == "ENDBLK" => {
+                        CodePair {
+                            code: 0,
+                            value: CodePairValue::Str(ref s),
+                            ..
+                        } if s == "ENDBLK" => {
                             // swallow all non-0 code pairs
                             loop {
                                 match iter.next() {
@@ -153,7 +150,7 @@ impl Block {
                                         // done reading ENDBLK
                                         iter.put_back(Ok(pair));
                                         break;
-                                    },
+                                    }
                                     Some(Ok(_)) => (), // swallow this
                                     Some(Err(e)) => return Err(e),
                                     None => return Err(DxfError::UnexpectedEndOfInput),
@@ -162,13 +159,13 @@ impl Block {
 
                             drawing.blocks.push(current);
                             break;
-                        },
+                        }
                         CodePair { code: 0, .. } => {
                             // should be an entity
                             iter.put_back(Ok(pair));
                             let mut iter = EntityIter { iter: iter };
                             iter.read_entities_into_vec(&mut current.entities)?;
-                        },
+                        }
                         _ => {
                             // specific to the BLOCK
                             match pair.code {
@@ -185,18 +182,22 @@ impl Block {
                                 70 => current.flags = pair.assert_i16()? as i32,
                                 330 => current.__owner_handle = pair.as_handle()?,
                                 extension_data::EXTENSION_DATA_GROUP => {
-                                    let group = ExtensionGroup::read_group(pair.assert_string()?, iter, pair.offset)?;
+                                    let group = ExtensionGroup::read_group(
+                                        pair.assert_string()?,
+                                        iter,
+                                        pair.offset,
+                                    )?;
                                     current.extension_data_groups.push(group);
-                                },
+                                }
                                 x_data::XDATA_APPLICATIONNAME => {
                                     let x = XData::read_item(pair.assert_string()?, iter)?;
                                     current.x_data.push(x);
-                                },
+                                }
                                 _ => (), // unsupported code pair
                             }
-                        },
+                        }
                     }
-                },
+                }
                 Some(Err(e)) => return Err(e),
                 None => return Err(DxfError::UnexpectedEndOfInput),
             }
@@ -204,12 +205,22 @@ impl Block {
 
         Ok(())
     }
-    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>
-        where T: Write {
-
+    pub(crate) fn write<T>(
+        &self,
+        version: &AcadVersion,
+        write_handles: bool,
+        writer: &mut CodePairWriter<T>,
+        handle_tracker: &mut HandleTracker,
+    ) -> DxfResult<()>
+    where
+        T: Write,
+    {
         writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
         if write_handles && self.handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(5, &as_handle(handle_tracker.get_block_handle(&self))))?;
+            writer.write_code_pair(&CodePair::new_string(
+                5,
+                &as_handle(handle_tracker.get_block_handle(&self)),
+            ))?;
         }
 
         if version >= &AcadVersion::R14 {
@@ -220,7 +231,8 @@ impl Block {
 
         if version >= &AcadVersion::R13 {
             if self.__owner_handle != 0 {
-                writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
+                writer
+                    .write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
             }
 
             writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
@@ -297,8 +309,7 @@ impl Block {
     fn set_flag(&mut self, mask: i32, val: bool) {
         if val {
             self.flags |= mask;
-        }
-        else {
+        } else {
             self.flags &= !mask;
         }
     }

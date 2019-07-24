@@ -1,30 +1,37 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 extern crate dxf;
-use self::dxf::*;
 use self::dxf::entities::*;
 use self::dxf::enums::*;
 use self::dxf::objects::*;
+use self::dxf::*;
 
 extern crate image;
-use self::image::{
-    DynamicImage,
-    GenericImage,
-};
+use self::image::{DynamicImage, GenericImage};
 
 mod test_helpers;
 use test_helpers::helpers::*;
 
 #[test]
 fn read_string_with_control_characters() {
-    let drawing = parse_drawing(vec![
-        "0", "SECTION",
-        "2", "HEADER",
-        "9", "$LASTSAVEDBY",
-        "1", "a^G^ ^^ b",
-        "0", "ENDSEC",
-        "0", "EOF",
-    ].join("\n").as_str());
+    let drawing = parse_drawing(
+        vec![
+            "0",
+            "SECTION",
+            "2",
+            "HEADER",
+            "9",
+            "$LASTSAVEDBY",
+            "1",
+            "a^G^ ^^ b",
+            "0",
+            "ENDSEC",
+            "0",
+            "EOF",
+        ]
+        .join("\n")
+        .as_str(),
+    );
     assert_eq!("a\u{7}^\u{1E} b", drawing.header.last_saved_by);
 }
 
@@ -57,13 +64,14 @@ fn normalize_dimension_styles() {
     let mut file = Drawing::default();
     file.clear();
     assert_eq!(0, file.dim_styles.len());
-    file.entities.push(Entity::new(EntityType::RadialDimension(RadialDimension {
-        dimension_base: DimensionBase {
-            dimension_style_name: String::from("style name"),
-            .. Default::default()
-        },
-        .. Default::default()
-    })));
+    file.entities
+        .push(Entity::new(EntityType::RadialDimension(RadialDimension {
+            dimension_base: DimensionBase {
+                dimension_style_name: String::from("style name"),
+                ..Default::default()
+            },
+            ..Default::default()
+        })));
     file.normalize();
     assert_eq!(3, file.dim_styles.len());
     assert_eq!("ANNOTATIVE", file.dim_styles[0].name);
@@ -91,7 +99,7 @@ fn normalize_line_types() {
     file.entities.push(Entity {
         common: EntityCommon {
             line_type_name: String::from("line type"),
-            .. Default::default()
+            ..Default::default()
         },
         specific: EntityType::Line(Default::default()),
     });
@@ -108,10 +116,11 @@ fn normalize_text_styles() {
     let mut file = Drawing::default();
     file.clear();
     assert_eq!(0, file.styles.len());
-    file.entities.push(Entity::new(EntityType::Attribute(Attribute {
-        text_style_name: String::from("text style"),
-        .. Default::default()
-    })));
+    file.entities
+        .push(Entity::new(EntityType::Attribute(Attribute {
+            text_style_name: String::from("text style"),
+            ..Default::default()
+        })));
     file.normalize();
     assert_eq!(3, file.styles.len());
     assert_eq!("ANNOTATIVE", file.styles[0].name);
@@ -134,10 +143,11 @@ fn normalize_views() {
     let mut file = Drawing::default();
     file.clear();
     assert_eq!(0, file.views.len());
-    file.objects.push(Object::new(ObjectType::PlotSettings(PlotSettings {
-        plot_view_name: String::from("some view"),
-        .. Default::default()
-    })));
+    file.objects
+        .push(Object::new(ObjectType::PlotSettings(PlotSettings {
+            plot_view_name: String::from("some view"),
+            ..Default::default()
+        })));
     file.normalize();
     assert_eq!(1, file.views.len());
     assert_eq!("some view", file.views[0].name);
@@ -165,16 +175,13 @@ fn thumbnail_round_trip() {
     let drawing = Drawing {
         header: Header {
             version: AcadVersion::R2000, // thumbnails are only written >= R2000
-            .. Default::default()
+            ..Default::default()
         },
         thumbnail: Some(thumbnail),
-        .. Default::default()
+        ..Default::default()
     };
     let drawing_text = to_test_string(&drawing);
-    assert!(drawing_text.contains(&vec![
-        "  0", "SECTION",
-        "  2", "THUMBNAILIMAGE",
-    ].join("\r\n")));
+    assert!(drawing_text.contains(&vec!["  0", "SECTION", "  2", "THUMBNAILIMAGE",].join("\r\n")));
 
     // re-read the drawing
     let drawing = parse_drawing(&*drawing_text);

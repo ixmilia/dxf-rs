@@ -2,19 +2,12 @@
 
 use std::io::Read;
 
-use ::{
-    Block,
-    Color,
-    Drawing,
-    DxfError,
-    DxfResult,
-    Point,
-};
+use {Block, Color, Drawing, DxfError, DxfResult, Point};
 
-use ::dxb_item_type::DxbItemType;
-use ::entities::*;
-use ::entity_iter::collect_entities;
-use ::helper_functions::*;
+use dxb_item_type::DxbItemType;
+use entities::*;
+use entity_iter::collect_entities;
+use helper_functions::*;
 
 use enum_primitive::FromPrimitive;
 
@@ -46,69 +39,119 @@ impl<T: Read> DxbReader<T> {
     }
     pub fn load(&mut self) -> DxfResult<Drawing> {
         // swallow the next two bytes
-        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x1A, 16);
+        assert_or_err!(
+            try_option_io_result_into_err!(read_u8(&mut self.reader)),
+            0x1A,
+            16
+        );
         self.advance_offset(1);
-        assert_or_err!(try_option_io_result_into_err!(read_u8(&mut self.reader)), 0x00, 17);
+        assert_or_err!(
+            try_option_io_result_into_err!(read_u8(&mut self.reader)),
+            0x00,
+            17
+        );
         self.advance_offset(1);
 
         let mut block_base = None;
         let mut entities = vec![];
         loop {
-            let item_type = match DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(&mut self.reader))) {
+            let item_type = match DxbItemType::from_u8(try_option_io_result_into_err!(read_u8(
+                &mut self.reader
+            ))) {
                 Some(item_type) => item_type,
                 None => return Err(DxfError::UnexpectedEnumValue(self.offset)),
             };
             self.advance_offset(1);
             match item_type {
                 // entities
-                DxbItemType::Arc => { entities.push(self.read_arc()?); },
-                DxbItemType::Circle => { entities.push(self.read_circle()?); },
-                DxbItemType::Face => { entities.push(self.read_face()?); },
-                DxbItemType::Line |
-                DxbItemType::Line3D => { entities.push(self.read_line()?); },
-                DxbItemType::LineExtension => { entities.push(self.read_line_extension()?); },
-                DxbItemType::LineExtension3D => { entities.push(self.read_line_extension_3d()?); },
-                DxbItemType::Point => { entities.push(self.read_point()?); },
-                DxbItemType::Polyline => { entities.push(self.read_polyline()?); },
-                DxbItemType::Seqend => { entities.push(self.read_seqend()?); },
-                DxbItemType::Solid => { entities.push(self.read_solid()?); },
-                DxbItemType::Trace => { entities.push(self.read_trace()?); },
-                DxbItemType::TraceExtension => { entities.push(self.read_trace_extension()?); },
-                DxbItemType::Vertex => { entities.push(self.read_vertex()?); },
+                DxbItemType::Arc => {
+                    entities.push(self.read_arc()?);
+                }
+                DxbItemType::Circle => {
+                    entities.push(self.read_circle()?);
+                }
+                DxbItemType::Face => {
+                    entities.push(self.read_face()?);
+                }
+                DxbItemType::Line | DxbItemType::Line3D => {
+                    entities.push(self.read_line()?);
+                }
+                DxbItemType::LineExtension => {
+                    entities.push(self.read_line_extension()?);
+                }
+                DxbItemType::LineExtension3D => {
+                    entities.push(self.read_line_extension_3d()?);
+                }
+                DxbItemType::Point => {
+                    entities.push(self.read_point()?);
+                }
+                DxbItemType::Polyline => {
+                    entities.push(self.read_polyline()?);
+                }
+                DxbItemType::Seqend => {
+                    entities.push(self.read_seqend()?);
+                }
+                DxbItemType::Solid => {
+                    entities.push(self.read_solid()?);
+                }
+                DxbItemType::Trace => {
+                    entities.push(self.read_trace()?);
+                }
+                DxbItemType::TraceExtension => {
+                    entities.push(self.read_trace_extension()?);
+                }
+                DxbItemType::Vertex => {
+                    entities.push(self.read_vertex()?);
+                }
                 // global values
-                DxbItemType::NewColor => { self.current_color = Color::from_raw_value(self.read_w()? as i16); },
-                DxbItemType::NewLayer => { self.layer_name = self.read_null_terminated_string()?; },
-                DxbItemType::ScaleFactor => { self.scale_factor = self.read_f()?; },
+                DxbItemType::NewColor => {
+                    self.current_color = Color::from_raw_value(self.read_w()? as i16);
+                }
+                DxbItemType::NewLayer => {
+                    self.layer_name = self.read_null_terminated_string()?;
+                }
+                DxbItemType::ScaleFactor => {
+                    self.scale_factor = self.read_f()?;
+                }
                 // other
                 DxbItemType::BlockBase => {
                     let loc = Point::new(self.read_n()?, self.read_n()?, 0.0);
                     if block_base == None && entities.len() == 0 {
                         // only if this is the first item encountered
                         block_base = Some(loc);
-                    }
-                    else {
+                    } else {
                         return Err(DxfError::InvalidBinaryFile);
                     }
-                },
+                }
                 DxbItemType::Bulge => {
                     let bulge = self.read_u()?;
                     match vec_last!(entities) {
-                        &mut Entity { specific: EntityType::Vertex(ref mut v), .. } => { v.bulge = bulge; },
+                        &mut Entity {
+                            specific: EntityType::Vertex(ref mut v),
+                            ..
+                        } => {
+                            v.bulge = bulge;
+                        }
                         _ => return Err(DxfError::UnexpectedEnumValue(self.offset)),
                     }
-                },
-                DxbItemType::NumberMode => { self.is_integer_mode = self.read_w()? == 0; },
+                }
+                DxbItemType::NumberMode => {
+                    self.is_integer_mode = self.read_w()? == 0;
+                }
                 DxbItemType::Width => {
                     let starting_width = self.read_n()?;
                     let ending_width = self.read_n()?;
                     match vec_last!(entities) {
-                        &mut Entity { specific: EntityType::Vertex(ref mut v), .. } => {
+                        &mut Entity {
+                            specific: EntityType::Vertex(ref mut v),
+                            ..
+                        } => {
                             v.starting_width = starting_width;
                             v.ending_width = ending_width;
-                        },
+                        }
                         _ => return Err(DxfError::UnexpectedEnumValue(self.offset)),
                     }
-                },
+                }
                 // done
                 DxbItemType::EOF => break,
             }
@@ -124,10 +167,10 @@ impl<T: Read> DxbReader<T> {
                 block.base_point = location;
                 block.entities = gathered_entities;
                 drawing.blocks.push(block);
-            },
+            }
             None => {
                 drawing.entities = gathered_entities;
-            },
+            }
         }
 
         Ok(drawing)
@@ -208,7 +251,12 @@ impl<T: Read> DxbReader<T> {
     fn read_trace_extension(&mut self) -> DxfResult<Entity> {
         let p3 = Point::new(self.read_n()?, self.read_n()?, 0.0);
         let p4 = Point::new(self.read_n()?, self.read_n()?, 0.0);
-        let trace = Trace::new(self.last_trace_p3.clone(), self.last_trace_p4.clone(), p3, p4);
+        let trace = Trace::new(
+            self.last_trace_p3.clone(),
+            self.last_trace_p4.clone(),
+            p3,
+            p4,
+        );
         self.last_trace_p3 = trace.third_corner.clone();
         self.last_trace_p4 = trace.fourth_corner.clone();
         Ok(self.wrap_common_values(EntityType::Trace(trace)))
@@ -231,8 +279,7 @@ impl<T: Read> DxbReader<T> {
             self.advance_offset(1);
             if b == 0 {
                 return Ok(value);
-            }
-            else {
+            } else {
                 value.push(b as char);
             }
         }
@@ -240,8 +287,7 @@ impl<T: Read> DxbReader<T> {
     fn read_a(&mut self) -> DxfResult<f64> {
         let value = if self.is_integer_mode {
             read_i32(&mut self.reader)? as f64 * self.scale_factor / 1000000.0
-        }
-        else {
+        } else {
             read_f32(&mut self.reader)? as f64
         };
         self.advance_offset(4);
@@ -257,8 +303,7 @@ impl<T: Read> DxbReader<T> {
             let value = read_i16(&mut self.reader)? as f64 * self.scale_factor;
             self.advance_offset(2);
             Ok(value)
-        }
-        else {
+        } else {
             let value = read_f32(&mut self.reader)? as f64;
             self.advance_offset(4);
             Ok(value)
@@ -267,8 +312,7 @@ impl<T: Read> DxbReader<T> {
     fn read_u(&mut self) -> DxfResult<f64> {
         let value = if self.is_integer_mode {
             read_i32(&mut self.reader)? as f64 * 65536.0 * self.scale_factor
-        }
-        else {
+        } else {
             read_f32(&mut self.reader)? as f64
         };
         self.advance_offset(4);
