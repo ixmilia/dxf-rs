@@ -82,7 +82,7 @@ impl error::Error for DxfError {
             &DxfError::WrongItemType => "the specified item type is not correct",
         }
     }
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             &DxfError::IoError(ref e) => Some(e),
             &DxfError::ImageError(ref e) => Some(e),
