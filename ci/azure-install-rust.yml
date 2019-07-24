@@ -1,0 +1,31 @@
+steps:
+
+  # Linux
+  - script: |
+      set -e
+      curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+      rustup toolchain install $RUST_TOOLCHAIN
+      rustup default $RUST_TOOLCHAIN
+      echo "##vso[task.setvariable variable=PATH;]$PATH:/usr/local/cargo/bin"
+    env:
+      RUST_TOOLCHAIN: ${{ parameters.rustToolchain }}
+    displayName: Install rust (Linux)
+    condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+  # Windows
+  - script: |
+      curl -sSf -o rustup-init.exe https://win.rustup.rs
+      rustup-init.exe -y --default-toolchain none
+      rustup toolchain install %RUST_TOOLCHAIN%
+      rustup default %RUST_TOOLCHAIN%
+      echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
+    env:
+      RUST_TOOLCHAIN: ${{ parameters.rustToolchain }}
+    displayName: Install rust (Windows)
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+  # All OS
+  - script: |
+      rustc -Vv
+      cargo -V
+    displayName: Report versions

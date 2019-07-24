@@ -1,52 +1,35 @@
 jobs:
+
 - job: Windows
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-2019
   strategy:
-    maxParallel: 2
+    maxParallel: 3
     matrix:
       stable:
-        _nightly: false
+        rustToolchain: stable
+      beta:
+        rustToolchain: beta
       nightly:
-        _nightly: true
+        rustToolchain: nightly
   steps:
-  - task: Rust@1
-    displayName: Prepare
-    inputs:
-      installNightly: $(_nightly)
-  - task: Cargo@1
-    displayName: Build
-    inputs:
-      cargoCommand: build
-      cargoCommandOptions: --release
-  - task: Cargo@1
-    displayName: Test
-    inputs:
-      cargoCommand: test
-      cargoCommandOptions: --release
+  - template: ci/azure-test.yml
+    parameters:
+      rustToolchain: $(rustToolchain)
 
 - job: Linux
   pool:
     vmImage: ubuntu-16.04
   strategy:
-    maxParallel: 2
+    maxParallel: 3
     matrix:
       stable:
-        _nightly: false
+        rustToolchain: stable
+      beta:
+        rustToolchain: beta
       nightly:
-        _nightly: true
+        rustToolchain: nightly
   steps:
-  - task: Rust@1
-    displayName: Prepare
-    inputs:
-      installNightly: $(_nightly)
-  - task: Cargo@1
-    displayName: Build
-    inputs:
-      cargoCommand: build
-      cargoCommandOptions: --release
-  - task: Cargo@1
-    displayName: Test
-    inputs:
-      cargoCommand: test
-      cargoCommandOptions: --release
+  - template: ci/azure-test.yml
+    parameters:
+      rustToolchain: $(rustToolchain)
