@@ -481,7 +481,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         }
 
         fun.push_str("        for x in &item.x_data {\n");
-        fun.push_str("            x.write(&drawing.header.version, writer)?;\n");
+        fun.push_str("            x.write(drawing.header.version, writer)?;\n");
         fun.push_str("        }\n");
 
         fun.push_str("    }\n");

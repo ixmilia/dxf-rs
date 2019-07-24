@@ -207,7 +207,7 @@ impl Block {
     }
     pub(crate) fn write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
@@ -223,13 +223,13 @@ impl Block {
             ))?;
         }
 
-        if version >= &AcadVersion::R14 {
+        if version >= AcadVersion::R14 {
             for group in &self.extension_data_groups {
                 group.write(writer)?;
             }
         }
 
-        if version >= &AcadVersion::R13 {
+        if version >= AcadVersion::R13 {
             if self.__owner_handle != 0 {
                 writer
                     .write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
@@ -243,7 +243,7 @@ impl Block {
         }
 
         writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
-        if version >= &AcadVersion::R13 {
+        if version >= AcadVersion::R13 {
             writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockBegin"))?;
         }
 
@@ -252,7 +252,7 @@ impl Block {
         writer.write_code_pair(&CodePair::new_f64(10, self.base_point.x))?;
         writer.write_code_pair(&CodePair::new_f64(20, self.base_point.y))?;
         writer.write_code_pair(&CodePair::new_f64(30, self.base_point.z))?;
-        if version >= &AcadVersion::R12 {
+        if version >= AcadVersion::R12 {
             writer.write_code_pair(&CodePair::new_string(3, &self.name))?;
         }
 
@@ -270,17 +270,17 @@ impl Block {
             writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
         }
 
-        if version >= &AcadVersion::R14 {
+        if version >= AcadVersion::R14 {
             for group in &self.extension_data_groups {
                 group.write(writer)?;
             }
         }
 
-        if version >= &AcadVersion::R2000 && self.__owner_handle != 0 {
+        if version >= AcadVersion::R2000 && self.__owner_handle != 0 {
             writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
         }
 
-        if version >= &AcadVersion::R13 {
+        if version >= AcadVersion::R13 {
             writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
         }
 
@@ -289,12 +289,12 @@ impl Block {
         }
 
         writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
-        if version >= &AcadVersion::R13 {
+        if version >= AcadVersion::R13 {
             writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd"))?;
         }
 
         for x in &self.x_data {
-            x.write(&version, writer)?;
+            x.write(version, writer)?;
         }
 
         Ok(())

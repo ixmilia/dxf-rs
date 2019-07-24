@@ -1269,7 +1269,7 @@ impl Entity {
     }
     pub(crate) fn write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
@@ -1285,7 +1285,7 @@ impl Entity {
                 self.specific.write(&self.common, version, writer)?;
             }
 
-            self.post_write(&version, write_handles, writer, handle_tracker)?;
+            self.post_write(version, write_handles, writer, handle_tracker)?;
             for x in &self.common.x_data {
                 x.write(version, writer)?;
             }
@@ -1295,7 +1295,7 @@ impl Entity {
     }
     fn apply_custom_writer<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
@@ -1304,7 +1304,7 @@ impl Entity {
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
                 dim.dimension_base.write(version, writer)?;
-                if version >= &AcadVersion::R13 {
+                if version >= AcadVersion::R13 {
                     writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension"))?;
                 }
                 writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x))?;
@@ -1318,7 +1318,7 @@ impl Entity {
                 writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
                 writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle))?;
                 writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle))?;
-                if version >= &AcadVersion::R13 {
+                if version >= AcadVersion::R13 {
                     writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
                 }
             }
@@ -1372,11 +1372,11 @@ impl Entity {
                     "AcDb2dPolyline"
                 };
                 writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
-                if *version <= AcadVersion::R13 {
+                if version <= AcadVersion::R13 {
                     writer
                         .write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
                 }
-                if *version >= AcadVersion::R12 {
+                if version >= AcadVersion::R12 {
                     writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
                     writer.write_code_pair(&CodePair::new_f64(20, poly.location.y))?;
                     writer.write_code_pair(&CodePair::new_f64(30, poly.location.z))?;
@@ -1449,7 +1449,7 @@ impl Entity {
                 }
                 writer.write_code_pair(&CodePair::new_i16(70, v.flags as i16))?;
                 writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
-                if *version >= AcadVersion::R13 {
+                if version >= AcadVersion::R13 {
                     if v.polyface_mesh_vertex_index1 != 0 {
                         writer.write_code_pair(&CodePair::new_i16(
                             71,
@@ -1475,7 +1475,7 @@ impl Entity {
                         ))?;
                     }
                 }
-                if *version >= AcadVersion::R2010 {
+                if version >= AcadVersion::R2010 {
                     writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
                 }
             }
@@ -1486,7 +1486,7 @@ impl Entity {
     }
     fn post_write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
@@ -1497,14 +1497,14 @@ impl Entity {
         match self.specific {
             EntityType::Attribute(ref att) => self.write_attribute_m_text(
                 att.m_text.clone(),
-                &version,
+                version,
                 write_handles,
                 writer,
                 handle_tracker,
             )?,
             EntityType::AttributeDefinition(ref att) => self.write_attribute_m_text(
                 att.m_text.clone(),
-                &version,
+                version,
                 write_handles,
                 writer,
                 handle_tracker,
@@ -1515,9 +1515,9 @@ impl Entity {
                         common: Default::default(),
                         specific: EntityType::Attribute(a.clone()),
                     };
-                    a.write(&version, write_handles, writer, handle_tracker)?;
+                    a.write(version, write_handles, writer, handle_tracker)?;
                 }
-                Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
+                Entity::write_seqend(version, write_handles, writer, handle_tracker)?;
             }
             EntityType::Polyline(ref poly) => {
                 for v in &poly.vertices {
@@ -1528,9 +1528,9 @@ impl Entity {
                         common: Default::default(),
                         specific: EntityType::Vertex(v),
                     };
-                    v.write(&version, write_handles, writer, handle_tracker)?;
+                    v.write(version, write_handles, writer, handle_tracker)?;
                 }
-                Entity::write_seqend(&version, write_handles, writer, handle_tracker)?;
+                Entity::write_seqend(version, write_handles, writer, handle_tracker)?;
             }
             _ => (),
         }
@@ -1540,7 +1540,7 @@ impl Entity {
     fn write_attribute_m_text<T>(
         &self,
         m_text: MText,
-        version: &AcadVersion,
+        version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
@@ -1559,11 +1559,11 @@ impl Entity {
             common: m_text_common,
             specific: EntityType::MText(m_text),
         };
-        m_text.write(&version, write_handles, writer, handle_tracker)?;
+        m_text.write(version, write_handles, writer, handle_tracker)?;
         Ok(())
     }
     fn write_seqend<T>(
-        version: &AcadVersion,
+        version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
@@ -1575,7 +1575,7 @@ impl Entity {
             common: Default::default(),
             specific: EntityType::Seqend(Default::default()),
         };
-        seqend.write(&version, write_handles, writer, handle_tracker)?;
+        seqend.write(version, write_handles, writer, handle_tracker)?;
         Ok(())
     }
 }

@@ -82,14 +82,14 @@ impl XData {
     }
     pub(crate) fn write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         // not supported on < R2000
-        if version >= &AcadVersion::R2000 {
+        if version >= AcadVersion::R2000 {
             writer.write_code_pair(&CodePair::new_string(
                 XDATA_APPLICATIONNAME,
                 &self.application_name,

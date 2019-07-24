@@ -1448,7 +1448,7 @@ impl Object {
     }
     pub(crate) fn write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         writer: &mut CodePairWriter<T>,
         handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
@@ -1460,7 +1460,7 @@ impl Object {
             self.common.write(version, writer, handle_tracker)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(version, writer)?;
-                self.post_write(&version, writer, handle_tracker)?;
+                self.post_write(version, writer, handle_tracker)?;
             }
             for x in &self.common.x_data {
                 x.write(version, writer)?;
@@ -1471,7 +1471,7 @@ impl Object {
     }
     fn apply_custom_writer<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
@@ -1537,10 +1537,10 @@ impl Object {
             }
             ObjectType::Dictionary(ref dict) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
-                if *version >= AcadVersion::R2000 && !dict.is_hard_owner {
+                if version >= AcadVersion::R2000 && !dict.is_hard_owner {
                     writer.write_code_pair(&CodePair::new_i16(280, as_i16(dict.is_hard_owner)))?;
                 }
-                if *version >= AcadVersion::R2000 {
+                if version >= AcadVersion::R2000 {
                     writer.write_code_pair(&CodePair::new_i16(
                         281,
                         dict.duplicate_record_handling as i16,
@@ -1556,7 +1556,7 @@ impl Object {
             }
             ObjectType::DictionaryWithDefault(ref dict) => {
                 writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
-                if *version >= AcadVersion::R2000 {
+                if version >= AcadVersion::R2000 {
                     writer.write_code_pair(&CodePair::new_i16(
                         281,
                         dict.duplicate_record_handling as i16,
@@ -1659,7 +1659,7 @@ impl Object {
     }
     fn post_write<T>(
         &self,
-        _version: &AcadVersion,
+        _version: AcadVersion,
         _writer: &mut CodePairWriter<T>,
         _handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>

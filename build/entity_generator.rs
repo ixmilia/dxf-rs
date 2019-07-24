@@ -202,7 +202,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        let ent = self;\n");
@@ -326,7 +326,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
 
             if name(&c) == "DimensionBase" {
                 fun.push_str("impl DimensionBase {\n");
-                fun.push_str("    pub(crate) fn write<T>(&self, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+                fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
                 fun.push_str("        where T: Write {\n");
                 fun.push_str("\n");
                 fun.push_str("        let ent = self;\n");
@@ -403,17 +403,17 @@ fn generate_implementation(fun: &mut String, element: &Element) {
 
 fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
     fun.push_str(
-        "    pub(crate) fn is_supported_on_version(&self, version: &AcadVersion) -> bool {\n",
+        "    pub(crate) fn is_supported_on_version(&self, version: AcadVersion) -> bool {\n",
     );
     fun.push_str("        match self {\n");
     for entity in &element.children {
         if name(&entity) != "Entity" && name(&entity) != "DimensionBase" {
             let mut predicates = vec![];
             if !min_version(&entity).is_empty() {
-                predicates.push(format!("*version >= AcadVersion::{}", min_version(&entity)));
+                predicates.push(format!("version >= AcadVersion::{}", min_version(&entity)));
             }
             if !max_version(&entity).is_empty() {
-                predicates.push(format!("*version <= AcadVersion::{}", max_version(&entity)));
+                predicates.push(format!("version <= AcadVersion::{}", max_version(&entity)));
             }
             let predicate = if predicates.len() == 0 {
                 String::from("true")
@@ -555,7 +555,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 }
 
 fn generate_write(fun: &mut String, element: &Element) {
-    fun.push_str("    pub(crate) fn write<T>(&self, common: &EntityCommon, version: &AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, common: &EntityCommon, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        match self {\n");
@@ -668,13 +668,13 @@ fn generate_write_code_pairs_for_write_order(
             let mut predicates = vec![];
             if !min_version(&write_command).is_empty() {
                 predicates.push(format!(
-                    "*version >= AcadVersion::{}",
+                    "version >= AcadVersion::{}",
                     min_version(&write_command)
                 ));
             }
             if !max_version(&write_command).is_empty() {
                 predicates.push(format!(
-                    "*version <= AcadVersion::{}",
+                    "version <= AcadVersion::{}",
                     max_version(&write_command)
                 ));
             }
@@ -713,7 +713,7 @@ fn generate_write_code_pairs_for_write_order(
             commands.push(String::from("}"));
         }
         "WriteExtensionData" => {
-            commands.push(String::from("if *version >= AcadVersion::R14 {"));
+            commands.push(String::from("if version >= AcadVersion::R14 {"));
             commands.push(String::from(
                 "    for group in &self.extension_data_groups {",
             ));
@@ -731,10 +731,10 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     let mut commands = vec![];
     let mut predicates = vec![];
     if !min_version(&field).is_empty() {
-        predicates.push(format!("*version >= AcadVersion::{}", min_version(&field)));
+        predicates.push(format!("version >= AcadVersion::{}", min_version(&field)));
     }
     if !max_version(&field).is_empty() {
-        predicates.push(format!("*version <= AcadVersion::{}", max_version(&field)));
+        predicates.push(format!("version <= AcadVersion::{}", max_version(&field)));
     }
     if disable_writing_default(&field) {
         predicates.push(format!(

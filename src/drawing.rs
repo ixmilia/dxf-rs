@@ -454,7 +454,7 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "BLOCKS"))?;
         for b in &self.blocks {
-            b.write(&self.header.version, write_handles, writer, handle_tracker)?;
+            b.write(self.header.version, write_handles, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -472,7 +472,7 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
         for e in &self.entities {
-            e.write(&self.header.version, write_handles, writer, handle_tracker)?;
+            e.write(self.header.version, write_handles, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -489,7 +489,7 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
         for o in &self.objects {
-            o.write(&self.header.version, writer, handle_tracker)?;
+            o.write(self.header.version, writer, handle_tracker)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
