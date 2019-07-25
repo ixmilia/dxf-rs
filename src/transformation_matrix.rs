@@ -37,23 +37,25 @@ impl TransformationMatrix {
 
 // internal visibility only
 impl TransformationMatrix {
-    pub(crate) fn from_vec(&mut self, values: &[f64]) {
-        self.m11 = TransformationMatrix::get_value_or_default(&values, 0);
-        self.m12 = TransformationMatrix::get_value_or_default(&values, 1);
-        self.m13 = TransformationMatrix::get_value_or_default(&values, 2);
-        self.m14 = TransformationMatrix::get_value_or_default(&values, 3);
-        self.m21 = TransformationMatrix::get_value_or_default(&values, 4);
-        self.m22 = TransformationMatrix::get_value_or_default(&values, 5);
-        self.m23 = TransformationMatrix::get_value_or_default(&values, 6);
-        self.m24 = TransformationMatrix::get_value_or_default(&values, 7);
-        self.m31 = TransformationMatrix::get_value_or_default(&values, 8);
-        self.m32 = TransformationMatrix::get_value_or_default(&values, 9);
-        self.m33 = TransformationMatrix::get_value_or_default(&values, 10);
-        self.m34 = TransformationMatrix::get_value_or_default(&values, 11);
-        self.m41 = TransformationMatrix::get_value_or_default(&values, 12);
-        self.m42 = TransformationMatrix::get_value_or_default(&values, 13);
-        self.m43 = TransformationMatrix::get_value_or_default(&values, 14);
-        self.m44 = TransformationMatrix::get_value_or_default(&values, 15);
+    pub(crate) fn from_vec(values: &[f64]) -> Self {
+        TransformationMatrix {
+            m11: TransformationMatrix::get_value_or_default(values, 0),
+            m12: TransformationMatrix::get_value_or_default(values, 1),
+            m13: TransformationMatrix::get_value_or_default(values, 2),
+            m14: TransformationMatrix::get_value_or_default(values, 3),
+            m21: TransformationMatrix::get_value_or_default(values, 4),
+            m22: TransformationMatrix::get_value_or_default(values, 5),
+            m23: TransformationMatrix::get_value_or_default(values, 6),
+            m24: TransformationMatrix::get_value_or_default(values, 7),
+            m31: TransformationMatrix::get_value_or_default(values, 8),
+            m32: TransformationMatrix::get_value_or_default(values, 9),
+            m33: TransformationMatrix::get_value_or_default(values, 10),
+            m34: TransformationMatrix::get_value_or_default(values, 11),
+            m41: TransformationMatrix::get_value_or_default(values, 12),
+            m42: TransformationMatrix::get_value_or_default(values, 13),
+            m43: TransformationMatrix::get_value_or_default(values, 14),
+            m44: TransformationMatrix::get_value_or_default(values, 15),
+        }
     }
     pub(crate) fn get_values(&self) -> Vec<f64> {
         vec![

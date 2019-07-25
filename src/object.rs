@@ -238,27 +238,27 @@ impl Object {
                 );
             }
             ObjectType::Material(ref mut material) => {
-                material
-                    .diffuse_map_transformation_matrix
-                    .from_vec(&material.__diffuse_map_transformation_matrix_values);
-                material
-                    .specular_map_transformation_matrix
-                    .from_vec(&material.__specular_map_transformation_matrix_values);
-                material
-                    .reflection_map_transformation_matrix
-                    .from_vec(&material.__reflection_map_transformation_matrix_values);
-                material
-                    .opacity_map_transformation_matrix
-                    .from_vec(&material.__opacity_map_transformation_matrix_values);
-                material
-                    .bump_map_transformation_matrix
-                    .from_vec(&material.__bump_map_transformation_matrix_values);
-                material
-                    .refraction_map_transformation_matrix
-                    .from_vec(&material.__refraction_map_transformation_matrix_values);
-                material
-                    .normal_map_transformation_matrix
-                    .from_vec(&material.__normal_map_transformation_matrix_values);
+                material.diffuse_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__diffuse_map_transformation_matrix_values,
+                );
+                material.specular_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__specular_map_transformation_matrix_values,
+                );
+                material.reflection_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__reflection_map_transformation_matrix_values,
+                );
+                material.opacity_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__opacity_map_transformation_matrix_values,
+                );
+                material.bump_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__bump_map_transformation_matrix_values,
+                );
+                material.refraction_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__refraction_map_transformation_matrix_values,
+                );
+                material.normal_map_transformation_matrix = TransformationMatrix::from_vec(
+                    &material.__normal_map_transformation_matrix_values,
+                );
                 material.__diffuse_map_transformation_matrix_values.clear();
                 material.__specular_map_transformation_matrix_values.clear();
                 material
@@ -1192,8 +1192,7 @@ impl Object {
                             } else {
                                 matrix_list.push(pair.assert_f64()?);
                                 if matrix_list.len() == 12 {
-                                    let mut matrix = TransformationMatrix::default();
-                                    matrix.from_vec(&vec![
+                                    let matrix = TransformationMatrix::from_vec(&[
                                         matrix_list[0],
                                         matrix_list[1],
                                         matrix_list[2],
