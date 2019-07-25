@@ -147,19 +147,19 @@ impl Class {
     }
     pub(crate) fn write<T>(
         &self,
-        version: &AcadVersion,
+        version: AcadVersion,
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
         T: Write,
     {
-        if version >= &AcadVersion::R14 {
+        if version >= AcadVersion::R14 {
             writer.write_code_pair(&CodePair::new_str(0, "CLASS"))?;
             writer.write_code_pair(&CodePair::new_string(1, &self.record_name))?;
             writer.write_code_pair(&CodePair::new_string(2, &self.class_name))?;
             writer.write_code_pair(&CodePair::new_string(3, &self.application_name))?;
             writer.write_code_pair(&CodePair::new_i32(90, self.proxy_capability_flags))?;
-            if version >= &AcadVersion::R2004 {
+            if version >= AcadVersion::R2004 {
                 writer.write_code_pair(&CodePair::new_i32(91, self.instance_count as i32))?;
             }
         } else {

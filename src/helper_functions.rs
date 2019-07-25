@@ -33,7 +33,7 @@ pub(crate) fn as_bool(v: i16) -> bool {
 }
 
 fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {
-    let days_since_dublin = f - 2415020.0; // julian dublin offset, e.g., December 31, 1899 12:00AM
+    let days_since_dublin = f - 2_415_020.0; // julian dublin offset, e.g., December 31, 1899 12:00AM
     let secs_per_day = 24i64 * 60 * 60;
     let seconds = days_since_dublin * secs_per_day as f64;
     // functions consuming this need to use 1900/01/01 instead of 1899/12/31 as a base
@@ -75,7 +75,7 @@ fn as_datetime_conversion_test() {
     // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
     assert_eq!(
         Local.ymd(1999, 12, 31).and_hms(21, 58, 35),
-        as_datetime_local(2451544.91568287)
+        as_datetime_local(2_451_544.915_682_87)
     );
 }
 
@@ -85,7 +85,7 @@ where
 {
     let epoch = get_epoch(timezone);
     let duration = date.signed_duration_since(epoch);
-    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2415021f64
+    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2_415_021f64
 }
 
 pub(crate) fn as_double_local(date: DateTime<Local>) -> f64 {
@@ -100,7 +100,7 @@ pub(crate) fn as_double_utc(date: DateTime<Utc>) -> f64 {
 fn as_double_conversion_test() {
     // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
     assert_eq!(
-        2451544.9156828704,
+        2_451_544.915_682_870_4,
         as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35))
     );
 }
@@ -119,7 +119,7 @@ pub(crate) fn as_handle(h: u32) -> String {
 
 pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
     let mut reconstructed = String::new();
-    let s = if s.starts_with("{") && s.ends_with("}") {
+    let s = if s.starts_with('{') && s.ends_with('}') {
         // reconstruct the string without the braces
         for c in s.chars().skip(1).take(s.len() - 2) {
             reconstructed.push(c);
@@ -416,6 +416,7 @@ pub(crate) fn read_i32<T: Read>(reader: &mut T) -> DxfResult<i32> {
     Ok(LittleEndian::read_i32(&[a, b, c, d]))
 }
 
+#[allow(clippy::many_single_char_names)]
 pub(crate) fn read_i64<T: Read>(reader: &mut T) -> DxfResult<i64> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
@@ -436,6 +437,7 @@ pub(crate) fn read_f32<T: Read>(reader: &mut T) -> DxfResult<f32> {
     Ok(LittleEndian::read_f32(&[a, b, c, d]))
 }
 
+#[allow(clippy::many_single_char_names)]
 pub(crate) fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));
@@ -448,7 +450,7 @@ pub(crate) fn read_f64<T: Read>(reader: &mut T) -> DxfResult<f64> {
     Ok(LittleEndian::read_f64(&[a, b, c, d, e, f, g, h]))
 }
 
-pub(crate) fn parse_hex_string(data: &String, bytes: &mut Vec<u8>, offset: usize) -> DxfResult<()> {
+pub(crate) fn parse_hex_string(data: &str, bytes: &mut Vec<u8>, offset: usize) -> DxfResult<()> {
     fn char_to_value(c: char, offset: usize) -> DxfResult<u8> {
         let value = match c {
             '0' => 0,

@@ -18,7 +18,7 @@ pub enum CodePairValue {
 
 // internal visibility only
 impl CodePairValue {
-    pub(crate) fn escape_string<'a>(val: &'a String) -> Cow<'a, String> {
+    pub(crate) fn escape_string(val: &'_ str) -> Cow<'_, str> {
         fn needs_escaping(c: char) -> bool {
             let c = c as u8;
             c <= 0x1F || c == 0x5E
@@ -72,12 +72,12 @@ impl CodePairValue {
                 }
             }
 
-            Cow::Owned(result)
+            result.into()
         } else {
-            Cow::Borrowed(val)
+            val.into()
         }
     }
-    pub(crate) fn un_escape_string<'a>(val: &'a String) -> Cow<'a, String> {
+    pub(crate) fn un_escape_string(val: &'_ str) -> Cow<'_, str> {
         fn needs_un_escaping(c: char) -> bool {
             c == '^'
         }
@@ -126,7 +126,7 @@ impl CodePairValue {
                                 ']' => 0x1D,
                                 '^' => 0x1E,
                                 '_' => 0x1F,
-                                ' ' => '^' as u8,
+                                ' ' => b'^',
                                 _ => c as u8, // invalid escape sequence, just keep the character
                             };
 
@@ -138,9 +138,9 @@ impl CodePairValue {
                 }
             }
 
-            Cow::Owned(result)
+            result.into()
         } else {
-            Cow::Borrowed(val)
+            val.into()
         }
     }
 }
@@ -148,12 +148,12 @@ impl CodePairValue {
 impl Clone for CodePairValue {
     fn clone(&self) -> Self {
         match self {
-            &CodePairValue::Boolean(b) => CodePairValue::Boolean(b),
-            &CodePairValue::Integer(i) => CodePairValue::Integer(i),
-            &CodePairValue::Long(l) => CodePairValue::Long(l),
-            &CodePairValue::Short(s) => CodePairValue::Short(s),
-            &CodePairValue::Double(d) => CodePairValue::Double(d),
-            &CodePairValue::Str(ref s) => CodePairValue::Str(String::from(s.as_str())),
+            CodePairValue::Boolean(b) => CodePairValue::Boolean(*b),
+            CodePairValue::Integer(i) => CodePairValue::Integer(*i),
+            CodePairValue::Long(l) => CodePairValue::Long(*l),
+            CodePairValue::Short(s) => CodePairValue::Short(*s),
+            CodePairValue::Double(d) => CodePairValue::Double(*d),
+            CodePairValue::Str(ref s) => CodePairValue::Str(String::from(s.as_str())),
         }
     }
 }
@@ -161,12 +161,12 @@ impl Clone for CodePairValue {
 impl Debug for CodePairValue {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
-            &CodePairValue::Boolean(s) => write!(formatter, "{}", s),
-            &CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
-            &CodePairValue::Long(l) => write!(formatter, "{}", l),
-            &CodePairValue::Short(s) => write!(formatter, "{: >6}", s),
-            &CodePairValue::Double(d) => write!(formatter, "{}", format_f64(d)),
-            &CodePairValue::Str(ref s) => write!(formatter, "{}", CodePairValue::escape_string(s)),
+            CodePairValue::Boolean(s) => write!(formatter, "{}", s),
+            CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
+            CodePairValue::Long(l) => write!(formatter, "{}", l),
+            CodePairValue::Short(s) => write!(formatter, "{: >6}", s),
+            CodePairValue::Double(d) => write!(formatter, "{}", format_f64(*d)),
+            CodePairValue::Str(ref s) => write!(formatter, "{}", CodePairValue::escape_string(s)),
         }
     }
 }

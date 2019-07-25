@@ -17,8 +17,8 @@ pub(crate) struct CodePairIter<T: Read> {
 impl<T: Read> CodePairIter<T> {
     pub fn new(reader: T, first_line: String) -> Self {
         CodePairIter {
-            reader: reader,
-            first_line: first_line,
+            reader,
+            first_line,
             read_first_line: false,
             read_as_ascii: true,
             binary_detection_complete: false,
@@ -52,22 +52,19 @@ impl<T: Read> CodePairIter<T> {
     }
     fn read_code_pair_ascii(&mut self) -> Option<DxfResult<CodePair>> {
         // Read code.  If no line is available, fail gracefully.
-        let code_line = match self.read_first_line {
-            true => {
-                self.offset += 1;
-                match read_line(&mut self.reader) {
-                    Some(Ok(v)) => v,
-                    Some(Err(e)) => return Some(Err(e)),
-                    None => return None,
-                }
+        let code_line = if self.read_first_line {
+            self.offset += 1;
+            match read_line(&mut self.reader) {
+                Some(Ok(v)) => v,
+                Some(Err(e)) => return Some(Err(e)),
+                None => return None,
             }
-            false => {
-                self.read_first_line = true;
+        } else {
+            self.read_first_line = true;
 
-                // .clone() is fine because it'll only ever be called once and the only valid
-                // values that might be cloned are: "0" and "999"; all others are errors.
-                self.first_line.clone()
-            }
+            // .clone() is fine because it'll only ever be called once and the only valid
+            // values that might be cloned are: "0" and "999"; all others are errors.
+            self.first_line.clone()
         };
         let code_line = code_line.trim();
         if code_line.is_empty() {
@@ -117,7 +114,7 @@ impl<T: Read> CodePairIter<T> {
     fn read_code_pair_binary(&mut self) -> Option<DxfResult<CodePair>> {
         // Read code.  If no data is available, fail gracefully.
         let mut code = match read_u8(&mut self.reader) {
-            Some(Ok(c)) => c as i32,
+            Some(Ok(c)) => i32::from(c),
             Some(Err(e)) => return Some(Err(DxfError::IoError(e))),
             None => return None,
         };
@@ -125,7 +122,7 @@ impl<T: Read> CodePairIter<T> {
 
         // If reading a larger code and no data is available, die horribly.
         if code == 255 {
-            code = try_from_dxf_result!(read_i16(&mut self.reader)) as i32;
+            code = i32::from(try_from_dxf_result!(read_i16(&mut self.reader)));
             self.offset += 2;
         }
 
@@ -188,9 +185,10 @@ impl<T: Read> Iterator for CodePairIter<T> {
                 }
             }
 
-            let pair = match self.read_as_ascii {
-                true => self.read_code_pair_ascii(),
-                false => self.read_code_pair_binary(),
+            let pair = if self.read_as_ascii {
+                self.read_code_pair_ascii()
+            } else {
+                self.read_code_pair_binary()
             };
 
             match pair {

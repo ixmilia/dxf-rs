@@ -17,7 +17,7 @@ pub struct Point {
 impl Point {
     /// Creates a new `Point` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Point {
-        Point { x: x, y: y, z: z }
+        Point { x, y, z }
     }
     /// Returns a point representing the origin of (0, 0, 0).
     pub fn origin() -> Point {

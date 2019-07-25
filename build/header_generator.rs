@@ -185,6 +185,7 @@ fn generate_set_defaults(fun: &mut String, element: &Element) {
 
 fn generate_set_header_value(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
+    fun.push_str("    #[allow(clippy::cognitive_complexity)] // generated method\n");
     fun.push_str("    pub(crate) fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
     for v in &element.children {

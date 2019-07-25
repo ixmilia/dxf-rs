@@ -34,7 +34,7 @@ impl ExtensionGroup {
     where
         I: Iterator<Item = DxfResult<CodePair>>,
     {
-        if !application_name.starts_with("{") {
+        if !application_name.starts_with('{') {
             return Err(DxfError::ParseError(offset));
         }
         let mut application_name = application_name.clone();
@@ -52,7 +52,7 @@ impl ExtensionGroup {
                 if name == "}" {
                     // end of group
                     break;
-                } else if name.starts_with("{") {
+                } else if name.starts_with('{') {
                     // nested group
                     let sub_group = ExtensionGroup::read_group(name, iter, pair.offset)?;
                     items.push(ExtensionGroupItem::Group(sub_group));
@@ -67,15 +67,15 @@ impl ExtensionGroup {
             }
         }
         Ok(ExtensionGroup {
-            application_name: application_name,
-            items: items,
+            application_name,
+            items,
         })
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write,
     {
-        if self.items.len() > 0 {
+        if !self.items.is_empty() {
             let mut full_group_name = String::new();
             full_group_name.push('{');
             full_group_name.push_str(&self.application_name);
@@ -85,8 +85,8 @@ impl ExtensionGroup {
             ))?;
             for item in &self.items {
                 match item {
-                    &ExtensionGroupItem::CodePair(ref pair) => writer.write_code_pair(pair)?,
-                    &ExtensionGroupItem::Group(ref group) => group.write(writer)?,
+                    ExtensionGroupItem::CodePair(ref pair) => writer.write_code_pair(pair)?,
+                    ExtensionGroupItem::Group(ref group) => group.write(writer)?,
                 }
             }
             writer.write_code_pair(&CodePair::new_str(EXTENSION_DATA_GROUP, "}"))?;

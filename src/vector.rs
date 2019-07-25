@@ -17,7 +17,7 @@ pub struct Vector {
 impl Vector {
     /// Creates a new `Vector` with the specified values.
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
-        Vector { x: x, y: y, z: z }
+        Vector { x, y, z }
     }
     /// Returns a new zero vector representing (0, 0, 0).
     pub fn zero() -> Vector {

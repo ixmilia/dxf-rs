@@ -139,7 +139,7 @@ impl SectionGeometrySettings {
             }
         }
 
-        return Ok(Some(gs));
+        Ok(Some(gs))
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where

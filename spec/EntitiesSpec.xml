@@ -996,9 +996,9 @@
     <Field Name="__number_of_knots_ignored" Code="72" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="__number_of_control_points_ignored" Code="73" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="__number_of_fit_points_ignored" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
-    <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.0000001" DisableWritingDefault="true" />
-    <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.0000000001" DisableWritingDefault="true" />
+    <Field Name="knot_tolerance" Code="42" Type="f64" DefaultValue="0.000_000_1" DisableWritingDefault="true" />
+    <Field Name="control_point_tolerance" Code="43" Type="f64" DefaultValue="0.000_000_1" DisableWritingDefault="true" />
+    <Field Name="fit_tolerance" Code="44" Type="f64" DefaultValue="0.000_000_000_1" DisableWritingDefault="true" />
     <Field Name="start_tangent" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
     <Field Name="end_tangent" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
     <Field Name="knot_values" Code="40" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />

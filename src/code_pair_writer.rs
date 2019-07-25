@@ -17,28 +17,23 @@ where
 
 impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
     pub fn new(writer: &'a mut T, as_ascii: bool) -> Self {
-        CodePairWriter {
-            writer: writer,
-            as_ascii: as_ascii,
-        }
+        CodePairWriter { writer, as_ascii }
     }
     pub fn write_prelude(&mut self) -> DxfResult<()> {
-        match self.as_ascii {
-            true => (),
-            false => {
-                self.writer
-                    .write_fmt(format_args!("AutoCAD Binary DXF\r\n"))?;
-                self.writer.write_u8(0x1A)?;
-                self.writer.write_u8(0x00)?;
-            }
+        if !self.as_ascii {
+            self.writer
+                .write_fmt(format_args!("AutoCAD Binary DXF\r\n"))?;
+            self.writer.write_u8(0x1A)?;
+            self.writer.write_u8(0x00)?;
         }
 
         Ok(())
     }
     pub fn write_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
-        match self.as_ascii {
-            true => self.write_ascii_code_pair(pair),
-            false => self.write_binary_code_pair(pair),
+        if self.as_ascii {
+            self.write_ascii_code_pair(pair)
+        } else {
+            self.write_binary_code_pair(pair)
         }
     }
     fn write_ascii_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
@@ -58,13 +53,13 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
         }
 
         // write value
-        match &pair.value {
-            &CodePairValue::Boolean(s) => self.writer.write_i16::<LittleEndian>(s)?,
-            &CodePairValue::Integer(i) => self.writer.write_i32::<LittleEndian>(i)?,
-            &CodePairValue::Long(l) => self.writer.write_i64::<LittleEndian>(l)?,
-            &CodePairValue::Short(s) => self.writer.write_i16::<LittleEndian>(s)?,
-            &CodePairValue::Double(d) => self.writer.write_f64::<LittleEndian>(d)?,
-            &CodePairValue::Str(ref s) => {
+        match pair.value {
+            CodePairValue::Boolean(s) => self.writer.write_i16::<LittleEndian>(s)?,
+            CodePairValue::Integer(i) => self.writer.write_i32::<LittleEndian>(i)?,
+            CodePairValue::Long(l) => self.writer.write_i64::<LittleEndian>(l)?,
+            CodePairValue::Short(s) => self.writer.write_i16::<LittleEndian>(s)?,
+            CodePairValue::Double(d) => self.writer.write_f64::<LittleEndian>(d)?,
+            CodePairValue::Str(ref s) => {
                 for &b in CodePairValue::escape_string(s).as_bytes() {
                     self.writer.write_u8(b)?;
                 }

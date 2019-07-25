@@ -37,7 +37,7 @@ impl TransformationMatrix {
 
 // internal visibility only
 impl TransformationMatrix {
-    pub(crate) fn from_vec(&mut self, values: &Vec<f64>) {
+    pub(crate) fn from_vec(&mut self, values: &[f64]) {
         self.m11 = TransformationMatrix::get_value_or_default(&values, 0);
         self.m12 = TransformationMatrix::get_value_or_default(&values, 1);
         self.m13 = TransformationMatrix::get_value_or_default(&values, 2);
@@ -71,7 +71,7 @@ impl TransformationMatrix {
 
 // private implementation
 impl TransformationMatrix {
-    fn get_value_or_default(values: &Vec<f64>, index: usize) -> f64 {
+    fn get_value_or_default(values: &[f64], index: usize) -> f64 {
         if values.len() > index {
             values[index]
         } else {

@@ -70,11 +70,8 @@ impl SectionTypeSettings {
                 }
                 2 => {
                     // value should be "SectionGeometrySettings", but it doesn't really matter
-                    loop {
-                        match SectionGeometrySettings::read(iter)? {
-                            Some(gs) => ss.geometry_settings.push(gs),
-                            None => break,
-                        }
+                    while let Some(gs) = SectionGeometrySettings::read(iter)? {
+                        ss.geometry_settings.push(gs);
                     }
                 }
                 3 => (), // value should be "SectionTypeSettingsEnd", but it doesn't really matter
@@ -108,7 +105,7 @@ impl SectionTypeSettings {
         writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
         writer.write_code_pair(&CodePair::new_i32(
             91,
-            as_i16(self.is_generation_option) as i32,
+            i32::from(as_i16(self.is_generation_option)),
         ))?;
         writer.write_code_pair(&CodePair::new_i32(
             92,

@@ -406,7 +406,7 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
                 predicates.join(" && ")
             };
             fun.push_str(&format!(
-                "            &ObjectType::{typ}(_) => {{ {predicate} }},\n",
+                "            ObjectType::{typ}(_) => {{ {predicate} }},\n",
                 typ = name(&object),
                 predicate = predicate
             ));
@@ -542,7 +542,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     }
 
     fun.push_str("        }\n");
-    fun.push_str("        return Ok(true);\n");
+    fun.push_str("        Ok(true)\n");
     fun.push_str("    }\n");
 
     if unused_readers.len() > 0 {

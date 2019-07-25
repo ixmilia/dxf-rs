@@ -75,16 +75,15 @@ impl Color {
     /// Creates a `Color` from the specified index.
     pub fn from_index(i: u8) -> Color {
         Color {
-            raw_value: i as i16,
+            raw_value: i16::from(i),
         }
     }
     pub(crate) fn get_writable_color_value(&self, layer: &Layer) -> i16 {
         let value = self.get_raw_value().abs();
-        let value = match layer.is_layer_on {
-            true => value,
-            false => -value,
-        };
-
-        value
+        if layer.is_layer_on {
+            value
+        } else {
+            -value
+        }
     }
 }

@@ -34,8 +34,8 @@ pub struct GeoMeshPoint {
 impl GeoMeshPoint {
     pub fn new(source: Point, destination: Point) -> Self {
         GeoMeshPoint {
-            source: source,
-            destination: destination,
+            source,
+            destination,
         }
     }
 }
@@ -54,9 +54,9 @@ pub struct MLineStyleElement {
 impl MLineStyleElement {
     pub fn new(offset: f64, color: Color, line_type: String) -> Self {
         MLineStyleElement {
-            offset: offset,
-            color: color,
-            line_type: line_type,
+            offset,
+            color,
+            line_type,
         }
     }
 }
@@ -108,7 +108,7 @@ impl Object {
     pub fn new(specific: ObjectType) -> Self {
         Object {
             common: Default::default(),
-            specific: specific,
+            specific,
         }
     }
     /// Ensures all object values are valid.
@@ -566,10 +566,10 @@ impl Object {
                                 layout.ucs_y_axis.z = pair.assert_f64()?;
                             }
                             70 => {
-                                layout.layout_flags = pair.assert_i16()? as i32;
+                                layout.layout_flags = i32::from(pair.assert_i16()?);
                             }
                             71 => {
-                                layout.tab_order = pair.assert_i16()? as i32;
+                                layout.tab_order = i32::from(pair.assert_i16()?);
                             }
                             76 => {
                                 layout.ucs_orthographic_type = enum_from_number!(
@@ -1096,10 +1096,10 @@ impl Object {
                             }
                         }
                         70 => {
-                            mline.__flags = pair.assert_i16()? as i32;
+                            mline.__flags = i32::from(pair.assert_i16()?);
                         }
                         71 => {
-                            mline.__element_count = pair.assert_i16()? as i32;
+                            mline.__element_count = i32::from(pair.assert_i16()?);
                             read_element_count = true;
                         }
                         _ => {
@@ -1114,11 +1114,8 @@ impl Object {
                     match pair.code {
                         1 => {
                             // value should be "SectionTypeSettings", but it doesn't realy matter
-                            loop {
-                                match SectionTypeSettings::read(iter)? {
-                                    Some(ts) => ss.geometry_settings.push(ts),
-                                    None => break,
-                                }
+                            while let Some(ts) = SectionTypeSettings::read(iter)? {
+                                ss.geometry_settings.push(ts);
                             }
                         }
                         90 => {
@@ -1284,13 +1281,13 @@ impl Object {
                             ss.shade_plot_type = pair.assert_i16()?;
                         }
                         75 => {
-                            ss.viewports_per_page = pair.assert_i16()? as i32;
+                            ss.viewports_per_page = i32::from(pair.assert_i16()?);
                         }
                         76 => {
-                            ss.viewport_distribution_row_count = pair.assert_i16()? as i32;
+                            ss.viewport_distribution_row_count = i32::from(pair.assert_i16()?);
                         }
                         77 => {
-                            ss.viewport_distribution_column_count = pair.assert_i16()? as i32;
+                            ss.viewport_distribution_column_count = i32::from(pair.assert_i16()?);
                         }
                         90 => {
                             if !seen_version {
@@ -1300,9 +1297,9 @@ impl Object {
                                 // after the version, 90 pairs come in julian_day/seconds_past_midnight duals
                                 match julian_day {
                                     Some(jd) => {
-                                        let date = as_datetime_local(jd as f64);
-                                        let date =
-                                            date.add(Duration::seconds(pair.assert_i32()? as i64));
+                                        let date = as_datetime_local(f64::from(jd));
+                                        let date = date
+                                            .add(Duration::seconds(i64::from(pair.assert_i32()?)));
                                         ss.dates.push(date);
                                         julian_day = None;
                                     }
@@ -1326,7 +1323,7 @@ impl Object {
                                 ss.use_subset = pair.assert_bool()?;
                                 reading_hours = true;
                             } else {
-                                ss.hours.push(pair.assert_i16()? as i32);
+                                ss.hours.push(i32::from(pair.assert_i16()?));
                             }
                         }
                         291 => {
@@ -1388,7 +1385,7 @@ impl Object {
                             );
                         }
                         71 => {
-                            ts.flags = pair.assert_i16()? as i32;
+                            ts.flags = i32::from(pair.assert_i16()?);
                         }
                         280 => {
                             if !read_version {
@@ -1443,7 +1440,7 @@ impl Object {
                     }
                 }
             }
-            _ => return Ok(false), // no custom reader
+            _ => Ok(false), // no custom reader
         }
     }
     pub(crate) fn write<T>(
@@ -1485,51 +1482,51 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_i32(91, data.row_count as i32))?;
                 writer.write_code_pair(&CodePair::new_string(1, &data.name))?;
                 for col in 0..data.column_count {
-                    let column_code = match &data.values[0][col] {
-                        &Some(DataTableValue::Boolean(_)) => Some(71),
-                        &Some(DataTableValue::Integer(_)) => Some(93),
-                        &Some(DataTableValue::Double(_)) => Some(40),
-                        &Some(DataTableValue::Str(_)) => Some(3),
-                        &Some(DataTableValue::Point2D(_)) => Some(10),
-                        &Some(DataTableValue::Point3D(_)) => Some(11),
-                        &Some(DataTableValue::Handle(_)) => Some(331),
-                        &None => None,
+                    let column_code = match data.values[0][col] {
+                        Some(DataTableValue::Boolean(_)) => Some(71),
+                        Some(DataTableValue::Integer(_)) => Some(93),
+                        Some(DataTableValue::Double(_)) => Some(40),
+                        Some(DataTableValue::Str(_)) => Some(3),
+                        Some(DataTableValue::Point2D(_)) => Some(10),
+                        Some(DataTableValue::Point3D(_)) => Some(11),
+                        Some(DataTableValue::Handle(_)) => Some(331),
+                        None => None,
                     };
                     if let Some(column_code) = column_code {
                         writer.write_code_pair(&CodePair::new_i32(92, column_code))?;
                         writer
                             .write_code_pair(&CodePair::new_string(2, &data.column_names[col]))?;
                         for row in 0..data.row_count {
-                            match &data.values[row][col] {
-                                &Some(DataTableValue::Boolean(val)) => {
+                            match data.values[row][col] {
+                                Some(DataTableValue::Boolean(val)) => {
                                     writer.write_code_pair(&CodePair::new_i16(71, as_i16(val)))?;
                                 }
-                                &Some(DataTableValue::Integer(val)) => {
+                                Some(DataTableValue::Integer(val)) => {
                                     writer.write_code_pair(&CodePair::new_i32(93, val))?;
                                 }
-                                &Some(DataTableValue::Double(val)) => {
+                                Some(DataTableValue::Double(val)) => {
                                     writer.write_code_pair(&CodePair::new_f64(40, val))?;
                                 }
-                                &Some(DataTableValue::Str(ref val)) => {
+                                Some(DataTableValue::Str(ref val)) => {
                                     writer.write_code_pair(&CodePair::new_string(3, val))?;
                                 }
-                                &Some(DataTableValue::Point2D(ref val)) => {
+                                Some(DataTableValue::Point2D(ref val)) => {
                                     writer.write_code_pair(&CodePair::new_f64(10, val.x))?;
                                     writer.write_code_pair(&CodePair::new_f64(20, val.y))?;
                                     writer.write_code_pair(&CodePair::new_f64(30, val.z))?;
                                 }
-                                &Some(DataTableValue::Point3D(ref val)) => {
+                                Some(DataTableValue::Point3D(ref val)) => {
                                     writer.write_code_pair(&CodePair::new_f64(11, val.x))?;
                                     writer.write_code_pair(&CodePair::new_f64(21, val.y))?;
                                     writer.write_code_pair(&CodePair::new_f64(31, val.z))?;
                                 }
-                                &Some(DataTableValue::Handle(val)) => {
+                                Some(DataTableValue::Handle(val)) => {
                                     writer.write_code_pair(&CodePair::new_string(
                                         331,
                                         &as_handle(val),
                                     ))?;
                                 }
-                                &None => (),
+                                None => (),
                             }
                         }
                     }

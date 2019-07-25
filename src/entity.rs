@@ -20,8 +20,8 @@ use helper_functions::*;
 impl Arc {
     pub fn new(center: Point, radius: f64, start: f64, end: f64) -> Self {
         Arc {
-            center: center,
-            radius: radius,
+            center,
+            radius,
             start_angle: start,
             end_angle: end,
             ..Default::default()
@@ -35,8 +35,8 @@ impl Arc {
 impl Circle {
     pub fn new(center: Point, radius: f64) -> Self {
         Circle {
-            center: center,
-            radius: radius,
+            center,
+            radius,
             ..Default::default()
         }
     }
@@ -79,10 +79,10 @@ impl Face3D {
         fourth_corner: Point,
     ) -> Self {
         Face3D {
-            first_corner: first_corner,
-            second_corner: second_corner,
-            third_corner: third_corner,
-            fourth_corner: fourth_corner,
+            first_corner,
+            second_corner,
+            third_corner,
+            fourth_corner,
             ..Default::default()
         }
     }
@@ -94,8 +94,8 @@ impl Face3D {
 impl Line {
     pub fn new(p1: Point, p2: Point) -> Self {
         Line {
-            p1: p1,
-            p2: p2,
+            p1,
+            p2,
             ..Default::default()
         }
     }
@@ -160,10 +160,10 @@ impl Solid {
         fourth_corner: Point,
     ) -> Self {
         Solid {
-            first_corner: first_corner,
-            second_corner: second_corner,
-            third_corner: third_corner,
-            fourth_corner: fourth_corner,
+            first_corner,
+            second_corner,
+            third_corner,
+            fourth_corner,
             ..Default::default()
         }
     }
@@ -180,10 +180,10 @@ impl Trace {
         fourth_corner: Point,
     ) -> Self {
         Trace {
-            first_corner: first_corner,
-            second_corner: second_corner,
-            third_corner: third_corner,
-            fourth_corner: fourth_corner,
+            first_corner,
+            second_corner,
+            third_corner,
+            fourth_corner,
             ..Default::default()
         }
     }
@@ -195,7 +195,7 @@ impl Trace {
 impl Vertex {
     pub fn new(location: Point) -> Self {
         Vertex {
-            location: location,
+            location,
             ..Default::default()
         }
     }
@@ -206,8 +206,8 @@ impl Vertex {
 //------------------------------------------------------------------------------
 impl EntityType {
     fn apply_dimension_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {
-        match self {
-            &mut EntityType::RotatedDimension(ref mut dim) => match pair.code {
+        match *self {
+            EntityType::RotatedDimension(ref mut dim) => match pair.code {
                 12 => {
                     dim.insertion_point.x = pair.assert_f64()?;
                 }
@@ -245,7 +245,7 @@ impl EntityType {
                     return Ok(false);
                 }
             },
-            &mut EntityType::RadialDimension(ref mut dim) => match pair.code {
+            EntityType::RadialDimension(ref mut dim) => match pair.code {
                 15 => {
                     dim.definition_point_2.x = pair.assert_f64()?;
                 }
@@ -262,7 +262,7 @@ impl EntityType {
                     return Ok(false);
                 }
             },
-            &mut EntityType::DiameterDimension(ref mut dim) => match pair.code {
+            EntityType::DiameterDimension(ref mut dim) => match pair.code {
                 15 => {
                     dim.definition_point_2.x = pair.assert_f64()?;
                 }
@@ -279,7 +279,7 @@ impl EntityType {
                     return Ok(false);
                 }
             },
-            &mut EntityType::AngularThreePointDimension(ref mut dim) => match pair.code {
+            EntityType::AngularThreePointDimension(ref mut dim) => match pair.code {
                 13 => {
                     dim.definition_point_2.x = pair.assert_f64()?;
                 }
@@ -320,7 +320,7 @@ impl EntityType {
                     return Ok(false);
                 }
             },
-            &mut EntityType::OrdinateDimension(ref mut dim) => match pair.code {
+            EntityType::OrdinateDimension(ref mut dim) => match pair.code {
                 13 => {
                     dim.definition_point_2.x = pair.assert_f64()?;
                 }
@@ -369,7 +369,7 @@ impl Entity {
     pub fn new(specific: EntityType) -> Self {
         Entity {
             common: Default::default(),
-            specific: specific,
+            specific,
         }
     }
     /// Ensures all entity values are valid.
@@ -578,7 +578,7 @@ impl Entity {
                             match dimension_entity {
                                 Some(dim) => {
                                     return Ok(Some(Entity {
-                                        common: common,
+                                        common,
                                         specific: dim,
                                     }));
                                 }
@@ -854,7 +854,8 @@ impl Entity {
                                     }
                                     1 => att.is_really_locked = as_bool(pair.assert_i16()?),
                                     2 => {
-                                        att.__secondary_attribute_count = pair.assert_i16()? as i32
+                                        att.__secondary_attribute_count =
+                                            i32::from(pair.assert_i16()?)
                                     }
                                     _ => {
                                         return Err(DxfError::UnexpectedCodePair(
@@ -865,11 +866,11 @@ impl Entity {
                                 }
                                 xrec_code_70_count += 1;
                             } else {
-                                att.flags = pair.assert_i16()? as i32;
+                                att.flags = i32::from(pair.assert_i16()?);
                             }
                         }
                         71 => {
-                            att.text_generation_flags = pair.assert_i16()? as i32;
+                            att.text_generation_flags = i32::from(pair.assert_i16()?);
                         }
                         72 => {
                             att.horizontal_text_justification = enum_from_number!(
@@ -1008,7 +1009,8 @@ impl Entity {
                                     }
                                     1 => att.is_really_locked = as_bool(pair.assert_i16()?),
                                     2 => {
-                                        att.__secondary_attribute_count = pair.assert_i16()? as i32
+                                        att.__secondary_attribute_count =
+                                            i32::from(pair.assert_i16()?)
                                     }
                                     _ => {
                                         return Err(DxfError::UnexpectedCodePair(
@@ -1019,11 +1021,11 @@ impl Entity {
                                 }
                                 xrec_code_70_count += 1;
                             } else {
-                                att.flags = pair.assert_i16()? as i32;
+                                att.flags = i32::from(pair.assert_i16()?);
                             }
                         }
                         71 => {
-                            att.text_generation_flags = pair.assert_i16()? as i32;
+                            att.text_generation_flags = i32::from(pair.assert_i16()?);
                         }
                         72 => {
                             att.horizontal_text_justification = enum_from_number!(
@@ -1106,7 +1108,7 @@ impl Entity {
                             poly.constant_width = pair.assert_f64()?;
                         }
                         70 => {
-                            poly.flags = pair.assert_i16()? as i32;
+                            poly.flags = i32::from(pair.assert_i16()?);
                         }
                         210 => {
                             poly.extrusion_direction.x = pair.assert_f64()?;
@@ -1244,7 +1246,7 @@ impl Entity {
                             reading_column_data = true;
                         }
                         76 => {
-                            mtext.column_count = pair.assert_i16()? as i32;
+                            mtext.column_count = i32::from(pair.assert_i16()?);
                         }
                         78 => {
                             mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?);
@@ -1264,7 +1266,7 @@ impl Entity {
                     }
                 }
             }
-            _ => return Ok(false), // no custom reader
+            _ => Ok(false), // no custom reader
         }
     }
     pub(crate) fn write<T>(
@@ -1548,13 +1550,13 @@ impl Entity {
     where
         T: Write,
     {
-        let mut m_text_common = EntityCommon {
+        let m_text_common = EntityCommon {
             __owner_handle: self.common.handle,
             is_in_paper_space: self.common.is_in_paper_space,
             layer: self.common.layer.clone(),
             ..Default::default()
         };
-        let _m_text_handle = handle_tracker.get_entity_handle(&mut m_text_common);
+        let _m_text_handle = handle_tracker.get_entity_handle(&m_text_common);
         let m_text = Entity {
             common: m_text_common,
             specific: EntityType::MText(m_text),

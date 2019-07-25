@@ -11,9 +11,7 @@ pub(crate) struct HandleTracker {
 
 impl HandleTracker {
     pub fn new(next_handle: u32) -> Self {
-        HandleTracker {
-            next_handle: next_handle,
-        }
+        HandleTracker { next_handle }
     }
     pub fn get_app_id_handle(&mut self, item: &AppId) -> u32 {
         self.get_next_handle(item.handle)

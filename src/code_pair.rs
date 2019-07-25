@@ -22,18 +22,18 @@ pub struct CodePair {
 }
 
 impl CodePair {
-    pub fn new(code: i32, val: CodePairValue, offset: usize) -> Self {
+    pub fn new(code: i32, value: CodePairValue, offset: usize) -> Self {
         CodePair {
-            code: code,
-            value: val,
-            offset: offset,
+            code,
+            value,
+            offset,
         }
     }
     pub fn new_str(code: i32, val: &str) -> Self {
         CodePair::new(code, CodePairValue::Str(val.to_string()), 0)
     }
-    pub fn new_string(code: i32, val: &String) -> Self {
-        CodePair::new(code, CodePairValue::Str(val.clone()), 0)
+    pub fn new_string(code: i32, val: &str) -> Self {
+        CodePair::new(code, CodePairValue::Str(val.to_string()), 0)
     }
     pub fn new_i16(code: i32, val: i16) -> Self {
         CodePair::new(code, CodePairValue::Short(val), 0)

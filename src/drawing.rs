@@ -265,7 +265,7 @@ impl Drawing {
         self.view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
     /// Gets a `DrawingItem` with the appropriate handle or `None`.
-    pub fn get_item_by_handle<'a>(&'a self, handle: u32) -> Option<DrawingItem<'a>> {
+    pub fn get_item_by_handle(&'_ self, handle: u32) -> Option<DrawingItem<'_>> {
         for item in &self.app_ids {
             if item.handle == handle {
                 return Some(DrawingItem::AppId(item));
@@ -330,7 +330,7 @@ impl Drawing {
         None
     }
     /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
-    pub fn get_item_by_handle_mut<'a>(&'a mut self, handle: u32) -> Option<DrawingItemMut<'a>> {
+    pub fn get_item_by_handle_mut(&'_ mut self, handle: u32) -> Option<DrawingItemMut<'_>> {
         for item in &mut self.app_ids {
             if item.handle == handle {
                 return Some(DrawingItemMut::AppId(item));
@@ -410,14 +410,14 @@ impl Drawing {
     where
         T: Write,
     {
-        if self.classes.len() == 0 {
+        if self.classes.is_empty() {
             return Ok(());
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "CLASSES"))?;
         for c in &self.classes {
-            c.write(&self.header.version, writer)?;
+            c.write(self.header.version, writer)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -447,7 +447,7 @@ impl Drawing {
     where
         T: Write,
     {
-        if self.blocks.len() == 0 {
+        if self.blocks.is_empty() {
             return Ok(());
         }
 
@@ -500,26 +500,23 @@ impl Drawing {
         T: Write,
     {
         if &self.header.version >= &AcadVersion::R2000 {
-            match self.thumbnail {
-                Some(ref i) => {
-                    writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-                    writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
-                    let mut data = vec![];
-                    i.save(&mut data, image::ImageFormat::BMP)?;
-                    let length = data.len() - 14; // skip 14 byte bmp header
-                    writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
-                    for s in data[14..].chunks(128) {
-                        let mut line = String::new();
-                        for b in s {
-                            line.push_str(&format!("{:02X}", b));
-                        }
-                        writer.write_code_pair(&CodePair::new_string(310, &line))?;
+            if let Some(ref img) = self.thumbnail {
+                writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
+                writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
+                let mut data = vec![];
+                img.save(&mut data, image::ImageFormat::BMP)?;
+                let length = data.len() - 14; // skip 14 byte bmp header
+                writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
+                for s in data[14..].chunks(128) {
+                    let mut line = String::new();
+                    for b in s {
+                        line.push_str(&format!("{:02X}", b));
                     }
-                    writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
+                    writer.write_code_pair(&CodePair::new_string(310, &line))?;
                 }
-                None => (), // nothing to write
+                writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
             }
-        } // */
+        }
         Ok(())
     }
     fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
@@ -624,7 +621,7 @@ impl Drawing {
     where
         I: Iterator<Item = DxfResult<CodePair>>,
     {
-        let mut iter = EntityIter { iter: iter };
+        let mut iter = EntityIter { iter };
         iter.read_entities_into_vec(&mut self.entities)?;
         Ok(())
     }
@@ -632,12 +629,9 @@ impl Drawing {
     where
         I: Iterator<Item = DxfResult<CodePair>>,
     {
-        let mut iter = put_back(ObjectIter { iter: iter });
-        loop {
-            match iter.next() {
-                Some(obj) => self.objects.push(obj),
-                None => break,
-            }
+        let iter = put_back(ObjectIter { iter });
+        for obj in iter {
+            self.objects.push(obj);
         }
 
         Ok(())
@@ -660,7 +654,7 @@ impl Drawing {
 
         // prepend the BMP header that always seems to be missing from DXF files
         let mut data: Vec<u8> = vec![
-            'B' as u8, 'M' as u8, // magic number
+            b'B', b'M', // magic number
             0x00, 0x00, 0x00, 0x00, // file length (calculated later)
             0x00, 0x00, // reserved
             0x00, 0x00, // reserved
@@ -692,7 +686,7 @@ impl Drawing {
         // set the file length
         let mut length_bytes = vec![];
         length_bytes.write_i32::<LittleEndian>(data.len() as i32)?;
-        data[file_length_offset + 0] = length_bytes[0];
+        data[file_length_offset] = length_bytes[0];
         data[file_length_offset + 1] = length_bytes[1];
         data[file_length_offset + 2] = length_bytes[2];
         data[file_length_offset + 3] = length_bytes[3];
@@ -716,7 +710,7 @@ impl Drawing {
         let image_data_offset = header_length + dib_header_size + palette_size;
         let mut offset_bytes = vec![];
         offset_bytes.write_i32::<LittleEndian>(image_data_offset as i32)?;
-        data[image_data_offset_offset + 0] = offset_bytes[0];
+        data[image_data_offset_offset] = offset_bytes[0];
         data[image_data_offset_offset + 1] = offset_bytes[1];
         data[image_data_offset_offset + 2] = offset_bytes[2];
         data[image_data_offset_offset + 3] = offset_bytes[3];
@@ -873,20 +867,16 @@ impl Drawing {
         // gather existing mline style names
         let mut existing_mline_styles = HashSet::new();
         for obj in &self.objects {
-            match &obj.specific {
-                &ObjectType::MLineStyle(ref ml) => {
-                    add_to_existing(&mut existing_mline_styles, &ml.style_name)
-                }
-                _ => (),
+            if let ObjectType::MLineStyle(ref ml) = &obj.specific {
+                add_to_existing(&mut existing_mline_styles, &ml.style_name);
             }
         }
 
         // find mline style names that should exist
         let mut to_add = HashSet::new();
         for ent in &self.entities {
-            match &ent.specific {
-                &EntityType::MLine(ref ml) => add_to_existing(&mut to_add, &ml.style_name),
-                _ => (),
+            if let EntityType::MLine(ref ml) = &ent.specific {
+                add_to_existing(&mut to_add, &ml.style_name);
             }
         }
 
@@ -915,23 +905,23 @@ impl Drawing {
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
         for ent in &self.entities {
             match &ent.specific {
-                &EntityType::RotatedDimension(ref d) => {
+                EntityType::RotatedDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
                 }
-                &EntityType::RadialDimension(ref d) => {
+                EntityType::RadialDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
                 }
-                &EntityType::DiameterDimension(ref d) => {
+                EntityType::DiameterDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
                 }
-                &EntityType::AngularThreePointDimension(ref d) => {
+                EntityType::AngularThreePointDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
                 }
-                &EntityType::OrdinateDimension(ref d) => {
+                EntityType::OrdinateDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
                 }
-                &EntityType::Leader(ref l) => add_to_existing(&mut to_add, &l.dimension_style_name),
-                &EntityType::Tolerance(ref t) => {
+                EntityType::Leader(ref l) => add_to_existing(&mut to_add, &l.dimension_style_name),
+                EntityType::Tolerance(ref t) => {
                     add_to_existing(&mut to_add, &t.dimension_style_name)
                 }
                 _ => (),
@@ -971,12 +961,12 @@ impl Drawing {
         }
         for obj in &self.objects {
             match &obj.specific {
-                &ObjectType::LayerFilter(ref l) => {
+                ObjectType::LayerFilter(ref l) => {
                     for layer_name in &l.layer_names {
                         add_to_existing(&mut to_add, &layer_name);
                     }
                 }
-                &ObjectType::LayerIndex(ref l) => {
+                ObjectType::LayerIndex(ref l) => {
                     for layer_name in &l.layer_names {
                         add_to_existing(&mut to_add, &layer_name);
                     }
@@ -1022,11 +1012,8 @@ impl Drawing {
             add_to_existing(&mut to_add, &ent.common.line_type_name);
         }
         for obj in &self.objects {
-            match &obj.specific {
-                &ObjectType::MLineStyle(ref style) => {
-                    add_to_existing(&mut to_add, &style.style_name)
-                }
-                _ => (),
+            if let ObjectType::MLineStyle(ref style) = &obj.specific {
+                add_to_existing(&mut to_add, &style.style_name);
             }
         }
 
@@ -1054,22 +1041,21 @@ impl Drawing {
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
         for entity in &self.entities {
             match &entity.specific {
-                &EntityType::ArcAlignedText(ref e) => {
+                EntityType::ArcAlignedText(ref e) => {
                     add_to_existing(&mut to_add, &e.text_style_name)
                 }
-                &EntityType::Attribute(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                &EntityType::AttributeDefinition(ref e) => {
+                EntityType::Attribute(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                EntityType::AttributeDefinition(ref e) => {
                     add_to_existing(&mut to_add, &e.text_style_name)
                 }
-                &EntityType::MText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                &EntityType::Text(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                EntityType::MText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
+                EntityType::Text(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
                 _ => (),
             }
         }
         for obj in &self.objects {
-            match &obj.specific {
-                &ObjectType::MLineStyle(ref o) => add_to_existing(&mut to_add, &o.style_name),
-                _ => (),
+            if let ObjectType::MLineStyle(ref o) = &obj.specific {
+                add_to_existing(&mut to_add, &o.style_name);
             }
         }
 
@@ -1116,11 +1102,8 @@ impl Drawing {
         // find views that should exist
         let mut to_add = HashSet::new();
         for obj in &self.objects {
-            match &obj.specific {
-                &ObjectType::PlotSettings(ref ps) => {
-                    add_to_existing(&mut to_add, &ps.plot_view_name)
-                }
-                _ => (),
+            if let ObjectType::PlotSettings(ref ps) = &obj.specific {
+                add_to_existing(&mut to_add, &ps.plot_view_name);
             }
         }
 
@@ -1164,8 +1147,8 @@ impl Drawing {
     }
 }
 
-fn add_to_existing(set: &mut HashSet<String>, val: &String) {
+fn add_to_existing(set: &mut HashSet<String>, val: &str) {
     if !set.contains(val) {
-        set.insert(val.clone());
+        set.insert(val.to_string());
     }
 }

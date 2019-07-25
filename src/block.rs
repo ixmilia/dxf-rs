@@ -163,7 +163,7 @@ impl Block {
                         CodePair { code: 0, .. } => {
                             // should be an entity
                             iter.put_back(Ok(pair));
-                            let mut iter = EntityIter { iter: iter };
+                            let mut iter = EntityIter { iter };
                             iter.read_entities_into_vec(&mut current.entities)?;
                         }
                         _ => {
@@ -179,7 +179,7 @@ impl Block {
                                 20 => current.base_point.y = pair.assert_f64()?,
                                 30 => current.base_point.z = pair.assert_f64()?,
                                 67 => current.is_in_paperspace = as_bool(pair.assert_i16()?),
-                                70 => current.flags = pair.assert_i16()? as i32,
+                                70 => current.flags = i32::from(pair.assert_i16()?),
                                 330 => current.__owner_handle = pair.as_handle()?,
                                 extension_data::EXTENSION_DATA_GROUP => {
                                     let group = ExtensionGroup::read_group(
