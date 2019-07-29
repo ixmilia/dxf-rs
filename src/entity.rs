@@ -769,504 +769,520 @@ impl Entity {
     {
         match self.specific {
             EntityType::Attribute(ref mut att) => {
-                let xrecord_text = "AcDbXrecord";
-                let mut last_subclass_marker = String::new();
-                let mut is_version_set = false;
-                let mut xrec_code_70_count = 0;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        100 => {
-                            last_subclass_marker = pair.assert_string()?;
-                        }
-                        1 => {
-                            att.value = pair.assert_string()?;
-                        }
-                        2 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = pair.assert_string()?;
-                            } else {
-                                att.attribute_tag = pair.assert_string()?;
-                            }
-                        }
-                        7 => {
-                            att.text_style_name = pair.assert_string()?;
-                        }
-                        10 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = pair.assert_f64()?;
-                            } else {
-                                att.location.x = pair.assert_f64()?;
-                            }
-                        }
-                        20 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = pair.assert_f64()?;
-                            } else {
-                                att.location.y = pair.assert_f64()?;
-                            }
-                        }
-                        30 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = pair.assert_f64()?;
-                            } else {
-                                att.location.z = pair.assert_f64()?;
-                            }
-                        }
-                        11 => {
-                            att.second_alignment_point.x = pair.assert_f64()?;
-                        }
-                        21 => {
-                            att.second_alignment_point.y = pair.assert_f64()?;
-                        }
-                        31 => {
-                            att.second_alignment_point.z = pair.assert_f64()?;
-                        }
-                        39 => {
-                            att.thickness = pair.assert_f64()?;
-                        }
-                        40 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = pair.assert_f64()?;
-                            } else {
-                                att.text_height = pair.assert_f64()?;
-                            }
-                        }
-                        41 => {
-                            att.relative_x_scale_factor = pair.assert_f64()?;
-                        }
-                        50 => {
-                            att.rotation = pair.assert_f64()?;
-                        }
-                        51 => {
-                            att.oblique_angle = pair.assert_f64()?;
-                        }
-                        70 => {
-                            if last_subclass_marker == xrecord_text {
-                                match xrec_code_70_count {
-                                    0 => {
-                                        att.m_text_flag = enum_from_number!(
-                                            MTextFlag,
-                                            MultilineAttribute,
-                                            from_i16,
-                                            pair.assert_i16()?
-                                        )
-                                    }
-                                    1 => att.is_really_locked = as_bool(pair.assert_i16()?),
-                                    2 => {
-                                        att.__secondary_attribute_count =
-                                            i32::from(pair.assert_i16()?)
-                                    }
-                                    _ => {
-                                        return Err(DxfError::UnexpectedCodePair(
-                                            pair,
-                                            String::new(),
-                                        ))
-                                    }
-                                }
-                                xrec_code_70_count += 1;
-                            } else {
-                                att.flags = i32::from(pair.assert_i16()?);
-                            }
-                        }
-                        71 => {
-                            att.text_generation_flags = i32::from(pair.assert_i16()?);
-                        }
-                        72 => {
-                            att.horizontal_text_justification = enum_from_number!(
-                                HorizontalTextJustification,
-                                Left,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        73 => {
-                            att.field_length = pair.assert_i16()?;
-                        }
-                        74 => {
-                            att.vertical_text_justification = enum_from_number!(
-                                VerticalTextJustification,
-                                Baseline,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        210 => {
-                            att.normal.x = pair.assert_f64()?;
-                        }
-                        220 => {
-                            att.normal.y = pair.assert_f64()?;
-                        }
-                        230 => {
-                            att.normal.z = pair.assert_f64()?;
-                        }
-                        280 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(pair.assert_i16()?);
-                            } else if !is_version_set {
-                                att.version =
-                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
-                                is_version_set = true;
-                            } else {
-                                att.is_locked_in_block = as_bool(pair.assert_i16()?);
-                            }
-                        }
-                        340 => {
-                            att.__secondary_attributes_handle.push(pair.as_handle()?);
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Entity::apply_custom_reader_attribute(&mut self.common, att, iter)
             }
             EntityType::AttributeDefinition(ref mut att) => {
-                let xrecord_text = "AcDbXrecord";
-                let mut last_subclass_marker = String::new();
-                let mut is_version_set = false;
-                let mut xrec_code_70_count = 0;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        100 => {
-                            last_subclass_marker = pair.assert_string()?;
-                        }
-                        1 => {
-                            att.value = pair.assert_string()?;
-                        }
-                        2 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.x_record_tag = pair.assert_string()?;
-                            } else {
-                                att.text_tag = pair.assert_string()?;
-                            }
-                        }
-                        3 => {
-                            att.prompt = pair.assert_string()?;
-                        }
-                        7 => {
-                            att.text_style_name = pair.assert_string()?;
-                        }
-                        10 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.x = pair.assert_f64()?;
-                            } else {
-                                att.location.x = pair.assert_f64()?;
-                            }
-                        }
-                        20 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.y = pair.assert_f64()?;
-                            } else {
-                                att.location.y = pair.assert_f64()?;
-                            }
-                        }
-                        30 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.alignment_point.z = pair.assert_f64()?;
-                            } else {
-                                att.location.z = pair.assert_f64()?;
-                            }
-                        }
-                        11 => {
-                            att.second_alignment_point.x = pair.assert_f64()?;
-                        }
-                        21 => {
-                            att.second_alignment_point.y = pair.assert_f64()?;
-                        }
-                        31 => {
-                            att.second_alignment_point.z = pair.assert_f64()?;
-                        }
-                        39 => {
-                            att.thickness = pair.assert_f64()?;
-                        }
-                        40 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.annotation_scale = pair.assert_f64()?;
-                            } else {
-                                att.text_height = pair.assert_f64()?;
-                            }
-                        }
-                        41 => {
-                            att.relative_x_scale_factor = pair.assert_f64()?;
-                        }
-                        50 => {
-                            att.rotation = pair.assert_f64()?;
-                        }
-                        51 => {
-                            att.oblique_angle = pair.assert_f64()?;
-                        }
-                        70 => {
-                            if last_subclass_marker == xrecord_text {
-                                match xrec_code_70_count {
-                                    0 => {
-                                        att.m_text_flag = enum_from_number!(
-                                            MTextFlag,
-                                            MultilineAttribute,
-                                            from_i16,
-                                            pair.assert_i16()?
-                                        )
-                                    }
-                                    1 => att.is_really_locked = as_bool(pair.assert_i16()?),
-                                    2 => {
-                                        att.__secondary_attribute_count =
-                                            i32::from(pair.assert_i16()?)
-                                    }
-                                    _ => {
-                                        return Err(DxfError::UnexpectedCodePair(
-                                            pair,
-                                            String::new(),
-                                        ))
-                                    }
-                                }
-                                xrec_code_70_count += 1;
-                            } else {
-                                att.flags = i32::from(pair.assert_i16()?);
-                            }
-                        }
-                        71 => {
-                            att.text_generation_flags = i32::from(pair.assert_i16()?);
-                        }
-                        72 => {
-                            att.horizontal_text_justification = enum_from_number!(
-                                HorizontalTextJustification,
-                                Left,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        73 => {
-                            att.field_length = pair.assert_i16()?;
-                        }
-                        74 => {
-                            att.vertical_text_justification = enum_from_number!(
-                                VerticalTextJustification,
-                                Baseline,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        210 => {
-                            att.normal.x = pair.assert_f64()?;
-                        }
-                        220 => {
-                            att.normal.y = pair.assert_f64()?;
-                        }
-                        230 => {
-                            att.normal.z = pair.assert_f64()?;
-                        }
-                        280 => {
-                            if last_subclass_marker == xrecord_text {
-                                att.keep_duplicate_records = as_bool(pair.assert_i16()?);
-                            } else if !is_version_set {
-                                att.version =
-                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
-                                is_version_set = true;
-                            } else {
-                                att.is_locked_in_block = as_bool(pair.assert_i16()?);
-                            }
-                        }
-                        340 => {
-                            att.__secondary_attributes_handle.push(pair.as_handle()?);
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Entity::apply_custom_reader_attributedefinition(&mut self.common, att, iter)
             }
             EntityType::LwPolyline(ref mut poly) => {
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        // vertex-specific pairs
-                        10 => {
-                            // start a new vertex
-                            poly.vertices.push(LwPolylineVertex::default());
-                            vec_last!(poly.vertices).x = pair.assert_f64()?;
-                        }
-                        20 => {
-                            vec_last!(poly.vertices).y = pair.assert_f64()?;
-                        }
-                        40 => {
-                            vec_last!(poly.vertices).starting_width = pair.assert_f64()?;
-                        }
-                        41 => {
-                            vec_last!(poly.vertices).ending_width = pair.assert_f64()?;
-                        }
-                        42 => {
-                            vec_last!(poly.vertices).bulge = pair.assert_f64()?;
-                        }
-                        91 => {
-                            vec_last!(poly.vertices).id = pair.assert_i32()?;
-                        }
-                        // other pairs
-                        39 => {
-                            poly.thickness = pair.assert_f64()?;
-                        }
-                        43 => {
-                            poly.constant_width = pair.assert_f64()?;
-                        }
-                        70 => {
-                            poly.flags = i32::from(pair.assert_i16()?);
-                        }
-                        210 => {
-                            poly.extrusion_direction.x = pair.assert_f64()?;
-                        }
-                        220 => {
-                            poly.extrusion_direction.y = pair.assert_f64()?;
-                        }
-                        230 => {
-                            poly.extrusion_direction.z = pair.assert_f64()?;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Entity::apply_custom_reader_lwpolyline(&mut self.common, poly, iter)
             }
             EntityType::MText(ref mut mtext) => {
-                let mut reading_column_data = false;
-                let mut read_column_count = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        10 => {
-                            mtext.insertion_point.x = pair.assert_f64()?;
-                        }
-                        20 => {
-                            mtext.insertion_point.y = pair.assert_f64()?;
-                        }
-                        30 => {
-                            mtext.insertion_point.z = pair.assert_f64()?;
-                        }
-                        40 => {
-                            mtext.initial_text_height = pair.assert_f64()?;
-                        }
-                        41 => {
-                            mtext.reference_rectangle_width = pair.assert_f64()?;
-                        }
-                        71 => {
-                            mtext.attachment_point = enum_from_number!(
-                                AttachmentPoint,
-                                TopLeft,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        72 => {
-                            mtext.drawing_direction = enum_from_number!(
-                                DrawingDirection,
-                                LeftToRight,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        3 => {
-                            mtext.extended_text.push(pair.assert_string()?);
-                        }
-                        1 => {
-                            mtext.text = pair.assert_string()?;
-                        }
-                        7 => {
-                            mtext.text_style_name = pair.assert_string()?;
-                        }
-                        210 => {
-                            mtext.extrusion_direction.x = pair.assert_f64()?;
-                        }
-                        220 => {
-                            mtext.extrusion_direction.y = pair.assert_f64()?;
-                        }
-                        230 => {
-                            mtext.extrusion_direction.z = pair.assert_f64()?;
-                        }
-                        11 => {
-                            mtext.x_axis_direction.x = pair.assert_f64()?;
-                        }
-                        21 => {
-                            mtext.x_axis_direction.y = pair.assert_f64()?;
-                        }
-                        31 => {
-                            mtext.x_axis_direction.z = pair.assert_f64()?;
-                        }
-                        42 => {
-                            mtext.horizontal_width = pair.assert_f64()?;
-                        }
-                        43 => {
-                            mtext.vertical_height = pair.assert_f64()?;
-                        }
-                        50 => {
-                            if reading_column_data {
-                                if read_column_count {
-                                    mtext.column_heights.push(pair.assert_f64()?);
-                                } else {
-                                    mtext.column_count = pair.assert_f64()? as i32;
-                                    read_column_count = true;
-                                }
-                            } else {
-                                mtext.rotation_angle = pair.assert_f64()?;
-                            }
-                        }
-                        73 => {
-                            mtext.line_spacing_style = enum_from_number!(
-                                MTextLineSpacingStyle,
-                                AtLeast,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        44 => {
-                            mtext.line_spacing_factor = pair.assert_f64()?;
-                        }
-                        90 => {
-                            mtext.background_fill_setting = enum_from_number!(
-                                BackgroundFillSetting,
-                                Off,
-                                from_i32,
-                                pair.assert_i32()?
-                            );
-                        }
-                        420 => {
-                            mtext.background_color_rgb = pair.assert_i32()?;
-                        }
-                        430 => {
-                            mtext.background_color_name = pair.assert_string()?;
-                        }
-                        45 => {
-                            mtext.fill_box_scale = pair.assert_f64()?;
-                        }
-                        63 => {
-                            mtext.background_fill_color = Color::from_raw_value(pair.assert_i16()?);
-                        }
-                        441 => {
-                            mtext.background_fill_color_transparency = pair.assert_i32()?;
-                        }
-                        75 => {
-                            mtext.column_type = pair.assert_i16()?;
-                            reading_column_data = true;
-                        }
-                        76 => {
-                            mtext.column_count = i32::from(pair.assert_i16()?);
-                        }
-                        78 => {
-                            mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?);
-                        }
-                        79 => {
-                            mtext.is_column_auto_height = as_bool(pair.assert_i16()?);
-                        }
-                        48 => {
-                            mtext.column_width = pair.assert_f64()?;
-                        }
-                        49 => {
-                            mtext.column_gutter = pair.assert_f64()?;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Entity::apply_custom_reader_mtext(&mut self.common, mtext, iter)
             }
             _ => Ok(false), // no custom reader
+        }
+    }
+    fn apply_custom_reader_attribute<I>(
+        common: &mut EntityCommon,
+        att: &mut Attribute,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let xrecord_text = "AcDbXrecord";
+        let mut last_subclass_marker = String::new();
+        let mut is_version_set = false;
+        let mut xrec_code_70_count = 0;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                100 => {
+                    last_subclass_marker = pair.assert_string()?;
+                }
+                1 => {
+                    att.value = pair.assert_string()?;
+                }
+                2 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.x_record_tag = pair.assert_string()?;
+                    } else {
+                        att.attribute_tag = pair.assert_string()?;
+                    }
+                }
+                7 => {
+                    att.text_style_name = pair.assert_string()?;
+                }
+                10 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.x = pair.assert_f64()?;
+                    } else {
+                        att.location.x = pair.assert_f64()?;
+                    }
+                }
+                20 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.y = pair.assert_f64()?;
+                    } else {
+                        att.location.y = pair.assert_f64()?;
+                    }
+                }
+                30 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.z = pair.assert_f64()?;
+                    } else {
+                        att.location.z = pair.assert_f64()?;
+                    }
+                }
+                11 => {
+                    att.second_alignment_point.x = pair.assert_f64()?;
+                }
+                21 => {
+                    att.second_alignment_point.y = pair.assert_f64()?;
+                }
+                31 => {
+                    att.second_alignment_point.z = pair.assert_f64()?;
+                }
+                39 => {
+                    att.thickness = pair.assert_f64()?;
+                }
+                40 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.annotation_scale = pair.assert_f64()?;
+                    } else {
+                        att.text_height = pair.assert_f64()?;
+                    }
+                }
+                41 => {
+                    att.relative_x_scale_factor = pair.assert_f64()?;
+                }
+                50 => {
+                    att.rotation = pair.assert_f64()?;
+                }
+                51 => {
+                    att.oblique_angle = pair.assert_f64()?;
+                }
+                70 => {
+                    if last_subclass_marker == xrecord_text {
+                        match xrec_code_70_count {
+                            0 => {
+                                att.m_text_flag = enum_from_number!(
+                                    MTextFlag,
+                                    MultilineAttribute,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                )
+                            }
+                            1 => att.is_really_locked = as_bool(pair.assert_i16()?),
+                            2 => att.__secondary_attribute_count = i32::from(pair.assert_i16()?),
+                            _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
+                        }
+                        xrec_code_70_count += 1;
+                    } else {
+                        att.flags = i32::from(pair.assert_i16()?);
+                    }
+                }
+                71 => {
+                    att.text_generation_flags = i32::from(pair.assert_i16()?);
+                }
+                72 => {
+                    att.horizontal_text_justification = enum_from_number!(
+                        HorizontalTextJustification,
+                        Left,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                73 => {
+                    att.field_length = pair.assert_i16()?;
+                }
+                74 => {
+                    att.vertical_text_justification = enum_from_number!(
+                        VerticalTextJustification,
+                        Baseline,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                210 => {
+                    att.normal.x = pair.assert_f64()?;
+                }
+                220 => {
+                    att.normal.y = pair.assert_f64()?;
+                }
+                230 => {
+                    att.normal.z = pair.assert_f64()?;
+                }
+                280 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.keep_duplicate_records = as_bool(pair.assert_i16()?);
+                    } else if !is_version_set {
+                        att.version =
+                            enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                        is_version_set = true;
+                    } else {
+                        att.is_locked_in_block = as_bool(pair.assert_i16()?);
+                    }
+                }
+                340 => {
+                    att.__secondary_attributes_handle.push(pair.as_handle()?);
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_attributedefinition<I>(
+        common: &mut EntityCommon,
+        att: &mut AttributeDefinition,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let xrecord_text = "AcDbXrecord";
+        let mut last_subclass_marker = String::new();
+        let mut is_version_set = false;
+        let mut xrec_code_70_count = 0;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                100 => {
+                    last_subclass_marker = pair.assert_string()?;
+                }
+                1 => {
+                    att.value = pair.assert_string()?;
+                }
+                2 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.x_record_tag = pair.assert_string()?;
+                    } else {
+                        att.text_tag = pair.assert_string()?;
+                    }
+                }
+                3 => {
+                    att.prompt = pair.assert_string()?;
+                }
+                7 => {
+                    att.text_style_name = pair.assert_string()?;
+                }
+                10 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.x = pair.assert_f64()?;
+                    } else {
+                        att.location.x = pair.assert_f64()?;
+                    }
+                }
+                20 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.y = pair.assert_f64()?;
+                    } else {
+                        att.location.y = pair.assert_f64()?;
+                    }
+                }
+                30 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.alignment_point.z = pair.assert_f64()?;
+                    } else {
+                        att.location.z = pair.assert_f64()?;
+                    }
+                }
+                11 => {
+                    att.second_alignment_point.x = pair.assert_f64()?;
+                }
+                21 => {
+                    att.second_alignment_point.y = pair.assert_f64()?;
+                }
+                31 => {
+                    att.second_alignment_point.z = pair.assert_f64()?;
+                }
+                39 => {
+                    att.thickness = pair.assert_f64()?;
+                }
+                40 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.annotation_scale = pair.assert_f64()?;
+                    } else {
+                        att.text_height = pair.assert_f64()?;
+                    }
+                }
+                41 => {
+                    att.relative_x_scale_factor = pair.assert_f64()?;
+                }
+                50 => {
+                    att.rotation = pair.assert_f64()?;
+                }
+                51 => {
+                    att.oblique_angle = pair.assert_f64()?;
+                }
+                70 => {
+                    if last_subclass_marker == xrecord_text {
+                        match xrec_code_70_count {
+                            0 => {
+                                att.m_text_flag = enum_from_number!(
+                                    MTextFlag,
+                                    MultilineAttribute,
+                                    from_i16,
+                                    pair.assert_i16()?
+                                )
+                            }
+                            1 => att.is_really_locked = as_bool(pair.assert_i16()?),
+                            2 => att.__secondary_attribute_count = i32::from(pair.assert_i16()?),
+                            _ => return Err(DxfError::UnexpectedCodePair(pair, String::new())),
+                        }
+                        xrec_code_70_count += 1;
+                    } else {
+                        att.flags = i32::from(pair.assert_i16()?);
+                    }
+                }
+                71 => {
+                    att.text_generation_flags = i32::from(pair.assert_i16()?);
+                }
+                72 => {
+                    att.horizontal_text_justification = enum_from_number!(
+                        HorizontalTextJustification,
+                        Left,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                73 => {
+                    att.field_length = pair.assert_i16()?;
+                }
+                74 => {
+                    att.vertical_text_justification = enum_from_number!(
+                        VerticalTextJustification,
+                        Baseline,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                210 => {
+                    att.normal.x = pair.assert_f64()?;
+                }
+                220 => {
+                    att.normal.y = pair.assert_f64()?;
+                }
+                230 => {
+                    att.normal.z = pair.assert_f64()?;
+                }
+                280 => {
+                    if last_subclass_marker == xrecord_text {
+                        att.keep_duplicate_records = as_bool(pair.assert_i16()?);
+                    } else if !is_version_set {
+                        att.version =
+                            enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                        is_version_set = true;
+                    } else {
+                        att.is_locked_in_block = as_bool(pair.assert_i16()?);
+                    }
+                }
+                340 => {
+                    att.__secondary_attributes_handle.push(pair.as_handle()?);
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_lwpolyline<I>(
+        common: &mut EntityCommon,
+        poly: &mut LwPolyline,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                // vertex-specific pairs
+                10 => {
+                    // start a new vertex
+                    poly.vertices.push(LwPolylineVertex::default());
+                    vec_last!(poly.vertices).x = pair.assert_f64()?;
+                }
+                20 => {
+                    vec_last!(poly.vertices).y = pair.assert_f64()?;
+                }
+                40 => {
+                    vec_last!(poly.vertices).starting_width = pair.assert_f64()?;
+                }
+                41 => {
+                    vec_last!(poly.vertices).ending_width = pair.assert_f64()?;
+                }
+                42 => {
+                    vec_last!(poly.vertices).bulge = pair.assert_f64()?;
+                }
+                91 => {
+                    vec_last!(poly.vertices).id = pair.assert_i32()?;
+                }
+                // other pairs
+                39 => {
+                    poly.thickness = pair.assert_f64()?;
+                }
+                43 => {
+                    poly.constant_width = pair.assert_f64()?;
+                }
+                70 => {
+                    poly.flags = i32::from(pair.assert_i16()?);
+                }
+                210 => {
+                    poly.extrusion_direction.x = pair.assert_f64()?;
+                }
+                220 => {
+                    poly.extrusion_direction.y = pair.assert_f64()?;
+                }
+                230 => {
+                    poly.extrusion_direction.z = pair.assert_f64()?;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_mtext<I>(
+        common: &mut EntityCommon,
+        mtext: &mut MText,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut reading_column_data = false;
+        let mut read_column_count = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                10 => {
+                    mtext.insertion_point.x = pair.assert_f64()?;
+                }
+                20 => {
+                    mtext.insertion_point.y = pair.assert_f64()?;
+                }
+                30 => {
+                    mtext.insertion_point.z = pair.assert_f64()?;
+                }
+                40 => {
+                    mtext.initial_text_height = pair.assert_f64()?;
+                }
+                41 => {
+                    mtext.reference_rectangle_width = pair.assert_f64()?;
+                }
+                71 => {
+                    mtext.attachment_point =
+                        enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?);
+                }
+                72 => {
+                    mtext.drawing_direction = enum_from_number!(
+                        DrawingDirection,
+                        LeftToRight,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                3 => {
+                    mtext.extended_text.push(pair.assert_string()?);
+                }
+                1 => {
+                    mtext.text = pair.assert_string()?;
+                }
+                7 => {
+                    mtext.text_style_name = pair.assert_string()?;
+                }
+                210 => {
+                    mtext.extrusion_direction.x = pair.assert_f64()?;
+                }
+                220 => {
+                    mtext.extrusion_direction.y = pair.assert_f64()?;
+                }
+                230 => {
+                    mtext.extrusion_direction.z = pair.assert_f64()?;
+                }
+                11 => {
+                    mtext.x_axis_direction.x = pair.assert_f64()?;
+                }
+                21 => {
+                    mtext.x_axis_direction.y = pair.assert_f64()?;
+                }
+                31 => {
+                    mtext.x_axis_direction.z = pair.assert_f64()?;
+                }
+                42 => {
+                    mtext.horizontal_width = pair.assert_f64()?;
+                }
+                43 => {
+                    mtext.vertical_height = pair.assert_f64()?;
+                }
+                50 => {
+                    if reading_column_data {
+                        if read_column_count {
+                            mtext.column_heights.push(pair.assert_f64()?);
+                        } else {
+                            mtext.column_count = pair.assert_f64()? as i32;
+                            read_column_count = true;
+                        }
+                    } else {
+                        mtext.rotation_angle = pair.assert_f64()?;
+                    }
+                }
+                73 => {
+                    mtext.line_spacing_style = enum_from_number!(
+                        MTextLineSpacingStyle,
+                        AtLeast,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                44 => {
+                    mtext.line_spacing_factor = pair.assert_f64()?;
+                }
+                90 => {
+                    mtext.background_fill_setting =
+                        enum_from_number!(BackgroundFillSetting, Off, from_i32, pair.assert_i32()?);
+                }
+                420 => {
+                    mtext.background_color_rgb = pair.assert_i32()?;
+                }
+                430 => {
+                    mtext.background_color_name = pair.assert_string()?;
+                }
+                45 => {
+                    mtext.fill_box_scale = pair.assert_f64()?;
+                }
+                63 => {
+                    mtext.background_fill_color = Color::from_raw_value(pair.assert_i16()?);
+                }
+                441 => {
+                    mtext.background_fill_color_transparency = pair.assert_i32()?;
+                }
+                75 => {
+                    mtext.column_type = pair.assert_i16()?;
+                    reading_column_data = true;
+                }
+                76 => {
+                    mtext.column_count = i32::from(pair.assert_i16()?);
+                }
+                78 => {
+                    mtext.is_column_flow_reversed = as_bool(pair.assert_i16()?);
+                }
+                79 => {
+                    mtext.is_column_auto_height = as_bool(pair.assert_i16()?);
+                }
+                48 => {
+                    mtext.column_width = pair.assert_f64()?;
+                }
+                49 => {
+                    mtext.column_gutter = pair.assert_f64()?;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
         }
     }
     pub(crate) fn write<T>(
@@ -1305,185 +1321,253 @@ impl Entity {
     {
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
-                dim.dimension_base.write(version, writer)?;
-                if version >= AcadVersion::R13 {
-                    writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension"))?;
-                }
-                writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x))?;
-                writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y))?;
-                writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z))?;
-                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-                writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle))?;
-                writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle))?;
-                if version >= AcadVersion::R13 {
-                    writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
-                }
+                Entity::apply_custom_writer_rotateddimension(dim, version, writer)?;
             }
             EntityType::RadialDimension(ref dim) => {
-                dim.dimension_base.write(version, writer)?;
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
-                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
-                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
-                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
-                writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
+                Entity::apply_custom_writer_radialdimension(dim, version, writer)?;
             }
             EntityType::DiameterDimension(ref dim) => {
-                dim.dimension_base.write(version, writer)?;
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
-                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
-                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
-                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
-                writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
+                Entity::apply_custom_writer_diameterdimension(dim, version, writer)?;
             }
             EntityType::AngularThreePointDimension(ref dim) => {
-                dim.dimension_base.write(version, writer)?;
-                writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
-                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-                writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x))?;
-                writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y))?;
-                writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z))?;
-                writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x))?;
-                writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y))?;
-                writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z))?;
+                Entity::apply_custom_writer_angularthreepointdimension(dim, version, writer)?;
             }
             EntityType::OrdinateDimension(ref dim) => {
-                dim.dimension_base.write(version, writer)?;
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
-                writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-                writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-                writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-                writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-                writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-                writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+                Entity::apply_custom_writer_ordinatedimension(dim, version, writer)?;
             }
             EntityType::Polyline(ref poly) => {
-                let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh()
-                {
-                    "AcDb3dPolyline"
-                } else {
-                    "AcDb2dPolyline"
-                };
-                writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
-                if version <= AcadVersion::R13 {
-                    writer
-                        .write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
-                }
-                if version >= AcadVersion::R12 {
-                    writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
-                    writer.write_code_pair(&CodePair::new_f64(20, poly.location.y))?;
-                    writer.write_code_pair(&CodePair::new_f64(30, poly.location.z))?;
-                }
-                if poly.thickness != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(39, poly.thickness))?;
-                }
-                if poly.flags != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(70, poly.flags as i16))?;
-                }
-                if poly.default_starting_width != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(40, poly.default_starting_width))?;
-                }
-                if poly.default_ending_width != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(41, poly.default_ending_width))?;
-                }
-                if poly.polygon_mesh_m_vertex_count != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(
-                        71,
-                        poly.polygon_mesh_m_vertex_count as i16,
-                    ))?;
-                }
-                if poly.polygon_mesh_n_vertex_count != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(
-                        72,
-                        poly.polygon_mesh_n_vertex_count as i16,
-                    ))?;
-                }
-                if poly.smooth_surface_m_density != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(
-                        73,
-                        poly.smooth_surface_m_density as i16,
-                    ))?;
-                }
-                if poly.smooth_surface_n_density != 0 {
-                    writer.write_code_pair(&CodePair::new_i16(
-                        74,
-                        poly.smooth_surface_n_density as i16,
-                    ))?;
-                }
-                if poly.surface_type != PolylineCurvedAndSmoothSurfaceType::None {
-                    writer.write_code_pair(&CodePair::new_i16(75, poly.surface_type as i16))?;
-                }
-                if poly.normal != Vector::z_axis() {
-                    writer.write_code_pair(&CodePair::new_f64(210, poly.normal.x))?;
-                    writer.write_code_pair(&CodePair::new_f64(220, poly.normal.y))?;
-                    writer.write_code_pair(&CodePair::new_f64(230, poly.normal.z))?;
-                }
+                Entity::apply_custom_writer_polyline(poly, version, writer)?;
             }
             EntityType::Vertex(ref v) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
-                let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh()
-                {
-                    "AcDb3dPolylineVertex"
-                } else {
-                    "AcDb2dVertex"
-                };
-                writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
-                writer.write_code_pair(&CodePair::new_f64(10, v.location.x))?;
-                writer.write_code_pair(&CodePair::new_f64(20, v.location.y))?;
-                writer.write_code_pair(&CodePair::new_f64(30, v.location.z))?;
-                if v.starting_width != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(40, v.starting_width))?;
-                }
-                if v.ending_width != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(41, v.ending_width))?;
-                }
-                if v.bulge != 0.0 {
-                    writer.write_code_pair(&CodePair::new_f64(42, v.bulge))?;
-                }
-                writer.write_code_pair(&CodePair::new_i16(70, v.flags as i16))?;
-                writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
-                if version >= AcadVersion::R13 {
-                    if v.polyface_mesh_vertex_index1 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(
-                            71,
-                            v.polyface_mesh_vertex_index1 as i16,
-                        ))?;
-                    }
-                    if v.polyface_mesh_vertex_index2 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(
-                            72,
-                            v.polyface_mesh_vertex_index2 as i16,
-                        ))?;
-                    }
-                    if v.polyface_mesh_vertex_index3 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(
-                            73,
-                            v.polyface_mesh_vertex_index3 as i16,
-                        ))?;
-                    }
-                    if v.polyface_mesh_vertex_index4 != 0 {
-                        writer.write_code_pair(&CodePair::new_i16(
-                            74,
-                            v.polyface_mesh_vertex_index4 as i16,
-                        ))?;
-                    }
-                }
-                if version >= AcadVersion::R2010 {
-                    writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
-                }
+                Entity::apply_custom_writer_vertex(v, version, writer)?;
             }
             _ => return Ok(false), // no custom writer
         }
 
+        Ok(true)
+    }
+    fn apply_custom_writer_rotateddimension<T>(
+        dim: &RotatedDimension,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        dim.dimension_base.write(version, writer)?;
+        if version >= AcadVersion::R13 {
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension"))?;
+        }
+        writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x))?;
+        writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y))?;
+        writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z))?;
+        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+        writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle))?;
+        writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle))?;
+        if version >= AcadVersion::R13 {
+            writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
+        }
+        Ok(true)
+    }
+    fn apply_custom_writer_radialdimension<T>(
+        dim: &RadialDimension,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        dim.dimension_base.write(version, writer)?;
+        writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
+        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
+        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
+        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
+        writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
+        Ok(true)
+    }
+    fn apply_custom_writer_diameterdimension<T>(
+        dim: &DiameterDimension,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        dim.dimension_base.write(version, writer)?;
+        writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
+        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
+        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
+        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
+        writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
+        Ok(true)
+    }
+    fn apply_custom_writer_angularthreepointdimension<T>(
+        dim: &AngularThreePointDimension,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        dim.dimension_base.write(version, writer)?;
+        writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
+        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x))?;
+        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y))?;
+        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z))?;
+        writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x))?;
+        writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y))?;
+        writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z))?;
+        Ok(true)
+    }
+    fn apply_custom_writer_ordinatedimension<T>(
+        dim: &OrdinateDimension,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        dim.dimension_base.write(version, writer)?;
+        writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
+        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
+        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
+        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
+        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
+        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
+        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
+        Ok(true)
+    }
+    fn apply_custom_writer_polyline<T>(
+        poly: &Polyline,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
+            "AcDb3dPolyline"
+        } else {
+            "AcDb2dPolyline"
+        };
+        writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
+        if version <= AcadVersion::R13 {
+            writer.write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
+        }
+        if version >= AcadVersion::R12 {
+            writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
+            writer.write_code_pair(&CodePair::new_f64(20, poly.location.y))?;
+            writer.write_code_pair(&CodePair::new_f64(30, poly.location.z))?;
+        }
+        if poly.thickness != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(39, poly.thickness))?;
+        }
+        if poly.flags != 0 {
+            writer.write_code_pair(&CodePair::new_i16(70, poly.flags as i16))?;
+        }
+        if poly.default_starting_width != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(40, poly.default_starting_width))?;
+        }
+        if poly.default_ending_width != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(41, poly.default_ending_width))?;
+        }
+        if poly.polygon_mesh_m_vertex_count != 0 {
+            writer.write_code_pair(&CodePair::new_i16(
+                71,
+                poly.polygon_mesh_m_vertex_count as i16,
+            ))?;
+        }
+        if poly.polygon_mesh_n_vertex_count != 0 {
+            writer.write_code_pair(&CodePair::new_i16(
+                72,
+                poly.polygon_mesh_n_vertex_count as i16,
+            ))?;
+        }
+        if poly.smooth_surface_m_density != 0 {
+            writer.write_code_pair(&CodePair::new_i16(73, poly.smooth_surface_m_density as i16))?;
+        }
+        if poly.smooth_surface_n_density != 0 {
+            writer.write_code_pair(&CodePair::new_i16(74, poly.smooth_surface_n_density as i16))?;
+        }
+        if poly.surface_type != PolylineCurvedAndSmoothSurfaceType::None {
+            writer.write_code_pair(&CodePair::new_i16(75, poly.surface_type as i16))?;
+        }
+        if poly.normal != Vector::z_axis() {
+            writer.write_code_pair(&CodePair::new_f64(210, poly.normal.x))?;
+            writer.write_code_pair(&CodePair::new_f64(220, poly.normal.y))?;
+            writer.write_code_pair(&CodePair::new_f64(230, poly.normal.z))?;
+        }
+        Ok(true)
+    }
+    fn apply_custom_writer_vertex<T>(
+        v: &Vertex,
+        version: AcadVersion,
+        writer: &mut CodePairWriter<T>,
+    ) -> DxfResult<bool>
+    where
+        T: Write,
+    {
+        writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
+        let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
+            "AcDb3dPolylineVertex"
+        } else {
+            "AcDb2dVertex"
+        };
+        writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
+        writer.write_code_pair(&CodePair::new_f64(10, v.location.x))?;
+        writer.write_code_pair(&CodePair::new_f64(20, v.location.y))?;
+        writer.write_code_pair(&CodePair::new_f64(30, v.location.z))?;
+        if v.starting_width != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(40, v.starting_width))?;
+        }
+        if v.ending_width != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(41, v.ending_width))?;
+        }
+        if v.bulge != 0.0 {
+            writer.write_code_pair(&CodePair::new_f64(42, v.bulge))?;
+        }
+        writer.write_code_pair(&CodePair::new_i16(70, v.flags as i16))?;
+        writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
+        if version >= AcadVersion::R13 {
+            if v.polyface_mesh_vertex_index1 != 0 {
+                writer.write_code_pair(&CodePair::new_i16(
+                    71,
+                    v.polyface_mesh_vertex_index1 as i16,
+                ))?;
+            }
+            if v.polyface_mesh_vertex_index2 != 0 {
+                writer.write_code_pair(&CodePair::new_i16(
+                    72,
+                    v.polyface_mesh_vertex_index2 as i16,
+                ))?;
+            }
+            if v.polyface_mesh_vertex_index3 != 0 {
+                writer.write_code_pair(&CodePair::new_i16(
+                    73,
+                    v.polyface_mesh_vertex_index3 as i16,
+                ))?;
+            }
+            if v.polyface_mesh_vertex_index4 != 0 {
+                writer.write_code_pair(&CodePair::new_i16(
+                    74,
+                    v.polyface_mesh_vertex_index4 as i16,
+                ))?;
+            }
+        }
+        if version >= AcadVersion::R2010 {
+            writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
+        }
         Ok(true)
     }
     fn post_write<T>(

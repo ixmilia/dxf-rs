@@ -39,6 +39,7 @@ pub struct TableCellStyle {
 
 // internal visibility only
 impl TableCellStyle {
+    #[allow(clippy::cognitive_complexity)]
     pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<TableCellStyle>>
     where
         I: Iterator<Item = DxfResult<CodePair>>,

@@ -302,1144 +302,1242 @@ impl Object {
     {
         match self.specific {
             ObjectType::DataTable(ref mut data) => {
-                let mut read_column_count = false;
-                let mut read_row_count = false;
-                let mut _current_column_code = 0;
-                let mut current_column = 0;
-                let mut current_row = 0;
-                let mut created_table = false;
-                let mut current_2d_point = Point::origin();
-                let mut current_3d_point = Point::origin();
-
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        1 => {
-                            data.name = pair.assert_string()?;
-                        }
-                        70 => {
-                            data.field = pair.assert_i16()?;
-                        }
-                        90 => {
-                            data.column_count = pair.assert_i32()? as usize;
-                            read_column_count = true;
-                        }
-                        91 => {
-                            data.row_count = pair.assert_i32()? as usize;
-                            read_row_count = true;
-                        }
-
-                        // column headers
-                        2 => {
-                            data.column_names.push(pair.assert_string()?);
-                        }
-                        92 => {
-                            _current_column_code = pair.assert_i32()?;
-                            current_column += 1;
-                            current_row = 0;
-                        }
-
-                        // column values
-                        3 => {
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Str(pair.assert_string()?),
-                            );
-                        }
-                        40 => {
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Double(pair.assert_f64()?),
-                            );
-                        }
-                        71 => {
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Boolean(as_bool(pair.assert_i16()?)),
-                            );
-                        }
-                        93 => {
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Integer(pair.assert_i32()?),
-                            );
-                        }
-                        10 => {
-                            current_2d_point.x = pair.assert_f64()?;
-                        }
-                        20 => {
-                            current_2d_point.y = pair.assert_f64()?;
-                        }
-                        30 => {
-                            current_2d_point.z = pair.assert_f64()?;
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Point2D(current_2d_point.clone()),
-                            );
-                            current_2d_point = Point::origin();
-                        }
-                        11 => {
-                            current_3d_point.x = pair.assert_f64()?;
-                        }
-                        21 => {
-                            current_3d_point.y = pair.assert_f64()?;
-                        }
-                        31 => {
-                            current_3d_point.z = pair.assert_f64()?;
-                            data.set_value(
-                                current_row,
-                                current_column,
-                                DataTableValue::Point3D(current_3d_point.clone()),
-                            );
-                            current_3d_point = Point::origin();
-                        }
-                        330 | 331 | 340 | 350 | 360 => {
-                            if read_row_count || read_column_count {
-                                data.set_value(
-                                    current_row,
-                                    current_column,
-                                    DataTableValue::Handle(pair.as_handle()?),
-                                );
-                            } else {
-                                self.common.apply_individual_pair(&pair, iter)?;
-                            }
-                        }
-
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-
-                    if read_row_count && read_column_count && !created_table {
-                        for row in 0..data.row_count {
-                            data.values.push(vec![]);
-                            for _ in 0..data.column_count {
-                                data.values[row].push(None);
-                            }
-                        }
-                        created_table = true;
-                    }
-                }
+                Object::apply_custom_reader_datatable(&mut self.common, data, iter)
             }
             ObjectType::Dictionary(ref mut dict) => {
-                let mut last_entry_name = String::new();
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        3 => {
-                            last_entry_name = pair.assert_string()?;
-                        }
-                        280 => {
-                            dict.is_hard_owner = as_bool(pair.assert_i16()?);
-                        }
-                        281 => {
-                            dict.duplicate_record_handling = enum_from_number!(
-                                DictionaryDuplicateRecordHandling,
-                                NotApplicable,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        350 | 360 => {
-                            let handle = pair.as_handle()?;
-                            dict.value_handles.insert(last_entry_name.clone(), handle);
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_dictionary(&mut self.common, dict, iter)
             }
             ObjectType::DictionaryWithDefault(ref mut dict) => {
-                let mut last_entry_name = String::new();
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        3 => {
-                            last_entry_name = pair.assert_string()?;
-                        }
-                        281 => {
-                            dict.duplicate_record_handling = enum_from_number!(
-                                DictionaryDuplicateRecordHandling,
-                                NotApplicable,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        340 => {
-                            dict.default_handle = pair.as_handle()?;
-                        }
-                        350 | 360 => {
-                            let handle = pair.as_handle()?;
-                            dict.value_handles.insert(last_entry_name.clone(), handle);
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_dictionarywithdefault(&mut self.common, dict, iter)
             }
             ObjectType::Layout(ref mut layout) => {
-                let mut is_reading_plot_settings = true;
-                loop {
-                    let pair = next_pair!(iter);
-                    if is_reading_plot_settings {
-                        if pair.code == 100 && pair.assert_string()? == "AcDbLayout" {
-                            is_reading_plot_settings = false;
-                        } else {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    } else {
-                        match pair.code {
-                            1 => {
-                                layout.layout_name = pair.assert_string()?;
-                            }
-                            10 => {
-                                layout.minimum_limits.x = pair.assert_f64()?;
-                            }
-                            20 => {
-                                layout.minimum_limits.y = pair.assert_f64()?;
-                            }
-                            11 => {
-                                layout.maximum_limits.x = pair.assert_f64()?;
-                            }
-                            21 => {
-                                layout.maximum_limits.y = pair.assert_f64()?;
-                            }
-                            12 => {
-                                layout.insertion_base_point.x = pair.assert_f64()?;
-                            }
-                            22 => {
-                                layout.insertion_base_point.y = pair.assert_f64()?;
-                            }
-                            32 => {
-                                layout.insertion_base_point.z = pair.assert_f64()?;
-                            }
-                            13 => {
-                                layout.ucs_origin.x = pair.assert_f64()?;
-                            }
-                            23 => {
-                                layout.ucs_origin.y = pair.assert_f64()?;
-                            }
-                            33 => {
-                                layout.ucs_origin.z = pair.assert_f64()?;
-                            }
-                            14 => {
-                                layout.minimum_extents.x = pair.assert_f64()?;
-                            }
-                            24 => {
-                                layout.minimum_extents.y = pair.assert_f64()?;
-                            }
-                            34 => {
-                                layout.minimum_extents.z = pair.assert_f64()?;
-                            }
-                            15 => {
-                                layout.maximum_extents.x = pair.assert_f64()?;
-                            }
-                            25 => {
-                                layout.maximum_extents.y = pair.assert_f64()?;
-                            }
-                            35 => {
-                                layout.maximum_extents.z = pair.assert_f64()?;
-                            }
-                            16 => {
-                                layout.ucs_x_axis.x = pair.assert_f64()?;
-                            }
-                            26 => {
-                                layout.ucs_x_axis.y = pair.assert_f64()?;
-                            }
-                            36 => {
-                                layout.ucs_x_axis.z = pair.assert_f64()?;
-                            }
-                            17 => {
-                                layout.ucs_y_axis.x = pair.assert_f64()?;
-                            }
-                            27 => {
-                                layout.ucs_y_axis.y = pair.assert_f64()?;
-                            }
-                            37 => {
-                                layout.ucs_y_axis.z = pair.assert_f64()?;
-                            }
-                            70 => {
-                                layout.layout_flags = i32::from(pair.assert_i16()?);
-                            }
-                            71 => {
-                                layout.tab_order = i32::from(pair.assert_i16()?);
-                            }
-                            76 => {
-                                layout.ucs_orthographic_type = enum_from_number!(
-                                    UcsOrthographicType,
-                                    NotOrthographic,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                            }
-                            146 => {
-                                layout.elevation = pair.assert_f64()?;
-                            }
-                            330 => {
-                                layout.__viewport_handle = pair.as_handle()?;
-                            }
-                            345 => {
-                                layout.__table_record_handle = pair.as_handle()?;
-                            }
-                            346 => {
-                                layout.__table_record_base_handle = pair.as_handle()?;
-                            }
-                            _ => {
-                                self.common.apply_individual_pair(&pair, iter)?;
-                            }
-                        }
-                    }
-                }
+                Object::apply_custom_reader_layout(&mut self.common, layout, iter)
             }
             ObjectType::LightList(ref mut ll) => {
-                let mut read_version_number = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        1 => {} // don't worry about the light's name; it'll be read from the light entity directly
-                        5 => {
-                            if read_version_number {
-                                // pointer to a new light
-                                ll.__lights_handle.push(pair.as_handle()?);
-                            } else {
-                                // might still be the handle
-                                self.common.apply_individual_pair(&pair, iter)?;;
-                            }
-                        }
-                        90 => {
-                            if read_version_number {
-                                // count of lights is ignored since it's implicitly set by reading the values
-                            } else {
-                                ll.version = pair.assert_i32()?;
-                                read_version_number = false;
-                            }
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_lightlist(&mut self.common, ll, iter)
             }
             ObjectType::Material(ref mut mat) => {
-                let mut read_diffuse_map_file_name = false;
-                let mut is_reading_normal = false;
-                let mut read_diffuse_map_blend_factor = false;
-                let mut read_image_file_diffuse_map = false;
-                let mut read_diffuse_map_projection_method = false;
-                let mut read_diffuse_map_tiling_method = false;
-                let mut read_diffuse_map_auto_transform_method = false;
-                let mut read_ambient_color_value = false;
-                let mut read_bump_map_projection_method = false;
-                let mut read_luminance_mode = false;
-                let mut read_bump_map_tiling_method = false;
-                let mut read_normal_map_method = false;
-                let mut read_bump_map_auto_transform_method = false;
-                let mut read_use_image_file_for_refraction_map = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        1 => {
-                            mat.name = pair.assert_string()?;
-                        }
-                        2 => {
-                            mat.description = pair.assert_string()?;
-                        }
-                        3 => {
-                            if !read_diffuse_map_file_name {
-                                mat.diffuse_map_file_name = pair.assert_string()?;
-                                read_diffuse_map_file_name = true;
-                            } else {
-                                mat.normal_map_file_name = pair.assert_string()?;
-                                is_reading_normal = true;
-                            }
-                        }
-                        4 => {
-                            mat.normal_map_file_name = pair.assert_string()?;
-                        }
-                        6 => {
-                            mat.reflection_map_file_name = pair.assert_string()?;
-                        }
-                        7 => {
-                            mat.opacity_map_file_name = pair.assert_string()?;
-                        }
-                        8 => {
-                            mat.bump_map_file_name = pair.assert_string()?;
-                        }
-                        9 => {
-                            mat.refraction_map_file_name = pair.assert_string()?;
-                        }
-                        40 => {
-                            mat.ambient_color_factor = pair.assert_f64()?;
-                        }
-                        41 => {
-                            mat.diffuse_color_factor = pair.assert_f64()?;
-                        }
-                        42 => {
-                            if !read_diffuse_map_blend_factor {
-                                mat.diffuse_map_blend_factor = pair.assert_f64()?;
-                                read_diffuse_map_blend_factor = true;
-                            } else {
-                                mat.normal_map_blend_factor = pair.assert_f64()?;
-                                is_reading_normal = true;
-                            }
-                        }
-                        43 => {
-                            if is_reading_normal {
-                                mat.__normal_map_transformation_matrix_values
-                                    .push(pair.assert_f64()?);
-                            } else {
-                                mat.__diffuse_map_transformation_matrix_values
-                                    .push(pair.assert_f64()?);
-                            }
-                        }
-                        44 => {
-                            mat.specular_gloss_factor = pair.assert_f64()?;
-                        }
-                        45 => {
-                            mat.specular_color_factor = pair.assert_f64()?;
-                        }
-                        46 => {
-                            mat.specular_map_blend_factor = pair.assert_f64()?;
-                        }
-                        47 => {
-                            mat.__specular_map_transformation_matrix_values
-                                .push(pair.assert_f64()?);
-                        }
-                        48 => {
-                            mat.reflection_map_blend_factor = pair.assert_f64()?;
-                        }
-                        49 => {
-                            mat.__reflection_map_transformation_matrix_values
-                                .push(pair.assert_f64()?);
-                        }
-                        62 => {
-                            mat.gen_proc_color_index_value =
-                                Color::from_raw_value(pair.assert_i16()?);
-                        }
-                        70 => {
-                            mat.override_ambient_color = as_bool(pair.assert_i16()?);
-                        }
-                        71 => {
-                            mat.override_diffuse_color = as_bool(pair.assert_i16()?);
-                        }
-                        72 => {
-                            if !read_image_file_diffuse_map {
-                                mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i16()?);
-                                read_image_file_diffuse_map = true;
-                            } else {
-                                mat.use_image_file_for_normal_map = as_bool(pair.assert_i16()?);
-                            }
-                        }
-                        73 => {
-                            if !read_diffuse_map_projection_method {
-                                mat.diffuse_map_projection_method = enum_from_number!(
-                                    MapProjectionMethod,
-                                    Planar,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_diffuse_map_projection_method = true;
-                            } else {
-                                mat.normal_map_projection_method = enum_from_number!(
-                                    MapProjectionMethod,
-                                    Planar,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                is_reading_normal = true;
-                            }
-                        }
-                        74 => {
-                            if !read_diffuse_map_tiling_method {
-                                mat.diffuse_map_tiling_method = enum_from_number!(
-                                    MapTilingMethod,
-                                    Tile,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_diffuse_map_tiling_method = true;
-                            } else {
-                                mat.normal_map_tiling_method = enum_from_number!(
-                                    MapTilingMethod,
-                                    Tile,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                is_reading_normal = true;
-                            }
-                        }
-                        75 => {
-                            if !read_diffuse_map_auto_transform_method {
-                                mat.diffuse_map_auto_transform_method = enum_from_number!(
-                                    MapAutoTransformMethod,
-                                    NoAutoTransform,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_diffuse_map_auto_transform_method = true;
-                            } else {
-                                mat.normal_map_auto_transform_method = enum_from_number!(
-                                    MapAutoTransformMethod,
-                                    NoAutoTransform,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                is_reading_normal = true;
-                            }
-                        }
-                        76 => {
-                            mat.override_specular_color = as_bool(pair.assert_i16()?);
-                        }
-                        77 => {
-                            mat.use_image_file_for_specular_map = as_bool(pair.assert_i16()?);
-                        }
-                        78 => {
-                            mat.specular_map_projection_method = enum_from_number!(
-                                MapProjectionMethod,
-                                Planar,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        79 => {
-                            mat.specular_map_tiling_method = enum_from_number!(
-                                MapTilingMethod,
-                                Tile,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        90 => {
-                            if !read_ambient_color_value {
-                                mat.ambient_color_value = pair.assert_i32()?;
-                                read_ambient_color_value = true;
-                            } else {
-                                mat.self_illumination = pair.assert_i32()?;
-                            }
-                        }
-                        91 => {
-                            mat.diffuse_color_value = pair.assert_i32()?;
-                        }
-                        92 => {
-                            mat.specular_color_value = pair.assert_i32()?;
-                        }
-                        93 => {
-                            mat.illumination_model = pair.assert_i32()?;
-                        }
-                        94 => {
-                            mat.channel_flags = pair.assert_i32()?;
-                        }
-                        140 => {
-                            mat.opacity_factor = pair.assert_f64()?;
-                        }
-                        141 => {
-                            mat.opacity_map_blend_factor = pair.assert_f64()?;
-                        }
-                        142 => {
-                            mat.__opacity_map_transformation_matrix_values
-                                .push(pair.assert_f64()?);
-                        }
-                        143 => {
-                            mat.bump_map_blend_factor = pair.assert_f64()?;
-                        }
-                        144 => {
-                            mat.__bump_map_transformation_matrix_values
-                                .push(pair.assert_f64()?);
-                        }
-                        145 => {
-                            mat.refraction_index = pair.assert_f64()?;
-                        }
-                        146 => {
-                            mat.refraction_map_blend_factor = pair.assert_f64()?;
-                        }
-                        147 => {
-                            mat.__refraction_map_transformation_matrix_values
-                                .push(pair.assert_f64()?);
-                        }
-                        148 => {
-                            mat.translucence = pair.assert_f64()?;
-                        }
-                        170 => {
-                            mat.specular_map_auto_transform_method = enum_from_number!(
-                                MapAutoTransformMethod,
-                                NoAutoTransform,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        171 => {
-                            mat.use_image_file_for_reflection_map = as_bool(pair.assert_i16()?);
-                        }
-                        172 => {
-                            mat.reflection_map_projection_method = enum_from_number!(
-                                MapProjectionMethod,
-                                Planar,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        173 => {
-                            mat.reflection_map_tiling_method = enum_from_number!(
-                                MapTilingMethod,
-                                Tile,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        174 => {
-                            mat.reflection_map_auto_transform_method = enum_from_number!(
-                                MapAutoTransformMethod,
-                                NoAutoTransform,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        175 => {
-                            mat.use_image_file_for_opacity_map = as_bool(pair.assert_i16()?);
-                        }
-                        176 => {
-                            mat.opacity_map_projection_method = enum_from_number!(
-                                MapProjectionMethod,
-                                Planar,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        177 => {
-                            mat.opacity_map_tiling_method = enum_from_number!(
-                                MapTilingMethod,
-                                Tile,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        178 => {
-                            mat.opacity_map_auto_transform_method = enum_from_number!(
-                                MapAutoTransformMethod,
-                                NoAutoTransform,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        179 => {
-                            mat.use_image_file_for_bump_map = as_bool(pair.assert_i16()?);
-                        }
-                        270 => {
-                            if !read_bump_map_projection_method {
-                                mat.bump_map_projection_method = enum_from_number!(
-                                    MapProjectionMethod,
-                                    Planar,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_bump_map_projection_method = true;
-                            } else if !read_luminance_mode {
-                                mat.luminance_mode = pair.assert_i16()?;
-                                read_luminance_mode = true;
-                            } else {
-                                mat.map_u_tile = pair.assert_i16()?;
-                            }
-                        }
-                        271 => {
-                            if !read_bump_map_tiling_method {
-                                mat.bump_map_tiling_method = enum_from_number!(
-                                    MapTilingMethod,
-                                    Tile,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_bump_map_tiling_method = true;
-                            } else if !read_normal_map_method {
-                                mat.normal_map_method = pair.assert_i16()?;
-                                read_normal_map_method = true;
-                            } else {
-                                mat.gen_proc_integer_value = pair.assert_i16()?;
-                            }
-                        }
-                        272 => {
-                            if !read_bump_map_auto_transform_method {
-                                mat.bump_map_auto_transform_method = enum_from_number!(
-                                    MapAutoTransformMethod,
-                                    NoAutoTransform,
-                                    from_i16,
-                                    pair.assert_i16()?
-                                );
-                                read_bump_map_auto_transform_method = true;
-                            } else {
-                                mat.global_illumination_mode = pair.assert_i16()?;
-                            }
-                        }
-                        273 => {
-                            if !read_use_image_file_for_refraction_map {
-                                mat.use_image_file_for_refraction_map = as_bool(pair.assert_i16()?);
-                                read_use_image_file_for_refraction_map = true;
-                            } else {
-                                mat.final_gather_mode = pair.assert_i16()?;
-                            }
-                        }
-                        274 => {
-                            mat.refraction_map_projection_method = enum_from_number!(
-                                MapProjectionMethod,
-                                Planar,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        275 => {
-                            mat.refraction_map_tiling_method = enum_from_number!(
-                                MapTilingMethod,
-                                Tile,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        276 => {
-                            mat.refraction_map_auto_transform_method = enum_from_number!(
-                                MapAutoTransformMethod,
-                                NoAutoTransform,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        290 => {
-                            mat.is_two_sided = pair.assert_bool()?;
-                        }
-                        291 => {
-                            mat.gen_proc_boolean_value = pair.assert_bool()?;
-                        }
-                        292 => {
-                            mat.gen_proc_table_end = pair.assert_bool()?;
-                        }
-                        293 => {
-                            mat.is_anonymous = pair.assert_bool()?;
-                        }
-                        300 => {
-                            mat.gen_proc_name = pair.assert_string()?;
-                        }
-                        301 => {
-                            mat.gen_proc_text_value = pair.assert_string()?;
-                        }
-                        420 => {
-                            mat.gen_proc_color_rgb_value = pair.assert_i32()?;
-                        }
-                        430 => {
-                            mat.gen_proc_color_name = pair.assert_string()?;
-                        }
-                        460 => {
-                            mat.color_bleed_scale = pair.assert_f64()?;
-                        }
-                        461 => {
-                            mat.indirect_dump_scale = pair.assert_f64()?;
-                        }
-                        462 => {
-                            mat.reflectance_scale = pair.assert_f64()?;
-                        }
-                        463 => {
-                            mat.transmittance_scale = pair.assert_f64()?;
-                        }
-                        464 => {
-                            mat.luminance = pair.assert_f64()?;
-                        }
-                        465 => {
-                            mat.normal_map_strength = pair.assert_f64()?;
-                            is_reading_normal = true;
-                        }
-                        468 => {
-                            mat.reflectivity = pair.assert_f64()?;
-                        }
-                        469 => {
-                            mat.gen_proc_real_value = pair.assert_f64()?;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_material(&mut self.common, mat, iter)
             }
             ObjectType::MLineStyle(ref mut mline) => {
-                let mut read_element_count = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        2 => {
-                            mline.style_name = pair.assert_string()?;
-                        }
-                        3 => {
-                            mline.description = pair.assert_string()?;
-                        }
-                        6 => {
-                            mline.__element_line_types.push(pair.assert_string()?);
-                        }
-                        49 => {
-                            mline.__element_offsets.push(pair.assert_f64()?);
-                        }
-                        51 => {
-                            mline.start_angle = pair.assert_f64()?;
-                        }
-                        52 => {
-                            mline.end_angle = pair.assert_f64()?;
-                        }
-                        62 => {
-                            if read_element_count {
-                                mline
-                                    .__element_colors
-                                    .push(Color::from_raw_value(pair.assert_i16()?));
-                            } else {
-                                mline.fill_color = Color::from_raw_value(pair.assert_i16()?);
-                            }
-                        }
-                        70 => {
-                            mline.__flags = i32::from(pair.assert_i16()?);
-                        }
-                        71 => {
-                            mline.__element_count = i32::from(pair.assert_i16()?);
-                            read_element_count = true;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_mlinestyle(&mut self.common, mline, iter)
             }
             ObjectType::SectionSettings(ref mut ss) => {
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        1 => {
-                            // value should be "SectionTypeSettings", but it doesn't realy matter
-                            while let Some(ts) = SectionTypeSettings::read(iter)? {
-                                ss.geometry_settings.push(ts);
-                            }
-                        }
-                        90 => {
-                            ss.section_type = pair.assert_i32()?;
-                        }
-                        91 => (), // generation settings count; we just read as many as we're given
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_sectionsettings(&mut self.common, ss, iter)
             }
             ObjectType::SortentsTable(ref mut sort) => {
-                let mut is_ready_for_sort_handles = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        5 => {
-                            if is_ready_for_sort_handles {
-                                sort.__sort_items_handle.push(pair.as_handle()?);
-                            } else {
-                                self.common.handle = pair.as_handle()?;
-                                is_ready_for_sort_handles = true;
-                            }
-                        }
-                        100 => {
-                            is_ready_for_sort_handles = true;
-                        }
-                        330 => {
-                            self.common.__owner_handle = pair.as_handle()?;
-                            is_ready_for_sort_handles = true;
-                        }
-                        331 => {
-                            sort.__entities_handle.push(pair.as_handle()?);
-                            is_ready_for_sort_handles = true;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_sortentstable(&mut self.common, sort, iter)
             }
             ObjectType::SpatialFilter(ref mut sf) => {
-                let mut read_front_clipping_plane = false;
-                let mut set_inverse_matrix = false;
-                let mut matrix_list = vec![];
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        10 => {
-                            // code 10 always starts a new point
-                            sf.clip_boundary_definition_points.push(Point::origin());
-                            vec_last!(sf.clip_boundary_definition_points).x = pair.assert_f64()?;
-                        }
-                        20 => {
-                            vec_last!(sf.clip_boundary_definition_points).y = pair.assert_f64()?;
-                        }
-                        30 => {
-                            vec_last!(sf.clip_boundary_definition_points).z = pair.assert_f64()?;
-                        }
-                        11 => {
-                            sf.clip_boundary_origin.x = pair.assert_f64()?;
-                        }
-                        21 => {
-                            sf.clip_boundary_origin.y = pair.assert_f64()?;
-                        }
-                        31 => {
-                            sf.clip_boundary_origin.z = pair.assert_f64()?;
-                        }
-                        40 => {
-                            if !read_front_clipping_plane {
-                                sf.front_clipping_plane_distance = pair.assert_f64()?;
-                                read_front_clipping_plane = true;
-                            } else {
-                                matrix_list.push(pair.assert_f64()?);
-                                if matrix_list.len() == 12 {
-                                    let matrix = TransformationMatrix::from_vec(&[
-                                        matrix_list[0],
-                                        matrix_list[1],
-                                        matrix_list[2],
-                                        0.0,
-                                        matrix_list[3],
-                                        matrix_list[4],
-                                        matrix_list[5],
-                                        0.0,
-                                        matrix_list[6],
-                                        matrix_list[7],
-                                        matrix_list[8],
-                                        0.0,
-                                        matrix_list[9],
-                                        matrix_list[10],
-                                        matrix_list[11],
-                                        0.0,
-                                    ]);
-                                    matrix_list.clear();
-                                    if !set_inverse_matrix {
-                                        sf.inverse_transformation_matrix = matrix;
-                                        set_inverse_matrix = true;
-                                    } else {
-                                        sf.transformation_matrix = matrix;
-                                    }
-                                }
-                            }
-                        }
-                        41 => {
-                            sf.back_clipping_plane_distance = pair.assert_f64()?;
-                        }
-                        70 => (), // boundary point count; we just read as many as we're given
-                        71 => {
-                            sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?);
-                        }
-                        72 => {
-                            sf.is_front_clipping_plane = as_bool(pair.assert_i16()?);
-                        }
-                        73 => {
-                            sf.is_back_clipping_plane = as_bool(pair.assert_i16()?);
-                        }
-                        210 => {
-                            sf.clip_boundary_normal.x = pair.assert_f64()?;
-                        }
-                        220 => {
-                            sf.clip_boundary_normal.y = pair.assert_f64()?;
-                        }
-                        230 => {
-                            sf.clip_boundary_normal.z = pair.assert_f64()?;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_spatialfilter(&mut self.common, sf, iter)
             }
             ObjectType::SunStudy(ref mut ss) => {
-                let mut seen_version = false;
-                let mut reading_hours = false;
-                let mut julian_day = None;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        1 => {
-                            ss.sun_setup_name = pair.assert_string()?;
-                        }
-                        2 => {
-                            ss.description = pair.assert_string()?;
-                        }
-                        3 => {
-                            ss.sheet_set_name = pair.assert_string()?;
-                        }
-                        4 => {
-                            ss.sheet_subset_name = pair.assert_string()?;
-                        }
-                        40 => {
-                            ss.spacing = pair.assert_f64()?;
-                        }
-                        70 => {
-                            ss.output_type = pair.assert_i16()?;
-                        }
-                        73 => {
-                            reading_hours = true;
-                        }
-                        74 => {
-                            ss.shade_plot_type = pair.assert_i16()?;
-                        }
-                        75 => {
-                            ss.viewports_per_page = i32::from(pair.assert_i16()?);
-                        }
-                        76 => {
-                            ss.viewport_distribution_row_count = i32::from(pair.assert_i16()?);
-                        }
-                        77 => {
-                            ss.viewport_distribution_column_count = i32::from(pair.assert_i16()?);
-                        }
-                        90 => {
-                            if !seen_version {
-                                ss.version = pair.assert_i32()?;
-                                seen_version = true;
-                            } else {
-                                // after the version, 90 pairs come in julian_day/seconds_past_midnight duals
-                                match julian_day {
-                                    Some(jd) => {
-                                        let date = as_datetime_local(f64::from(jd));
-                                        let date = date
-                                            .add(Duration::seconds(i64::from(pair.assert_i32()?)));
-                                        ss.dates.push(date);
-                                        julian_day = None;
-                                    }
-                                    None => {
-                                        julian_day = Some(pair.assert_i32()?);
-                                    }
-                                }
-                            }
-                        }
-                        93 => {
-                            ss.start_time_seconds_past_midnight = pair.assert_i32()?;
-                        }
-                        94 => {
-                            ss.end_time_seconds_past_midnight = pair.assert_i32()?;
-                        }
-                        95 => {
-                            ss.interval_in_seconds = pair.assert_i32()?;
-                        }
-                        290 => {
-                            if !reading_hours {
-                                ss.use_subset = pair.assert_bool()?;
-                                reading_hours = true;
-                            } else {
-                                ss.hours.push(i32::from(pair.assert_i16()?));
-                            }
-                        }
-                        291 => {
-                            ss.select_dates_from_calendar = pair.assert_bool()?;
-                        }
-                        292 => {
-                            ss.select_range_of_dates = pair.assert_bool()?;
-                        }
-                        293 => {
-                            ss.lock_viewports = pair.assert_bool()?;
-                        }
-                        294 => {
-                            ss.label_viewports = pair.assert_bool()?;
-                        }
-                        340 => {
-                            ss.__page_setup_wizard_handle = pair.as_handle()?;
-                        }
-                        341 => {
-                            ss.__view_handle = pair.as_handle()?;
-                        }
-                        342 => {
-                            ss.__visual_style_handle = pair.as_handle()?;
-                        }
-                        343 => {
-                            ss.__text_style_handle = pair.as_handle()?;
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_sunstudy(&mut self.common, ss, iter)
             }
             ObjectType::TableStyle(ref mut ts) => {
-                let mut read_version = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    match pair.code {
-                        3 => {
-                            ts.description = pair.assert_string()?;
-                        }
-                        7 => {
-                            iter.put_back(Ok(pair)); // let the TableCellStyle reader parse this
-                            if let Some(style) = TableCellStyle::read(iter)? {
-                                ts.cell_styles.push(style);
-                            }
-                        }
-                        40 => {
-                            ts.horizontal_cell_margin = pair.assert_f64()?;
-                        }
-                        41 => {
-                            ts.vertical_cell_margin = pair.assert_f64()?;
-                        }
-                        70 => {
-                            ts.flow_direction = enum_from_number!(
-                                FlowDirection,
-                                Down,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                        }
-                        71 => {
-                            ts.flags = i32::from(pair.assert_i16()?);
-                        }
-                        280 => {
-                            if !read_version {
-                                ts.version =
-                                    enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
-                                read_version = true;
-                            } else {
-                                ts.is_title_suppressed = as_bool(pair.assert_i16()?);
-                            }
-                        }
-                        281 => {
-                            ts.is_column_heading_suppressed = as_bool(pair.assert_i16()?);
-                        }
-                        _ => {
-                            self.common.apply_individual_pair(&pair, iter)?;
-                        }
-                    }
-                }
+                Object::apply_custom_reader_tabletyle(&mut self.common, ts, iter)
             }
             ObjectType::XRecordObject(ref mut xr) => {
-                let mut reading_data = false;
-                loop {
-                    let pair = next_pair!(iter);
-                    if reading_data {
-                        xr.data_pairs.push(pair);
+                Object::apply_custom_reader_xrecordobject(&mut self.common, xr, iter)
+            }
+            _ => Ok(false), // no custom reader
+        }
+    }
+    fn apply_custom_reader_datatable<I>(
+        common: &mut ObjectCommon,
+        data: &mut DataTable,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_column_count = false;
+        let mut read_row_count = false;
+        let mut _current_column_code = 0;
+        let mut current_column = 0;
+        let mut current_row = 0;
+        let mut created_table = false;
+        let mut current_2d_point = Point::origin();
+        let mut current_3d_point = Point::origin();
+
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                1 => {
+                    data.name = pair.assert_string()?;
+                }
+                70 => {
+                    data.field = pair.assert_i16()?;
+                }
+                90 => {
+                    data.column_count = pair.assert_i32()? as usize;
+                    read_column_count = true;
+                }
+                91 => {
+                    data.row_count = pair.assert_i32()? as usize;
+                    read_row_count = true;
+                }
+
+                // column headers
+                2 => {
+                    data.column_names.push(pair.assert_string()?);
+                }
+                92 => {
+                    _current_column_code = pair.assert_i32()?;
+                    current_column += 1;
+                    current_row = 0;
+                }
+
+                // column values
+                3 => {
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Str(pair.assert_string()?),
+                    );
+                }
+                40 => {
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Double(pair.assert_f64()?),
+                    );
+                }
+                71 => {
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Boolean(as_bool(pair.assert_i16()?)),
+                    );
+                }
+                93 => {
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Integer(pair.assert_i32()?),
+                    );
+                }
+                10 => {
+                    current_2d_point.x = pair.assert_f64()?;
+                }
+                20 => {
+                    current_2d_point.y = pair.assert_f64()?;
+                }
+                30 => {
+                    current_2d_point.z = pair.assert_f64()?;
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Point2D(current_2d_point.clone()),
+                    );
+                    current_2d_point = Point::origin();
+                }
+                11 => {
+                    current_3d_point.x = pair.assert_f64()?;
+                }
+                21 => {
+                    current_3d_point.y = pair.assert_f64()?;
+                }
+                31 => {
+                    current_3d_point.z = pair.assert_f64()?;
+                    data.set_value(
+                        current_row,
+                        current_column,
+                        DataTableValue::Point3D(current_3d_point.clone()),
+                    );
+                    current_3d_point = Point::origin();
+                }
+                330 | 331 | 340 | 350 | 360 => {
+                    if read_row_count || read_column_count {
+                        data.set_value(
+                            current_row,
+                            current_column,
+                            DataTableValue::Handle(pair.as_handle()?),
+                        );
                     } else {
-                        if pair.code == 280 {
-                            xr.duplicate_record_handling = enum_from_number!(
-                                DictionaryDuplicateRecordHandling,
-                                NotApplicable,
-                                from_i16,
-                                pair.assert_i16()?
-                            );
-                            reading_data = true;
-                            continue;
-                        }
+                        common.apply_individual_pair(&pair, iter)?;
+                    }
+                }
 
-                        if self.common.apply_individual_pair(&pair, iter)? {
-                            continue;
-                        }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
 
-                        match pair.code {
-                            100 => {
-                                continue;
-                            } // value should be "AcDbXrecord", but it doesn't really matter
-                            5 | 105 => (), // these codes aren't allowed here
-                            _ => {
-                                xr.data_pairs.push(pair);
-                                reading_data = true;
+            if read_row_count && read_column_count && !created_table {
+                for row in 0..data.row_count {
+                    data.values.push(vec![]);
+                    for _ in 0..data.column_count {
+                        data.values[row].push(None);
+                    }
+                }
+                created_table = true;
+            }
+        }
+    }
+    fn apply_custom_reader_dictionary<I>(
+        common: &mut ObjectCommon,
+        dict: &mut Dictionary,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut last_entry_name = String::new();
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                3 => {
+                    last_entry_name = pair.assert_string()?;
+                }
+                280 => {
+                    dict.is_hard_owner = as_bool(pair.assert_i16()?);
+                }
+                281 => {
+                    dict.duplicate_record_handling = enum_from_number!(
+                        DictionaryDuplicateRecordHandling,
+                        NotApplicable,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                350 | 360 => {
+                    let handle = pair.as_handle()?;
+                    dict.value_handles.insert(last_entry_name.clone(), handle);
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_dictionarywithdefault<I>(
+        common: &mut ObjectCommon,
+        dict: &mut DictionaryWithDefault,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut last_entry_name = String::new();
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                3 => {
+                    last_entry_name = pair.assert_string()?;
+                }
+                281 => {
+                    dict.duplicate_record_handling = enum_from_number!(
+                        DictionaryDuplicateRecordHandling,
+                        NotApplicable,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                340 => {
+                    dict.default_handle = pair.as_handle()?;
+                }
+                350 | 360 => {
+                    let handle = pair.as_handle()?;
+                    dict.value_handles.insert(last_entry_name.clone(), handle);
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_layout<I>(
+        common: &mut ObjectCommon,
+        layout: &mut Layout,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut is_reading_plot_settings = true;
+        loop {
+            let pair = next_pair!(iter);
+            if is_reading_plot_settings {
+                if pair.code == 100 && pair.assert_string()? == "AcDbLayout" {
+                    is_reading_plot_settings = false;
+                } else {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            } else {
+                match pair.code {
+                    1 => {
+                        layout.layout_name = pair.assert_string()?;
+                    }
+                    10 => {
+                        layout.minimum_limits.x = pair.assert_f64()?;
+                    }
+                    20 => {
+                        layout.minimum_limits.y = pair.assert_f64()?;
+                    }
+                    11 => {
+                        layout.maximum_limits.x = pair.assert_f64()?;
+                    }
+                    21 => {
+                        layout.maximum_limits.y = pair.assert_f64()?;
+                    }
+                    12 => {
+                        layout.insertion_base_point.x = pair.assert_f64()?;
+                    }
+                    22 => {
+                        layout.insertion_base_point.y = pair.assert_f64()?;
+                    }
+                    32 => {
+                        layout.insertion_base_point.z = pair.assert_f64()?;
+                    }
+                    13 => {
+                        layout.ucs_origin.x = pair.assert_f64()?;
+                    }
+                    23 => {
+                        layout.ucs_origin.y = pair.assert_f64()?;
+                    }
+                    33 => {
+                        layout.ucs_origin.z = pair.assert_f64()?;
+                    }
+                    14 => {
+                        layout.minimum_extents.x = pair.assert_f64()?;
+                    }
+                    24 => {
+                        layout.minimum_extents.y = pair.assert_f64()?;
+                    }
+                    34 => {
+                        layout.minimum_extents.z = pair.assert_f64()?;
+                    }
+                    15 => {
+                        layout.maximum_extents.x = pair.assert_f64()?;
+                    }
+                    25 => {
+                        layout.maximum_extents.y = pair.assert_f64()?;
+                    }
+                    35 => {
+                        layout.maximum_extents.z = pair.assert_f64()?;
+                    }
+                    16 => {
+                        layout.ucs_x_axis.x = pair.assert_f64()?;
+                    }
+                    26 => {
+                        layout.ucs_x_axis.y = pair.assert_f64()?;
+                    }
+                    36 => {
+                        layout.ucs_x_axis.z = pair.assert_f64()?;
+                    }
+                    17 => {
+                        layout.ucs_y_axis.x = pair.assert_f64()?;
+                    }
+                    27 => {
+                        layout.ucs_y_axis.y = pair.assert_f64()?;
+                    }
+                    37 => {
+                        layout.ucs_y_axis.z = pair.assert_f64()?;
+                    }
+                    70 => {
+                        layout.layout_flags = i32::from(pair.assert_i16()?);
+                    }
+                    71 => {
+                        layout.tab_order = i32::from(pair.assert_i16()?);
+                    }
+                    76 => {
+                        layout.ucs_orthographic_type = enum_from_number!(
+                            UcsOrthographicType,
+                            NotOrthographic,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                    }
+                    146 => {
+                        layout.elevation = pair.assert_f64()?;
+                    }
+                    330 => {
+                        layout.__viewport_handle = pair.as_handle()?;
+                    }
+                    345 => {
+                        layout.__table_record_handle = pair.as_handle()?;
+                    }
+                    346 => {
+                        layout.__table_record_base_handle = pair.as_handle()?;
+                    }
+                    _ => {
+                        common.apply_individual_pair(&pair, iter)?;
+                    }
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_lightlist<I>(
+        common: &mut ObjectCommon,
+        ll: &mut LightList,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_version_number = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                1 => {} // don't worry about the light's name; it'll be read from the light entity directly
+                5 => {
+                    if read_version_number {
+                        // pointer to a new light
+                        ll.__lights_handle.push(pair.as_handle()?);
+                    } else {
+                        // might still be the handle
+                        common.apply_individual_pair(&pair, iter)?;;
+                    }
+                }
+                90 => {
+                    if read_version_number {
+                        // count of lights is ignored since it's implicitly set by reading the values
+                    } else {
+                        ll.version = pair.assert_i32()?;
+                        read_version_number = false;
+                    }
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    #[allow(clippy::cognitive_complexity)]
+    fn apply_custom_reader_material<I>(
+        common: &mut ObjectCommon,
+        mat: &mut Material,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_diffuse_map_file_name = false;
+        let mut is_reading_normal = false;
+        let mut read_diffuse_map_blend_factor = false;
+        let mut read_image_file_diffuse_map = false;
+        let mut read_diffuse_map_projection_method = false;
+        let mut read_diffuse_map_tiling_method = false;
+        let mut read_diffuse_map_auto_transform_method = false;
+        let mut read_ambient_color_value = false;
+        let mut read_bump_map_projection_method = false;
+        let mut read_luminance_mode = false;
+        let mut read_bump_map_tiling_method = false;
+        let mut read_normal_map_method = false;
+        let mut read_bump_map_auto_transform_method = false;
+        let mut read_use_image_file_for_refraction_map = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                1 => {
+                    mat.name = pair.assert_string()?;
+                }
+                2 => {
+                    mat.description = pair.assert_string()?;
+                }
+                3 => {
+                    if !read_diffuse_map_file_name {
+                        mat.diffuse_map_file_name = pair.assert_string()?;
+                        read_diffuse_map_file_name = true;
+                    } else {
+                        mat.normal_map_file_name = pair.assert_string()?;
+                        is_reading_normal = true;
+                    }
+                }
+                4 => {
+                    mat.normal_map_file_name = pair.assert_string()?;
+                }
+                6 => {
+                    mat.reflection_map_file_name = pair.assert_string()?;
+                }
+                7 => {
+                    mat.opacity_map_file_name = pair.assert_string()?;
+                }
+                8 => {
+                    mat.bump_map_file_name = pair.assert_string()?;
+                }
+                9 => {
+                    mat.refraction_map_file_name = pair.assert_string()?;
+                }
+                40 => {
+                    mat.ambient_color_factor = pair.assert_f64()?;
+                }
+                41 => {
+                    mat.diffuse_color_factor = pair.assert_f64()?;
+                }
+                42 => {
+                    if !read_diffuse_map_blend_factor {
+                        mat.diffuse_map_blend_factor = pair.assert_f64()?;
+                        read_diffuse_map_blend_factor = true;
+                    } else {
+                        mat.normal_map_blend_factor = pair.assert_f64()?;
+                        is_reading_normal = true;
+                    }
+                }
+                43 => {
+                    if is_reading_normal {
+                        mat.__normal_map_transformation_matrix_values
+                            .push(pair.assert_f64()?);
+                    } else {
+                        mat.__diffuse_map_transformation_matrix_values
+                            .push(pair.assert_f64()?);
+                    }
+                }
+                44 => {
+                    mat.specular_gloss_factor = pair.assert_f64()?;
+                }
+                45 => {
+                    mat.specular_color_factor = pair.assert_f64()?;
+                }
+                46 => {
+                    mat.specular_map_blend_factor = pair.assert_f64()?;
+                }
+                47 => {
+                    mat.__specular_map_transformation_matrix_values
+                        .push(pair.assert_f64()?);
+                }
+                48 => {
+                    mat.reflection_map_blend_factor = pair.assert_f64()?;
+                }
+                49 => {
+                    mat.__reflection_map_transformation_matrix_values
+                        .push(pair.assert_f64()?);
+                }
+                62 => {
+                    mat.gen_proc_color_index_value = Color::from_raw_value(pair.assert_i16()?);
+                }
+                70 => {
+                    mat.override_ambient_color = as_bool(pair.assert_i16()?);
+                }
+                71 => {
+                    mat.override_diffuse_color = as_bool(pair.assert_i16()?);
+                }
+                72 => {
+                    if !read_image_file_diffuse_map {
+                        mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i16()?);
+                        read_image_file_diffuse_map = true;
+                    } else {
+                        mat.use_image_file_for_normal_map = as_bool(pair.assert_i16()?);
+                    }
+                }
+                73 => {
+                    if !read_diffuse_map_projection_method {
+                        mat.diffuse_map_projection_method = enum_from_number!(
+                            MapProjectionMethod,
+                            Planar,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        read_diffuse_map_projection_method = true;
+                    } else {
+                        mat.normal_map_projection_method = enum_from_number!(
+                            MapProjectionMethod,
+                            Planar,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        is_reading_normal = true;
+                    }
+                }
+                74 => {
+                    if !read_diffuse_map_tiling_method {
+                        mat.diffuse_map_tiling_method =
+                            enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                        read_diffuse_map_tiling_method = true;
+                    } else {
+                        mat.normal_map_tiling_method =
+                            enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                        is_reading_normal = true;
+                    }
+                }
+                75 => {
+                    if !read_diffuse_map_auto_transform_method {
+                        mat.diffuse_map_auto_transform_method = enum_from_number!(
+                            MapAutoTransformMethod,
+                            NoAutoTransform,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        read_diffuse_map_auto_transform_method = true;
+                    } else {
+                        mat.normal_map_auto_transform_method = enum_from_number!(
+                            MapAutoTransformMethod,
+                            NoAutoTransform,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        is_reading_normal = true;
+                    }
+                }
+                76 => {
+                    mat.override_specular_color = as_bool(pair.assert_i16()?);
+                }
+                77 => {
+                    mat.use_image_file_for_specular_map = as_bool(pair.assert_i16()?);
+                }
+                78 => {
+                    mat.specular_map_projection_method = enum_from_number!(
+                        MapProjectionMethod,
+                        Planar,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                79 => {
+                    mat.specular_map_tiling_method =
+                        enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                }
+                90 => {
+                    if !read_ambient_color_value {
+                        mat.ambient_color_value = pair.assert_i32()?;
+                        read_ambient_color_value = true;
+                    } else {
+                        mat.self_illumination = pair.assert_i32()?;
+                    }
+                }
+                91 => {
+                    mat.diffuse_color_value = pair.assert_i32()?;
+                }
+                92 => {
+                    mat.specular_color_value = pair.assert_i32()?;
+                }
+                93 => {
+                    mat.illumination_model = pair.assert_i32()?;
+                }
+                94 => {
+                    mat.channel_flags = pair.assert_i32()?;
+                }
+                140 => {
+                    mat.opacity_factor = pair.assert_f64()?;
+                }
+                141 => {
+                    mat.opacity_map_blend_factor = pair.assert_f64()?;
+                }
+                142 => {
+                    mat.__opacity_map_transformation_matrix_values
+                        .push(pair.assert_f64()?);
+                }
+                143 => {
+                    mat.bump_map_blend_factor = pair.assert_f64()?;
+                }
+                144 => {
+                    mat.__bump_map_transformation_matrix_values
+                        .push(pair.assert_f64()?);
+                }
+                145 => {
+                    mat.refraction_index = pair.assert_f64()?;
+                }
+                146 => {
+                    mat.refraction_map_blend_factor = pair.assert_f64()?;
+                }
+                147 => {
+                    mat.__refraction_map_transformation_matrix_values
+                        .push(pair.assert_f64()?);
+                }
+                148 => {
+                    mat.translucence = pair.assert_f64()?;
+                }
+                170 => {
+                    mat.specular_map_auto_transform_method = enum_from_number!(
+                        MapAutoTransformMethod,
+                        NoAutoTransform,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                171 => {
+                    mat.use_image_file_for_reflection_map = as_bool(pair.assert_i16()?);
+                }
+                172 => {
+                    mat.reflection_map_projection_method = enum_from_number!(
+                        MapProjectionMethod,
+                        Planar,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                173 => {
+                    mat.reflection_map_tiling_method =
+                        enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                }
+                174 => {
+                    mat.reflection_map_auto_transform_method = enum_from_number!(
+                        MapAutoTransformMethod,
+                        NoAutoTransform,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                175 => {
+                    mat.use_image_file_for_opacity_map = as_bool(pair.assert_i16()?);
+                }
+                176 => {
+                    mat.opacity_map_projection_method = enum_from_number!(
+                        MapProjectionMethod,
+                        Planar,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                177 => {
+                    mat.opacity_map_tiling_method =
+                        enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                }
+                178 => {
+                    mat.opacity_map_auto_transform_method = enum_from_number!(
+                        MapAutoTransformMethod,
+                        NoAutoTransform,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                179 => {
+                    mat.use_image_file_for_bump_map = as_bool(pair.assert_i16()?);
+                }
+                270 => {
+                    if !read_bump_map_projection_method {
+                        mat.bump_map_projection_method = enum_from_number!(
+                            MapProjectionMethod,
+                            Planar,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        read_bump_map_projection_method = true;
+                    } else if !read_luminance_mode {
+                        mat.luminance_mode = pair.assert_i16()?;
+                        read_luminance_mode = true;
+                    } else {
+                        mat.map_u_tile = pair.assert_i16()?;
+                    }
+                }
+                271 => {
+                    if !read_bump_map_tiling_method {
+                        mat.bump_map_tiling_method =
+                            enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                        read_bump_map_tiling_method = true;
+                    } else if !read_normal_map_method {
+                        mat.normal_map_method = pair.assert_i16()?;
+                        read_normal_map_method = true;
+                    } else {
+                        mat.gen_proc_integer_value = pair.assert_i16()?;
+                    }
+                }
+                272 => {
+                    if !read_bump_map_auto_transform_method {
+                        mat.bump_map_auto_transform_method = enum_from_number!(
+                            MapAutoTransformMethod,
+                            NoAutoTransform,
+                            from_i16,
+                            pair.assert_i16()?
+                        );
+                        read_bump_map_auto_transform_method = true;
+                    } else {
+                        mat.global_illumination_mode = pair.assert_i16()?;
+                    }
+                }
+                273 => {
+                    if !read_use_image_file_for_refraction_map {
+                        mat.use_image_file_for_refraction_map = as_bool(pair.assert_i16()?);
+                        read_use_image_file_for_refraction_map = true;
+                    } else {
+                        mat.final_gather_mode = pair.assert_i16()?;
+                    }
+                }
+                274 => {
+                    mat.refraction_map_projection_method = enum_from_number!(
+                        MapProjectionMethod,
+                        Planar,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                275 => {
+                    mat.refraction_map_tiling_method =
+                        enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                }
+                276 => {
+                    mat.refraction_map_auto_transform_method = enum_from_number!(
+                        MapAutoTransformMethod,
+                        NoAutoTransform,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                }
+                290 => {
+                    mat.is_two_sided = pair.assert_bool()?;
+                }
+                291 => {
+                    mat.gen_proc_boolean_value = pair.assert_bool()?;
+                }
+                292 => {
+                    mat.gen_proc_table_end = pair.assert_bool()?;
+                }
+                293 => {
+                    mat.is_anonymous = pair.assert_bool()?;
+                }
+                300 => {
+                    mat.gen_proc_name = pair.assert_string()?;
+                }
+                301 => {
+                    mat.gen_proc_text_value = pair.assert_string()?;
+                }
+                420 => {
+                    mat.gen_proc_color_rgb_value = pair.assert_i32()?;
+                }
+                430 => {
+                    mat.gen_proc_color_name = pair.assert_string()?;
+                }
+                460 => {
+                    mat.color_bleed_scale = pair.assert_f64()?;
+                }
+                461 => {
+                    mat.indirect_dump_scale = pair.assert_f64()?;
+                }
+                462 => {
+                    mat.reflectance_scale = pair.assert_f64()?;
+                }
+                463 => {
+                    mat.transmittance_scale = pair.assert_f64()?;
+                }
+                464 => {
+                    mat.luminance = pair.assert_f64()?;
+                }
+                465 => {
+                    mat.normal_map_strength = pair.assert_f64()?;
+                    is_reading_normal = true;
+                }
+                468 => {
+                    mat.reflectivity = pair.assert_f64()?;
+                }
+                469 => {
+                    mat.gen_proc_real_value = pair.assert_f64()?;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_mlinestyle<I>(
+        common: &mut ObjectCommon,
+        mline: &mut MLineStyle,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_element_count = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                2 => {
+                    mline.style_name = pair.assert_string()?;
+                }
+                3 => {
+                    mline.description = pair.assert_string()?;
+                }
+                6 => {
+                    mline.__element_line_types.push(pair.assert_string()?);
+                }
+                49 => {
+                    mline.__element_offsets.push(pair.assert_f64()?);
+                }
+                51 => {
+                    mline.start_angle = pair.assert_f64()?;
+                }
+                52 => {
+                    mline.end_angle = pair.assert_f64()?;
+                }
+                62 => {
+                    if read_element_count {
+                        mline
+                            .__element_colors
+                            .push(Color::from_raw_value(pair.assert_i16()?));
+                    } else {
+                        mline.fill_color = Color::from_raw_value(pair.assert_i16()?);
+                    }
+                }
+                70 => {
+                    mline.__flags = i32::from(pair.assert_i16()?);
+                }
+                71 => {
+                    mline.__element_count = i32::from(pair.assert_i16()?);
+                    read_element_count = true;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_sectionsettings<I>(
+        common: &mut ObjectCommon,
+        ss: &mut SectionSettings,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                1 => {
+                    // value should be "SectionTypeSettings", but it doesn't realy matter
+                    while let Some(ts) = SectionTypeSettings::read(iter)? {
+                        ss.geometry_settings.push(ts);
+                    }
+                }
+                90 => {
+                    ss.section_type = pair.assert_i32()?;
+                }
+                91 => (), // generation settings count; we just read as many as we're given
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_sortentstable<I>(
+        common: &mut ObjectCommon,
+        sort: &mut SortentsTable,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut is_ready_for_sort_handles = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                5 => {
+                    if is_ready_for_sort_handles {
+                        sort.__sort_items_handle.push(pair.as_handle()?);
+                    } else {
+                        common.handle = pair.as_handle()?;
+                        is_ready_for_sort_handles = true;
+                    }
+                }
+                100 => {
+                    is_ready_for_sort_handles = true;
+                }
+                330 => {
+                    common.__owner_handle = pair.as_handle()?;
+                    is_ready_for_sort_handles = true;
+                }
+                331 => {
+                    sort.__entities_handle.push(pair.as_handle()?);
+                    is_ready_for_sort_handles = true;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_spatialfilter<I>(
+        common: &mut ObjectCommon,
+        sf: &mut SpatialFilter,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_front_clipping_plane = false;
+        let mut set_inverse_matrix = false;
+        let mut matrix_list = vec![];
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                10 => {
+                    // code 10 always starts a new point
+                    sf.clip_boundary_definition_points.push(Point::origin());
+                    vec_last!(sf.clip_boundary_definition_points).x = pair.assert_f64()?;
+                }
+                20 => {
+                    vec_last!(sf.clip_boundary_definition_points).y = pair.assert_f64()?;
+                }
+                30 => {
+                    vec_last!(sf.clip_boundary_definition_points).z = pair.assert_f64()?;
+                }
+                11 => {
+                    sf.clip_boundary_origin.x = pair.assert_f64()?;
+                }
+                21 => {
+                    sf.clip_boundary_origin.y = pair.assert_f64()?;
+                }
+                31 => {
+                    sf.clip_boundary_origin.z = pair.assert_f64()?;
+                }
+                40 => {
+                    if !read_front_clipping_plane {
+                        sf.front_clipping_plane_distance = pair.assert_f64()?;
+                        read_front_clipping_plane = true;
+                    } else {
+                        matrix_list.push(pair.assert_f64()?);
+                        if matrix_list.len() == 12 {
+                            let matrix = TransformationMatrix::from_vec(&[
+                                matrix_list[0],
+                                matrix_list[1],
+                                matrix_list[2],
+                                0.0,
+                                matrix_list[3],
+                                matrix_list[4],
+                                matrix_list[5],
+                                0.0,
+                                matrix_list[6],
+                                matrix_list[7],
+                                matrix_list[8],
+                                0.0,
+                                matrix_list[9],
+                                matrix_list[10],
+                                matrix_list[11],
+                                0.0,
+                            ]);
+                            matrix_list.clear();
+                            if !set_inverse_matrix {
+                                sf.inverse_transformation_matrix = matrix;
+                                set_inverse_matrix = true;
+                            } else {
+                                sf.transformation_matrix = matrix;
                             }
                         }
                     }
                 }
+                41 => {
+                    sf.back_clipping_plane_distance = pair.assert_f64()?;
+                }
+                70 => (), // boundary point count; we just read as many as we're given
+                71 => {
+                    sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?);
+                }
+                72 => {
+                    sf.is_front_clipping_plane = as_bool(pair.assert_i16()?);
+                }
+                73 => {
+                    sf.is_back_clipping_plane = as_bool(pair.assert_i16()?);
+                }
+                210 => {
+                    sf.clip_boundary_normal.x = pair.assert_f64()?;
+                }
+                220 => {
+                    sf.clip_boundary_normal.y = pair.assert_f64()?;
+                }
+                230 => {
+                    sf.clip_boundary_normal.z = pair.assert_f64()?;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
             }
-            _ => Ok(false), // no custom reader
+        }
+    }
+    fn apply_custom_reader_sunstudy<I>(
+        common: &mut ObjectCommon,
+        ss: &mut SunStudy,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut seen_version = false;
+        let mut reading_hours = false;
+        let mut julian_day = None;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                1 => {
+                    ss.sun_setup_name = pair.assert_string()?;
+                }
+                2 => {
+                    ss.description = pair.assert_string()?;
+                }
+                3 => {
+                    ss.sheet_set_name = pair.assert_string()?;
+                }
+                4 => {
+                    ss.sheet_subset_name = pair.assert_string()?;
+                }
+                40 => {
+                    ss.spacing = pair.assert_f64()?;
+                }
+                70 => {
+                    ss.output_type = pair.assert_i16()?;
+                }
+                73 => {
+                    reading_hours = true;
+                }
+                74 => {
+                    ss.shade_plot_type = pair.assert_i16()?;
+                }
+                75 => {
+                    ss.viewports_per_page = i32::from(pair.assert_i16()?);
+                }
+                76 => {
+                    ss.viewport_distribution_row_count = i32::from(pair.assert_i16()?);
+                }
+                77 => {
+                    ss.viewport_distribution_column_count = i32::from(pair.assert_i16()?);
+                }
+                90 => {
+                    if !seen_version {
+                        ss.version = pair.assert_i32()?;
+                        seen_version = true;
+                    } else {
+                        // after the version, 90 pairs come in julian_day/seconds_past_midnight duals
+                        match julian_day {
+                            Some(jd) => {
+                                let date = as_datetime_local(f64::from(jd));
+                                let date =
+                                    date.add(Duration::seconds(i64::from(pair.assert_i32()?)));
+                                ss.dates.push(date);
+                                julian_day = None;
+                            }
+                            None => {
+                                julian_day = Some(pair.assert_i32()?);
+                            }
+                        }
+                    }
+                }
+                93 => {
+                    ss.start_time_seconds_past_midnight = pair.assert_i32()?;
+                }
+                94 => {
+                    ss.end_time_seconds_past_midnight = pair.assert_i32()?;
+                }
+                95 => {
+                    ss.interval_in_seconds = pair.assert_i32()?;
+                }
+                290 => {
+                    if !reading_hours {
+                        ss.use_subset = pair.assert_bool()?;
+                        reading_hours = true;
+                    } else {
+                        ss.hours.push(i32::from(pair.assert_i16()?));
+                    }
+                }
+                291 => {
+                    ss.select_dates_from_calendar = pair.assert_bool()?;
+                }
+                292 => {
+                    ss.select_range_of_dates = pair.assert_bool()?;
+                }
+                293 => {
+                    ss.lock_viewports = pair.assert_bool()?;
+                }
+                294 => {
+                    ss.label_viewports = pair.assert_bool()?;
+                }
+                340 => {
+                    ss.__page_setup_wizard_handle = pair.as_handle()?;
+                }
+                341 => {
+                    ss.__view_handle = pair.as_handle()?;
+                }
+                342 => {
+                    ss.__visual_style_handle = pair.as_handle()?;
+                }
+                343 => {
+                    ss.__text_style_handle = pair.as_handle()?;
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_tabletyle<I>(
+        common: &mut ObjectCommon,
+        ts: &mut TableStyle,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut read_version = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                3 => {
+                    ts.description = pair.assert_string()?;
+                }
+                7 => {
+                    iter.put_back(Ok(pair)); // let the TableCellStyle reader parse this
+                    if let Some(style) = TableCellStyle::read(iter)? {
+                        ts.cell_styles.push(style);
+                    }
+                }
+                40 => {
+                    ts.horizontal_cell_margin = pair.assert_f64()?;
+                }
+                41 => {
+                    ts.vertical_cell_margin = pair.assert_f64()?;
+                }
+                70 => {
+                    ts.flow_direction =
+                        enum_from_number!(FlowDirection, Down, from_i16, pair.assert_i16()?);
+                }
+                71 => {
+                    ts.flags = i32::from(pair.assert_i16()?);
+                }
+                280 => {
+                    if !read_version {
+                        ts.version =
+                            enum_from_number!(Version, R2010, from_i16, pair.assert_i16()?);
+                        read_version = true;
+                    } else {
+                        ts.is_title_suppressed = as_bool(pair.assert_i16()?);
+                    }
+                }
+                281 => {
+                    ts.is_column_heading_suppressed = as_bool(pair.assert_i16()?);
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
+    fn apply_custom_reader_xrecordobject<I>(
+        common: &mut ObjectCommon,
+        xr: &mut XRecordObject,
+        iter: &mut PutBack<I>,
+    ) -> DxfResult<bool>
+    where
+        I: Iterator<Item = DxfResult<CodePair>>,
+    {
+        let mut reading_data = false;
+        loop {
+            let pair = next_pair!(iter);
+            if reading_data {
+                xr.data_pairs.push(pair);
+            } else {
+                if pair.code == 280 {
+                    xr.duplicate_record_handling = enum_from_number!(
+                        DictionaryDuplicateRecordHandling,
+                        NotApplicable,
+                        from_i16,
+                        pair.assert_i16()?
+                    );
+                    reading_data = true;
+                    continue;
+                }
+
+                if common.apply_individual_pair(&pair, iter)? {
+                    continue;
+                }
+
+                match pair.code {
+                    100 => {
+                        continue;
+                    } // value should be "AcDbXrecord", but it doesn't really matter
+                    5 | 105 => (), // these codes aren't allowed here
+                    _ => {
+                        xr.data_pairs.push(pair);
+                        reading_data = true;
+                    }
+                }
+            }
         }
     }
     pub(crate) fn write<T>(
