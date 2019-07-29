@@ -97,6 +97,7 @@ pub(crate) fn as_double_utc(date: DateTime<Utc>) -> f64 {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn as_double_conversion_test() {
     // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
     assert_eq!(
@@ -225,8 +226,9 @@ pub(crate) fn parse_f64(s: String, offset: usize) -> DxfResult<f64> {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn parse_f64_test() {
-    assert_eq!(3.14, parse_f64("  3.14 ".to_string(), 0).unwrap());
+    assert_eq!(2.5, parse_f64("  2.5 ".to_string(), 0).unwrap());
 }
 
 pub(crate) fn parse_i32(s: String, offset: usize) -> DxfResult<i32> {

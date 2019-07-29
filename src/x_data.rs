@@ -107,76 +107,64 @@ impl XDataItem {
     where
         I: Iterator<Item = DxfResult<CodePair>>,
     {
-        loop {
-            match pair.code {
-                XDATA_STRING => return Ok(XDataItem::Str(pair.assert_string()?)),
-                XDATA_CONTROLGROUP => {
-                    let mut items = vec![];
-                    loop {
-                        let pair = match iter.next() {
-                            Some(Ok(pair)) => {
-                                if pair.code < XDATA_STRING {
-                                    return Err(DxfError::UnexpectedCodePair(
-                                        pair,
-                                        String::from("expected XDATA item"),
-                                    ));
-                                }
-                                pair
+        match pair.code {
+            XDATA_STRING => Ok(XDataItem::Str(pair.assert_string()?)),
+            XDATA_CONTROLGROUP => {
+                let mut items = vec![];
+                loop {
+                    let pair = match iter.next() {
+                        Some(Ok(pair)) => {
+                            if pair.code < XDATA_STRING {
+                                return Err(DxfError::UnexpectedCodePair(
+                                    pair,
+                                    String::from("expected XDATA item"),
+                                ));
                             }
-                            Some(Err(e)) => return Err(e),
-                            None => return Err(DxfError::UnexpectedEndOfInput),
-                        };
-                        if pair.code == XDATA_CONTROLGROUP && pair.assert_string()? == "}" {
-                            // end of group
-                            break;
+                            pair
                         }
-
-                        items.push(XDataItem::read_item(&pair, iter)?);
+                        Some(Err(e)) => return Err(e),
+                        None => return Err(DxfError::UnexpectedEndOfInput),
+                    };
+                    if pair.code == XDATA_CONTROLGROUP && pair.assert_string()? == "}" {
+                        // end of group
+                        break;
                     }
-                    return Ok(XDataItem::ControlGroup(items));
+
+                    items.push(XDataItem::read_item(&pair, iter)?);
                 }
-                XDATA_LAYER => return Ok(XDataItem::LayerName(pair.assert_string()?)),
-                XDATA_BINARYDATA => {
-                    let mut data = vec![];
-                    parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?;
-                    return Ok(XDataItem::BinaryData(data));
-                }
-                XDATA_HANDLE => return Ok(XDataItem::Handle(pair.as_handle()?)),
-                XDATA_THREEREALS => {
-                    return Ok(XDataItem::ThreeReals(
-                        pair.assert_f64()?,
-                        XDataItem::read_double(iter, pair.code)?,
-                        XDataItem::read_double(iter, pair.code)?,
-                    ))
-                }
-                XDATA_WORLDSPACEDISPLACEMENT => {
-                    return Ok(XDataItem::WorldSpaceDisplacement(XDataItem::read_point(
-                        iter,
-                        pair.assert_f64()?,
-                        pair.code,
-                    )?))
-                }
-                XDATA_WORLDSPACEPOSITION => {
-                    return Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(
-                        iter,
-                        pair.assert_f64()?,
-                        pair.code,
-                    )?))
-                }
-                XDATA_WORLDDIRECTION => {
-                    return Ok(XDataItem::WorldDirection(XDataItem::read_vector(
-                        iter,
-                        pair.assert_f64()?,
-                        pair.code,
-                    )?))
-                }
-                XDATA_REAL => return Ok(XDataItem::Real(pair.assert_f64()?)),
-                XDATA_DISTANCE => return Ok(XDataItem::Distance(pair.assert_f64()?)),
-                XDATA_SCALEFACTOR => return Ok(XDataItem::ScaleFactor(pair.assert_f64()?)),
-                XDATA_INTEGER => return Ok(XDataItem::Integer(pair.assert_i16()?)),
-                XDATA_LONG => return Ok(XDataItem::Long(pair.assert_i32()?)),
-                _ => return Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
+                Ok(XDataItem::ControlGroup(items))
             }
+            XDATA_LAYER => Ok(XDataItem::LayerName(pair.assert_string()?)),
+            XDATA_BINARYDATA => {
+                let mut data = vec![];
+                parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?;
+                Ok(XDataItem::BinaryData(data))
+            }
+            XDATA_HANDLE => Ok(XDataItem::Handle(pair.as_handle()?)),
+            XDATA_THREEREALS => Ok(XDataItem::ThreeReals(
+                pair.assert_f64()?,
+                XDataItem::read_double(iter, pair.code)?,
+                XDataItem::read_double(iter, pair.code)?,
+            )),
+            XDATA_WORLDSPACEDISPLACEMENT => Ok(XDataItem::WorldSpaceDisplacement(
+                XDataItem::read_point(iter, pair.assert_f64()?, pair.code)?,
+            )),
+            XDATA_WORLDSPACEPOSITION => Ok(XDataItem::WorldSpacePosition(XDataItem::read_point(
+                iter,
+                pair.assert_f64()?,
+                pair.code,
+            )?)),
+            XDATA_WORLDDIRECTION => Ok(XDataItem::WorldDirection(XDataItem::read_vector(
+                iter,
+                pair.assert_f64()?,
+                pair.code,
+            )?)),
+            XDATA_REAL => Ok(XDataItem::Real(pair.assert_f64()?)),
+            XDATA_DISTANCE => Ok(XDataItem::Distance(pair.assert_f64()?)),
+            XDATA_SCALEFACTOR => Ok(XDataItem::ScaleFactor(pair.assert_f64()?)),
+            XDATA_INTEGER => Ok(XDataItem::Integer(pair.assert_i16()?)),
+            XDATA_LONG => Ok(XDataItem::Long(pair.assert_i32()?)),
+            _ => Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
         }
     }
     fn read_double<T>(iter: &mut PutBack<T>, expected_code: i32) -> DxfResult<f64>
