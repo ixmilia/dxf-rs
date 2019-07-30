@@ -9,13 +9,29 @@ mod test_helper_generator;
 mod xml_helpers;
 
 use std::env;
-use std::fs::File;
+use std::error::Error;
+use std::fmt::Debug;
+use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 
 include!("../src/expected_type.rs");
 
-fn main() {
+fn main() -> Result<(), Box<Error>> {
+    // watch everything under the `build/` and `spec/` directories and also one specific file
+    rerun_if_changed("src/expected_type.rs");
+    let dirs_to_watch = vec!["build/", "spec/"];
+    for sub_dir in dirs_to_watch {
+        rerun_if_changed(sub_dir);
+        let path = Path::new(&sub_dir);
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            if entry.file_type()?.is_file() {
+                rerun_if_changed(&entry.path().as_os_str());
+            }
+        }
+    }
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let generated_dir = Path::new(&out_dir).join("generated");
     let _ = std::fs::create_dir(&generated_dir); // might fail if it's already there
@@ -36,7 +52,12 @@ pub mod tables;
 
     test_helper_generator::generate_test_helpers(&generated_dir);
 
-    // only watch the `build/` and `spec/` directories
-    println!("cargo:rerun-if-changed=build/");
-    println!("cargo:rerun-if-changed=spec/");
+    Ok(())
+}
+
+fn rerun_if_changed<S: Debug + ?Sized>(s: &S) {
+    let s = format!("{:?}", s)
+        .replace("\\\\", "/") // normalize directory separators
+        .replace("\"", ""); // ignore surrounding quotes
+    println!("cargo:rerun-if-changed={}", s);
 }
