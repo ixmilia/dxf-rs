@@ -100,7 +100,7 @@ fn round_trip() {
 #[test]
 fn parse_with_leading_bom() {
     let buf = vec![
-        0xFEu8, 0xFF, // UTF-8 representation of BOM
+        0xEFu8, 0xBB, 0xBF, // UTF-8 byte representation of BOM
         '0' as u8, '\n' as u8, 'E' as u8, 'O' as u8, 'F' as u8,
     ];
     let _drawing = Drawing::load(&mut buf.as_slice());

@@ -287,7 +287,7 @@ where
             Err(e) => return Some(Err(DxfError::IoError(e))),
         };
         match (i, c) {
-            (0, 0xFE) | (1, 0xFF) => (),
+            (0, 0xEF) | (1, 0xBB) | (2, 0xBF) => (), // skip UTF-8 BOM
             _ => {
                 let c = c as char;
                 if c == '\n' {
