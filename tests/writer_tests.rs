@@ -2,8 +2,8 @@
 
 extern crate dxf;
 
-use std::io::{Cursor, Seek, SeekFrom};
 use self::dxf::*;
+use std::io::{Cursor, Seek, SeekFrom};
 
 mod test_helpers;
 
