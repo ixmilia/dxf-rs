@@ -1,12 +1,13 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use std::io::Write;
+use std::io::{Read, Write};
 
 use {
     CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
     ExtensionGroup, Point, XData,
 };
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
 use entities::Entity;
 use entity_iter::EntityIter;
@@ -15,8 +16,6 @@ use extension_data;
 use handle_tracker::HandleTracker;
 use helper_functions::*;
 use x_data;
-
-use itertools::PutBack;
 
 /// A block is a collection of entities.
 #[derive(Clone)]
@@ -125,9 +124,12 @@ impl Default for Block {
 
 // internal visibility only
 impl Block {
-    pub(crate) fn read_block<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn read_block<I>(
+        drawing: &mut Drawing,
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         // match code pair:
         //   0/ENDBLK -> swallow code pairs and return

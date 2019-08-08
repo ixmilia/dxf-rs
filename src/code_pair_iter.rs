@@ -2,6 +2,7 @@
 
 use {CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
 
+use code_pair_value::un_escape_ascii_to_unicode;
 use helper_functions::*;
 use std::io::Read;
 
@@ -9,7 +10,8 @@ pub(crate) struct CodePairIter<T: Read> {
     reader: T,
     first_line: String,
     read_first_line: bool,
-    read_as_ascii: bool,
+    read_as_text: bool,
+    read_text_as_utf8: bool,
     binary_detection_complete: bool,
     offset: usize,
 }
@@ -20,12 +22,16 @@ impl<T: Read> CodePairIter<T> {
             reader,
             first_line,
             read_first_line: false,
-            read_as_ascii: true,
+            read_as_text: true,
+            read_text_as_utf8: false,
             binary_detection_complete: false,
             offset: 0,
         }
     }
-    fn detect_binary_or_ascii_file(&mut self) -> DxfResult<()> {
+    pub fn read_as_utf8(&mut self) {
+        self.read_text_as_utf8 = true;
+    }
+    fn detect_binary_or_text_file(&mut self) -> DxfResult<()> {
         match &*self.first_line {
             "AutoCAD Binary DXF" => {
                 // swallow the next two bytes
@@ -39,18 +45,18 @@ impl<T: Read> CodePairIter<T> {
                     0x00,
                     19
                 );
-                self.read_as_ascii = false;
+                self.read_as_text = false;
                 self.offset = 20;
             }
             _ => {
-                self.read_as_ascii = true;
+                self.read_as_text = true;
                 self.offset = 1;
             }
         }
         self.binary_detection_complete = true;
         Ok(())
     }
-    fn read_code_pair_ascii(&mut self) -> Option<DxfResult<CodePair>> {
+    fn read_code_pair_text(&mut self) -> Option<DxfResult<CodePair>> {
         // Read code.  If no line is available, fail gracefully.
         let code_line = if self.read_first_line {
             self.offset += 1;
@@ -105,7 +111,13 @@ impl<T: Read> CodePairIter<T> {
                 CodePairValue::Double(try_into_option!(parse_f64(value_line, self.offset)))
             }
             ExpectedType::Str => {
-                CodePairValue::Str(CodePairValue::un_escape_string(&value_line).into_owned())
+                let value_line = if self.read_text_as_utf8 {
+                    value_line
+                } else {
+                    un_escape_ascii_to_unicode(&value_line)
+                };
+                let value_line = CodePairValue::un_escape_string(&value_line);
+                CodePairValue::Str(value_line.into_owned())
             }
         };
 
@@ -179,14 +191,14 @@ impl<T: Read> Iterator for CodePairIter<T> {
     fn next(&mut self) -> Option<DxfResult<CodePair>> {
         loop {
             if !self.binary_detection_complete {
-                match self.detect_binary_or_ascii_file() {
+                match self.detect_binary_or_text_file() {
                     Ok(_) => (),
                     Err(e) => return Some(Err(e)),
                 }
             }
 
-            let pair = if self.read_as_ascii {
-                self.read_code_pair_ascii()
+            let pair = if self.read_as_text {
+                self.read_code_pair_text()
             } else {
                 self.read_code_pair_binary()
             };

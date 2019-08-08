@@ -3,8 +3,8 @@
 // other implementation is in `generated/objects.rs`
 
 use enum_primitive::FromPrimitive;
-use itertools::{Itertools, PutBack};
-use std::io::Write;
+use itertools::Itertools;
+use std::io::{Read, Write};
 use std::ops::Add;
 
 extern crate chrono;
@@ -15,6 +15,7 @@ use {
     TableCellStyle, TransformationMatrix,
 };
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
 use enums::*;
 use handle_tracker::HandleTracker;
@@ -116,9 +117,9 @@ impl Object {
         self.common.normalize();
         // no object-specific values to set
     }
-    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<Object>>
+    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<Object>>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         loop {
             match iter.next() {
@@ -181,9 +182,13 @@ impl Object {
             }
         }
     }
-    fn apply_code_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>
+    fn apply_code_pair<I>(
+        &mut self,
+        pair: &CodePair,
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         if !self.specific.try_apply_code_pair(&pair)? {
             self.common.apply_individual_pair(&pair, iter)?;
@@ -296,9 +301,9 @@ impl Object {
 
         Ok(())
     }
-    fn apply_custom_reader<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
+    fn apply_custom_reader<I>(&mut self, iter: &mut CodePairPutBack<I>) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         match self.specific {
             ObjectType::DataTable(ref mut data) => {
@@ -346,10 +351,10 @@ impl Object {
     fn apply_custom_reader_datatable<I>(
         common: &mut ObjectCommon,
         data: &mut DataTable,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_column_count = false;
         let mut read_row_count = false;
@@ -478,10 +483,10 @@ impl Object {
     fn apply_custom_reader_dictionary<I>(
         common: &mut ObjectCommon,
         dict: &mut Dictionary,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut last_entry_name = String::new();
         loop {
@@ -514,10 +519,10 @@ impl Object {
     fn apply_custom_reader_dictionarywithdefault<I>(
         common: &mut ObjectCommon,
         dict: &mut DictionaryWithDefault,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut last_entry_name = String::new();
         loop {
@@ -550,10 +555,10 @@ impl Object {
     fn apply_custom_reader_layout<I>(
         common: &mut ObjectCommon,
         layout: &mut Layout,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut is_reading_plot_settings = true;
         loop {
@@ -671,10 +676,10 @@ impl Object {
     fn apply_custom_reader_lightlist<I>(
         common: &mut ObjectCommon,
         ll: &mut LightList,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_version_number = false;
         loop {
@@ -708,10 +713,10 @@ impl Object {
     fn apply_custom_reader_material<I>(
         common: &mut ObjectCommon,
         mat: &mut Material,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_diffuse_map_file_name = false;
         let mut is_reading_normal = false;
@@ -1122,10 +1127,10 @@ impl Object {
     fn apply_custom_reader_mlinestyle<I>(
         common: &mut ObjectCommon,
         mline: &mut MLineStyle,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_element_count = false;
         loop {
@@ -1174,10 +1179,10 @@ impl Object {
     fn apply_custom_reader_sectionsettings<I>(
         common: &mut ObjectCommon,
         ss: &mut SectionSettings,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         loop {
             let pair = next_pair!(iter);
@@ -1201,10 +1206,10 @@ impl Object {
     fn apply_custom_reader_sortentstable<I>(
         common: &mut ObjectCommon,
         sort: &mut SortentsTable,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut is_ready_for_sort_handles = false;
         loop {
@@ -1238,10 +1243,10 @@ impl Object {
     fn apply_custom_reader_spatialfilter<I>(
         common: &mut ObjectCommon,
         sf: &mut SpatialFilter,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_front_clipping_plane = false;
         let mut set_inverse_matrix = false;
@@ -1335,10 +1340,10 @@ impl Object {
     fn apply_custom_reader_sunstudy<I>(
         common: &mut ObjectCommon,
         ss: &mut SunStudy,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut seen_version = false;
         let mut reading_hours = false;
@@ -1449,10 +1454,10 @@ impl Object {
     fn apply_custom_reader_tabletyle<I>(
         common: &mut ObjectCommon,
         ts: &mut TableStyle,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut read_version = false;
         loop {
@@ -1501,10 +1506,10 @@ impl Object {
     fn apply_custom_reader_xrecordobject<I>(
         common: &mut ObjectCommon,
         xr: &mut XRecordObject,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
     ) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut reading_data = false;
         loop {

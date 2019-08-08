@@ -34,6 +34,7 @@ use ::{
     Vector,
     XData,
 };
+use ::code_pair_put_back::CodePairPutBack;
 use ::code_pair_writer::CodePairWriter;
 use ::extension_data;
 use ::handle_tracker::HandleTracker;
@@ -45,8 +46,7 @@ use enums::*;
 use enum_primitive::FromPrimitive;
 use objects::*;
 
-use itertools::PutBack;
-use std::io::Write;
+use std::io::{Read, Write};
 ".trim_start());
     fun.push_str("\n");
     generate_base_entity(&mut fun, &element);
@@ -157,8 +157,8 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     }
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<()>\n");
-    fun.push_str("        where I: Iterator<Item = DxfResult<CodePair>> {\n");
+    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n");
+    fun.push_str("        where I: Read {\n");
     fun.push_str("\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
@@ -550,7 +550,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     }
 
     fun.push_str("        }\n");
-    fun.push_str("        return Ok(true);\n");
+    fun.push_str("        Ok(true)\n");
     fun.push_str("    }\n");
 }
 

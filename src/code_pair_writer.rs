@@ -5,6 +5,7 @@ use std::io::Write;
 extern crate byteorder;
 use self::byteorder::{LittleEndian, WriteBytesExt};
 
+use code_pair_value::{escape_control_characters, escape_unicode_to_ascii};
 use {CodePair, CodePairValue, DxfResult};
 
 pub(crate) struct CodePairWriter<'a, T>
@@ -12,15 +13,20 @@ where
     T: Write + ?Sized + 'a,
 {
     writer: &'a mut T,
-    as_ascii: bool,
+    as_text: bool,
+    text_as_ascii: bool,
 }
 
 impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
-    pub fn new(writer: &'a mut T, as_ascii: bool) -> Self {
-        CodePairWriter { writer, as_ascii }
+    pub fn new(writer: &'a mut T, as_text: bool, text_as_ascii: bool) -> Self {
+        CodePairWriter {
+            writer,
+            as_text,
+            text_as_ascii,
+        }
     }
     pub fn write_prelude(&mut self) -> DxfResult<()> {
-        if !self.as_ascii {
+        if !self.as_text {
             self.writer
                 .write_fmt(format_args!("AutoCAD Binary DXF\r\n"))?;
             self.writer.write_u8(0x1A)?;
@@ -30,7 +36,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
         Ok(())
     }
     pub fn write_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
-        if self.as_ascii {
+        if self.as_text {
             self.write_ascii_code_pair(pair)
         } else {
             self.write_binary_code_pair(pair)
@@ -39,8 +45,20 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
     fn write_ascii_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
         self.writer
             .write_fmt(format_args!("{: >3}\r\n", pair.code))?;
-        self.writer
-            .write_fmt(format_args!("{:?}\r\n", &pair.value))?;
+        match pair.value {
+            CodePairValue::Str(ref s) => {
+                let s = escape_control_characters(&s);
+                let s = if self.text_as_ascii {
+                    escape_unicode_to_ascii(&s)
+                } else {
+                    s
+                };
+                self.writer.write_fmt(format_args!("{}\r\n", s))?;
+            }
+            _ => self
+                .writer
+                .write_fmt(format_args!("{:?}\r\n", &pair.value))?,
+        };
         Ok(())
     }
     fn write_binary_code_pair(&mut self, pair: &CodePair) -> DxfResult<()> {
@@ -60,7 +78,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
             CodePairValue::Short(s) => self.writer.write_i16::<LittleEndian>(s)?,
             CodePairValue::Double(d) => self.writer.write_f64::<LittleEndian>(d)?,
             CodePairValue::Str(ref s) => {
-                for &b in CodePairValue::escape_string(s).as_bytes() {
+                for &b in escape_control_characters(s).as_bytes() {
                     self.writer.write_u8(b)?;
                 }
 

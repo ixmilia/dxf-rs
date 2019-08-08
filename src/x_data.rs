@@ -1,10 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use itertools::PutBack;
-use std::io::Write;
+use std::io::{Read, Write};
 
 use {CodePair, DxfError, DxfResult, Point, Vector};
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
 use enums::AcadVersion;
 use helper_functions::*;
@@ -54,9 +54,12 @@ pub enum XDataItem {
 }
 
 impl XData {
-    pub(crate) fn read_item<I>(application_name: String, iter: &mut PutBack<I>) -> DxfResult<XData>
+    pub(crate) fn read_item<I>(
+        application_name: String,
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<XData>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut xdata = XData {
             application_name,
@@ -103,9 +106,9 @@ impl XData {
 }
 
 impl XDataItem {
-    fn read_item<I>(pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<XDataItem>
+    fn read_item<I>(pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<XDataItem>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         match pair.code {
             XDATA_STRING => Ok(XDataItem::Str(pair.assert_string()?)),
@@ -167,9 +170,9 @@ impl XDataItem {
             _ => Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
         }
     }
-    fn read_double<T>(iter: &mut PutBack<T>, expected_code: i32) -> DxfResult<f64>
+    fn read_double<T>(iter: &mut CodePairPutBack<T>, expected_code: i32) -> DxfResult<f64>
     where
-        T: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         match iter.next() {
             Some(Ok(ref pair)) if pair.code == expected_code => Ok(pair.assert_f64()?),
@@ -178,9 +181,13 @@ impl XDataItem {
             None => Err(DxfError::UnexpectedEndOfInput),
         }
     }
-    fn read_point<I>(iter: &mut PutBack<I>, first: f64, expected_code: i32) -> DxfResult<Point>
+    fn read_point<I>(
+        iter: &mut CodePairPutBack<I>,
+        first: f64,
+        expected_code: i32,
+    ) -> DxfResult<Point>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         Ok(Point::new(
             first,
@@ -188,9 +195,13 @@ impl XDataItem {
             XDataItem::read_double(iter, expected_code)?,
         ))
     }
-    fn read_vector<I>(iter: &mut PutBack<I>, first: f64, expected_code: i32) -> DxfResult<Vector>
+    fn read_vector<I>(
+        iter: &mut CodePairPutBack<I>,
+        first: f64,
+        expected_code: i32,
+    ) -> DxfResult<Vector>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         Ok(Vector::new(
             first,

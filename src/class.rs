@@ -1,14 +1,13 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use std::io::Write;
+use std::io::{Read, Write};
 
 use {CodePair, Drawing, DxfError, DxfResult};
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
 use enums::*;
 use helper_functions::*;
-
-use itertools::PutBack;
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
 #[derive(Clone)]
@@ -121,9 +120,12 @@ impl Default for Class {
 
 // internal visibility only
 impl Class {
-    pub(crate) fn read_classes<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn read_classes<I>(
+        drawing: &mut Drawing,
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         loop {
             match iter.next() {
@@ -181,9 +183,13 @@ impl Class {
 
 // private implementation
 impl Class {
-    fn read_class<I>(typ: &str, drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    fn read_class<I>(
+        typ: &str,
+        drawing: &mut Drawing,
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut class = Class::default();
 

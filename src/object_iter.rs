@@ -1,14 +1,15 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use itertools::PutBack;
-use objects::Object;
-use {CodePair, DxfResult};
+use std::io::Read;
 
-pub(crate) struct ObjectIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
-    pub iter: &'a mut PutBack<I>,
+use code_pair_put_back::CodePairPutBack;
+use objects::Object;
+
+pub(crate) struct ObjectIter<'a, I: 'a + Read> {
+    pub iter: &'a mut CodePairPutBack<I>,
 }
 
-impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for ObjectIter<'a, I> {
+impl<'a, I: 'a + Read> Iterator for ObjectIter<'a, I> {
     type Item = Object;
 
     fn next(&mut self) -> Option<Object> {

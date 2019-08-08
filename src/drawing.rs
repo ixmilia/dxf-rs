@@ -6,6 +6,7 @@ use self::byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 extern crate image;
 use self::image::DynamicImage;
 
+use code_pair_put_back::CodePairPutBack;
 use drawing_item::{DrawingItem, DrawingItemMut};
 use entities::*;
 use enums::*;
@@ -31,7 +32,7 @@ use code_pair_writer::CodePairWriter;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 
-use itertools::{put_back, PutBack};
+use itertools::put_back;
 use std::collections::HashSet;
 use std::iter::Iterator;
 use std::path::Path;
@@ -115,7 +116,7 @@ impl Drawing {
                 let reader = CodePairIter::new(reader, first_line);
                 let mut drawing = Drawing::default();
                 drawing.clear();
-                let mut iter = put_back(reader);
+                let mut iter = CodePairPutBack::from_code_pair_iter(reader);
                 Drawing::read_sections(&mut drawing, &mut iter)?;
                 match iter.next() {
                     Some(Ok(CodePair {
@@ -158,11 +159,13 @@ impl Drawing {
     where
         T: Write + ?Sized,
     {
+        let text_as_ascii = self.header.version <= AcadVersion::R2004;
+
         // write to memory while tracking the used handle values
         let mut buf = vec![];
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         {
-            let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii);
+            let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii, text_as_ascii);
             let write_handles =
                 self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
             self.write_classes(&mut code_pair_writer)?;
@@ -176,7 +179,7 @@ impl Drawing {
 
         // write header to the final location
         {
-            let mut final_writer = CodePairWriter::new(writer, as_ascii);
+            let mut final_writer = CodePairWriter::new(writer, as_ascii, text_as_ascii);
             final_writer.write_prelude()?;
             self.header
                 .write(&mut final_writer, handle_tracker.get_current_next_handle())?;
@@ -519,9 +522,9 @@ impl Drawing {
         }
         Ok(())
     }
-    fn read_sections<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>
+    fn read_sections<T>(drawing: &mut Drawing, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         loop {
             match iter.next() {
@@ -598,9 +601,9 @@ impl Drawing {
 
         Ok(())
     }
-    fn swallow_section<I>(iter: &mut PutBack<I>) -> DxfResult<()>
+    fn swallow_section<T>(iter: &mut CodePairPutBack<T>) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         loop {
             match iter.next() {
@@ -617,17 +620,17 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_entities<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
+    fn read_entities<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         let mut iter = EntityIter { iter };
         iter.read_entities_into_vec(&mut self.entities)?;
         Ok(())
     }
-    fn read_objects<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<()>
+    fn read_objects<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         let iter = put_back(ObjectIter { iter });
         for obj in iter {
@@ -636,9 +639,9 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_thumbnail<I>(&mut self, iter: &mut PutBack<I>) -> DxfResult<bool>
+    fn read_thumbnail<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<bool>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         // get the length; we don't really care about this since we'll just read whatever's there
         let length_pair = next_pair!(iter);
@@ -721,13 +724,13 @@ impl Drawing {
     }
     fn read_section_item<I, F>(
         &mut self,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
         item_type: &str,
         callback: F,
     ) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
-        F: Fn(&mut Drawing, &mut PutBack<I>) -> DxfResult<()>,
+        I: Read,
+        F: Fn(&mut Drawing, &mut CodePairPutBack<I>) -> DxfResult<()>,
     {
         loop {
             match iter.next() {
@@ -757,9 +760,9 @@ impl Drawing {
 
         Ok(())
     }
-    pub(crate) fn swallow_table<I>(iter: &mut PutBack<I>) -> DxfResult<()>
+    pub(crate) fn swallow_table<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<()>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         loop {
             match iter.next() {

@@ -39,6 +39,7 @@ use ::{
     Vector,
     XData,
 };
+use ::code_pair_put_back::CodePairPutBack;
 use ::code_pair_writer::CodePairWriter;
 use ::extension_data;
 use ::handle_tracker::HandleTracker;
@@ -49,9 +50,8 @@ use ::x_data;
 use entities::*;
 use enums::*;
 use enum_primitive::FromPrimitive;
-use itertools::PutBack;
 use std::collections::HashMap;
-use std::io::Write;
+use std::io::{Read, Write};
 
 extern crate chrono;
 use self::chrono::{DateTime, Local};
@@ -163,8 +163,8 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     }
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut PutBack<I>) -> DxfResult<bool>\n");
-    fun.push_str("        where I: Iterator<Item = DxfResult<CodePair>> {\n");
+    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<bool>\n");
+    fun.push_str("        where I: Read {\n");
     fun.push_str("\n");
     fun.push_str("        match pair.code {\n");
     for c in &object.children {

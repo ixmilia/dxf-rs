@@ -279,25 +279,28 @@ pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
 where
     T: Read + ?Sized,
 {
-    let mut result = String::new();
-    let bytes = reader.bytes();
-    for (i, c) in bytes.enumerate() {
-        let c = match c {
-            Ok(c) => c,
+    let mut bytes = vec![];
+    let reader_bytes = reader.bytes();
+    for (i, b) in reader_bytes.enumerate() {
+        let b = match b {
+            Ok(b) => b,
             Err(e) => return Some(Err(DxfError::IoError(e))),
         };
-        match (i, c) {
+        match (i, b) {
             (0, 0xEF) | (1, 0xBB) | (2, 0xBF) => (), // skip UTF-8 BOM
             _ => {
-                let c = c as char;
-                if c == '\n' {
+                if b == b'\n' {
                     break;
                 }
-                result.push(c);
+                bytes.push(b);
             }
         }
     }
 
+    let mut result = match String::from_utf8(bytes) {
+        Ok(s) => s,
+        Err(_) => return Some(Err(DxfError::MalformedString)),
+    };
     if result.ends_with('\r') {
         result.pop();
     }

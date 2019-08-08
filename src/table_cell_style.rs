@@ -1,9 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use std::io::Read;
 use {CodePair, Color, DxfResult};
 
+use code_pair_put_back::CodePairPutBack;
 use helper_functions::*;
-use itertools::PutBack;
 
 /// Defines a style for a table's cell.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -40,9 +41,9 @@ pub struct TableCellStyle {
 // internal visibility only
 impl TableCellStyle {
     #[allow(clippy::cognitive_complexity)]
-    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<TableCellStyle>>
+    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<TableCellStyle>>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         let mut seen_name = false;
         let mut style = TableCellStyle::default();

@@ -25,6 +25,7 @@ pub enum DxfError {
     ExpectedTableType(usize),
     WrongValueType(usize),
     InvalidBinaryFile,
+    MalformedString,
     WrongItemType,
 }
 
@@ -90,6 +91,7 @@ impl fmt::Display for DxfError {
                 o
             ),
             DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
+            DxfError::MalformedString => write!(formatter, "the string is malformed"),
             DxfError::WrongItemType => write!(formatter, "the specified item type is not correct"),
         }
     }
@@ -116,6 +118,7 @@ impl error::Error for DxfError {
             DxfError::ExpectedTableType(_) => "a 2/<table-type> code pair was expected",
             DxfError::WrongValueType(_) => "the CodePairValue does not contain the requested type",
             DxfError::InvalidBinaryFile => "the binary file is invalid",
+            DxfError::MalformedString => "the string is malformed",
             DxfError::WrongItemType => "the specified item type is not correct",
         }
     }

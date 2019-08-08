@@ -1,10 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use itertools::PutBack;
-use std::io::Write;
+use std::io::{Read, Write};
 
 use {CodePair, DxfError, DxfResult};
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
 
 pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
@@ -28,11 +28,11 @@ pub enum ExtensionGroupItem {
 impl ExtensionGroup {
     pub(crate) fn read_group<I>(
         application_name: String,
-        iter: &mut PutBack<I>,
+        iter: &mut CodePairPutBack<I>,
         offset: usize,
     ) -> DxfResult<ExtensionGroup>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         if !application_name.starts_with('{') {
             return Err(DxfError::ParseError(offset));

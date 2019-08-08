@@ -36,6 +36,7 @@ use ::{
     Vector,
     XData,
 };
+use ::code_pair_put_back::CodePairPutBack;
 use ::code_pair_writer::CodePairWriter;
 use ::handle_tracker::HandleTracker;
 use ::helper_functions::*;
@@ -44,8 +45,7 @@ use ::x_data;
 
 use enums::*;
 use enum_primitive::FromPrimitive;
-use std::io::Write;
-use itertools::PutBack;
+use std::io::{Read, Write};
 ".trim_start());
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);
@@ -147,8 +147,8 @@ fn generate_table_items(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_reader(fun: &mut String, element: &Element) {
-    fun.push_str("pub(crate) fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n");
-    fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
+    fun.push_str("pub(crate) fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n");
+    fun.push_str("    where I: Read {\n");
     fun.push_str("\n");
     fun.push_str("    match iter.next() {\n");
     fun.push_str("        Some(Ok(pair)) => {\n");
@@ -187,8 +187,8 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
     for table in &element.children {
         let table_item = &table.children[0];
 
-        fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut PutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
-        fun.push_str("    where I: Iterator<Item = DxfResult<CodePair>> {\n");
+        fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str("    where I: Read {\n");
         fun.push_str("\n");
         fun.push_str("    loop {\n");
         fun.push_str("        match iter.next() {\n");

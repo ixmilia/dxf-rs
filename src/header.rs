@@ -2,10 +2,11 @@
 
 // other implementation is in `generated/header.rs`
 
-use itertools::PutBack;
-use std::io::Write;
+use std::io::{Read, Write};
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
+use enums::*;
 use helper_functions::*;
 use {CodePair, DxfError, DxfResult};
 
@@ -22,9 +23,9 @@ impl Header {
         default_if_empty(&mut self.dimension_style_name, "STANDARD");
         default_if_empty(&mut self.file_name, ".");
     }
-    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Header>
+    pub(crate) fn read<T>(iter: &mut CodePairPutBack<T>) -> DxfResult<Header>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        T: Read,
     {
         let mut header = Header::default();
         loop {
@@ -47,6 +48,11 @@ impl Header {
                                         } else {
                                             header
                                                 .set_header_value(&last_header_variable, &pair)?;
+                                            if last_header_variable == "$ACADVER"
+                                                && header.version >= AcadVersion::R2007
+                                            {
+                                                iter.read_as_utf8();
+                                            }
                                         }
                                     }
                                     Some(Err(e)) => return Err(e),

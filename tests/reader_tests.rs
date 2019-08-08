@@ -107,6 +107,44 @@ fn parse_with_leading_bom() {
 }
 
 #[test]
+fn parse_as_ascii_text() {
+    // if version <= R2004 (AC1018) stream is ASCII
+    let file = from_section(
+        "HEADER",
+        "
+  9
+$ACADVER
+  1
+AC1018
+  9
+$PROJECTNAME
+  1
+\\U+00E8"
+            .trim_start(),
+    );
+    assert_eq!("è", file.header.project_name);
+}
+
+#[test]
+fn parse_as_utf8_text() {
+    // if version >= R2007 (AC1021) stream is UTF-8
+    let file = from_section(
+        "HEADER",
+        "
+  9
+$ACADVER
+  1
+AC1021
+  9
+$PROJECTNAME
+  1
+è"
+        .trim_start(),
+    );
+    assert_eq!("è", file.header.project_name);
+}
+
+#[test]
 fn read_binary_file() {
     let drawing = unwrap_drawing(Drawing::load_file("./tests/diamond-bin.dxf"));
     assert_eq!(12, drawing.entities.len());

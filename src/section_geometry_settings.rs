@@ -1,12 +1,11 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use std::io::Write;
+use std::io::{Read, Write};
 
 use {CodePair, Color, DxfResult};
 
+use code_pair_put_back::CodePairPutBack;
 use code_pair_writer::CodePairWriter;
-
-use itertools::PutBack;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -54,9 +53,11 @@ impl Default for SectionGeometrySettings {
 
 // internal visibility only
 impl SectionGeometrySettings {
-    pub(crate) fn read<I>(iter: &mut PutBack<I>) -> DxfResult<Option<SectionGeometrySettings>>
+    pub(crate) fn read<I>(
+        iter: &mut CodePairPutBack<I>,
+    ) -> DxfResult<Option<SectionGeometrySettings>>
     where
-        I: Iterator<Item = DxfResult<CodePair>>,
+        I: Read,
     {
         // check the first pair; only code 90 can start one of these
         match iter.next() {

@@ -1,14 +1,18 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use entities::*;
-use itertools::{put_back, PutBack};
-use {CodePair, DxfResult};
+use std::io::Read;
 
-pub(crate) struct EntityIter<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> {
-    pub iter: &'a mut PutBack<I>,
+use code_pair_put_back::CodePairPutBack;
+use entities::*;
+use DxfResult;
+
+use itertools::{put_back, PutBack};
+
+pub(crate) struct EntityIter<'a, T: 'a + Read> {
+    pub iter: &'a mut CodePairPutBack<T>,
 }
 
-impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'a, I> {
+impl<'a, I: 'a + Read> Iterator for EntityIter<'a, I> {
     type Item = Entity;
 
     fn next(&mut self) -> Option<Entity> {
@@ -19,7 +23,7 @@ impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> Iterator for EntityIter<'
     }
 }
 
-impl<'a, I: 'a + Iterator<Item = DxfResult<CodePair>>> EntityIter<'a, I> {
+impl<'a, I: 'a + Read> EntityIter<'a, I> {
     pub(crate) fn read_entities_into_vec(&mut self, entities: &mut Vec<Entity>) -> DxfResult<()> {
         collect_entities(self, entities)
     }
