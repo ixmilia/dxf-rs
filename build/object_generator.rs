@@ -434,14 +434,14 @@ fn generate_type_string(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     fun.push_str("    pub(crate) fn to_type_string(&self) -> &str {\n");
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for c in &element.children {
         // only write the first type string given
         let type_string = attr(&c, "TypeString");
         let type_strings = type_string.split(',').collect::<Vec<_>>();
         if name(c) != "Object" && !type_string.is_empty() {
             fun.push_str(&format!(
-                "            &ObjectType::{typ}(_) => {{ \"{type_string}\" }},\n",
+                "            ObjectType::{typ}(_) => {{ \"{type_string}\" }},\n",
                 typ = name(c),
                 type_string = type_strings[0]
             ));
@@ -456,7 +456,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     fun.push_str(
         "    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n",
     );
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for c in &element.children {
         if c.name != "Object" {
             panic!("expected top level object");
@@ -469,7 +469,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     "obj"
                 }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
                 fun.push_str(&format!(
-                    "            &mut ObjectType::{typ}(ref mut {obj}) => {{\n",
+                    "            ObjectType::{typ}(ref mut {obj}) => {{\n",
                     typ = name(c),
                     obj = obj
                 ));
@@ -536,7 +536,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                         unused_readers.push(format!("{}.{}", name(c), name(f)));
                     }
                 }
-                fun.push_str(&format!("            &mut ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)));
+                fun.push_str(&format!("            ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(&c)));
             }
         }
     }
@@ -555,7 +555,7 @@ fn generate_write(fun: &mut String, element: &Element) {
     fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for object in &element.children {
         if name(&object) != "Object" {
             if generate_writer_function(&object) {
@@ -565,7 +565,7 @@ fn generate_write(fun: &mut String, element: &Element) {
                     "obj"
                 }; // ACDBPLACEHOLDER and OBJECT_PTR don't use this variable
                 fun.push_str(&format!(
-                    "            &ObjectType::{typ}(ref {obj}) => {{\n",
+                    "            ObjectType::{typ}(ref {obj}) => {{\n",
                     typ = name(&object),
                     obj = obj
                 ));
@@ -581,7 +581,7 @@ fn generate_write(fun: &mut String, element: &Element) {
                         unused_writers.push(format!("{}.{}", name(element), name(f)));
                     }
                 }
-                fun.push_str(&format!("            &ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(&object)));
+                fun.push_str(&format!("            ObjectType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(&object)));
             }
         }
     }

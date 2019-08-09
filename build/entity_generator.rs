@@ -20,6 +20,8 @@ pub fn generate_entities(generated_dir: &Path) {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
+#[allow(clippy::bool_comparison)]
+
 use ::{
     CodePair,
     Color,

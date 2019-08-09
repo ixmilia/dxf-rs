@@ -237,9 +237,9 @@
     <Field Name="__destination_mesh_y_points" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="face_indices" Code="97" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="__faces_count" Code="96" Type="i32" DefaultValue="0" />
-    <Field Name="__face_point_index_x" Code="97" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
-    <Field Name="__face_point_index_y" Code="98" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
-    <Field Name="__face_point_index_z" Code="99" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="{} as f64" />
+    <Field Name="__face_point_index_x" Code="97" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="f64::from({})" />
+    <Field Name="__face_point_index_y" Code="98" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="f64::from({})" />
+    <Field Name="__face_point_index_z" Code="99" Type="f64" DefaultValue="vec![]" AllowMultiples="true" ReadConverter="f64::from({})" />
     <WriteOrder>
       <WriteField Field="version" />
       <WriteField Field="coordinate_type" />
@@ -303,8 +303,8 @@
   <Object Name="ImageDefinition" SubclassMarker="AcDbRasterImageDef" TypeString="IMAGEDEF" MinVersion="R14">
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="file_path" Code="1" Type="String" DefaultValue="String::new()" />
-    <Field Name="image_width" Code="10" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as f64" />
-    <Field Name="image_height" Code="20" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as f64" />
+    <Field Name="image_width" Code="10" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="f64::from({})" />
+    <Field Name="image_height" Code="20" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="f64::from({})" />
     <Field Name="pixel_width" Code="11" Type="f64" DefaultValue="0.0" />
     <Field Name="pixel_height" Code="12" Type="f64" DefaultValue="0.0" />
     <Field Name="is_image_loaded" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
@@ -722,7 +722,7 @@
     <Field Name="plot_window_upper_right_y_value" Code="141" Type="f64" DefaultValue="0.0" />
     <Field Name="custom_print_scale_numerator" Code="142" Type="f64" DefaultValue="0.0" />
     <Field Name="custom_print_scale_denominator" Code="143" Type="f64" DefaultValue="0.0" />
-    <Field Name="plot_layout_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16">
+    <Field Name="plot_layout_flags" Code="70" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16">
       <Flag Name="plot_viewport_borders" Mask="1" />
       <Flag Name="show_plot_styles" Mask="2" />
       <Flag Name="plot_centered" Mask="4" />
@@ -745,7 +745,7 @@
     <Field Name="standard_scale" Code="75" Type="StandardScale" DefaultValue="StandardScale::ScaledToFit" ReadConverter="enum_from_number!(StandardScale, ScaledToFit, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="shade_plot_mode" Code="76" Type="ShadePlotMode" DefaultValue="ShadePlotMode::AsDisplayed" ReadConverter="enum_from_number!(ShadePlotMode, AsDisplayed, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2004" />
     <Field Name="shade_plot_resolution_level" Code="77" Type="ShadePlotResolutionLevel" DefaultValue="ShadePlotResolutionLevel::Normal" ReadConverter="enum_from_number!(ShadePlotResolutionLevel, Normal, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2004" />
-    <Field Name="shade_plot_custom_dpi" Code="78" Type="i32" DefaultValue="100" ReadConverter="{} as i32" WriteConverter="{} as i16" MinVersion="R2004" />
+    <Field Name="shade_plot_custom_dpi" Code="78" Type="i32" DefaultValue="100" ReadConverter="i32::from({})" WriteConverter="{} as i16" MinVersion="R2004" />
     <Field Name="standard_scale_value" Code="147" Type="f64" DefaultValue="1.0" />
     <Field Name="paper_image_origin_x" Code="148" Type="f64" DefaultValue="0.0" />
     <Field Name="paper_image_origin_y" Code="149" Type="f64" DefaultValue="0.0" />
@@ -939,9 +939,9 @@
     <Field Name="class_version" Code="90" Type="i32" DefaultValue="1" />
     <Field Name="is_fog_enabled" Code="290" Type="bool" DefaultValue="false" />
     <Field Name="is_background_fog_enabled" Code="290" Type="bool" DefaultValue="false" />
-    <Field Name="fog_color_red" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="fog_color_green" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
-    <Field Name="fog_color_blue" Code="280" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="fog_color_red" Code="280" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />
+    <Field Name="fog_color_green" Code="280" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />
+    <Field Name="fog_color_blue" Code="280" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />
     <Field Name="near_fog_density_percent" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="far_fog_density_percent" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="near_clipping_plane_distance_percent" Code="40" Type="f64" DefaultValue="0.0" />
@@ -1232,9 +1232,9 @@
     <Field Name="edge_silhouette_color" Code="67" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
     <Field Name="edge_silhouette_width" Code="79" Type="i16" DefaultValue="0" />
     <Field Name="edge_halo_gap" Code="170" Type="i16" DefaultValue="0" />
-    <Field Name="edge_iso_line_count" Code="171" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="edge_iso_line_count" Code="171" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />
     <Field Name="hide_edge_line_precision" Code="290" Type="bool" DefaultValue="false" />
-    <Field Name="edge_style_apply_flags" Code="174" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
+    <Field Name="edge_style_apply_flags" Code="174" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />
     <Field Name="display_style_settings" Code="93" Type="i32" DefaultValue="0" />
     <Field Name="brightness" Code="44" Type="f64" DefaultValue="0.0" />
     <Field Name="shadow_type" Code="173" Type="i16" DefaultValue="0" />

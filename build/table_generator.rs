@@ -333,7 +333,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         fun.push_str("    where T: Write {\n");
         fun.push_str("\n");
         fun.push_str(&format!(
-            "    if drawing.{collection}.len() == 0 {{\n",
+            "    if drawing.{collection}.is_empty() {{\n",
             collection = attr(&table, "Collection")
         ));
         fun.push_str("        return Ok(()) // nothing to write\n");
