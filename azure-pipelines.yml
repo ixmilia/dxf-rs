@@ -34,16 +34,6 @@ jobs:
     parameters:
       rustToolchain: $(rustToolchain)
 
-- job: Clippy
-  pool:
-    vmImage: ubuntu-16.04
-  container: 'rust:latest'
-  steps:
-  - script: rustup component add clippy
-    displayName: Install clippy
-  - script: cargo clippy --all
-    displayName: Run clippy
-
 - job: Formatting
   pool:
     vmImage: ubuntu-16.04
