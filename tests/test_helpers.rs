@@ -48,6 +48,13 @@ pub mod helpers {
         contents
     }
 
+    pub fn to_binary(drawing: &Drawing) -> Vec<u8> {
+        let mut buf = Cursor::new(vec![]);
+        drawing.save_binary(&mut buf).ok().unwrap();
+        buf.seek(SeekFrom::Start(0)).ok().unwrap();
+        buf.into_inner()
+    }
+
     pub fn assert_contains(drawing: &Drawing, contents: String) {
         let actual = to_test_string(&drawing);
         assert!(actual.contains(&contents));

@@ -146,6 +146,7 @@ $PROJECTNAME
 
 #[test]
 fn read_binary_file() {
+    // `diamond-bin.dxf` is a pre-R13 binary file
     let drawing = unwrap_drawing(Drawing::load_file("./tests/diamond-bin.dxf"));
     assert_eq!(12, drawing.entities.len());
     match drawing.entities[0].specific {
@@ -158,26 +159,47 @@ fn read_binary_file() {
 }
 
 #[test]
+fn read_binary_file_post_r13() {
+    // post R13 binary files have 2 byte codes and single byte booleans
+    let data = vec![
+        // binary header
+        b'A', b'u', b't', b'o', b'C', b'A', b'D', b' ', b'B', b'i', b'n', b'a', b'r', b'y', b' ',
+        b'D', b'X', b'F', b'\r', b'\n', 0x1A, 0x00, // 0/SECTION
+        0x00, 0x00, b'S', b'E', b'C', b'T', b'I', b'O', b'N', 0x00, // 2/HEADER
+        0x02, 0x00, b'H', b'E', b'A', b'D', b'E', b'R', 0x00, // 9/$LWDISPLAY
+        0x09, 0x00, b'$', b'L', b'W', b'D', b'I', b'S', b'P', b'L', b'A', b'Y', 0x00, 0x22, 0x01,
+        0x01, // 290/true
+        0x00, 0x00, b'E', b'N', b'D', b'S', b'E', b'C', 0x00, // 0/ENDSEC
+        0x00, 0x00, b'E', b'O', b'F', 0x00, // 0/EOF
+    ];
+    let drawing = Drawing::load(&mut data.as_slice()).unwrap();
+    assert!(drawing.header.display_linewieght_in_model_and_layout_tab);
+}
+
+#[test]
 fn read_binary_file_after_writing() {
-    let mut drawing = Drawing::default();
-    let line = Line {
-        p1: Point::new(1.1, 2.2, 3.3),
-        p2: Point::new(4.4, 5.5, 6.6),
-        ..Default::default()
-    };
-    drawing.entities.push(Entity::new(EntityType::Line(line)));
-    let mut buf = Cursor::new(vec![]);
-    drawing.save_binary(&mut buf).ok().unwrap();
-    buf.seek(SeekFrom::Start(0)).ok().unwrap();
-    let mut reader = BufReader::new(&mut buf);
-    let drawing = unwrap_drawing(Drawing::load(&mut reader));
-    assert_eq!(1, drawing.entities.len());
-    match drawing.entities[0].specific {
-        EntityType::Line(ref line) => {
-            assert_eq!(Point::new(1.1, 2.2, 3.3), line.p1);
-            assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
+    for version in vec![AcadVersion::R12, AcadVersion::R13] {
+        let mut drawing = Drawing::default();
+        drawing.header.version = version;
+        let line = Line {
+            p1: Point::new(1.1, 2.2, 3.3),
+            p2: Point::new(4.4, 5.5, 6.6),
+            ..Default::default()
+        };
+        drawing.entities.push(Entity::new(EntityType::Line(line)));
+        let mut buf = Cursor::new(vec![]);
+        drawing.save_binary(&mut buf).ok().unwrap();
+        buf.seek(SeekFrom::Start(0)).ok().unwrap();
+        let mut reader = BufReader::new(&mut buf);
+        let drawing = unwrap_drawing(Drawing::load(&mut reader));
+        assert_eq!(1, drawing.entities.len());
+        match drawing.entities[0].specific {
+            EntityType::Line(ref line) => {
+                assert_eq!(Point::new(1.1, 2.2, 3.3), line.p1);
+                assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
+            }
+            _ => panic!("expected a line"),
         }
-        _ => panic!("expected a line"),
     }
 }
 

@@ -5,6 +5,7 @@ extern crate dxf;
 use self::dxf::enums::*;
 use self::dxf::*;
 use std::io::{Cursor, Seek, SeekFrom};
+use std::str::from_utf8;
 
 mod test_helpers;
 use test_helpers::helpers::*;
@@ -43,4 +44,24 @@ fn write_unicode_as_utf8() {
         &drawing,
         vec!["  9", "$PROJECTNAME", "  1", "è"].join("\r\n"),
     );
+}
+
+#[test]
+fn write_binary_file() {
+    for version in vec![AcadVersion::R12, AcadVersion::R13] {
+        println!("checking version {:?}", version);
+        let mut drawing = Drawing::default();
+        drawing.header.version = version;
+        let buf = to_binary(&drawing);
+
+        // check binary sentinel
+        let sentinel = from_utf8(&buf[0..20]).ok().unwrap();
+        assert_eq!("AutoCAD Binary DXF\r\n", sentinel);
+
+        // check "SECTION" text at expected offset
+        let sec_offset = if version <= AcadVersion::R12 { 23 } else { 24 };
+        let sec_end = sec_offset + 7;
+        let sec_text = from_utf8(&buf[sec_offset..sec_end]).ok().unwrap();
+        assert_eq!("SECTION", sec_text);
+    }
 }

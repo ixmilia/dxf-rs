@@ -407,6 +407,11 @@ macro_rules! vec_last {
     };
 }
 
+pub(crate) fn read_u8_strict<T: Read>(reader: &mut T) -> DxfResult<u8> {
+    let u = try_from_option_io_result!(read_u8(reader));
+    Ok(u)
+}
+
 pub(crate) fn read_i16<T: Read>(reader: &mut T) -> DxfResult<i16> {
     let a = try_from_option_io_result!(read_u8(reader));
     let b = try_from_option_io_result!(read_u8(reader));

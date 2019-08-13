@@ -165,7 +165,8 @@ impl Drawing {
         let mut buf = vec![];
         let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
         {
-            let mut code_pair_writer = CodePairWriter::new(&mut buf, as_ascii, text_as_ascii);
+            let mut code_pair_writer =
+                CodePairWriter::new(&mut buf, as_ascii, text_as_ascii, self.header.version);
             let write_handles =
                 self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
             self.write_classes(&mut code_pair_writer)?;
@@ -179,7 +180,8 @@ impl Drawing {
 
         // write header to the final location
         {
-            let mut final_writer = CodePairWriter::new(writer, as_ascii, text_as_ascii);
+            let mut final_writer =
+                CodePairWriter::new(writer, as_ascii, text_as_ascii, self.header.version);
             final_writer.write_prelude()?;
             self.header
                 .write(&mut final_writer, handle_tracker.get_current_next_handle())?;

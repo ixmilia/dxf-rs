@@ -12,6 +12,8 @@ pub(crate) struct CodePairIter<T: Read> {
     read_first_line: bool,
     read_as_text: bool,
     read_text_as_utf8: bool,
+    is_post_r13_binary: bool,
+    returned_binary_pair: bool,
     binary_detection_complete: bool,
     offset: usize,
 }
@@ -24,6 +26,8 @@ impl<T: Read> CodePairIter<T> {
             read_first_line: false,
             read_as_text: true,
             read_text_as_utf8: false,
+            is_post_r13_binary: false,
+            returned_binary_pair: false,
             binary_detection_complete: false,
             offset: 0,
         }
@@ -133,7 +137,13 @@ impl<T: Read> CodePairIter<T> {
         self.offset += 1;
 
         // If reading a larger code and no data is available, die horribly.
-        if code == 255 {
+        if self.is_post_r13_binary {
+            // post R13 codes are 2 bytes, read the second byte of the code
+            let high_byte = i32::from(try_from_dxf_result!(read_u8_strict(&mut self.reader)));
+            code += high_byte << 8;
+            self.offset += 1;
+        } else if code == 255 {
+            // pre R13 codes are either 1 or 3 bytes
             code = i32::from(try_from_dxf_result!(read_i16(&mut self.reader)));
             self.offset += 2;
         }
@@ -144,10 +154,18 @@ impl<T: Read> CodePairIter<T> {
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
         let (value, read_bytes) = match expected_type {
-            ExpectedType::Boolean => (
-                CodePairValue::Boolean(try_from_dxf_result!(read_i16(&mut self.reader))),
-                2,
-            ),
+            ExpectedType::Boolean => {
+                // after R13 bools are encoded as a single byte
+                let (b_value, read_bytes) = if self.is_post_r13_binary {
+                    (
+                        i16::from(try_from_dxf_result!(read_u8_strict(&mut self.reader))),
+                        1,
+                    )
+                } else {
+                    (try_from_dxf_result!(read_i16(&mut self.reader)), 2)
+                };
+                (CodePairValue::Boolean(b_value), read_bytes)
+            }
             ExpectedType::Integer => (
                 CodePairValue::Integer(try_from_dxf_result!(read_i32(&mut self.reader))),
                 4,
@@ -165,24 +183,40 @@ impl<T: Read> CodePairIter<T> {
                 8,
             ),
             ExpectedType::Str => {
-                let mut s = String::new();
-                loop {
-                    match read_u8(&mut self.reader) {
-                        Some(Ok(0)) => break,
-                        Some(Ok(c)) => s.push(c as char),
-                        Some(Err(e)) => return Some(Err(DxfError::IoError(e))),
-                        None => return Some(Err(DxfError::UnexpectedEndOfInput)),
-                    }
+                let mut value = try_from_dxf_result!(self.read_string_binary());
+                if !self.returned_binary_pair && code == 0 && value == "" {
+                    // If this is the first pair being read and the code is 0, the only valid string value is "SECTION".
+                    // If the read value is instead empty, that means the string reader found a single 0x00 byte which
+                    // indicates that this is a post R13 binary file where codes are always read as 2 bytes.  The 0x00
+                    // byte was really the second byte of {0x00, 0x00}, so we need to do one more string read to catch
+                    // the reader up.
+                    self.is_post_r13_binary = true;
+                    self.offset += 1; // account for the NULL byte that was interpreted as an empty string
+                    value = try_from_dxf_result!(self.read_string_binary()); // now read the actual value
                 }
                 (
-                    CodePairValue::Str(CodePairValue::un_escape_string(&s).into_owned()),
-                    s.len(),
+                    CodePairValue::Str(CodePairValue::un_escape_string(&value).into_owned()),
+                    value.len() + 1, // +1 to account for the NULL terminator
                 )
             }
         };
         self.offset += read_bytes;
+        self.returned_binary_pair = true;
 
         Some(Ok(CodePair::new(code, value, self.offset)))
+    }
+    fn read_string_binary(&mut self) -> DxfResult<String> {
+        let mut s = String::new();
+        loop {
+            match read_u8(&mut self.reader) {
+                Some(Ok(0)) => break,
+                Some(Ok(c)) => s.push(c as char),
+                Some(Err(e)) => return Err(DxfError::IoError(e)),
+                None => return Err(DxfError::UnexpectedEndOfInput),
+            }
+        }
+
+        Ok(s)
     }
 }
 
