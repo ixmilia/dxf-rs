@@ -17,7 +17,7 @@ use std::path::Path;
 
 include!("../src/expected_type.rs");
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     // watch everything under the `build/` and `spec/` directories and also one specific file
     rerun_if_changed("src/expected_type.rs");
     let dirs_to_watch = vec!["build/", "spec/"];
