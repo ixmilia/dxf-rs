@@ -692,7 +692,7 @@ impl Object {
                         ll.__lights_handle.push(pair.as_handle()?);
                     } else {
                         // might still be the handle
-                        common.apply_individual_pair(&pair, iter)?;;
+                        common.apply_individual_pair(&pair, iter)?;
                     }
                 }
                 90 => {
@@ -1676,7 +1676,8 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_i32(90, ll.__lights_handle.len() as i32))?;
                 for light in &ll.__lights_handle {
                     writer.write_code_pair(&CodePair::new_string(5, &as_handle(*light)))?;
-                    writer.write_code_pair(&CodePair::new_string(1, &String::new()))?; // TODO: write the light's real name
+                    // TODO: write the light's real name
+                    writer.write_code_pair(&CodePair::new_string(1, &String::new()))?;
                 }
             }
             ObjectType::SectionSettings(ref ss) => {
