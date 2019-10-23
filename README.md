@@ -3,8 +3,6 @@
 
 A rust [crate](https://crates.io/crates/dxf) for reading and writing DXF CAD files.
 
-[![Build Status](https://dev.azure.com/ixmilia/public/_apis/build/status/dxf-rs?branchName=master)](https://dev.azure.com/ixmilia/public/_build/latest?definitionId=15)
-
 # Usage
 
 Put this in your `Cargo.toml`:
