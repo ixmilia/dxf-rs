@@ -30,4 +30,5 @@ jobs:
     - uses: hecrj/setup-rust-action@v1
       with:
         components: rustfmt
+    - uses: actions/checkout@v1
     - run: cargo fmt --all -- --check
