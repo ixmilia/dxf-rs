@@ -1,0 +1,33 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    name: Build and test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        rust_version: [stable, beta, nightly]
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: ${{ matrix.rust_version }}
+    - name: Report versions
+      run: |
+        rustc -Vv
+        cargo -V
+    - uses: actions/checkout@v1
+    - run: cargo build --verbose
+    - run: cargo test --verbose
+
+  formatting:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        components: rustfmt
+    - run: cargo fmt --all -- --check
