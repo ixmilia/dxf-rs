@@ -1,8 +1,0 @@
-steps:
-- template: azure-install-rust.yml
-  parameters:
-    rustToolchain: $(rustToolchain)
-- script: cargo build --release
-  displayName: Build
-- script: cargo test --release
-  displayName: Test
