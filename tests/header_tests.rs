@@ -272,5 +272,6 @@ fn write_proper_handseed_on_read_file() {
 fn dont_write_suppressed_variables() {
     let mut drawing = Drawing::default();
     drawing.header.version = AcadVersion::R2004;
-    assert_not_contains(&drawing, vec!["  9", "$HIDETEXT", "290", "0"].join("\r\n"));
+    assert_contains(&drawing, vec!["9", "$HIDETEXT", "280"].join("\r\n"));
+    assert_not_contains(&drawing, vec!["9", "$HIDETEXT", "290"].join("\r\n"));
 }
