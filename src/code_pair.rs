@@ -3,7 +3,7 @@
 extern crate byteorder;
 
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 use self::byteorder::{BigEndian, ByteOrder};
 
@@ -101,8 +101,14 @@ impl CodePair {
 }
 
 impl Debug for CodePair {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        write!(formatter, "{}/{:?}", self.code, &self.value)
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "[@{}]{}/{:?}", self.offset, self.code, &self.value)
+    }
+}
+
+impl Display for CodePair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}/{}", self.code, &self.value)
     }
 }
 
@@ -122,5 +128,15 @@ mod tests {
         assert_eq!(0x00, CodePair::new_str(0, "0").as_handle().unwrap());
         assert_eq!(0x01, CodePair::new_str(0, "1").as_handle().unwrap());
         assert_eq!(0xABCD, CodePair::new_str(0, "ABCD").as_handle().unwrap());
+    }
+
+    #[test]
+    fn impl_debug() {
+        assert_eq!("[@0]0/str", format!("{:?}", CodePair::new_str(0, "str")));
+    }
+
+    #[test]
+    fn impl_display() {
+        assert_eq!("0/str", format!("{}", CodePair::new_str(0, "str")));
     }
 }

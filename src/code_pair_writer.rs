@@ -63,9 +63,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
                 };
                 self.writer.write_fmt(format_args!("{}\r\n", s))?;
             }
-            _ => self
-                .writer
-                .write_fmt(format_args!("{:?}\r\n", &pair.value))?,
+            _ => self.writer.write_fmt(format_args!("{}\r\n", &pair.value))?,
         };
         Ok(())
     }

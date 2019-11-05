@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 /// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
@@ -100,15 +100,21 @@ impl Clone for CodePairValue {
 }
 
 impl Debug for CodePairValue {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            CodePairValue::Boolean(s) => write!(formatter, "{}", s),
-            CodePairValue::Integer(i) => write!(formatter, "{: >9}", i),
-            CodePairValue::Long(l) => write!(formatter, "{}", l),
-            CodePairValue::Short(s) => write!(formatter, "{: >6}", s),
-            CodePairValue::Double(d) => write!(formatter, "{}", format_f64(*d)),
-            CodePairValue::Str(ref s) => write!(formatter, "{}", s),
+            CodePairValue::Boolean(s) => write!(f, "{}", s),
+            CodePairValue::Integer(i) => write!(f, "{: >9}", i),
+            CodePairValue::Long(l) => write!(f, "{}", l),
+            CodePairValue::Short(s) => write!(f, "{: >6}", s),
+            CodePairValue::Double(d) => write!(f, "{}", format_f64(*d)),
+            CodePairValue::Str(ref s) => write!(f, "{}", s),
         }
+    }
+}
+
+impl Display for CodePairValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self) // fall back to debug
     }
 }
 
