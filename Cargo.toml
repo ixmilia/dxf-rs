@@ -19,6 +19,7 @@ serialize = ["serde", "serde_derive"]
 [dependencies]
 byteorder = "1.0.0"
 chrono = { version= "0.4.0", features = ["serde"] }
+encoding_rs = "0.8.20"
 enum_primitive = "0.1.1"
 image = "0.14.0"
 itertools = "0.6.0"

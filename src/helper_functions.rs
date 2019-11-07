@@ -11,6 +11,9 @@ extern crate chrono;
 use self::chrono::prelude::*;
 use self::chrono::Duration as ChronoDuration;
 
+extern crate encoding_rs;
+use self::encoding_rs::Encoding;
+
 extern crate uuid;
 use self::uuid::Uuid;
 
@@ -275,11 +278,12 @@ pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
     Color::from_raw_value(color.abs())
 }
 
-pub(crate) fn read_line<T>(reader: &mut T) -> Option<DxfResult<String>>
+pub(crate) fn read_line<T>(reader: &mut T, encoding: &'static Encoding) -> Option<DxfResult<String>>
 where
     T: Read + ?Sized,
 {
     let mut bytes = vec![];
+    let mut skipping_bom = false;
     let reader_bytes = reader.bytes();
     for (i, b) in reader_bytes.enumerate() {
         let b = match b {
@@ -287,7 +291,10 @@ where
             Err(e) => return Some(Err(DxfError::IoError(e))),
         };
         match (i, b) {
-            (0, 0xEF) | (1, 0xBB) | (2, 0xBF) => (), // skip UTF-8 BOM
+            (0, 0xEF) => {
+                skipping_bom = true;
+            }
+            (1, 0xBB) | (2, 0xBF) if skipping_bom => (), // skip UTF-8 BOM
             _ => {
                 if b == b'\n' {
                     break;
@@ -297,10 +304,11 @@ where
         }
     }
 
-    let mut result = match String::from_utf8(bytes) {
-        Ok(s) => s,
-        Err(_) => return Some(Err(DxfError::MalformedString)),
+    let mut result = match encoding.decode(&bytes) {
+        (result, _, false) => String::from(&*result),
+        (_, _, true) => return Some(Err(DxfError::MalformedString)),
     };
+
     if result.ends_with('\r') {
         result.pop();
     }

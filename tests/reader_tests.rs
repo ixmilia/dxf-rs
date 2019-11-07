@@ -2,6 +2,8 @@
 
 extern crate dxf;
 
+extern crate encoding_rs;
+
 use std::io::{BufReader, Cursor, Seek, SeekFrom};
 
 use self::dxf::entities::*;
@@ -142,6 +144,41 @@ $PROJECTNAME
         .trim_start(),
     );
     assert_eq!("è", file.header.project_name);
+}
+
+#[test]
+fn read_with_alternate_encoding() {
+    let head = "
+  0
+SECTION
+  2
+HEADER
+  9
+$PROJECTNAME
+  1"
+    .trim();
+    let tail = "
+  0
+ENDSEC
+  0
+EOF"
+    .trim();
+    let mut bytes = head.as_bytes().to_vec();
+    bytes.push(b'\r');
+    bytes.push(b'\n');
+    bytes.push(0xB2); // these two bytes represent the character `不` in GB18030 encoding
+    bytes.push(0xBB);
+    bytes.push(b'\r');
+    bytes.push(b'\n');
+    for b in tail.as_bytes() {
+        bytes.push(*b);
+    }
+    let mut bytes = bytes.as_slice();
+    let drawing = unwrap_drawing(Drawing::load_with_encoding(
+        &mut bytes,
+        encoding_rs::GB18030,
+    ));
+    assert_eq!("不", drawing.header.project_name);
 }
 
 #[test]

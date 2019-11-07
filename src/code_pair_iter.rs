@@ -3,15 +3,16 @@
 use {CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
 
 use code_pair_value::un_escape_ascii_to_unicode;
+use encoding_rs::Encoding;
 use helper_functions::*;
 use std::io::Read;
 
 pub(crate) struct CodePairIter<T: Read> {
     reader: T,
+    string_encoding: &'static Encoding,
     first_line: String,
     read_first_line: bool,
     read_as_text: bool,
-    read_text_as_utf8: bool,
     is_post_r13_binary: bool,
     returned_binary_pair: bool,
     binary_detection_complete: bool,
@@ -19,13 +20,13 @@ pub(crate) struct CodePairIter<T: Read> {
 }
 
 impl<T: Read> CodePairIter<T> {
-    pub fn new(reader: T, first_line: String) -> Self {
+    pub fn new(reader: T, string_encoding: &'static Encoding, first_line: String) -> Self {
         CodePairIter {
             reader,
+            string_encoding,
             first_line,
             read_first_line: false,
             read_as_text: true,
-            read_text_as_utf8: false,
             is_post_r13_binary: false,
             returned_binary_pair: false,
             binary_detection_complete: false,
@@ -33,7 +34,7 @@ impl<T: Read> CodePairIter<T> {
         }
     }
     pub fn read_as_utf8(&mut self) {
-        self.read_text_as_utf8 = true;
+        self.string_encoding = encoding_rs::UTF_8;
     }
     fn detect_binary_or_text_file(&mut self) -> DxfResult<()> {
         match &*self.first_line {
@@ -64,7 +65,7 @@ impl<T: Read> CodePairIter<T> {
         // Read code.  If no line is available, fail gracefully.
         let code_line = if self.read_first_line {
             self.offset += 1;
-            match read_line(&mut self.reader) {
+            match read_line(&mut self.reader, encoding_rs::WINDOWS_1252) {
                 Some(Ok(v)) => v,
                 Some(Err(e)) => return Some(Err(e)),
                 None => return None,
@@ -87,7 +88,7 @@ impl<T: Read> CodePairIter<T> {
 
         // Read value.  If no line is available die horribly.
         self.offset += 1;
-        let value_line = match read_line(&mut self.reader) {
+        let value_line = match read_line(&mut self.reader, self.string_encoding) {
             Some(Ok(v)) => v,
             Some(Err(e)) => return Some(Err(e)),
             None => return Some(Err(DxfError::UnexpectedEndOfInput)),
@@ -115,10 +116,10 @@ impl<T: Read> CodePairIter<T> {
                 CodePairValue::Double(try_into_option!(parse_f64(value_line, self.offset)))
             }
             ExpectedType::Str => {
-                let value_line = if self.read_text_as_utf8 {
-                    value_line
-                } else {
+                let value_line = if self.string_encoding == encoding_rs::WINDOWS_1252 {
                     un_escape_ascii_to_unicode(&value_line)
+                } else {
+                    value_line
                 };
                 let value_line = CodePairValue::un_escape_string(&value_line);
                 CodePairValue::Str(value_line.into_owned())

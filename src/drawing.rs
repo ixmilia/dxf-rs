@@ -3,6 +3,9 @@
 extern crate byteorder;
 use self::byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 
+extern crate encoding_rs;
+use self::encoding_rs::Encoding;
+
 extern crate image;
 use self::image::DynamicImage;
 
@@ -102,7 +105,14 @@ impl Drawing {
     where
         T: Read + ?Sized,
     {
-        let first_line = match read_line(reader) {
+        Drawing::load_with_encoding(reader, encoding_rs::WINDOWS_1252)
+    }
+    /// Loads a `Drawing` from anything that implements the `Read` trait using the specified text encoding.
+    pub fn load_with_encoding<T>(reader: &mut T, encoding: &'static Encoding) -> DxfResult<Drawing>
+    where
+        T: Read + ?Sized,
+    {
+        let first_line = match read_line(reader, encoding) {
             Some(Ok(line)) => line,
             Some(Err(e)) => return Err(e),
             None => return Err(DxfError::UnexpectedEndOfInput),
@@ -113,7 +123,7 @@ impl Drawing {
                 reader.load()
             }
             _ => {
-                let reader = CodePairIter::new(reader, first_line);
+                let reader = CodePairIter::new(reader, encoding, first_line);
                 let mut drawing = Drawing::default();
                 drawing.clear();
                 let mut iter = CodePairPutBack::from_code_pair_iter(reader);
@@ -136,10 +146,17 @@ impl Drawing {
     }
     /// Loads a `Drawing` from disk, using a `BufReader`.
     pub fn load_file(file_name: &str) -> DxfResult<Drawing> {
+        Drawing::load_file_with_encoding(file_name, encoding_rs::WINDOWS_1252)
+    }
+    /// Loads a `Drawing` from disk, using a `BufReader` with the specified text encoding.
+    pub fn load_file_with_encoding(
+        file_name: &str,
+        encoding: &'static Encoding,
+    ) -> DxfResult<Drawing> {
         let path = Path::new(file_name);
         let file = File::open(&path)?;
         let mut buf_reader = BufReader::new(file);
-        Drawing::load(&mut buf_reader)
+        Drawing::load_with_encoding(&mut buf_reader, encoding)
     }
     /// Writes a `Drawing` to anything that implements the `Write` trait.
     pub fn save<T>(&self, writer: &mut T) -> DxfResult<()>
