@@ -1,6 +1,13 @@
 Changelog
 =========
 
+## 0.4.0
+
+- Add support for R2018 drawings.
+- Improve compatability when writing files.
+- Improve non-ASCII text encoding handling.
+- Support post R13 binary files.
+
 ## 0.3.0
 
 - Fall back to default values when enum parsing fails.

@@ -1,6 +1,6 @@
 [package]
 name = "dxf"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Brett V. Forsgren <brett.forsgren@outlook.com>"]
 build = "build/build.rs"
 description = "A rust crate for reading and writing DXF and DXB CAD files."
