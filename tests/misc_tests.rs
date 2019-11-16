@@ -7,7 +7,7 @@ use self::dxf::objects::*;
 use self::dxf::*;
 
 extern crate image;
-use self::image::{DynamicImage, GenericImage};
+use self::image::{DynamicImage, GenericImageView};
 
 mod test_helpers;
 use test_helpers::helpers::*;
