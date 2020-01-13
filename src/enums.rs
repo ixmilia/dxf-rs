@@ -3,6 +3,7 @@
 extern crate num;
 
 use crate::{DxfError, DxfResult};
+use std::fmt;
 
 enum_from_primitive! {
 #[allow(non_camel_case_types)]
@@ -97,8 +98,11 @@ impl AcadVersion {
             _ => AcadVersion::R12, // default to R12
         }
     }
-    pub fn to_string(self) -> String {
-        String::from(match self {
+}
+
+impl fmt::Display for AcadVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let display_value = match self {
             AcadVersion::Version_1_0 => "MC0.0",
             AcadVersion::Version_1_2 => "AC1.2",
             AcadVersion::Version_1_40 => "AC1.40",
@@ -120,7 +124,8 @@ impl AcadVersion {
             AcadVersion::R2010 => "AC1024",
             AcadVersion::R2013 => "AC1027",
             AcadVersion::R2018 => "AC1032",
-        })
+        };
+        write!(f, "{}", display_value)
     }
 }
 
