@@ -32,7 +32,6 @@
 //! Open a DXF file from disk:
 //!
 //! ``` rust
-//! # fn main() { }
 //! # fn ex() -> dxf::DxfResult<()> {
 //! use dxf::Drawing;
 //! use dxf::entities::*;
@@ -57,7 +56,6 @@
 //! Saving a DXF file to disk:
 //!
 //! ``` rust
-//! # fn main() { }
 //! # fn ex() -> dxf::DxfResult<()> {
 //! use dxf::Drawing;
 //! use dxf::entities::*;
