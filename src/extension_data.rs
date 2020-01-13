@@ -37,7 +37,7 @@ impl ExtensionGroup {
         if !application_name.starts_with('{') {
             return Err(DxfError::ParseError(offset));
         }
-        let mut application_name = application_name.clone();
+        let mut application_name = application_name;
         application_name.remove(0);
 
         let mut items = vec![];
