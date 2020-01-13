@@ -2,12 +2,12 @@
 
 use std::io::{Read, Write};
 
-use {CodePair, Drawing, DxfError, DxfResult};
+use crate::{CodePair, Drawing, DxfError, DxfResult};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use enums::*;
-use helper_functions::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::enums::*;
+use crate::helper_functions::*;
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
 #[derive(Clone)]

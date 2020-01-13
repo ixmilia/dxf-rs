@@ -2,10 +2,10 @@
 
 use std::io::{Read, Write};
 
-use {CodePair, Color, DxfResult};
+use crate::{CodePair, Color, DxfResult};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]

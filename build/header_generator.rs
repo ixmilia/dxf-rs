@@ -3,10 +3,10 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ExpectedType;
+use crate::ExpectedType;
 
-use other_helpers::*;
-use xml_helpers::*;
+use crate::other_helpers::*;
+use crate::xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -21,7 +21,7 @@ pub fn generate_header(generated_dir: &Path) {
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 // types from `lib.rs`.
-use ::{
+use crate::{
     CodePair,
     Color,
     DxfError,
@@ -30,11 +30,11 @@ use ::{
     Point,
     Vector,
 };
-use ::code_pair_writer::CodePairWriter;
-use ::helper_functions::*;
+use crate::code_pair_writer::CodePairWriter;
+use crate::helper_functions::*;
 
-use enums::*;
-use enum_primitive::FromPrimitive;
+use crate::enums::*;
+use crate::enum_primitive::FromPrimitive;
 
 use std::io::Write;
 use std::time::Duration;

@@ -7,9 +7,9 @@ use std::fmt::{Debug, Display, Formatter};
 
 use self::byteorder::{BigEndian, ByteOrder};
 
-use {CodePairValue, DxfError, DxfResult};
+use crate::{CodePairValue, DxfError, DxfResult};
 
-use helper_functions::parse_hex_string;
+use crate::helper_functions::parse_hex_string;
 
 /// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
 /// data itself.
@@ -121,7 +121,7 @@ impl PartialEq for CodePair {
 
 #[cfg(test)]
 mod tests {
-    use CodePair;
+    use crate::CodePair;
 
     #[test]
     fn as_handle() {

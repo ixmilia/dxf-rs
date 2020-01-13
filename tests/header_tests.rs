@@ -8,7 +8,7 @@ use self::dxf::*;
 use std::time::Duration;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 #[test]
 fn empty_header() {

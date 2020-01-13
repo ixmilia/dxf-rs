@@ -4,13 +4,13 @@
 
 use std::io::{Read, Write};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use enums::*;
-use helper_functions::*;
-use {CodePair, DxfError, DxfResult};
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::enums::*;
+use crate::helper_functions::*;
+use crate::{CodePair, DxfError, DxfResult};
 
-pub use generated::header::*;
+pub use crate::generated::header::*;
 
 impl Header {
     /// Ensure all values are valid.

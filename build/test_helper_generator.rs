@@ -3,7 +3,7 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use xml_helpers::*;
+use crate::xml_helpers::*;
 
 use std::fs::File;
 use std::io::{BufReader, Write};

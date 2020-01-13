@@ -6,10 +6,10 @@ use self::dxf::enums::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 mod generated;
-use generated::all_types;
+use crate::generated::all_types;
 
 fn read_entity(entity_type: &str, body: String) -> Entity {
     let drawing = from_section(

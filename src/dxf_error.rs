@@ -7,7 +7,7 @@ use std::num;
 
 use image;
 
-use CodePair;
+use crate::CodePair;
 
 #[derive(Debug)]
 pub enum DxfError {

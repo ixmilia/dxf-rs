@@ -5,9 +5,9 @@ use std::io::Write;
 extern crate byteorder;
 use self::byteorder::{LittleEndian, WriteBytesExt};
 
-use code_pair_value::{escape_control_characters, escape_unicode_to_ascii};
-use enums::AcadVersion;
-use {CodePair, CodePairValue, DxfResult};
+use crate::code_pair_value::{escape_control_characters, escape_unicode_to_ascii};
+use crate::enums::AcadVersion;
+use crate::{CodePair, CodePairValue, DxfResult};
 
 pub(crate) struct CodePairWriter<'a, T>
 where

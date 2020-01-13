@@ -3,10 +3,10 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ExpectedType;
+use crate::ExpectedType;
 
-use other_helpers::*;
-use xml_helpers::*;
+use crate::other_helpers::*;
+use crate::xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -21,7 +21,7 @@ pub fn generate_tables(generated_dir: &Path) {
 
 extern crate itertools;
 
-use ::{
+use crate::{
     CodePair,
     CodePairValue,
     Color,
@@ -36,15 +36,15 @@ use ::{
     Vector,
     XData,
 };
-use ::code_pair_put_back::CodePairPutBack;
-use ::code_pair_writer::CodePairWriter;
-use ::handle_tracker::HandleTracker;
-use ::helper_functions::*;
-use ::extension_data;
-use ::x_data;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
+use crate::extension_data;
+use crate::x_data;
 
-use enums::*;
-use enum_primitive::FromPrimitive;
+use crate::enums::*;
+use crate::enum_primitive::FromPrimitive;
 use std::io::{Read, Write};
 ".trim_start());
     fun.push_str("\n");

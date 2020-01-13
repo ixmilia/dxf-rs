@@ -9,6 +9,7 @@ repository = "https://github.com/ixmilia/dxf-rs"
 readme = "README.md"
 keywords = ["AutoCAD", "CAD", "DXB", "DXF"]
 license = "Apache-2.0"
+edition = "2018"
 
 [package.metadata.docs.rs]
 all-features = true

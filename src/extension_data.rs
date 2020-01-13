@@ -2,10 +2,10 @@
 
 use std::io::{Read, Write};
 
-use {CodePair, DxfError, DxfResult};
+use crate::{CodePair, DxfError, DxfResult};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
 
 pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 

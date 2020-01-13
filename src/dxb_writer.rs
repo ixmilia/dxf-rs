@@ -5,10 +5,10 @@ use std::io::Write;
 extern crate byteorder;
 use self::byteorder::{LittleEndian, WriteBytesExt};
 
-use {Drawing, DxfResult};
+use crate::{Drawing, DxfResult};
 
-use dxb_item_type::DxbItemType;
-use entities::*;
+use crate::dxb_item_type::DxbItemType;
+use crate::entities::*;
 
 use itertools::Itertools;
 

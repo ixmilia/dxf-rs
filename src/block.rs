@@ -2,20 +2,20 @@
 
 use std::io::{Read, Write};
 
-use {
+use crate::{
     CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
     ExtensionGroup, Point, XData,
 };
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use entities::Entity;
-use entity_iter::EntityIter;
-use enums::*;
-use extension_data;
-use handle_tracker::HandleTracker;
-use helper_functions::*;
-use x_data;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::entities::Entity;
+use crate::entity_iter::EntityIter;
+use crate::enums::*;
+use crate::extension_data;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
+use crate::x_data;
 
 /// A block is a collection of entities.
 #[derive(Clone)]

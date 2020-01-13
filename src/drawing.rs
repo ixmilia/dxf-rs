@@ -9,28 +9,28 @@ use self::encoding_rs::Encoding;
 extern crate image;
 use self::image::DynamicImage;
 
-use code_pair_put_back::CodePairPutBack;
-use drawing_item::{DrawingItem, DrawingItemMut};
-use entities::*;
-use enums::*;
-use header::*;
-use objects::*;
-use tables::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::drawing_item::{DrawingItem, DrawingItemMut};
+use crate::entities::*;
+use crate::enums::*;
+use crate::header::*;
+use crate::objects::*;
+use crate::tables::*;
 
-use {CodePair, CodePairValue, DxfError, DxfResult};
+use crate::{CodePair, CodePairValue, DxfError, DxfResult};
 
-use dxb_reader::DxbReader;
-use dxb_writer::DxbWriter;
-use entity_iter::EntityIter;
-use handle_tracker::HandleTracker;
-use helper_functions::*;
-use object_iter::ObjectIter;
+use crate::dxb_reader::DxbReader;
+use crate::dxb_writer::DxbWriter;
+use crate::entity_iter::EntityIter;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
+use crate::object_iter::ObjectIter;
 
-use block::Block;
-use class::Class;
+use crate::block::Block;
+use crate::class::Class;
 
-use code_pair_iter::CodePairIter;
-use code_pair_writer::CodePairWriter;
+use crate::code_pair_iter::CodePairIter;
+use crate::code_pair_writer::CodePairWriter;
 
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};

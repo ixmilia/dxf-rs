@@ -11,7 +11,7 @@ use self::dxf::enums::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 #[test]
 fn totally_empty_file() {

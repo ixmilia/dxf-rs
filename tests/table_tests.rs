@@ -6,7 +6,7 @@ use self::dxf::tables::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 fn read_table(table_name: &str, value_pairs: Vec<&str>) -> Drawing {
     let mut pairs = vec![

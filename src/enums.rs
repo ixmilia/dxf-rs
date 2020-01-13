@@ -2,7 +2,7 @@
 
 extern crate num;
 
-use {DxfError, DxfResult};
+use crate::{DxfError, DxfResult};
 
 enum_from_primitive! {
 #[allow(non_camel_case_types)]

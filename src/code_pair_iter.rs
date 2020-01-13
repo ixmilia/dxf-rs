@@ -1,10 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use {CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
+use crate::{CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
 
-use code_pair_value::un_escape_ascii_to_unicode;
+use crate::code_pair_value::un_escape_ascii_to_unicode;
+use crate::helper_functions::*;
 use encoding_rs::Encoding;
-use helper_functions::*;
 use std::io::Read;
 
 pub(crate) struct CodePairIter<T: Read> {

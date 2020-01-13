@@ -3,10 +3,10 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use ExpectedType;
+use crate::ExpectedType;
 
-use other_helpers::*;
-use xml_helpers::*;
+use crate::other_helpers::*;
+use crate::xml_helpers::*;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -20,7 +20,7 @@ pub fn generate_objects(generated_dir: &Path) {
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-use ::{
+use crate::{
     CodePair,
     Color,
     DataTableValue,
@@ -39,17 +39,17 @@ use ::{
     Vector,
     XData,
 };
-use ::code_pair_put_back::CodePairPutBack;
-use ::code_pair_writer::CodePairWriter;
-use ::extension_data;
-use ::handle_tracker::HandleTracker;
-use ::helper_functions::*;
-use ::tables::*;
-use ::x_data;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::extension_data;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
+use crate::tables::*;
+use crate::x_data;
 
-use entities::*;
-use enums::*;
-use enum_primitive::FromPrimitive;
+use crate::entities::*;
+use crate::enums::*;
+use crate::enum_primitive::FromPrimitive;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 

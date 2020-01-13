@@ -8,7 +8,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 use std::str::from_utf8;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 #[test]
 fn dont_write_utf8_bom() {

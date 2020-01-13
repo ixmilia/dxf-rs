@@ -5,7 +5,7 @@ use self::dxf::enums::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 fn read_single_class(version_str: &str, body: Vec<&str>) -> Class {
     let mut lines = vec![

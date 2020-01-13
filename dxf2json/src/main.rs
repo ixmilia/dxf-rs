@@ -4,13 +4,10 @@ extern crate dxf;
 extern crate serde;
 extern crate serde_json;
 
+use dxf::Drawing;
 use std::env;
 use std::fs::File;
-use std::io::{
-    BufWriter,
-    Write,
-};
-use dxf::Drawing;
+use std::io::{BufWriter, Write};
 
 fn main() {
     let args: Vec<String> = env::args().collect();

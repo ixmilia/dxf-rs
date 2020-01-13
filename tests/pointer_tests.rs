@@ -7,7 +7,7 @@ use self::dxf::objects::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 #[test]
 fn follow_entity_pointer_to_object() {

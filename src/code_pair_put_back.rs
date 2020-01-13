@@ -2,9 +2,9 @@
 
 use std::io::Read;
 
-use code_pair_iter::CodePairIter;
-use dxf_result::DxfResult;
-use CodePair;
+use crate::code_pair_iter::CodePairIter;
+use crate::dxf_result::DxfResult;
+use crate::CodePair;
 
 pub(crate) struct CodePairPutBack<T: Read> {
     top: Vec<DxfResult<CodePair>>,

@@ -2,11 +2,11 @@
 
 use std::io::{Read, Write};
 
-use {CodePair, DxfResult, SectionGeometrySettings};
+use crate::{CodePair, DxfResult, SectionGeometrySettings};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use helper_functions::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::helper_functions::*;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]

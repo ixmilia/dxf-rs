@@ -131,13 +131,13 @@ extern crate serde_derive;
 extern crate serde;
 
 mod code_pair;
-pub use code_pair::CodePair;
+pub use crate::code_pair::CodePair;
 
 mod code_pair_value;
-pub use code_pair_value::CodePairValue;
+pub use crate::code_pair_value::CodePairValue;
 
 mod data_table_value;
-pub use data_table_value::DataTableValue;
+pub use crate::data_table_value::DataTableValue;
 
 #[macro_use]
 mod helper_functions;
@@ -147,53 +147,53 @@ mod dxb_reader;
 mod dxb_writer;
 
 mod extension_data;
-pub use extension_data::*;
+pub use crate::extension_data::*;
 
 mod x_data;
-pub use x_data::*;
+pub use crate::x_data::*;
 
 mod table;
 
 mod handle_tracker;
 
 mod drawing;
-pub use drawing::Drawing;
+pub use crate::drawing::Drawing;
 
 mod drawing_item;
-pub use drawing_item::{DrawingItem, DrawingItemMut};
+pub use crate::drawing_item::{DrawingItem, DrawingItemMut};
 
 mod section_geometry_settings;
-pub use section_geometry_settings::SectionGeometrySettings;
+pub use crate::section_geometry_settings::SectionGeometrySettings;
 
 mod section_type_settings;
-pub use section_type_settings::SectionTypeSettings;
+pub use crate::section_type_settings::SectionTypeSettings;
 
 mod table_cell_style;
-pub use table_cell_style::TableCellStyle;
+pub use crate::table_cell_style::TableCellStyle;
 
 mod transformation_matrix;
-pub use transformation_matrix::TransformationMatrix;
+pub use crate::transformation_matrix::TransformationMatrix;
 
 pub mod enums;
 
 mod color;
-pub use color::Color;
+pub use crate::color::Color;
 
 mod point;
-pub use point::Point;
+pub use crate::point::Point;
 
 mod vector;
-pub use vector::Vector;
+pub use crate::vector::Vector;
 
 mod generated;
 pub mod entities {
-    pub use generated::entities::*;
+    pub use crate::generated::entities::*;
 }
 pub mod tables {
-    pub use generated::tables::*;
+    pub use crate::generated::tables::*;
 }
 pub mod objects {
-    pub use generated::objects::*;
+    pub use crate::generated::objects::*;
 }
 
 include!("expected_type.rs");
@@ -203,28 +203,28 @@ mod code_pair_put_back;
 mod code_pair_writer;
 
 mod block;
-pub use block::Block;
+pub use crate::block::Block;
 
 mod class;
-pub use class::Class;
+pub use crate::class::Class;
 
 mod header;
-pub use header::Header;
+pub use crate::header::Header;
 
 mod line_weight;
-pub use line_weight::LineWeight;
+pub use crate::line_weight::LineWeight;
 
 mod entity;
-pub use entity::LwPolylineVertex;
+pub use crate::entity::LwPolylineVertex;
 
 mod object;
-pub use object::{GeoMeshPoint, MLineStyleElement};
+pub use crate::object::{GeoMeshPoint, MLineStyleElement};
 
 mod dxf_error;
-pub use dxf_error::DxfError;
+pub use crate::dxf_error::DxfError;
 
 mod dxf_result;
-pub use dxf_result::DxfResult;
+pub use crate::dxf_result::DxfResult;
 
 mod entity_iter;
 mod object_iter;

@@ -10,17 +10,17 @@ use std::ops::Add;
 extern crate chrono;
 use self::chrono::Duration;
 
-use {
+use crate::{
     CodePair, Color, DataTableValue, DxfError, DxfResult, Point, SectionTypeSettings,
     TableCellStyle, TransformationMatrix,
 };
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use enums::*;
-use handle_tracker::HandleTracker;
-use helper_functions::*;
-use objects::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::enums::*;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
+use crate::objects::*;
 
 //------------------------------------------------------------------------------
 //                                                                  GeoMeshPoint

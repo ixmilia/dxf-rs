@@ -2,12 +2,12 @@
 
 use std::io::Read;
 
-use {Block, Color, Drawing, DxfError, DxfResult, Point};
+use crate::{Block, Color, Drawing, DxfError, DxfResult, Point};
 
-use dxb_item_type::DxbItemType;
-use entities::*;
-use entity_iter::collect_entities;
-use helper_functions::*;
+use crate::dxb_item_type::DxbItemType;
+use crate::entities::*;
+use crate::entity_iter::collect_entities;
+use crate::helper_functions::*;
 
 use enum_primitive::FromPrimitive;
 

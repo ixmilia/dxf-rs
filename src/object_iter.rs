@@ -2,8 +2,8 @@
 
 use std::io::Read;
 
-use code_pair_put_back::CodePairPutBack;
-use objects::Object;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::objects::Object;
 
 pub(crate) struct ObjectIter<'a, I: 'a + Read> {
     pub iter: &'a mut CodePairPutBack<I>,

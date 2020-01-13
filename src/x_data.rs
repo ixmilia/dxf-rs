@@ -2,12 +2,12 @@
 
 use std::io::{Read, Write};
 
-use {CodePair, DxfError, DxfResult, Point, Vector};
+use crate::{CodePair, DxfError, DxfResult, Point, Vector};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use enums::AcadVersion;
-use helper_functions::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::enums::AcadVersion;
+use crate::helper_functions::*;
 
 pub(crate) const XDATA_APPLICATIONNAME: i32 = 1001;
 const XDATA_STRING: i32 = 1000;

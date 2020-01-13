@@ -10,7 +10,7 @@ extern crate image;
 use self::image::{DynamicImage, GenericImageView};
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 #[test]
 fn read_string_with_control_characters() {

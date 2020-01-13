@@ -6,10 +6,10 @@ use self::dxf::objects::*;
 use self::dxf::*;
 
 mod test_helpers;
-use test_helpers::helpers::*;
+use crate::test_helpers::helpers::*;
 
 mod generated;
-use generated::all_types;
+use crate::generated::all_types;
 
 fn read_object(object_type: &str, body: String) -> Object {
     let drawing = from_section(

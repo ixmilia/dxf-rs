@@ -5,14 +5,14 @@
 use enum_primitive::FromPrimitive;
 use std::io::{Read, Write};
 
-use {CodePair, Color, DxfError, DxfResult, Point, Vector};
+use crate::{CodePair, Color, DxfError, DxfResult, Point, Vector};
 
-use code_pair_put_back::CodePairPutBack;
-use code_pair_writer::CodePairWriter;
-use entities::*;
-use enums::*;
-use handle_tracker::HandleTracker;
-use helper_functions::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::code_pair_writer::CodePairWriter;
+use crate::entities::*;
+use crate::enums::*;
+use crate::handle_tracker::HandleTracker;
+use crate::helper_functions::*;
 
 //------------------------------------------------------------------------------
 //                                                                           Arc

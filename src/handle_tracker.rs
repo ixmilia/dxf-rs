@@ -1,9 +1,9 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use entities::EntityCommon;
-use objects::ObjectCommon;
-use tables::*;
-use Block;
+use crate::entities::EntityCommon;
+use crate::objects::ObjectCommon;
+use crate::tables::*;
+use crate::Block;
 
 pub(crate) struct HandleTracker {
     next_handle: u32,

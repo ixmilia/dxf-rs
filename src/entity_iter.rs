@@ -2,9 +2,9 @@
 
 use std::io::Read;
 
-use code_pair_put_back::CodePairPutBack;
-use entities::*;
-use DxfResult;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::entities::*;
+use crate::DxfResult;
 
 use itertools::{put_back, PutBack};
 

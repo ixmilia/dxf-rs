@@ -19,9 +19,9 @@ use self::uuid::Uuid;
 
 use enum_primitive::FromPrimitive;
 
-use enums::*;
-use tables::Layer;
-use {CodePair, Color, DxfError, DxfResult};
+use crate::enums::*;
+use crate::tables::Layer;
+use crate::{CodePair, Color, DxfError, DxfResult};
 
 pub(crate) fn verify_code(pair: &CodePair, expected: i32) -> DxfResult<()> {
     if expected == pair.code {

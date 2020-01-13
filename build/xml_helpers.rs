@@ -2,8 +2,8 @@
 
 extern crate xmltree;
 use self::xmltree::Element;
-use other_helpers::*;
-use ExpectedType;
+use crate::other_helpers::*;
+use crate::ExpectedType;
 
 pub fn attr(element: &Element, name: &str) -> String {
     match &element.attributes.get(name) {

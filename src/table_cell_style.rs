@@ -1,10 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+use crate::{CodePair, Color, DxfResult};
 use std::io::Read;
-use {CodePair, Color, DxfResult};
 
-use code_pair_put_back::CodePairPutBack;
-use helper_functions::*;
+use crate::code_pair_put_back::CodePairPutBack;
+use crate::helper_functions::*;
 
 /// Defines a style for a table's cell.
 #[derive(Clone, Debug, Default, PartialEq)]
