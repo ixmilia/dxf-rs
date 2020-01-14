@@ -226,3 +226,10 @@ pub use crate::dxf_result::DxfResult;
 
 mod entity_iter;
 mod object_iter;
+
+#[cfg(test)]
+#[macro_use]
+extern crate float_cmp;
+
+#[cfg(test)]
+mod test_helpers;
