@@ -227,6 +227,11 @@ pub use crate::dxf_result::DxfResult;
 mod entity_iter;
 mod object_iter;
 
+//------------------------------- test imports ---------------------------------
+
+#[cfg(test)]
+include!(concat!(env!("OUT_DIR"), "/generated/tests/mod.rs"));
+
 #[cfg(test)]
 #[macro_use]
 extern crate float_cmp;

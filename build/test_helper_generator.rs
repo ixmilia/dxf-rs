@@ -26,10 +26,9 @@ pub mod all_types;
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-extern crate dxf;
-use self::dxf::enums::*;
-use self::dxf::entities::*;
-use self::dxf::objects::*;
+use crate::enums::*;
+use crate::entities::*;
+use crate::objects::*;
 ".trim_start());
     fun.push_str("\n");
     let mut file = File::create(generated_dir.join("tests/all_types.rs"))
