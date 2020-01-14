@@ -130,7 +130,7 @@ fn round_trip() {
 fn parse_with_leading_bom() {
     let buf = vec![
         0xEFu8, 0xBB, 0xBF, // UTF-8 byte representation of BOM
-        '0' as u8, '\n' as u8, 'E' as u8, 'O' as u8, 'F' as u8,
+        b'0', b'\n', b'E', b'O', b'F',
     ];
     let _drawing = Drawing::load(&mut buf.as_slice());
 }
@@ -271,9 +271,8 @@ fn read_binary_file_after_writing() {
 fn read_dxb_file() {
     let data = vec![
         // DXB sentinel "AutoCAD DXB 1.0\r\n"
-        'A' as u8, 'u' as u8, 't' as u8, 'o' as u8, 'C' as u8, 'A' as u8, 'D' as u8, ' ' as u8,
-        'D' as u8, 'X' as u8, 'B' as u8, ' ' as u8, '1' as u8, '.' as u8, '0' as u8, '\r' as u8,
-        '\n' as u8, 0x1A, 0x0, // color
+        b'A', b'u', b't', b'o', b'C', b'A', b'D', b' ', b'D', b'X', b'B', b' ', b'1', b'.', b'0',
+        b'\r', b'\n', 0x1A, 0x0, // color
         136, // type specifier for new color
         0x01, 0x00, // color index 1
         // line
@@ -302,9 +301,8 @@ fn read_dxb_file() {
 fn read_dxb_file_with_polyline() {
     let data = vec![
         // DXB sentinel "AutoCAD DXB 1.0\r\n"
-        'A' as u8, 'u' as u8, 't' as u8, 'o' as u8, 'C' as u8, 'A' as u8, 'D' as u8, ' ' as u8,
-        'D' as u8, 'X' as u8, 'B' as u8, ' ' as u8, '1' as u8, '.' as u8, '0' as u8, '\r' as u8,
-        '\n' as u8, 0x1A, 0x0, 19, // polyline
+        b'A', b'u', b't', b'o', b'C', b'A', b'D', b' ', b'D', b'X', b'B', b' ', b'1', b'.', b'0',
+        b'\r', b'\n', 0x1A, 0x0, 19, // polyline
         0x00, 0x00, // is closed = false
         20,   // vertex
         0x01, 0x00, // x
