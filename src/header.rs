@@ -90,7 +90,7 @@ impl Header {
 mod tests {
     use crate::entities::*;
     use crate::enums::*;
-    use crate::test_helpers::helpers::*;
+    use crate::helper_functions::tests::*;
     use crate::*;
     use std::time::Duration;
 

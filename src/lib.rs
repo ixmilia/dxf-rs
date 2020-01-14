@@ -236,5 +236,4 @@ include!(concat!(env!("OUT_DIR"), "/generated/tests/mod.rs"));
 #[macro_use]
 extern crate float_cmp;
 
-#[cfg(test)]
-mod test_helpers;
+mod misc_tests;

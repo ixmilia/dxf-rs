@@ -259,7 +259,7 @@ impl Class {
 #[cfg(test)]
 mod tests {
     use crate::enums::*;
-    use crate::test_helpers::helpers::*;
+    use crate::helper_functions::tests::*;
     use crate::*;
 
     fn read_single_class(version_str: &str, body: Vec<&str>) -> Class {

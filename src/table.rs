@@ -63,9 +63,11 @@ impl ViewPort {
 
 #[cfg(test)]
 mod tests {
+    use crate::entities::*;
     use crate::enums::*;
+    use crate::helper_functions::tests::*;
+    use crate::objects::*;
     use crate::tables::*;
-    use crate::test_helpers::helpers::*;
     use crate::*;
 
     fn read_table(table_name: &str, value_pairs: Vec<&str>) -> Drawing {
@@ -370,5 +372,90 @@ mod tests {
             &drawing,
             vec!["1001", "IXMILIA", "1040", "1.1"].join("\r\n"),
         );
+    }
+
+    #[test]
+    fn normalize_layers() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.layers.len());
+        file.header.current_layer = String::from("current layer");
+        file.normalize();
+        assert_eq!(2, file.layers.len());
+        assert_eq!("0", file.layers[0].name);
+        assert_eq!("current layer", file.layers[1].name);
+    }
+
+    #[test]
+    fn normalize_line_types() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.line_types.len());
+        file.entities.push(Entity {
+            common: EntityCommon {
+                line_type_name: String::from("line type"),
+                ..Default::default()
+            },
+            specific: EntityType::Line(Default::default()),
+        });
+        file.normalize();
+        assert_eq!(4, file.line_types.len());
+        assert_eq!("BYBLOCK", file.line_types[0].name);
+        assert_eq!("BYLAYER", file.line_types[1].name);
+        assert_eq!("CONTINUOUS", file.line_types[2].name);
+        assert_eq!("line type", file.line_types[3].name);
+    }
+
+    #[test]
+    fn normalize_text_styles() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.styles.len());
+        file.entities
+            .push(Entity::new(EntityType::Attribute(Attribute {
+                text_style_name: String::from("text style"),
+                ..Default::default()
+            })));
+        file.normalize();
+        assert_eq!(3, file.styles.len());
+        assert_eq!("ANNOTATIVE", file.styles[0].name);
+        assert_eq!("STANDARD", file.styles[1].name);
+        assert_eq!("text style", file.styles[2].name);
+    }
+
+    #[test]
+    fn normalize_view_ports() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.view_ports.len());
+        file.normalize();
+        assert_eq!(1, file.view_ports.len());
+        assert_eq!("*ACTIVE", file.view_ports[0].name);
+    }
+
+    #[test]
+    fn normalize_views() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.views.len());
+        file.objects
+            .push(Object::new(ObjectType::PlotSettings(PlotSettings {
+                plot_view_name: String::from("some view"),
+                ..Default::default()
+            })));
+        file.normalize();
+        assert_eq!(1, file.views.len());
+        assert_eq!("some view", file.views[0].name);
+    }
+
+    #[test]
+    fn normalize_ucs() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.ucss.len());
+        file.header.ucs_name = String::from("primary ucs");
+        file.normalize();
+        assert_eq!(1, file.ucss.len());
+        assert_eq!("primary ucs", file.ucss[0].name);
     }
 }

@@ -321,7 +321,7 @@ impl Block {
 mod tests {
     use crate::entities::*;
     use crate::enums::*;
-    use crate::test_helpers::helpers::*;
+    use crate::helper_functions::tests::*;
     use crate::*;
 
     fn read_blocks_section(content: Vec<&str>) -> Drawing {

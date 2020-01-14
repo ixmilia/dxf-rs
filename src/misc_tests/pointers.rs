@@ -1,13 +1,10 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-extern crate dxf;
-use self::dxf::entities::*;
-use self::dxf::enums::*;
-use self::dxf::objects::*;
-use self::dxf::*;
-
-mod test_helpers;
-use crate::test_helpers::helpers::*;
+use crate::entities::*;
+use crate::enums::*;
+use crate::helper_functions::tests::*;
+use crate::objects::*;
+use crate::*;
 
 #[test]
 fn follow_entity_pointer_to_object() {
@@ -42,7 +39,7 @@ fn follow_entity_pointer_to_object() {
         .as_str(),
     );
     let line_common = match &drawing.entities[0] {
-        &Entity {
+        Entity {
             ref common,
             specific: EntityType::Line(_),
         } => common,

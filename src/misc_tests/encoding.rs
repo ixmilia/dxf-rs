@@ -1,17 +1,44 @@
-// Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
-
-extern crate dxf;
-
-extern crate encoding_rs;
+use crate::entities::*;
+use crate::enums::*;
+use crate::helper_functions::tests::*;
+use crate::*;
 
 use std::io::{BufReader, Cursor, Seek, SeekFrom};
+use std::str::from_utf8;
 
-use self::dxf::entities::*;
-use self::dxf::enums::*;
-use self::dxf::*;
+extern crate image;
+use self::image::{DynamicImage, GenericImageView};
 
-mod test_helpers;
-use crate::test_helpers::helpers::*;
+#[test]
+fn read_string_with_control_characters() {
+    let drawing = parse_drawing(
+        vec![
+            "0",
+            "SECTION",
+            "2",
+            "HEADER",
+            "9",
+            "$LASTSAVEDBY",
+            "1",
+            "a^G^ ^^ b",
+            "0",
+            "ENDSEC",
+            "0",
+            "EOF",
+        ]
+        .join("\n")
+        .as_str(),
+    );
+    assert_eq!("a\u{7}^\u{1E} b", drawing.header.last_saved_by);
+}
+
+#[test]
+fn write_string_with_control_characters() {
+    let mut drawing = Drawing::default();
+    drawing.header.version = AcadVersion::R2004;
+    drawing.header.last_saved_by = String::from("a\u{7}^\u{1E} b");
+    assert_contains(&drawing, String::from("a^G^ ^^ b"));
+}
 
 #[test]
 fn totally_empty_file() {
@@ -184,7 +211,7 @@ EOF"
 #[test]
 fn read_binary_file() {
     // `diamond-bin.dxf` is a pre-R13 binary file
-    let drawing = unwrap_drawing(Drawing::load_file("./tests/diamond-bin.dxf"));
+    let drawing = unwrap_drawing(Drawing::load_file("./src/misc_tests/diamond-bin.dxf"));
     assert_eq!(12, drawing.entities.len());
     match drawing.entities[0].specific {
         EntityType::Line(ref line) => {
@@ -215,9 +242,9 @@ fn read_binary_file_post_r13() {
 
 #[test]
 fn read_binary_file_after_writing() {
-    for version in vec![AcadVersion::R12, AcadVersion::R13] {
+    for version in &[AcadVersion::R12, AcadVersion::R13] {
         let mut drawing = Drawing::default();
-        drawing.header.version = version;
+        drawing.header.version = *version;
         let line = Line {
             p1: Point::new(1.1, 2.2, 3.3),
             p2: Point::new(4.4, 5.5, 6.6),
@@ -318,4 +345,86 @@ fn read_dxb_after_writing() {
         }
         _ => panic!("expected a line"),
     }
+}
+
+#[test]
+fn dont_write_utf8_bom() {
+    let drawing = Drawing::default();
+    let mut buf = Cursor::new(vec![]);
+    drawing.save(&mut buf).ok().unwrap();
+    buf.seek(SeekFrom::Start(0)).ok().unwrap();
+    let vec = buf.into_inner();
+
+    // file should start directly with a code, not a UTF-8 BOM
+    assert_eq!(b' ', vec[0]);
+    assert_eq!(b' ', vec[1]);
+    assert_eq!(b'0', vec[2]);
+}
+
+#[test]
+fn write_unicode_as_ascii() {
+    let mut drawing = Drawing::default();
+    drawing.header.version = AcadVersion::R2004;
+    drawing.header.project_name = String::from("è");
+    assert_contains(
+        &drawing,
+        vec!["  9", "$PROJECTNAME", "  1", "\\U+00E8"].join("\r\n"),
+    );
+}
+
+#[test]
+fn write_unicode_as_utf8() {
+    let mut drawing = Drawing::default();
+    drawing.header.version = AcadVersion::R2007;
+    drawing.header.project_name = String::from("è");
+    assert_contains(
+        &drawing,
+        vec!["  9", "$PROJECTNAME", "  1", "è"].join("\r\n"),
+    );
+}
+
+#[test]
+fn write_binary_file() {
+    for version in &[AcadVersion::R12, AcadVersion::R13] {
+        println!("checking version {:?}", version);
+        let mut drawing = Drawing::default();
+        drawing.header.version = *version;
+        let buf = to_binary(&drawing);
+
+        // check binary sentinel
+        let sentinel = from_utf8(&buf[0..20]).ok().unwrap();
+        assert_eq!("AutoCAD Binary DXF\r\n", sentinel);
+
+        // check "SECTION" text at expected offset
+        let sec_offset = if *version <= AcadVersion::R12 { 23 } else { 24 };
+        let sec_end = sec_offset + 7;
+        let sec_text = from_utf8(&buf[sec_offset..sec_end]).ok().unwrap();
+        assert_eq!("SECTION", sec_text);
+    }
+}
+
+#[test]
+fn thumbnail_round_trip() {
+    // prepare 1x1 px image, red pixel
+    let mut imgbuf = image::ImageBuffer::new(1, 1);
+    imgbuf.put_pixel(0, 0, image::Rgb([255u8, 0, 0]));
+    let thumbnail = DynamicImage::ImageRgb8(imgbuf);
+
+    // write drawing with thumbnail
+    let drawing = Drawing {
+        header: Header {
+            version: AcadVersion::R2000, // thumbnails are only written >= R2000
+            ..Default::default()
+        },
+        thumbnail: Some(thumbnail),
+        ..Default::default()
+    };
+    let drawing_text = to_test_string(&drawing);
+    assert!(drawing_text.contains(&vec!["  0", "SECTION", "  2", "THUMBNAILIMAGE",].join("\r\n")));
+
+    // re-read the drawing
+    let drawing = parse_drawing(&*drawing_text);
+    let thumbnail = drawing.thumbnail.unwrap();
+    assert_eq!((1, 1), thumbnail.dimensions());
+    assert_eq!(image::Rgba([255u8, 0, 0, 255]), thumbnail.get_pixel(0, 0));
 }

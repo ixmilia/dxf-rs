@@ -1777,8 +1777,8 @@ impl Object {
 #[cfg(test)]
 mod tests {
     use crate::enums::*;
+    use crate::helper_functions::tests::*;
     use crate::objects::*;
-    use crate::test_helpers::helpers::*;
     use crate::*;
 
     fn read_object(object_type: &str, body: String) -> Object {

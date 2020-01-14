@@ -1674,7 +1674,8 @@ impl Entity {
 mod tests {
     use crate::entities::*;
     use crate::enums::*;
-    use crate::test_helpers::helpers::*;
+    use crate::helper_functions::tests::*;
+    use crate::objects::*;
     use crate::*;
 
     fn read_entity(entity_type: &str, body: String) -> Entity {
@@ -3191,5 +3192,41 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn normalize_mline_styles() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.objects.len());
+        let mut mline = MLine::default();
+        mline.style_name = String::from("style name");
+        file.entities.push(Entity::new(EntityType::MLine(mline)));
+        file.normalize();
+        assert_eq!(1, file.objects.len());
+        match &file.objects[0].specific {
+            ObjectType::MLineStyle(ref ml) => assert_eq!("style name", ml.style_name),
+            _ => panic!("expected an mline style"),
+        }
+    }
+
+    #[test]
+    fn normalize_dimension_styles() {
+        let mut file = Drawing::default();
+        file.clear();
+        assert_eq!(0, file.dim_styles.len());
+        file.entities
+            .push(Entity::new(EntityType::RadialDimension(RadialDimension {
+                dimension_base: DimensionBase {
+                    dimension_style_name: String::from("style name"),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })));
+        file.normalize();
+        assert_eq!(3, file.dim_styles.len());
+        assert_eq!("ANNOTATIVE", file.dim_styles[0].name);
+        assert_eq!("STANDARD", file.dim_styles[1].name);
+        assert_eq!("style name", file.dim_styles[2].name);
     }
 }
