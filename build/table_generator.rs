@@ -329,6 +329,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
 
     for table in &element.children {
         let table_item = &table.children[0];
+        fun.push_str("#[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
         fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
         fun.push_str("\n");

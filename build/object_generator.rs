@@ -453,6 +453,7 @@ fn generate_type_string(fun: &mut String, element: &Element) {
 
 fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     let mut unused_readers = vec![];
+    fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str(
         "    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n",
     );
@@ -552,6 +553,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 
 fn generate_write(fun: &mut String, element: &Element) {
     let mut unused_writers = vec![];
+    fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");

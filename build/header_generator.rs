@@ -260,6 +260,7 @@ fn get_read_command(element: &Element) -> String {
 }
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
+    fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>, next_available_handle: u32) -> DxfResult<()>\n");
     fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
