@@ -521,7 +521,7 @@ impl Drawing {
     where
         T: Write,
     {
-        if &self.header.version >= &AcadVersion::R2000 {
+        if self.header.version >= AcadVersion::R2000 {
             if let Some(ref img) = self.thumbnail {
                 writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
                 writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
