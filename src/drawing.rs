@@ -40,6 +40,8 @@ use std::collections::HashSet;
 use std::iter::Iterator;
 use std::path::Path;
 
+pub(crate) const AUTO_REPLACE_HANDLE: u32 = 0xFFFF_FFFF;
+
 /// Represents a DXF drawing.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Drawing {
@@ -67,18 +69,22 @@ pub struct Drawing {
     pub view_ports: Vec<ViewPort>,
     /// The blocks contained by the drawing.
     pub blocks: Vec<Block>,
-    /// The entities contained by the drawing.
-    pub entities: Vec<Entity>,
     /// The objects contained by the drawing.
     pub objects: Vec<Object>,
+
+    /// Internal collection of entities.
+    __entities: Vec<Entity>,
+
     /// The thumbnail image preview of the drawing.
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub thumbnail: Option<DynamicImage>,
 }
 
-impl Default for Drawing {
-    fn default() -> Self {
-        Drawing {
+// public implementation
+impl Drawing {
+    #[allow(clippy::new_without_default)] // default state of struct isn't valid
+    pub fn new() -> Self {
+        let mut drawing = Drawing {
             header: Header::default(),
             classes: vec![],
             app_ids: vec![],
@@ -91,15 +97,13 @@ impl Default for Drawing {
             views: vec![],
             view_ports: vec![],
             blocks: vec![],
-            entities: vec![],
             objects: vec![],
+            __entities: vec![],
             thumbnail: None,
-        }
+        };
+        drawing.normalize();
+        drawing
     }
-}
-
-// public implementation
-impl Drawing {
     /// Loads a `Drawing` from anything that implements the `Read` trait.
     pub fn load<T>(reader: &mut T) -> DxfResult<Drawing>
     where
@@ -124,7 +128,7 @@ impl Drawing {
             }
             _ => {
                 let reader = CodePairIter::new(reader, encoding, first_line);
-                let mut drawing = Drawing::default();
+                let mut drawing = Drawing::new();
                 drawing.clear();
                 let mut iter = CodePairPutBack::from_code_pair_iter(reader);
                 Drawing::read_sections(&mut drawing, &mut iter)?;
@@ -189,7 +193,7 @@ impl Drawing {
             self.write_classes(&mut code_pair_writer)?;
             self.write_tables(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
             self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
-            self.write_entities(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
+            self.write_entities(write_handles, &mut code_pair_writer)?;
             self.write_objects(&mut code_pair_writer, &mut handle_tracker)?;
             self.write_thumbnail(&mut code_pair_writer)?;
             code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
@@ -237,6 +241,40 @@ impl Drawing {
         let mut buf_writer = BufWriter::new(file);
         self.save_dxb(&mut buf_writer)
     }
+    /// Returns an iterator for all contained entities.
+    pub fn entities(&self) -> impl Iterator<Item = &Entity> {
+        self.__entities.iter()
+    }
+    /// Returns an iterator for all mutable entities.
+    pub fn entities_mut(&mut self) -> impl Iterator<Item = &mut Entity> {
+        self.__entities.iter_mut()
+    }
+    /// Adds an entity to the `Drawing`.
+    pub fn add_entity(&mut self, mut entity: Entity) {
+        entity.common.handle = self.next_handle();
+
+        // TODO: set child handles, e.g., polyline vertices
+        match entity.specific {
+            EntityType::Insert(ref mut ins) => {
+                for a in ins.__attributes_and_handles.iter_mut() {
+                    if a.1 == AUTO_REPLACE_HANDLE {
+                        a.1 = self.next_handle();
+                    }
+                }
+            }
+            EntityType::Polyline(ref mut poly) => {
+                for v in poly.__vertices_and_handles.iter_mut() {
+                    if v.1 == AUTO_REPLACE_HANDLE {
+                        v.1 = self.next_handle();
+                    }
+                }
+            }
+            _ => (),
+        }
+
+        // ensure invariants
+        self.add_entity_no_handle_set(entity);
+    }
     /// Clears all items from the `Drawing`.
     pub fn clear(&mut self) {
         self.classes.clear();
@@ -250,7 +288,7 @@ impl Drawing {
         self.views.clear();
         self.view_ports.clear();
         self.blocks.clear();
-        self.entities.clear();
+        self.__entities.clear();
         self.objects.clear();
         self.thumbnail = None;
     }
@@ -267,7 +305,6 @@ impl Drawing {
         self.normalize_text_styles();
         self.normalize_view_ports();
         self.normalize_views();
-        self.ensure_mline_styles();
         self.ensure_dimension_styles();
         self.ensure_layers();
         self.ensure_line_types();
@@ -308,7 +345,7 @@ impl Drawing {
                 return Some(DrawingItem::DimStyle(item));
             }
         }
-        for item in &self.entities {
+        for item in &self.__entities {
             if item.common.handle == handle {
                 return Some(DrawingItem::Entity(item));
             }
@@ -373,7 +410,7 @@ impl Drawing {
                 return Some(DrawingItemMut::DimStyle(item));
             }
         }
-        for item in &mut self.entities {
+        for item in &mut self.__entities {
             if item.common.handle == handle {
                 return Some(DrawingItemMut::Entity(item));
             }
@@ -428,6 +465,94 @@ impl Drawing {
 
 // private implementation
 impl Drawing {
+    pub(crate) fn next_handle(&mut self) -> u32 {
+        let result = self.header.next_available_handle;
+        self.header.next_available_handle += 1;
+        result
+    }
+    fn add_entity_no_handle_set(&mut self, entity: Entity) {
+        self.ensure_mline_style_is_present(&entity);
+        self.ensure_dimension_style_is_present(&entity);
+        self.ensure_layer_is_present(&entity);
+        self.ensure_line_type_is_present(&entity);
+        self.ensure_text_style_is_present(&entity);
+        self.__entities.push(entity);
+    }
+    fn ensure_mline_style_is_present(&mut self, entity: &Entity) {
+        if let EntityType::MLine(ref ml) = &entity.specific {
+            if !self.objects.iter().any(|o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => mline_style.style_name == ml.style_name,
+                _ => false,
+            }) {
+                self.objects
+                    .push(Object::new(ObjectType::MLineStyle(MLineStyle {
+                        style_name: ml.style_name.clone(),
+                        ..Default::default()
+                    })));
+            }
+        }
+    }
+    fn ensure_dimension_style_is_present(&mut self, entity: &Entity) {
+        // ensure corresponding dimension style is present
+        let dim_style_name = match &entity.specific {
+            EntityType::RotatedDimension(ref d) => Some(&d.dimension_base.dimension_style_name),
+            EntityType::RadialDimension(ref d) => Some(&d.dimension_base.dimension_style_name),
+            EntityType::DiameterDimension(ref d) => Some(&d.dimension_base.dimension_style_name),
+            EntityType::AngularThreePointDimension(ref d) => {
+                Some(&d.dimension_base.dimension_style_name)
+            }
+            EntityType::OrdinateDimension(ref d) => Some(&d.dimension_base.dimension_style_name),
+            EntityType::Leader(ref l) => Some(&l.dimension_style_name),
+            EntityType::Tolerance(ref t) => Some(&t.dimension_style_name),
+            _ => None,
+        };
+        if let Some(dim_style_name) = dim_style_name {
+            if !self.dim_styles.iter().any(|d| &d.name == dim_style_name) {
+                self.dim_styles.push(DimStyle {
+                    name: dim_style_name.clone(),
+                    ..Default::default()
+                });
+            }
+        }
+    }
+    fn ensure_layer_is_present(&mut self, entity: &Entity) {
+        if !self.layers.iter().any(|l| l.name == entity.common.layer) {
+            self.layers.push(Layer {
+                name: entity.common.layer.clone(),
+                ..Default::default()
+            });
+        }
+    }
+    fn ensure_line_type_is_present(&mut self, entity: &Entity) {
+        if !self
+            .line_types
+            .iter()
+            .any(|lt| lt.name == entity.common.line_type_name)
+        {
+            self.line_types.push(LineType {
+                name: entity.common.line_type_name.clone(),
+                ..Default::default()
+            });
+        }
+    }
+    fn ensure_text_style_is_present(&mut self, entity: &Entity) {
+        let text_style_name = match &entity.specific {
+            EntityType::ArcAlignedText(ref e) => Some(&e.text_style_name),
+            EntityType::Attribute(ref e) => Some(&e.text_style_name),
+            EntityType::AttributeDefinition(ref e) => Some(&e.text_style_name),
+            EntityType::MText(ref e) => Some(&e.text_style_name),
+            EntityType::Text(ref e) => Some(&e.text_style_name),
+            _ => None,
+        };
+        if let Some(text_style_name) = text_style_name {
+            if !self.styles.iter().any(|s| &s.name == text_style_name) {
+                self.styles.push(Style {
+                    name: text_style_name.clone(),
+                    ..Default::default()
+                });
+            }
+        }
+    }
     fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write,
@@ -486,15 +611,14 @@ impl Drawing {
         &self,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
-        for e in &self.entities {
-            e.write(self.header.version, write_handles, writer, handle_tracker)?;
+        for e in &self.__entities {
+            e.write(self.header.version, write_handles, writer)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -644,7 +768,11 @@ impl Drawing {
         T: Read,
     {
         let mut iter = EntityIter { iter };
-        iter.read_entities_into_vec(&mut self.entities)?;
+        let mut entities = vec![];
+        iter.read_entities_into_vec(&mut entities)?;
+        for e in entities {
+            self.add_entity_no_handle_set(e);
+        }
         Ok(())
     }
     fn read_objects<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
@@ -809,8 +937,8 @@ impl Drawing {
         }
     }
     fn normalize_entities(&mut self) {
-        for i in 0..self.entities.len() {
-            self.entities[i].normalize();
+        for e in self.__entities.iter_mut() {
+            e.normalize();
         }
     }
     fn normalize_objects(&mut self) {
@@ -885,35 +1013,6 @@ impl Drawing {
             self.views[i].normalize();
         }
     }
-    fn ensure_mline_styles(&mut self) {
-        // gather existing mline style names
-        let mut existing_mline_styles = HashSet::new();
-        for obj in &self.objects {
-            if let ObjectType::MLineStyle(ref ml) = &obj.specific {
-                add_to_existing(&mut existing_mline_styles, &ml.style_name);
-            }
-        }
-
-        // find mline style names that should exist
-        let mut to_add = HashSet::new();
-        for ent in &self.entities {
-            if let EntityType::MLine(ref ml) = &ent.specific {
-                add_to_existing(&mut to_add, &ml.style_name);
-            }
-        }
-
-        // ensure all mline styles that should exist do
-        for name in &to_add {
-            if !existing_mline_styles.contains(name) {
-                existing_mline_styles.insert(name.clone());
-                self.objects
-                    .push(Object::new(ObjectType::MLineStyle(MLineStyle {
-                        style_name: name.clone(),
-                        ..Default::default()
-                    })));
-            }
-        }
-    }
     fn ensure_dimension_styles(&mut self) {
         // gather existing dimension style names
         let mut existing_dim_styles = HashSet::new();
@@ -925,7 +1024,7 @@ impl Drawing {
         let mut to_add = HashSet::new();
         add_to_existing(&mut to_add, &String::from("STANDARD"));
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
-        for ent in &self.entities {
+        for ent in &self.__entities {
             match &ent.specific {
                 EntityType::RotatedDimension(ref d) => {
                     add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
@@ -978,9 +1077,6 @@ impl Drawing {
                 add_to_existing(&mut to_add, &ent.common.layer);
             }
         }
-        for ent in &self.entities {
-            add_to_existing(&mut to_add, &ent.common.layer);
-        }
         for obj in &self.objects {
             match &obj.specific {
                 ObjectType::LayerFilter(ref l) => {
@@ -1030,9 +1126,6 @@ impl Drawing {
                 add_to_existing(&mut to_add, &ent.common.line_type_name);
             }
         }
-        for ent in &self.entities {
-            add_to_existing(&mut to_add, &ent.common.line_type_name);
-        }
         for obj in &self.objects {
             if let ObjectType::MLineStyle(ref style) = &obj.specific {
                 add_to_existing(&mut to_add, &style.style_name);
@@ -1061,20 +1154,6 @@ impl Drawing {
         let mut to_add = HashSet::new();
         add_to_existing(&mut to_add, &String::from("STANDARD"));
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
-        for entity in &self.entities {
-            match &entity.specific {
-                EntityType::ArcAlignedText(ref e) => {
-                    add_to_existing(&mut to_add, &e.text_style_name)
-                }
-                EntityType::Attribute(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                EntityType::AttributeDefinition(ref e) => {
-                    add_to_existing(&mut to_add, &e.text_style_name)
-                }
-                EntityType::MText(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                EntityType::Text(ref e) => add_to_existing(&mut to_add, &e.text_style_name),
-                _ => (),
-            }
-        }
         for obj in &self.objects {
             if let ObjectType::MLineStyle(ref o) = &obj.specific {
                 add_to_existing(&mut to_add, &o.style_name);
@@ -1172,5 +1251,506 @@ impl Drawing {
 fn add_to_existing(set: &mut HashSet<String>, val: &str) {
     if !set.contains(val) {
         set.insert(val.to_string());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::entities::*;
+    use crate::helper_functions::tests::*;
+    use crate::objects::*;
+    use crate::tables::*;
+    use crate::*;
+
+    #[test]
+    fn default_layers_are_present() {
+        let drawing = Drawing::new();
+        assert_eq!(1, drawing.layers.len());
+        assert_eq!("0", drawing.layers[0].name);
+    }
+
+    #[test]
+    fn default_dim_styles_are_present() {
+        let drawing = Drawing::new();
+        assert_eq!(2, drawing.dim_styles.len());
+        assert_eq!("ANNOTATIVE", drawing.dim_styles[0].name);
+        assert_eq!("STANDARD", drawing.dim_styles[1].name);
+    }
+
+    #[test]
+    fn default_line_types_are_present() {
+        let drawing = Drawing::new();
+        assert_eq!(3, drawing.line_types.len());
+        assert_eq!("BYBLOCK", drawing.line_types[0].name);
+        assert_eq!("BYLAYER", drawing.line_types[1].name);
+        assert_eq!("CONTINUOUS", drawing.line_types[2].name);
+    }
+
+    #[test]
+    fn default_text_styles_are_present() {
+        let drawing = Drawing::new();
+        assert_eq!(2, drawing.styles.len());
+        assert_eq!("ANNOTATIVE", drawing.styles[0].name);
+        assert_eq!("STANDARD", drawing.styles[1].name);
+    }
+
+    #[test]
+    fn entity_handle_is_set_on_add() {
+        let mut drawing = Drawing::new();
+        let ent = Entity {
+            common: Default::default(),
+            specific: EntityType::Line(Default::default()),
+        };
+        assert_eq!(0, ent.common.handle);
+
+        drawing.add_entity(ent);
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_ne!(0, entities[0].common.handle);
+    }
+
+    #[test]
+    fn mline_style_is_added_with_entity_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let mline_styles = drawing
+            .objects
+            .iter()
+            .filter(|&o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => {
+                    mline_style.style_name == "some-mline-style"
+                }
+                _ => false,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(0, mline_styles.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon::default(),
+            specific: EntityType::MLine(MLine {
+                style_name: String::from("some-mline-style"),
+                ..Default::default()
+            }),
+        });
+        let mline_styles = drawing
+            .objects
+            .iter()
+            .filter(|&o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => {
+                    mline_style.style_name == "some-mline-style"
+                }
+                _ => false,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(1, mline_styles.len());
+    }
+
+    #[test]
+    fn mline_style_is_not_added_with_entity_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.objects.push(Object {
+            common: ObjectCommon::default(),
+            specific: ObjectType::MLineStyle(MLineStyle {
+                style_name: String::from("some-mline-style"),
+                ..Default::default()
+            }),
+        });
+        let mline_styles = drawing
+            .objects
+            .iter()
+            .filter(|&o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => {
+                    mline_style.style_name == "some-mline-style"
+                }
+                _ => false,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(1, mline_styles.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon::default(),
+            specific: EntityType::MLine(MLine {
+                style_name: String::from("some-mline-style"),
+                ..Default::default()
+            }),
+        });
+        let mline_styles = drawing
+            .objects
+            .iter()
+            .filter(|&o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => {
+                    mline_style.style_name == "some-mline-style"
+                }
+                _ => false,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(1, mline_styles.len());
+    }
+
+    #[test]
+    fn mline_style_is_added_with_entity_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
+                "  0",
+                "MLINE",
+                "  2",
+                "some-mline-style",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let mline_styles = drawing
+            .objects
+            .iter()
+            .filter(|&o| match o.specific {
+                ObjectType::MLineStyle(ref mline_style) => {
+                    mline_style.style_name == "some-mline-style"
+                }
+                _ => false,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(1, mline_styles.len());
+    }
+
+    #[test]
+    fn dim_style_is_added_with_entity_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let dim_styles = drawing
+            .dim_styles
+            .iter()
+            .filter(|&d| d.name == "some-dim-style")
+            .collect::<Vec<_>>();
+        assert_eq!(0, dim_styles.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon::default(),
+            specific: EntityType::RadialDimension(RadialDimension {
+                dimension_base: DimensionBase {
+                    dimension_style_name: String::from("some-dim-style"),
+                    ..Default::default()
+                },
+                ..Default::default()
+            }),
+        });
+        let dim_styles = drawing
+            .dim_styles
+            .iter()
+            .filter(|&d| d.name == "some-dim-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, dim_styles.len());
+    }
+
+    #[test]
+    fn dim_style_is_not_added_with_entity_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.dim_styles.push(DimStyle {
+            name: String::from("some-dim-style"),
+            ..Default::default()
+        });
+        let dim_styles = drawing
+            .dim_styles
+            .iter()
+            .filter(|&d| d.name == "some-dim-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, dim_styles.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon::default(),
+            specific: EntityType::RadialDimension(RadialDimension {
+                dimension_base: DimensionBase {
+                    dimension_style_name: String::from("some-dim-style"),
+                    ..Default::default()
+                },
+                ..Default::default()
+            }),
+        });
+        let dim_styles = drawing
+            .dim_styles
+            .iter()
+            .filter(|&d| d.name == "some-dim-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, dim_styles.len());
+    }
+
+    #[test]
+    fn dim_style_is_added_with_entity_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
+                "  0",
+                "DIMENSION",
+                "  3",
+                "some-dim-style",
+                "100",
+                "AcDbRadialDimension",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let dim_styles = drawing
+            .dim_styles
+            .iter()
+            .filter(|&d| d.name == "some-dim-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, dim_styles.len());
+    }
+
+    #[test]
+    fn layer_is_added_with_entity_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(0, layers.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                layer: String::from("some-layer"),
+                ..Default::default()
+            },
+            specific: EntityType::Line(Default::default()),
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
+    fn layer_is_not_added_with_entity_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.layers.push(Layer {
+            name: String::from("some-layer"),
+            ..Default::default()
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                layer: String::from("some-layer"),
+                ..Default::default()
+            },
+            specific: EntityType::Line(Default::default()),
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
+    fn layer_is_added_with_entity_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
+                "  0",
+                "LINE",
+                "  8",
+                "some-layer",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
+    fn line_type_is_added_with_entity_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(0, line_types.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                line_type_name: String::from("some-line-type"),
+                ..Default::default()
+            },
+            specific: EntityType::Line(Default::default()),
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
+    fn line_type_is_not_added_with_entity_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.line_types.push(LineType {
+            name: String::from("some-line-type"),
+            ..Default::default()
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                line_type_name: String::from("some-line-type"),
+                ..Default::default()
+            },
+            specific: EntityType::Line(Default::default()),
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
+    fn line_type_is_added_with_entity_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
+                "  0",
+                "LINE",
+                "  6",
+                "some-line-type",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
+    fn text_style_is_added_with_entity_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(0, text_styles.len());
+
+        drawing.add_entity(Entity {
+            common: Default::default(),
+            specific: EntityType::Text(Text {
+                text_style_name: String::from("some-text-style"),
+                ..Default::default()
+            }),
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
+    fn text_style_is_not_added_with_entity_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.styles.push(Style {
+            name: String::from("some-text-style"),
+            ..Default::default()
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+
+        drawing.add_entity(Entity {
+            common: Default::default(),
+            specific: EntityType::Text(Text {
+                text_style_name: String::from("some-text-style"),
+                ..Default::default()
+            }),
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
+    fn text_style_is_added_with_entity_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
+                "  0",
+                "TEXT",
+                "  7",
+                "some-text-style",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
     }
 }

@@ -37,7 +37,6 @@ use crate::{
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
 use crate::extension_data;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
 use crate::tables::*;
 use crate::x_data;
@@ -202,7 +201,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write {\n");
     fun.push_str("\n");
     fun.push_str("        let ent = self;\n");
@@ -845,7 +844,7 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     }
     let writer = write_converter.replace("{}", &field_access);
     if name(&field) == "handle" && code == 5 {
-        String::from("CodePair::new_string(5, &as_handle(if self.handle == 0 { handle_tracker.get_entity_handle(&self) } else { self.handle }))")
+        String::from("CodePair::new_string(5, &as_handle(self.handle))")
     } else {
         format!(
             "CodePair::new_{typ}({code}, {writer})",

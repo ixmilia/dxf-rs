@@ -159,7 +159,7 @@ impl<T: Read> DxbReader<T> {
 
         let mut gathered_entities = vec![];
         collect_entities(&mut entities.into_iter(), &mut gathered_entities)?;
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.clear();
         match block_base {
             Some(location) => {
@@ -169,7 +169,9 @@ impl<T: Read> DxbReader<T> {
                 drawing.blocks.push(block);
             }
             None => {
-                drawing.entities = gathered_entities;
+                for e in gathered_entities {
+                    drawing.add_entity(e);
+                }
             }
         }
 

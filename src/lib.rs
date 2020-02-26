@@ -37,7 +37,7 @@
 //! use dxf::entities::*;
 //!
 //! let drawing = Drawing::load_file("path/to/file.dxf")?;
-//! for e in drawing.entities {
+//! for e in drawing.entities() {
 //!     println!("found entity on layer {}", e.common.layer);
 //!     match e.specific {
 //!         EntityType::Circle(ref circle) => {
@@ -60,8 +60,8 @@
 //! use dxf::Drawing;
 //! use dxf::entities::*;
 //!
-//! let mut drawing = Drawing::default();
-//! drawing.entities.push(Entity::new(EntityType::Line(Line::default())));
+//! let mut drawing = Drawing::new();
+//! drawing.add_entity(Entity::new(EntityType::Line(Line::default())));
 //! drawing.save_file("path/to/file.dxf")?;
 //! # Ok(())
 //! # }

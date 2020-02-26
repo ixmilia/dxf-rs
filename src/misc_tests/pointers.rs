@@ -38,7 +38,8 @@ fn follow_entity_pointer_to_object() {
         .join("\r\n")
         .as_str(),
     );
-    let line_common = match &drawing.entities[0] {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    let line_common = match entities[0] {
         Entity {
             ref common,
             specific: EntityType::Line(_),
@@ -100,7 +101,8 @@ fn follow_object_pointer_to_entity_collection() {
 #[test]
 fn no_pointer_bound() {
     let drawing = from_section("ENTITIES", vec!["  0", "LINE"].join("\r\n").as_str());
-    match drawing.entities[0].common.get_material(&drawing) {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    match entities[0].common.get_material(&drawing) {
         None => (),
         _ => panic!("expected None"),
     }
@@ -108,13 +110,8 @@ fn no_pointer_bound() {
 
 #[test]
 fn set_pointer_on_entity() {
-    let mut drawing = Drawing {
-        header: Header {
-            version: AcadVersion::R2007,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R2007;
     let mut material = Object {
         common: Default::default(),
         specific: ObjectType::Material(Material {
@@ -133,7 +130,7 @@ fn set_pointer_on_entity() {
         .unwrap();
     assert_eq!(1, material.common.handle);
     drawing.objects.push(material);
-    drawing.entities.push(line);
+    drawing.add_entity(line);
     assert_contains(&drawing, vec!["  0", "MATERIAL", "  5", "1"].join("\r\n"));
     assert_contains(
         &drawing,

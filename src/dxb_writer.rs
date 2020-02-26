@@ -26,7 +26,7 @@ impl<T: Write> DxbWriter<T> {
         self.writer.write_u8(0x1A)?;
         self.writer.write_u8(0x00)?;
 
-        let writing_block = drawing.entities.is_empty() && drawing.blocks.len() == 1;
+        let writing_block = drawing.entities().any(|_| true) && drawing.blocks.len() == 1;
         if writing_block {
             // write block header
             self.write_item_type(DxbItemType::BlockBase)?;
@@ -47,10 +47,7 @@ impl<T: Write> DxbWriter<T> {
         if writing_block {
             self.write_entities(&drawing.blocks[0].entities)?;
         } else {
-            let groups = drawing
-                .entities
-                .iter()
-                .group_by(|&e| e.common.layer.clone());
+            let groups = drawing.entities().group_by(|&e| e.common.layer.clone());
             for (layer, entities) in &groups {
                 self.write_item_type(DxbItemType::NewLayer)?;
                 self.write_null_terminated_string(&*layer)?;
@@ -165,7 +162,7 @@ impl<T: Write> DxbWriter<T> {
     fn write_polyline(&mut self, poly: &Polyline) -> DxfResult<()> {
         self.write_item_type(DxbItemType::Polyline)?;
         self.write_w(if poly.get_is_closed() { 1 } else { 0 })?;
-        for vertex in &poly.vertices {
+        for vertex in poly.vertices() {
             self.write_vertex(&vertex)?;
         }
         self.write_seqend()?;

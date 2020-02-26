@@ -203,7 +203,7 @@ $LUPREC
 
     #[test]
     fn write_multiple_value_variable() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
         assert!(to_test_string(&file).contains(
             vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"]
@@ -255,7 +255,7 @@ $LUPREC
 
     #[test]
     fn write_header_flags() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.header.set_end_point_snap(false);
         file.header.set_mid_point_snap(false);
         file.header.set_center_snap(true);
@@ -296,7 +296,7 @@ $LUPREC
     #[test]
     fn write_variable_with_different_codes() {
         // R13 writes $CMLSTYLE as a code 7
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.header.version = AcadVersion::R13;
         file.header.current_multiline_style = String::from("cml-style-7");
         assert_contains(
@@ -305,7 +305,7 @@ $LUPREC
         );
 
         // R14+ writes $CMLSTYLE as a code 2
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.header.version = AcadVersion::R14;
         file.header.current_multiline_style = String::from("cml-style-2");
         assert_contains(
@@ -327,34 +327,30 @@ $LUPREC
 
     #[test]
     fn write_proper_handseed_on_new_file() {
-        let mut drawing = Drawing::default();
-        drawing
-            .entities
-            .push(Entity::new(EntityType::Line(Line::new(
-                Point::origin(),
-                Point::origin(),
-            ))));
-        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "2"].join("\r\n"));
+        let mut drawing = Drawing::new();
+        drawing.add_entity(Entity::new(EntityType::Line(Line::new(
+            Point::origin(),
+            Point::origin(),
+        ))));
+        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "11"].join("\r\n"));
     }
 
     #[test]
     fn write_proper_handseed_on_read_file() {
         let mut drawing = from_section(
             "HEADER",
-            vec!["  9", "$HANDSEED", "  5", "2"].join("\r\n").as_str(),
+            vec!["  9", "$HANDSEED", "  5", "11"].join("\r\n").as_str(),
         );
-        drawing
-            .entities
-            .push(Entity::new(EntityType::Line(Line::new(
-                Point::origin(),
-                Point::origin(),
-            ))));
-        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "3"].join("\r\n"));
+        drawing.add_entity(Entity::new(EntityType::Line(Line::new(
+            Point::origin(),
+            Point::origin(),
+        ))));
+        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "14"].join("\r\n"));
     }
 
     #[test]
     fn dont_write_suppressed_variables() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004;
         assert_contains(&drawing, vec!["9", "$HIDETEXT", "280"].join("\r\n"));
         assert_not_contains(&drawing, vec!["9", "$HIDETEXT", "290"].join("\r\n"));

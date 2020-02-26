@@ -1,6 +1,5 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use crate::entities::EntityCommon;
 use crate::objects::ObjectCommon;
 use crate::tables::*;
 use crate::Block;
@@ -23,9 +22,6 @@ impl HandleTracker {
         self.get_next_handle(item.handle)
     }
     pub fn get_dim_style_handle(&mut self, item: &DimStyle) -> u32 {
-        self.get_next_handle(item.handle)
-    }
-    pub fn get_entity_handle(&mut self, item: &EntityCommon) -> u32 {
         self.get_next_handle(item.handle)
     }
     pub fn get_layer_handle(&mut self, item: &Layer) -> u32 {

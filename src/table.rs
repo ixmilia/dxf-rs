@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn write_layer() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         let mut layer = Layer::default();
         layer.name = String::from("layer-name");
         layer.color = Color::from_index(3);
@@ -229,17 +229,9 @@ mod tests {
             &drawing,
             vec![
                 "  0",
-                "TABLE",
-                "  2",
-                "LAYER",
-                "100",
-                "AcDbSymbolTable",
-                " 70",
-                "     0",
-                "  0",
                 "LAYER",
                 "  5",
-                "1",
+                "A",
                 "100",
                 "AcDbSymbolTableRecord",
                 "100",
@@ -320,14 +312,9 @@ mod tests {
             }],
             ..Default::default()
         };
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R14,
-                ..Default::default()
-            },
-            layers: vec![layer],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R14;
+        drawing.layers.push(layer);
         assert_contains(
             &drawing,
             vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
@@ -360,14 +347,9 @@ mod tests {
             }],
             ..Default::default()
         };
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R2000,
-                ..Default::default()
-            },
-            layers: vec![layer],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        drawing.layers.push(layer);
         assert_contains(
             &drawing,
             vec!["1001", "IXMILIA", "1040", "1.1"].join("\r\n"),
@@ -376,7 +358,7 @@ mod tests {
 
     #[test]
     fn normalize_layers() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.layers.len());
         file.header.current_layer = String::from("current layer");
@@ -388,10 +370,10 @@ mod tests {
 
     #[test]
     fn normalize_line_types() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.line_types.len());
-        file.entities.push(Entity {
+        file.add_entity(Entity {
             common: EntityCommon {
                 line_type_name: String::from("line type"),
                 ..Default::default()
@@ -408,14 +390,13 @@ mod tests {
 
     #[test]
     fn normalize_text_styles() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.styles.len());
-        file.entities
-            .push(Entity::new(EntityType::Attribute(Attribute {
-                text_style_name: String::from("text style"),
-                ..Default::default()
-            })));
+        file.add_entity(Entity::new(EntityType::Attribute(Attribute {
+            text_style_name: String::from("text style"),
+            ..Default::default()
+        })));
         file.normalize();
         assert_eq!(3, file.styles.len());
         assert_eq!("ANNOTATIVE", file.styles[0].name);
@@ -425,7 +406,7 @@ mod tests {
 
     #[test]
     fn normalize_view_ports() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.view_ports.len());
         file.normalize();
@@ -435,7 +416,7 @@ mod tests {
 
     #[test]
     fn normalize_views() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.views.len());
         file.objects
@@ -450,7 +431,7 @@ mod tests {
 
     #[test]
     fn normalize_ucs() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.ucss.len());
         file.header.ucs_name = String::from("primary ucs");

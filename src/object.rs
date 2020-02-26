@@ -1889,7 +1889,7 @@ mod tests {
 
     #[test]
     fn write_common_object_fields() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // IMAGEDEF is only supported on R14+
         let obj = Object {
             common: Default::default(),
@@ -1901,7 +1901,7 @@ mod tests {
 
     #[test]
     fn write_specific_object_fields() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // IMAGEDEF is only supported on R14+
         let img = ImageDefinition {
             file_path: String::from("path/to/file"),
@@ -1979,7 +1979,7 @@ mod tests {
 
     #[test]
     fn write_field_with_multiples_specific() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
         drawing.objects.push(Object {
             common: Default::default(),
@@ -2021,7 +2021,7 @@ mod tests {
 
     #[test]
     fn write_object_with_write_order() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
         drawing.objects.push(Object {
             common: Default::default(),
@@ -2065,7 +2065,7 @@ mod tests {
 
     #[test]
     fn write_object_with_flags() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000; // LAYOUT is only supported up to R2000
         let mut layout = Layout::default();
         assert_eq!(0, layout.layout_flags);
@@ -2106,7 +2106,7 @@ mod tests {
 
     #[test]
     fn write_object_with_handles() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2007; // LIGHTLIST only supported up to 2007
         drawing.objects.push(Object {
             common: ObjectCommon {
@@ -2143,7 +2143,7 @@ mod tests {
         let mut dict = Dictionary::default();
         dict.value_handles.insert(String::from("key1"), 0xAAAA);
         dict.value_handles.insert(String::from("key2"), 0xBBBB);
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.objects.push(Object {
             common: Default::default(),
             specific: ObjectType::Dictionary(dict),
@@ -2177,7 +2177,7 @@ mod tests {
 
     #[test]
     fn write_version_specific_object() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.objects.push(Object {
             common: Default::default(),
             specific: ObjectType::AcadProxyObject(Default::default()),
@@ -2225,26 +2225,21 @@ mod tests {
 
     #[test]
     fn write_extension_data() {
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R14,
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R14;
+        drawing.objects.push(Object {
+            common: ObjectCommon {
+                extension_data_groups: vec![ExtensionGroup {
+                    application_name: String::from("IXMILIA"),
+                    items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(
+                        1,
+                        "some string",
+                    ))],
+                }],
                 ..Default::default()
             },
-            objects: vec![Object {
-                common: ObjectCommon {
-                    extension_data_groups: vec![ExtensionGroup {
-                        application_name: String::from("IXMILIA"),
-                        items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(
-                            1,
-                            "some string",
-                        ))],
-                    }],
-                    ..Default::default()
-                },
-                specific: ObjectType::IdBuffer(IdBuffer::default()),
-            }],
-            ..Default::default()
-        };
+            specific: ObjectType::IdBuffer(IdBuffer::default()),
+        });
         assert_contains(
             &drawing,
             vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
@@ -2268,23 +2263,18 @@ mod tests {
 
     #[test]
     fn write_x_data() {
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R2000,
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        drawing.objects.push(Object {
+            common: ObjectCommon {
+                x_data: vec![XData {
+                    application_name: String::from("IXMILIA"),
+                    items: vec![XDataItem::Real(1.1)],
+                }],
                 ..Default::default()
             },
-            objects: vec![Object {
-                common: ObjectCommon {
-                    x_data: vec![XData {
-                        application_name: String::from("IXMILIA"),
-                        items: vec![XDataItem::Real(1.1)],
-                    }],
-                    ..Default::default()
-                },
-                specific: ObjectType::IdBuffer(IdBuffer::default()),
-            }],
-            ..Default::default()
-        };
+            specific: ObjectType::IdBuffer(IdBuffer::default()),
+        });
         assert_contains(
             &drawing,
             vec![
@@ -2366,17 +2356,12 @@ mod tests {
                 application_name: String::from("IXMILIA"),
                 items: vec![XDataItem::Real(1.1)],
             });
-            let drawing = Drawing {
-                objects: vec![Object {
-                    common: common,
-                    specific: expected_type,
-                }],
-                header: Header {
-                    version: max_version,
-                    ..Default::default()
-                },
-                ..Default::default()
-            };
+            let mut drawing = Drawing::new();
+            drawing.header.version = max_version;
+            drawing.objects.push(Object {
+                common,
+                specific: expected_type,
+            });
             assert_contains(&drawing, vec!["  0", type_string].join("\r\n"));
             if max_version >= AcadVersion::R14 {
                 // only written on R14+

@@ -11,8 +11,8 @@ use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
 use crate::entities::*;
 use crate::enums::*;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
+use crate::Drawing;
 
 //------------------------------------------------------------------------------
 //                                                                           Arc
@@ -89,6 +89,22 @@ impl Face3D {
 }
 
 //------------------------------------------------------------------------------
+//                                                                        Insert
+//------------------------------------------------------------------------------
+impl Insert {
+    pub fn attributes(&self) -> impl Iterator<Item = &Attribute> {
+        self.__attributes_and_handles.iter().map(|a| &a.0)
+    }
+    pub fn attributes_mut(&mut self) -> impl Iterator<Item = &mut Attribute> {
+        self.__attributes_and_handles.iter_mut().map(|a| &mut a.0)
+    }
+    pub fn add_attribute(&mut self, drawing: &mut Drawing, att: Attribute) {
+        let att_handle = drawing.next_handle();
+        self.__attributes_and_handles.push((att, att_handle));
+    }
+}
+
+//------------------------------------------------------------------------------
 //                                                                          Line
 //------------------------------------------------------------------------------
 impl Line {
@@ -125,6 +141,22 @@ impl ModelPoint {
             location: p,
             ..Default::default()
         }
+    }
+}
+
+//------------------------------------------------------------------------------
+//                                                                      Polyline
+//------------------------------------------------------------------------------
+impl Polyline {
+    pub fn vertices(&self) -> impl Iterator<Item = &Vertex> {
+        self.__vertices_and_handles.iter().map(|v| &v.0)
+    }
+    pub fn vertices_mut(&mut self) -> impl Iterator<Item = &mut Vertex> {
+        self.__vertices_and_handles.iter_mut().map(|v| &mut v.0)
+    }
+    pub fn add_vertex(&mut self, drawing: &mut Drawing, vertex: Vertex) {
+        let vertex_handle = drawing.next_handle();
+        self.__vertices_and_handles.push((vertex, vertex_handle));
     }
 }
 
@@ -1294,20 +1326,18 @@ impl Entity {
         version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common
-                .write(version, write_handles, writer, handle_tracker)?;
+            self.common.write(version, write_handles, writer)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(&self.common, version, writer)?;
             }
 
-            self.post_write(version, write_handles, writer, handle_tracker)?;
+            self.post_write(version, write_handles, writer)?;
             for x in &self.common.x_data {
                 x.write(version, writer)?;
             }
@@ -1579,48 +1609,45 @@ impl Entity {
         version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         match self.specific {
-            EntityType::Attribute(ref att) => self.write_attribute_m_text(
-                att.m_text.clone(),
-                version,
-                write_handles,
-                writer,
-                handle_tracker,
-            )?,
-            EntityType::AttributeDefinition(ref att) => self.write_attribute_m_text(
-                att.m_text.clone(),
-                version,
-                write_handles,
-                writer,
-                handle_tracker,
-            )?,
+            EntityType::Attribute(ref att) => {
+                self.write_attribute_m_text(att.m_text.clone(), version, write_handles, writer)?
+            }
+            EntityType::AttributeDefinition(ref att) => {
+                self.write_attribute_m_text(att.m_text.clone(), version, write_handles, writer)?
+            }
             EntityType::Insert(ref ins) => {
-                for a in &ins.attributes {
+                for (a, att_handle) in &ins.__attributes_and_handles {
                     let a = Entity {
-                        common: Default::default(),
+                        common: EntityCommon {
+                            handle: *att_handle,
+                            ..Default::default()
+                        },
                         specific: EntityType::Attribute(a.clone()),
                     };
-                    a.write(version, write_handles, writer, handle_tracker)?;
+                    a.write(version, write_handles, writer)?;
                 }
-                Entity::write_seqend(version, write_handles, writer, handle_tracker)?;
+                Entity::write_seqend(version, write_handles, writer)?;
             }
             EntityType::Polyline(ref poly) => {
-                for v in &poly.vertices {
+                for (v, vertex_handle) in &poly.__vertices_and_handles {
                     let mut v = v.clone();
                     v.set_is_3d_polyline_vertex(poly.get_is_3d_polyline());
                     v.set_is_3d_polygon_mesh(poly.get_is_3d_polygon_mesh());
                     let v = Entity {
-                        common: Default::default(),
+                        common: EntityCommon {
+                            handle: *vertex_handle,
+                            ..Default::default()
+                        },
                         specific: EntityType::Vertex(v),
                     };
-                    v.write(version, write_handles, writer, handle_tracker)?;
+                    v.write(version, write_handles, writer)?;
                 }
-                Entity::write_seqend(version, write_handles, writer, handle_tracker)?;
+                Entity::write_seqend(version, write_handles, writer)?;
             }
             _ => (),
         }
@@ -1633,30 +1660,28 @@ impl Entity {
         version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         let m_text_common = EntityCommon {
+            handle: 0, // TODO: set handle
             __owner_handle: self.common.handle,
             is_in_paper_space: self.common.is_in_paper_space,
             layer: self.common.layer.clone(),
             ..Default::default()
         };
-        let _m_text_handle = handle_tracker.get_entity_handle(&m_text_common);
         let m_text = Entity {
             common: m_text_common,
             specific: EntityType::MText(m_text),
         };
-        m_text.write(version, write_handles, writer, handle_tracker)?;
+        m_text.write(version, write_handles, writer)?;
         Ok(())
     }
     fn write_seqend<T>(
         version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
@@ -1665,7 +1690,7 @@ impl Entity {
             common: Default::default(),
             specific: EntityType::Seqend(Default::default()),
         };
-        seqend.write(version, write_handles, writer, handle_tracker)?;
+        seqend.write(version, write_handles, writer)?;
         Ok(())
     }
 }
@@ -1683,8 +1708,9 @@ mod tests {
             "ENTITIES",
             vec!["0", entity_type, body.as_str()].join("\r\n").as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        drawing.entities[0].to_owned()
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        entities[0].clone()
     }
 
     #[test]
@@ -1694,7 +1720,8 @@ mod tests {
                 .join("\r\n")
                 .as_str(),
         );
-        assert_eq!(0, drawing.entities.len());
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(0, entities.len());
     }
 
     #[test]
@@ -1717,7 +1744,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(0, drawing.entities.len());
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(0, entities.len());
     }
 
     #[test]
@@ -1744,12 +1772,13 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a line"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Circle(_) => (),
             _ => panic!("expected a circle"),
         }
@@ -1764,8 +1793,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a line"),
         }
@@ -1799,13 +1829,13 @@ mod tests {
 
     #[test]
     fn write_common_entity_fields() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         let mut ent = Entity {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
         };
         ent.common.layer = "some-layer".to_owned();
-        drawing.entities.push(ent);
+        drawing.add_entity(ent);
         assert_contains(
             &drawing,
             vec![
@@ -1824,13 +1854,13 @@ mod tests {
 
     #[test]
     fn write_specific_entity_fields() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         let line = Line {
             p1: Point::new(1.1, 2.2, 3.3),
             p2: Point::new(4.4, 5.5, 6.6),
             ..Default::default()
         };
-        drawing.entities.push(Entity::new(EntityType::Line(line)));
+        drawing.add_entity(Entity::new(EntityType::Line(line)));
         assert_contains(
             &drawing,
             vec![
@@ -1855,10 +1885,11 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
 
         // verify circle
-        match drawing.entities[0].specific {
+        match entities[0].specific {
             EntityType::Circle(ref circle) => {
                 assert_eq!(Point::new(1.1, 2.2, 3.3), circle.center);
                 assert!(approx_eq!(f64, 4.4, circle.radius));
@@ -1867,7 +1898,7 @@ mod tests {
         }
 
         // verify line
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(ref line) => {
                 assert_eq!(Point::new(5.5, 6.6, 7.7), line.p1);
                 assert_eq!(Point::new(8.8, 9.9, 10.1), line.p2);
@@ -1884,9 +1915,9 @@ mod tests {
 
     #[test]
     fn write_field_with_multiples_common() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: EntityCommon {
                 preview_image_data: vec![String::from("one"), String::from("two")],
                 ..Default::default()
@@ -1913,9 +1944,9 @@ mod tests {
 
     #[test]
     fn write_field_with_multiples_specific() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R13; // 3DSOLID is only supported on R13+
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Solid3D(Solid3D {
                 custom_data: vec![String::from("one-1"), String::from("one-2")],
@@ -1957,9 +1988,9 @@ mod tests {
 
     #[test]
     fn write_entity_with_write_order() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Image(Image {
                 clipping_vertices: vec![
@@ -2030,12 +2061,13 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::MText(_) => {}
             _ => panic!("expected an mtext"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(_) => {}
             _ => panic!("expected a line"),
         }
@@ -2055,13 +2087,13 @@ mod tests {
 
     #[test]
     fn write_entity_with_flags() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // IMAGE is only supported on R14+
         let mut image = Image::default();
         assert_eq!(0, image.display_options_flags);
         image.set_show_image(true);
         image.set_use_clipping_boundary(true);
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Image(image),
         });
@@ -2097,23 +2129,25 @@ mod tests {
 
     #[test]
     fn write_entity_with_handle_and_pointer() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: EntityCommon {
-                handle: 0xa1,
                 __owner_handle: 0xa2,
                 ..Default::default()
             },
             specific: EntityType::Line(Default::default()),
         });
-        assert_contains(&drawing, vec!["  5", "A1", "330", "A2"].join("\r\n"));
+        assert_contains(
+            &drawing,
+            vec!["  0", "LINE", "  5", "1", "330", "A2"].join("\r\n"),
+        );
     }
 
     #[test]
     fn write_version_specific_entity() {
-        let mut drawing = Drawing::default();
-        drawing.entities.push(Entity {
+        let mut drawing = Drawing::new();
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Solid3D(Default::default()),
         });
@@ -2147,8 +2181,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Polyline(ref poly) => {
                 assert_eq!(
                     vec![
@@ -2165,7 +2200,7 @@ mod tests {
                             ..Default::default()
                         },
                     ],
-                    poly.vertices
+                    poly.vertices().cloned().collect::<Vec<_>>()
                 );
             }
             _ => panic!("expected a POLYLINE"),
@@ -2187,8 +2222,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Polyline(ref poly) => {
                 assert_eq!(
                     vec![
@@ -2205,7 +2241,7 @@ mod tests {
                             ..Default::default()
                         },
                     ],
-                    poly.vertices
+                    poly.vertices().cloned().collect::<Vec<_>>()
                 );
             }
             _ => panic!("expected a POLYLINE"),
@@ -2218,9 +2254,10 @@ mod tests {
             "ENTITIES",
             vec!["0", "POLYLINE", "0", "SEQEND"].join("\r\n").as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
-            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
+            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices().count()),
             _ => panic!("expected a POLYLINE"),
         }
     }
@@ -2228,9 +2265,10 @@ mod tests {
     #[test]
     fn read_empty_polyline_without_seqend() {
         let drawing = from_section("ENTITIES", vec!["0", "POLYLINE"].join("\r\n").as_str());
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
-            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
+            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices().count()),
             _ => panic!("expected a POLYLINE"),
         }
     }
@@ -2250,8 +2288,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::Polyline(ref poly) => {
                 assert_eq!(
                     vec![
@@ -2268,13 +2307,13 @@ mod tests {
                             ..Default::default()
                         },
                     ],
-                    poly.vertices
+                    poly.vertices().cloned().collect::<Vec<_>>()
                 );
             }
             _ => panic!("expected a POLYLINE"),
         }
 
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a LINE"),
         }
@@ -2295,8 +2334,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::Polyline(ref poly) => {
                 assert_eq!(
                     vec![
@@ -2313,13 +2353,13 @@ mod tests {
                             ..Default::default()
                         },
                     ],
-                    poly.vertices
+                    poly.vertices().cloned().collect::<Vec<_>>()
                 );
             }
             _ => panic!("expected a POLYLINE"),
         }
 
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a LINE"),
         }
@@ -2333,12 +2373,13 @@ mod tests {
                 .join("\r\n")
                 .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
-            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
+            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices().count()),
             _ => panic!("expected a POLYLINE"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a LINE"),
         }
@@ -2350,12 +2391,13 @@ mod tests {
             "ENTITIES",
             vec!["0", "POLYLINE", "0", "LINE"].join("\r\n").as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
-            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices.len()),
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
+            EntityType::Polyline(ref poly) => assert_eq!(0, poly.vertices().count()),
             _ => panic!("expected a POLYLINE"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a LINE"),
         }
@@ -2363,25 +2405,30 @@ mod tests {
 
     #[test]
     fn write_2d_polyline() {
-        let mut drawing = Drawing::default();
-        let poly = Polyline {
-            vertices: vec![
-                Vertex {
-                    location: Point::new(1.1, 2.1, 3.1),
-                    ..Default::default()
-                },
-                Vertex {
-                    location: Point::new(1.2, 2.2, 3.2),
-                    ..Default::default()
-                },
-                Vertex {
-                    location: Point::new(1.3, 2.3, 3.3),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        drawing.entities.push(Entity {
+        let mut drawing = Drawing::new();
+        let mut poly = Polyline::default();
+        poly.add_vertex(
+            &mut drawing,
+            Vertex {
+                location: Point::new(1.1, 2.1, 3.1),
+                ..Default::default()
+            },
+        );
+        poly.add_vertex(
+            &mut drawing,
+            Vertex {
+                location: Point::new(1.2, 2.2, 3.2),
+                ..Default::default()
+            },
+        );
+        poly.add_vertex(
+            &mut drawing,
+            Vertex {
+                location: Point::new(1.3, 2.3, 3.3),
+                ..Default::default()
+            },
+        );
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Polyline(poly),
         });
@@ -2391,7 +2438,7 @@ mod tests {
                 "  0",
                 "POLYLINE", // polyline
                 "  5",
-                "1",
+                "4",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2409,7 +2456,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 1
                 "  5",
-                "2",
+                "1",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2431,7 +2478,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 2
                 "  5",
-                "3",
+                "2",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2453,7 +2500,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 3
                 "  5",
-                "4",
+                "3",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2481,16 +2528,17 @@ mod tests {
 
     #[test]
     fn write_3d_polyline() {
-        let mut drawing = Drawing::default();
-        let mut poly = Polyline {
-            vertices: vec![Vertex {
+        let mut drawing = Drawing::new();
+        let mut poly = Polyline::default();
+        poly.add_vertex(
+            &mut drawing,
+            Vertex {
                 location: Point::new(1.1, 2.1, 3.1),
                 ..Default::default()
-            }],
-            ..Default::default()
-        };
+            },
+        );
         poly.set_is_3d_polyline(true);
-        drawing.entities.push(Entity {
+        drawing.add_entity(Entity {
             common: Default::default(),
             specific: EntityType::Polyline(poly),
         });
@@ -2500,7 +2548,7 @@ mod tests {
                 "  0",
                 "POLYLINE", // polyline
                 "  5",
-                "1",
+                "2",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2520,7 +2568,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 1
                 "  5",
-                "2",
+                "1",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2548,8 +2596,9 @@ mod tests {
             "ENTITIES",
             vec!["0", "LWPOLYLINE", "43", "43.0"].join("\r\n").as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match &drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::LwPolyline(ref poly) => {
                 assert!(approx_eq!(f64, 43.0, poly.constant_width));
                 assert_eq!(0, poly.vertices.len());
@@ -2584,8 +2633,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match &drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::LwPolyline(ref poly) => {
                 assert!(approx_eq!(f64, 43.0, poly.constant_width));
                 assert_eq!(1, poly.vertices.len());
@@ -2640,8 +2690,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match &drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::LwPolyline(ref poly) => {
                 assert!(approx_eq!(f64, 43.0, poly.constant_width));
                 assert_eq!(2, poly.vertices.len());
@@ -2666,7 +2717,7 @@ mod tests {
 
     #[test]
     fn write_lw_polyline() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2013;
         let mut poly = LwPolyline::default();
         poly.constant_width = 43.0;
@@ -2683,9 +2734,7 @@ mod tests {
             bulge: 42.2,
             id: 92,
         });
-        drawing
-            .entities
-            .push(Entity::new(EntityType::LwPolyline(poly)));
+        drawing.add_entity(Entity::new(EntityType::LwPolyline(poly)));
         assert_contains(
             &drawing,
             vec![
@@ -2779,8 +2828,9 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Line(_) => {}
             _ => panic!("expected a line"),
         }
@@ -2797,8 +2847,8 @@ mod tests {
             ..Default::default()
         };
         let ent = Entity::new(EntityType::RadialDimension(dim));
-        let mut drawing = Drawing::default();
-        drawing.entities.push(ent);
+        let mut drawing = Drawing::new();
+        drawing.add_entity(ent);
         assert_contains(&drawing, vec!["  0", "DIMENSION"].join("\r\n"));
         assert_contains(&drawing, vec!["  1", "some-text"].join("\r\n"));
         assert_contains(
@@ -2833,16 +2883,17 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(3, file.entities.len());
-        match file.entities[0].specific {
+        let entities = file.entities().collect::<Vec<_>>();
+        assert_eq!(3, entities.len());
+        match entities[0].specific {
             EntityType::Insert(_) => (),
             _ => panic!("expected an INSERT"),
         }
-        match file.entities[1].specific {
+        match entities[1].specific {
             EntityType::Attribute(_) => (),
             _ => panic!("expected an ATTRIB"),
         }
-        match file.entities[2].specific {
+        match entities[2].specific {
             EntityType::Seqend(_) => (),
             _ => panic!("expected a SEQEND"),
         }
@@ -2861,22 +2912,21 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(1, file.entities.len());
-        match file.entities[0].specific {
-            EntityType::Insert(ref ins) => assert_eq!(2, ins.attributes.len()),
+        let entities = file.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
+            EntityType::Insert(ref ins) => assert_eq!(2, ins.attributes().count()),
             _ => panic!("exepcted an INSERT"),
         }
     }
 
     #[test]
     fn write_insert_with_embedded_attributes() {
-        let ins = Insert {
-            attributes: vec![Attribute::default()],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        let mut ins = Insert::default();
+        ins.add_attribute(&mut drawing, Attribute::default());
         let ent = Entity::new(EntityType::Insert(ins));
-        let mut drawing = Drawing::default();
-        drawing.entities.push(ent);
+        drawing.add_entity(ent);
         assert_contains(&drawing, vec!["  0", "INSERT"].join("\r\n"));
         assert_contains(
             &drawing,
@@ -2894,18 +2944,17 @@ mod tests {
 
     #[test]
     fn round_trip_insert_with_attributes() {
-        let ins = Insert {
-            attributes: vec![Attribute::default()],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        let mut ins = Insert::default();
+        ins.add_attribute(&mut drawing, Attribute::default());
         let ent = Entity::new(EntityType::Insert(ins));
-        let mut drawing = Drawing::default();
-        drawing.entities.push(ent);
+        drawing.add_entity(ent);
 
         let drawing = parse_drawing(&to_test_string(&drawing));
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
-            EntityType::Insert(ref ins) => assert_eq!(1, ins.attributes.len()),
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
+            EntityType::Insert(ref ins) => assert_eq!(1, ins.attributes().count()),
             _ => panic!("expected an INSERT"),
         }
     }
@@ -2918,8 +2967,9 @@ mod tests {
                 .join("\r\n")
                 .as_str(),
         );
-        assert_eq!(1, file.entities.len());
-        match file.entities[0].specific {
+        let entities = file.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
             _ => panic!("exepcted an attribute"),
         }
@@ -2927,14 +2977,9 @@ mod tests {
 
     #[test]
     fn write_attribute_with_attached_mtext() {
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R13,
-                ..Default::default()
-            }, // MTEXT is only written on R13+
-            entities: vec![Entity::new(EntityType::Attribute(Default::default()))],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13; // MTEXT is only written on R13+
+        drawing.add_entity(Entity::new(EntityType::Attribute(Default::default())));
         assert_contains(&drawing, vec!["  0", "ATTRIB"].join("\r\n"));
         assert_contains(&drawing, vec!["  0", "MTEXT"].join("\r\n"));
     }
@@ -2948,19 +2993,14 @@ mod tests {
             },
             ..Default::default()
         };
-        let ent = Entity::new(EntityType::Attribute(att));
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R13,
-                ..Default::default()
-            }, // MTEXT is only written on R13+
-            entities: vec![ent],
-            ..Default::default()
-        };
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13; // MTEXT is only written on R13+
+        drawing.add_entity(Entity::new(EntityType::Attribute(att)));
 
         let drawing = parse_drawing(&to_test_string(&drawing));
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
             _ => panic!("expected a attribute"),
         }
@@ -2985,26 +3025,21 @@ mod tests {
 
     #[test]
     fn write_extension_data() {
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R14,
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R14;
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                extension_data_groups: vec![ExtensionGroup {
+                    application_name: String::from("IXMILIA"),
+                    items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(
+                        1,
+                        "some string",
+                    ))],
+                }],
                 ..Default::default()
             },
-            entities: vec![Entity {
-                common: EntityCommon {
-                    extension_data_groups: vec![ExtensionGroup {
-                        application_name: String::from("IXMILIA"),
-                        items: vec![ExtensionGroupItem::CodePair(CodePair::new_str(
-                            1,
-                            "some string",
-                        ))],
-                    }],
-                    ..Default::default()
-                },
-                specific: EntityType::Line(Line::default()),
-            }],
-            ..Default::default()
-        };
+            specific: EntityType::Line(Line::default()),
+        });
         assert_contains(
             &drawing,
             vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
@@ -3028,23 +3063,18 @@ mod tests {
 
     #[test]
     fn write_x_data() {
-        let drawing = Drawing {
-            header: Header {
-                version: AcadVersion::R2000,
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        drawing.add_entity(Entity {
+            common: EntityCommon {
+                x_data: vec![XData {
+                    application_name: String::from("IXMILIA"),
+                    items: vec![XDataItem::Real(1.1)],
+                }],
                 ..Default::default()
             },
-            entities: vec![Entity {
-                common: EntityCommon {
-                    x_data: vec![XData {
-                        application_name: String::from("IXMILIA"),
-                        items: vec![XDataItem::Real(1.1)],
-                    }],
-                    ..Default::default()
-                },
-                specific: EntityType::Line(Line::default()),
-            }],
-            ..Default::default()
-        };
+            specific: EntityType::Line(Line::default()),
+        });
         assert_contains(
             &drawing,
             vec![
@@ -3065,12 +3095,13 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a line"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Circle(_) => (),
             _ => panic!("expected a circle"),
         }
@@ -3086,12 +3117,13 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(2, entities.len());
+        match entities[0].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a line"),
         }
-        match drawing.entities[1].specific {
+        match entities[1].specific {
             EntityType::Circle(_) => (),
             _ => panic!("expected a circle"),
         }
@@ -3159,17 +3191,12 @@ mod tests {
                 application_name: String::from("IXMILIA"),
                 items: vec![XDataItem::Real(1.1)],
             });
-            let drawing = Drawing {
-                entities: vec![Entity {
-                    common: common,
-                    specific: expected_type,
-                }],
-                header: Header {
-                    version: max_version,
-                    ..Default::default()
-                },
-                ..Default::default()
-            };
+            let mut drawing = Drawing::new();
+            drawing.header.version = max_version;
+            drawing.add_entity(Entity {
+                common,
+                specific: expected_type,
+            });
             // 3DLINE writes as a LINE
             let type_string = if type_string == "3DLINE" {
                 "LINE"
@@ -3196,12 +3223,12 @@ mod tests {
 
     #[test]
     fn normalize_mline_styles() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.objects.len());
         let mut mline = MLine::default();
         mline.style_name = String::from("style name");
-        file.entities.push(Entity::new(EntityType::MLine(mline)));
+        file.add_entity(Entity::new(EntityType::MLine(mline)));
         file.normalize();
         assert_eq!(1, file.objects.len());
         match &file.objects[0].specific {
@@ -3212,17 +3239,16 @@ mod tests {
 
     #[test]
     fn normalize_dimension_styles() {
-        let mut file = Drawing::default();
+        let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.dim_styles.len());
-        file.entities
-            .push(Entity::new(EntityType::RadialDimension(RadialDimension {
-                dimension_base: DimensionBase {
-                    dimension_style_name: String::from("style name"),
-                    ..Default::default()
-                },
+        file.add_entity(Entity::new(EntityType::RadialDimension(RadialDimension {
+            dimension_base: DimensionBase {
+                dimension_style_name: String::from("style name"),
                 ..Default::default()
-            })));
+            },
+            ..Default::default()
+        })));
         file.normalize();
         assert_eq!(3, file.dim_styles.len());
         assert_eq!("ANNOTATIVE", file.dim_styles[0].name);

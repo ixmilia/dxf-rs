@@ -34,7 +34,7 @@ fn read_string_with_control_characters() {
 
 #[test]
 fn write_string_with_control_characters() {
-    let mut drawing = Drawing::default();
+    let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2004;
     drawing.header.last_saved_by = String::from("a\u{7}^\u{1E} b");
     assert_contains(&drawing, String::from("a^G^ ^^ b"));
@@ -89,8 +89,9 @@ fn read_file_with_comments() {
         .join("\r\n")
         .trim(),
     );
-    assert_eq!(1, file.entities.len());
-    match file.entities[0].specific {
+    let entities = file.entities().collect::<Vec<_>>();
+    assert_eq!(1, entities.len());
+    match entities[0].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(1.1, 2.2, 0.0), line.p1);
         }
@@ -112,17 +113,19 @@ fn enum_out_of_bounds() {
 
 #[test]
 fn round_trip() {
-    // drawing with one entity and one layer
-    let mut drawing = Drawing::default();
-    drawing.entities.push(Entity {
+    // drawing with one entity and one auto-added layer
+    let mut drawing = Drawing::new();
+    drawing.clear();
+    drawing.add_entity(Entity {
         common: Default::default(),
         specific: EntityType::Line(Default::default()),
     });
-    drawing.layers.push(Default::default());
+    assert_eq!(1, drawing.entities().count());
+    assert_eq!(1, drawing.layers.len());
 
     // ensure they're still there
     let drawing = parse_drawing(&to_test_string(&drawing));
-    assert_eq!(1, drawing.entities.len());
+    assert_eq!(1, drawing.entities().count());
     assert_eq!(1, drawing.layers.len());
 }
 
@@ -212,8 +215,9 @@ EOF"
 fn read_binary_file() {
     // `diamond-bin.dxf` is a pre-R13 binary file
     let drawing = unwrap_drawing(Drawing::load_file("./src/misc_tests/diamond-bin.dxf"));
-    assert_eq!(12, drawing.entities.len());
-    match drawing.entities[0].specific {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    assert_eq!(12, entities.len());
+    match entities[0].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(45.0, 45.0, 0.0), line.p1);
             assert_eq!(Point::new(45.0, -45.0, 0.0), line.p2);
@@ -243,21 +247,22 @@ fn read_binary_file_post_r13() {
 #[test]
 fn read_binary_file_after_writing() {
     for version in &[AcadVersion::R12, AcadVersion::R13] {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = *version;
         let line = Line {
             p1: Point::new(1.1, 2.2, 3.3),
             p2: Point::new(4.4, 5.5, 6.6),
             ..Default::default()
         };
-        drawing.entities.push(Entity::new(EntityType::Line(line)));
+        drawing.add_entity(Entity::new(EntityType::Line(line)));
         let mut buf = Cursor::new(vec![]);
         drawing.save_binary(&mut buf).ok().unwrap();
         buf.seek(SeekFrom::Start(0)).ok().unwrap();
         let mut reader = BufReader::new(&mut buf);
         let drawing = unwrap_drawing(Drawing::load(&mut reader));
-        assert_eq!(1, drawing.entities.len());
-        match drawing.entities[0].specific {
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        match entities[0].specific {
             EntityType::Line(ref line) => {
                 assert_eq!(Point::new(1.1, 2.2, 3.3), line.p1);
                 assert_eq!(Point::new(4.4, 5.5, 6.6), line.p2);
@@ -286,9 +291,10 @@ fn read_dxb_file() {
         0x0,  // null terminator
     ];
     let drawing = Drawing::load(&mut data.as_slice()).unwrap();
-    assert_eq!(1, drawing.entities.len());
-    assert_eq!(Some(1), drawing.entities[0].common.color.index());
-    match drawing.entities[0].specific {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    assert_eq!(1, entities.len());
+    assert_eq!(Some(1), entities[0].common.color.index());
+    match entities[0].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(1.0, 2.0, 3.0), line.p1);
             assert_eq!(Point::new(4.0, 5.0, 6.0), line.p2);
@@ -314,12 +320,14 @@ fn read_dxb_file_with_polyline() {
         0x0,  // null terminator
     ];
     let drawing = Drawing::load(&mut data.as_slice()).unwrap();
-    assert_eq!(1, drawing.entities.len());
-    match drawing.entities[0].specific {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    assert_eq!(1, entities.len());
+    match entities[0].specific {
         EntityType::Polyline(ref poly) => {
-            assert_eq!(2, poly.vertices.len());
-            assert_eq!(Point::new(1.0, 2.0, 0.0), poly.vertices[0].location);
-            assert_eq!(Point::new(3.0, 4.0, 0.0), poly.vertices[1].location);
+            let vertices = poly.vertices().collect::<Vec<_>>();
+            assert_eq!(2, vertices.len());
+            assert_eq!(Point::new(1.0, 2.0, 0.0), vertices[0].location);
+            assert_eq!(Point::new(3.0, 4.0, 0.0), vertices[1].location);
         }
         _ => panic!("expected a polyline"),
     }
@@ -327,16 +335,17 @@ fn read_dxb_file_with_polyline() {
 
 #[test]
 fn read_dxb_after_writing() {
-    let mut drawing = Drawing::default();
+    let mut drawing = Drawing::new();
     let line = Line::new(Point::new(1.0, 2.0, 3.0), Point::new(4.0, 5.0, 6.0));
-    drawing.entities.push(Entity::new(EntityType::Line(line)));
+    drawing.add_entity(Entity::new(EntityType::Line(line)));
     let mut buf = Cursor::new(vec![]);
     drawing.save_dxb(&mut buf).ok().unwrap();
     buf.seek(SeekFrom::Start(0)).ok().unwrap();
     let mut reader = BufReader::new(&mut buf);
     let drawing = unwrap_drawing(Drawing::load(&mut reader));
-    assert_eq!(1, drawing.entities.len());
-    match drawing.entities[0].specific {
+    let entities = drawing.entities().collect::<Vec<_>>();
+    assert_eq!(1, entities.len());
+    match entities[0].specific {
         EntityType::Line(ref line) => {
             assert_eq!(Point::new(1.0, 2.0, 3.0), line.p1);
             assert_eq!(Point::new(4.0, 5.0, 6.0), line.p2);
@@ -347,7 +356,7 @@ fn read_dxb_after_writing() {
 
 #[test]
 fn dont_write_utf8_bom() {
-    let drawing = Drawing::default();
+    let drawing = Drawing::new();
     let mut buf = Cursor::new(vec![]);
     drawing.save(&mut buf).ok().unwrap();
     buf.seek(SeekFrom::Start(0)).ok().unwrap();
@@ -361,7 +370,7 @@ fn dont_write_utf8_bom() {
 
 #[test]
 fn write_unicode_as_ascii() {
-    let mut drawing = Drawing::default();
+    let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2004;
     drawing.header.project_name = String::from("è");
     assert_contains(
@@ -372,7 +381,7 @@ fn write_unicode_as_ascii() {
 
 #[test]
 fn write_unicode_as_utf8() {
-    let mut drawing = Drawing::default();
+    let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2007;
     drawing.header.project_name = String::from("è");
     assert_contains(
@@ -385,7 +394,7 @@ fn write_unicode_as_utf8() {
 fn write_binary_file() {
     for version in &[AcadVersion::R12, AcadVersion::R13] {
         println!("checking version {:?}", version);
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = *version;
         let buf = to_binary(&drawing);
 
@@ -409,14 +418,9 @@ fn thumbnail_round_trip() {
     let thumbnail = DynamicImage::ImageRgb8(imgbuf);
 
     // write drawing with thumbnail
-    let drawing = Drawing {
-        header: Header {
-            version: AcadVersion::R2000, // thumbnails are only written >= R2000
-            ..Default::default()
-        },
-        thumbnail: Some(thumbnail),
-        ..Default::default()
-    };
+    let mut drawing = Drawing::new();
+    drawing.header.version = AcadVersion::R2000; // thumbnails are only written >= R2000
+    drawing.thumbnail = Some(thumbnail);
     let drawing_text = to_test_string(&drawing);
     assert!(drawing_text.contains(&vec!["  0", "SECTION", "  2", "THUMBNAILIMAGE",].join("\r\n")));
 

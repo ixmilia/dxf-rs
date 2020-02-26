@@ -264,7 +264,7 @@ impl Block {
         }
 
         for e in &self.entities {
-            e.write(version, false, writer, &mut HandleTracker::new(0))?; // entities in blocks never have handles
+            e.write(version, false, writer)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDBLK"))?;
@@ -480,7 +480,7 @@ mod tests {
         assert_eq!(1, block.entities.len());
         match block.entities[0].specific {
             EntityType::Polyline(ref p) => {
-                assert_eq!(3, p.vertices.len());
+                assert_eq!(3, p.vertices().count());
             }
             _ => panic!("expected a polyline"),
         }
@@ -495,7 +495,7 @@ mod tests {
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Polyline(ref p) => {
-                assert_eq!(3, p.vertices.len());
+                assert_eq!(3, p.vertices().count());
             }
             _ => panic!("expected a polyline"),
         }
@@ -513,7 +513,7 @@ mod tests {
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Polyline(ref p) => {
-                assert_eq!(3, p.vertices.len());
+                assert_eq!(3, p.vertices().count());
             }
             _ => panic!("expected a polyline"),
         }
@@ -529,7 +529,7 @@ mod tests {
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Polyline(ref p) => {
-                assert_eq!(0, p.vertices.len());
+                assert_eq!(0, p.vertices().count());
             }
             _ => panic!("expected a polyline"),
         }
@@ -541,7 +541,7 @@ mod tests {
 
     #[test]
     fn dont_write_blocks_section_if_no_blocks() {
-        let drawing = Drawing::default();
+        let drawing = Drawing::new();
         let contents = to_test_string(&drawing);
         assert!(!contents.contains("BLOCKS"));
     }
@@ -600,7 +600,7 @@ mod tests {
                 }),
             ],
         });
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // extension group data only written on >= R14
         drawing.blocks.push(block);
         assert_contains(
@@ -667,7 +667,7 @@ mod tests {
                 XDataItem::ControlGroup(vec![XDataItem::Real(1.1)]),
             ],
         });
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000; // xdata only written on >= R2000
         drawing.blocks.push(block);
         assert_contains(
@@ -690,7 +690,7 @@ mod tests {
 
     #[test]
     fn round_trip_blocks() {
-        let mut drawing = Drawing::default();
+        let mut drawing = Drawing::new();
         let mut b1 = Block::default();
         b1.entities.push(Entity {
             common: Default::default(),

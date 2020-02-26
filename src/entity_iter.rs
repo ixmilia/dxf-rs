@@ -3,6 +3,7 @@
 use std::io::Read;
 
 use crate::code_pair_put_back::CodePairPutBack;
+use crate::drawing::AUTO_REPLACE_HANDLE;
 use crate::entities::*;
 use crate::DxfResult;
 
@@ -113,7 +114,9 @@ where
                         Some(Entity {
                             specific: EntityType::Attribute(att),
                             ..
-                        }) => ins.attributes.push(att),
+                        }) => ins
+                            .__attributes_and_handles
+                            .push((att, AUTO_REPLACE_HANDLE)),
                         Some(ent) => {
                             // stop gathering on any non-ATTRIBUTE
                             iter.put_back(ent);
@@ -141,7 +144,9 @@ where
                         Some(Entity {
                             specific: EntityType::Vertex(vertex),
                             ..
-                        }) => poly.vertices.push(vertex),
+                        }) => poly
+                            .__vertices_and_handles
+                            .push((vertex, AUTO_REPLACE_HANDLE)),
                         Some(ent) => {
                             // stop gathering on any non-VERTEX
                             iter.put_back(ent);
