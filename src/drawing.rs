@@ -291,6 +291,8 @@ impl Drawing {
         self.__entities.clear();
         self.objects.clear();
         self.thumbnail = None;
+
+        self.header.next_available_handle = 1;
     }
     /// Normalizes the `Drawing` by ensuring expected items are present.
     pub fn normalize(&mut self) {
@@ -1306,6 +1308,22 @@ mod tests {
         drawing.add_entity(ent);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_ne!(0, entities[0].common.handle);
+    }
+
+    #[test]
+    fn next_available_handle_is_reset_on_clear() {
+        let mut drawing = Drawing::new();
+        drawing.add_entity(Entity {
+            common: EntityCommon::default(),
+            specific: EntityType::Line(Line::default()),
+        });
+        assert_eq!(1, drawing.entities().count());
+        assert_ne!(0, drawing.header.next_available_handle);
+        assert_ne!(1, drawing.header.next_available_handle);
+
+        drawing.clear();
+        assert_eq!(0, drawing.entities().count());
+        assert_eq!(1, drawing.header.next_available_handle);
     }
 
     #[test]
