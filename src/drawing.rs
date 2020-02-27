@@ -69,11 +69,11 @@ pub struct Drawing {
     pub view_ports: Vec<ViewPort>,
     /// The blocks contained by the drawing.
     pub blocks: Vec<Block>,
-    /// The objects contained by the drawing.
-    pub objects: Vec<Object>,
 
     /// Internal collection of entities.
     __entities: Vec<Entity>,
+    /// Internal collection of objects.
+    __objects: Vec<Object>,
 
     /// The thumbnail image preview of the drawing.
     #[cfg_attr(feature = "serialize", serde(skip))]
@@ -97,8 +97,8 @@ impl Drawing {
             views: vec![],
             view_ports: vec![],
             blocks: vec![],
-            objects: vec![],
             __entities: vec![],
+            __objects: vec![],
             thumbnail: None,
         };
         drawing.normalize();
@@ -194,7 +194,7 @@ impl Drawing {
             self.write_tables(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
             self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
             self.write_entities(write_handles, &mut code_pair_writer)?;
-            self.write_objects(&mut code_pair_writer, &mut handle_tracker)?;
+            self.write_objects(&mut code_pair_writer)?;
             self.write_thumbnail(&mut code_pair_writer)?;
             code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
         }
@@ -253,7 +253,7 @@ impl Drawing {
     pub fn add_entity(&mut self, mut entity: Entity) {
         entity.common.handle = self.next_handle();
 
-        // TODO: set child handles, e.g., polyline vertices
+        // set child handles
         match entity.specific {
             EntityType::Insert(ref mut ins) => {
                 for a in ins.__attributes_and_handles.iter_mut() {
@@ -275,6 +275,23 @@ impl Drawing {
         // ensure invariants
         self.add_entity_no_handle_set(entity);
     }
+    /// Returns an iterator for all contained objects.
+    pub fn objects(&self) -> impl Iterator<Item = &Object> {
+        self.__objects.iter()
+    }
+    /// Returns an iterator for all mutable objects.
+    pub fn objects_mut(&mut self) -> impl Iterator<Item = &mut Object> {
+        self.__objects.iter_mut()
+    }
+    /// Adds an object to the `Drawing`.
+    pub fn add_object(&mut self, mut obj: Object) {
+        obj.common.handle = self.next_handle();
+
+        // TODO: set child handles
+
+        // ensure invariants
+        self.add_object_no_handle_set(obj);
+    }
     /// Clears all items from the `Drawing`.
     pub fn clear(&mut self) {
         self.classes.clear();
@@ -289,7 +306,7 @@ impl Drawing {
         self.view_ports.clear();
         self.blocks.clear();
         self.__entities.clear();
-        self.objects.clear();
+        self.__objects.clear();
         self.thumbnail = None;
 
         self.header.next_available_handle = 1;
@@ -312,7 +329,6 @@ impl Drawing {
         self.ensure_line_types();
         self.ensure_text_styles();
         self.ensure_view_ports();
-        self.ensure_views();
         self.ensure_ucs();
 
         self.app_ids.sort_by(|a, b| a.name.cmp(&b.name));
@@ -362,7 +378,7 @@ impl Drawing {
                 return Some(DrawingItem::LineType(item));
             }
         }
-        for item in &self.objects {
+        for item in &self.__objects {
             if item.common.handle == handle {
                 return Some(DrawingItem::Object(item));
             }
@@ -427,7 +443,7 @@ impl Drawing {
                 return Some(DrawingItemMut::LineType(item));
             }
         }
-        for item in &mut self.objects {
+        for item in &mut self.__objects {
             if item.common.handle == handle {
                 return Some(DrawingItemMut::Object(item));
             }
@@ -473,28 +489,34 @@ impl Drawing {
         result
     }
     fn add_entity_no_handle_set(&mut self, entity: Entity) {
-        self.ensure_mline_style_is_present(&entity);
-        self.ensure_dimension_style_is_present(&entity);
-        self.ensure_layer_is_present(&entity);
-        self.ensure_line_type_is_present(&entity);
-        self.ensure_text_style_is_present(&entity);
+        self.ensure_mline_style_is_present_for_entity(&entity);
+        self.ensure_dimension_style_is_present_for_entity(&entity);
+        self.ensure_layer_is_present(&entity.common.layer);
+        self.ensure_line_type_is_present(&entity.common.line_type_name);
+        self.ensure_text_style_is_present_for_entity(&entity);
         self.__entities.push(entity);
     }
-    fn ensure_mline_style_is_present(&mut self, entity: &Entity) {
+    fn add_object_no_handle_set(&mut self, obj: Object) {
+        self.ensure_layer_is_present_for_object(&obj);
+        self.ensure_line_type_is_present_for_object(&obj);
+        self.ensure_text_style_is_present_for_object(&obj);
+        self.ensure_view_is_present(&obj);
+        self.__objects.push(obj);
+    }
+    fn ensure_mline_style_is_present_for_entity(&mut self, entity: &Entity) {
         if let EntityType::MLine(ref ml) = &entity.specific {
-            if !self.objects.iter().any(|o| match o.specific {
+            if !self.objects().any(|o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => mline_style.style_name == ml.style_name,
                 _ => false,
             }) {
-                self.objects
-                    .push(Object::new(ObjectType::MLineStyle(MLineStyle {
-                        style_name: ml.style_name.clone(),
-                        ..Default::default()
-                    })));
+                self.add_object(Object::new(ObjectType::MLineStyle(MLineStyle {
+                    style_name: ml.style_name.clone(),
+                    ..Default::default()
+                })));
             }
         }
     }
-    fn ensure_dimension_style_is_present(&mut self, entity: &Entity) {
+    fn ensure_dimension_style_is_present_for_entity(&mut self, entity: &Entity) {
         // ensure corresponding dimension style is present
         let dim_style_name = match &entity.specific {
             EntityType::RotatedDimension(ref d) => Some(&d.dimension_base.dimension_style_name),
@@ -517,27 +539,43 @@ impl Drawing {
             }
         }
     }
-    fn ensure_layer_is_present(&mut self, entity: &Entity) {
-        if !self.layers.iter().any(|l| l.name == entity.common.layer) {
+    fn ensure_layer_is_present_for_object(&mut self, obj: &Object) {
+        match &obj.specific {
+            ObjectType::LayerFilter(ref l) => {
+                for layer_name in &l.layer_names {
+                    self.ensure_layer_is_present(&layer_name);
+                }
+            }
+            ObjectType::LayerIndex(ref l) => {
+                for layer_name in &l.layer_names {
+                    self.ensure_layer_is_present(&layer_name);
+                }
+            }
+            _ => (),
+        }
+    }
+    fn ensure_layer_is_present(&mut self, layer_name: &str) {
+        if !self.layers.iter().any(|l| l.name == *layer_name) {
             self.layers.push(Layer {
-                name: entity.common.layer.clone(),
+                name: String::from(layer_name),
                 ..Default::default()
             });
         }
     }
-    fn ensure_line_type_is_present(&mut self, entity: &Entity) {
-        if !self
-            .line_types
-            .iter()
-            .any(|lt| lt.name == entity.common.line_type_name)
-        {
+    fn ensure_line_type_is_present_for_object(&mut self, obj: &Object) {
+        if let ObjectType::MLineStyle(ref style) = &obj.specific {
+            self.ensure_line_type_is_present(&style.style_name);
+        }
+    }
+    fn ensure_line_type_is_present(&mut self, line_type_name: &str) {
+        if !self.line_types.iter().any(|lt| lt.name == *line_type_name) {
             self.line_types.push(LineType {
-                name: entity.common.line_type_name.clone(),
+                name: String::from(line_type_name),
                 ..Default::default()
             });
         }
     }
-    fn ensure_text_style_is_present(&mut self, entity: &Entity) {
+    fn ensure_text_style_is_present_for_entity(&mut self, entity: &Entity) {
         let text_style_name = match &entity.specific {
             EntityType::ArcAlignedText(ref e) => Some(&e.text_style_name),
             EntityType::Attribute(ref e) => Some(&e.text_style_name),
@@ -547,9 +585,27 @@ impl Drawing {
             _ => None,
         };
         if let Some(text_style_name) = text_style_name {
-            if !self.styles.iter().any(|s| &s.name == text_style_name) {
-                self.styles.push(Style {
-                    name: text_style_name.clone(),
+            self.ensure_text_style_is_present(&text_style_name);
+        }
+    }
+    fn ensure_text_style_is_present_for_object(&mut self, obj: &Object) {
+        if let ObjectType::MLineStyle(ref o) = &obj.specific {
+            self.ensure_text_style_is_present(&o.style_name);
+        }
+    }
+    fn ensure_text_style_is_present(&mut self, text_style_name: &str) {
+        if !self.styles.iter().any(|s| s.name == text_style_name) {
+            self.styles.push(Style {
+                name: String::from(text_style_name),
+                ..Default::default()
+            });
+        }
+    }
+    fn ensure_view_is_present(&mut self, obj: &Object) {
+        if let ObjectType::PlotSettings(ref ps) = &obj.specific {
+            if !self.views.iter().any(|v| v.name == ps.plot_view_name) {
+                self.views.push(View {
+                    name: ps.plot_view_name.clone(),
                     ..Default::default()
                 });
             }
@@ -626,18 +682,14 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_objects<T>(
-        &self,
-        writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
-    ) -> DxfResult<()>
+    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
-        for o in &self.objects {
-            o.write(self.header.version, writer, handle_tracker)?;
+        for o in &self.__objects {
+            o.write(self.header.version, writer)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -786,8 +838,12 @@ impl Drawing {
         T: Read,
     {
         let iter = put_back(ObjectIter { iter });
-        for obj in iter {
-            self.objects.push(obj);
+        for o in iter {
+            if o.common.handle == 0 {
+                self.add_object(o);
+            } else {
+                self.add_object_no_handle_set(o);
+            }
         }
 
         Ok(())
@@ -948,8 +1004,8 @@ impl Drawing {
         }
     }
     fn normalize_objects(&mut self) {
-        for i in 0..self.objects.len() {
-            self.objects[i].normalize();
+        for o in self.__objects.iter_mut() {
+            o.normalize();
         }
     }
     fn normalize_app_ids(&mut self) {
@@ -1083,21 +1139,6 @@ impl Drawing {
                 add_to_existing(&mut to_add, &ent.common.layer);
             }
         }
-        for obj in &self.objects {
-            match &obj.specific {
-                ObjectType::LayerFilter(ref l) => {
-                    for layer_name in &l.layer_names {
-                        add_to_existing(&mut to_add, &layer_name);
-                    }
-                }
-                ObjectType::LayerIndex(ref l) => {
-                    for layer_name in &l.layer_names {
-                        add_to_existing(&mut to_add, &layer_name);
-                    }
-                }
-                _ => (),
-            }
-        }
 
         // ensure all layers that should exist do
         for name in &to_add {
@@ -1132,11 +1173,6 @@ impl Drawing {
                 add_to_existing(&mut to_add, &ent.common.line_type_name);
             }
         }
-        for obj in &self.objects {
-            if let ObjectType::MLineStyle(ref style) = &obj.specific {
-                add_to_existing(&mut to_add, &style.style_name);
-            }
-        }
 
         // ensure all line_types that should exist do
         for name in &to_add {
@@ -1160,11 +1196,6 @@ impl Drawing {
         let mut to_add = HashSet::new();
         add_to_existing(&mut to_add, &String::from("STANDARD"));
         add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
-        for obj in &self.objects {
-            if let ObjectType::MLineStyle(ref o) = &obj.specific {
-                add_to_existing(&mut to_add, &o.style_name);
-            }
-        }
 
         // ensure all styles that should exist do
         for name in &to_add {
@@ -1193,32 +1224,6 @@ impl Drawing {
             if !existing_view_ports.contains(name) {
                 existing_view_ports.insert(name.clone());
                 self.view_ports.push(ViewPort {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
-    }
-    fn ensure_views(&mut self) {
-        // gather existing view names
-        let mut existing_views = HashSet::new();
-        for view in &self.views {
-            add_to_existing(&mut existing_views, &view.name);
-        }
-
-        // find views that should exist
-        let mut to_add = HashSet::new();
-        for obj in &self.objects {
-            if let ObjectType::PlotSettings(ref ps) = &obj.specific {
-                add_to_existing(&mut to_add, &ps.plot_view_name);
-            }
-        }
-
-        // ensure all views that should exist do
-        for name in &to_add {
-            if !existing_views.contains(name) {
-                existing_views.insert(name.clone());
-                self.views.push(View {
                     name: name.clone(),
                     ..Default::default()
                 });
@@ -1315,6 +1320,20 @@ mod tests {
     }
 
     #[test]
+    fn object_handle_is_set_on_add() {
+        let mut drawing = Drawing::new();
+        let obj = Object {
+            common: Default::default(),
+            specific: ObjectType::PlaceHolder(Default::default()),
+        };
+        assert_eq!(0, obj.common.handle);
+
+        drawing.add_object(obj);
+        let objects = drawing.objects().collect::<Vec<_>>();
+        assert_ne!(0, objects[0].common.handle);
+    }
+
+    #[test]
     fn entity_handle_is_set_during_read_if_not_specified() {
         let drawing = parse_drawing(
             vec![
@@ -1325,6 +1344,28 @@ mod tests {
         );
         let line = drawing.entities().nth(0).unwrap();
         assert_ne!(0, line.common.handle);
+    }
+
+    #[test]
+    fn object_handle_is_set_during_read_if_not_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "ACDBPLACEHOLDER",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let obj = drawing.objects().nth(0).unwrap();
+        assert_ne!(0, obj.common.handle);
     }
 
     #[test]
@@ -1339,6 +1380,30 @@ mod tests {
         );
         let line = drawing.entities().nth(0).unwrap();
         assert_eq!(0x3333, line.common.handle);
+    }
+
+    #[test]
+    fn object_handle_is_honored_during_read_if_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "ACDBPLACEHOLDER",
+                "  5",
+                "3333",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let obj = drawing.objects().nth(0).unwrap();
+        assert_eq!(0x3333, obj.common.handle);
     }
 
     #[test]
@@ -1361,8 +1426,7 @@ mod tests {
     fn mline_style_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
         let mline_styles = drawing
-            .objects
-            .iter()
+            .objects()
             .filter(|&o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => {
                     mline_style.style_name == "some-mline-style"
@@ -1380,8 +1444,7 @@ mod tests {
             }),
         });
         let mline_styles = drawing
-            .objects
-            .iter()
+            .objects()
             .filter(|&o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => {
                     mline_style.style_name == "some-mline-style"
@@ -1395,7 +1458,7 @@ mod tests {
     #[test]
     fn mline_style_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: ObjectCommon::default(),
             specific: ObjectType::MLineStyle(MLineStyle {
                 style_name: String::from("some-mline-style"),
@@ -1403,8 +1466,7 @@ mod tests {
             }),
         });
         let mline_styles = drawing
-            .objects
-            .iter()
+            .objects()
             .filter(|&o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => {
                     mline_style.style_name == "some-mline-style"
@@ -1422,8 +1484,7 @@ mod tests {
             }),
         });
         let mline_styles = drawing
-            .objects
-            .iter()
+            .objects()
             .filter(|&o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => {
                     mline_style.style_name == "some-mline-style"
@@ -1455,8 +1516,7 @@ mod tests {
             .as_str(),
         );
         let mline_styles = drawing
-            .objects
-            .iter()
+            .objects()
             .filter(|&o| match o.specific {
                 ObjectType::MLineStyle(ref mline_style) => {
                     mline_style.style_name == "some-mline-style"
@@ -1583,6 +1643,30 @@ mod tests {
     }
 
     #[test]
+    fn layer_is_added_with_object_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(0, layers.len());
+
+        drawing.add_object(Object {
+            common: ObjectCommon::default(),
+            specific: ObjectType::LayerFilter(LayerFilter {
+                layer_names: vec![String::from("some-layer")],
+            }),
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
     fn layer_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
         drawing.layers.push(Layer {
@@ -1612,6 +1696,34 @@ mod tests {
     }
 
     #[test]
+    fn layer_is_not_added_with_object_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.layers.push(Layer {
+            name: String::from("some-layer"),
+            ..Default::default()
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+
+        drawing.add_object(Object {
+            common: ObjectCommon::default(),
+            specific: ObjectType::LayerFilter(LayerFilter {
+                layer_names: vec![String::from("some-layer")],
+            }),
+        });
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
     fn layer_is_added_with_entity_on_file_read() {
         let drawing = parse_drawing(
             vec![
@@ -1621,6 +1733,34 @@ mod tests {
                 "ENTITIES",
                 "  0",
                 "LINE",
+                "  8",
+                "some-layer",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let layers = drawing
+            .layers
+            .iter()
+            .filter(|&l| l.name == "some-layer")
+            .collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+    }
+
+    #[test]
+    fn layer_is_added_with_object_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "LAYER_FILTER",
                 "  8",
                 "some-layer",
                 "  0",
@@ -1665,6 +1805,31 @@ mod tests {
     }
 
     #[test]
+    fn line_type_is_added_with_object_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(0, line_types.len());
+
+        drawing.add_object(Object {
+            common: ObjectCommon::default(),
+            specific: ObjectType::MLineStyle(MLineStyle {
+                style_name: String::from("some-line-type"),
+                ..Default::default()
+            }),
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
     fn line_type_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
         drawing.line_types.push(LineType {
@@ -1694,6 +1859,35 @@ mod tests {
     }
 
     #[test]
+    fn line_type_is_not_added_with_object_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.line_types.push(LineType {
+            name: String::from("some-line-type"),
+            ..Default::default()
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+
+        drawing.add_object(Object {
+            common: ObjectCommon::default(),
+            specific: ObjectType::MLineStyle(MLineStyle {
+                style_name: String::from("some-line-type"),
+                ..Default::default()
+            }),
+        });
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
     fn line_type_is_added_with_entity_on_file_read() {
         let drawing = parse_drawing(
             vec![
@@ -1704,6 +1898,34 @@ mod tests {
                 "  0",
                 "LINE",
                 "  6",
+                "some-line-type",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let line_types = drawing
+            .line_types
+            .iter()
+            .filter(|&lt| lt.name == "some-line-type")
+            .collect::<Vec<_>>();
+        assert_eq!(1, line_types.len());
+    }
+
+    #[test]
+    fn line_type_is_added_with_object_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "MLINESTYLE",
+                "  2",
                 "some-line-type",
                 "  0",
                 "ENDSEC",
@@ -1747,6 +1969,31 @@ mod tests {
     }
 
     #[test]
+    fn text_style_is_added_with_object_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(0, text_styles.len());
+
+        drawing.add_object(Object {
+            common: Default::default(),
+            specific: ObjectType::MLineStyle(MLineStyle {
+                style_name: String::from("some-text-style"),
+                ..Default::default()
+            }),
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
     fn text_style_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
         drawing.styles.push(Style {
@@ -1764,6 +2011,35 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Text(Text {
                 text_style_name: String::from("some-text-style"),
+                ..Default::default()
+            }),
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
+    fn text_style_is_not_added_with_object_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.styles.push(Style {
+            name: String::from("some-text-style"),
+            ..Default::default()
+        });
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+
+        drawing.add_object(Object {
+            common: Default::default(),
+            specific: ObjectType::MLineStyle(MLineStyle {
+                style_name: String::from("some-text-style"),
                 ..Default::default()
             }),
         });
@@ -1801,5 +2077,115 @@ mod tests {
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
+    fn text_style_is_added_with_object_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "MLINESTYLE",
+                "  2",
+                "some-text-style",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let text_styles = drawing
+            .styles
+            .iter()
+            .filter(|&s| s.name == "some-text-style")
+            .collect::<Vec<_>>();
+        assert_eq!(1, text_styles.len());
+    }
+
+    #[test]
+    fn view_is_added_with_object_if_not_already_present() {
+        let mut drawing = Drawing::new();
+        let views = drawing
+            .views
+            .iter()
+            .filter(|&v| v.name == "some-view")
+            .collect::<Vec<_>>();
+        assert_eq!(0, views.len());
+
+        drawing.add_object(Object {
+            common: Default::default(),
+            specific: ObjectType::PlotSettings(PlotSettings {
+                plot_view_name: String::from("some-view"),
+                ..Default::default()
+            }),
+        });
+        let views = drawing
+            .views
+            .iter()
+            .filter(|&v| v.name == "some-view")
+            .collect::<Vec<_>>();
+        assert_eq!(1, views.len());
+    }
+
+    #[test]
+    fn view_is_not_added_with_object_if_already_present() {
+        let mut drawing = Drawing::new();
+        drawing.views.push(View {
+            name: String::from("some-view"),
+            ..Default::default()
+        });
+        let views = drawing
+            .views
+            .iter()
+            .filter(|&v| v.name == "some-view")
+            .collect::<Vec<_>>();
+        assert_eq!(1, views.len());
+
+        drawing.add_object(Object {
+            common: Default::default(),
+            specific: ObjectType::PlotSettings(PlotSettings {
+                plot_view_name: String::from("some-view"),
+                ..Default::default()
+            }),
+        });
+        let views = drawing
+            .views
+            .iter()
+            .filter(|&v| v.name == "some-view")
+            .collect::<Vec<_>>();
+        assert_eq!(1, views.len());
+    }
+
+    #[test]
+    fn view_is_added_with_object_on_file_read() {
+        let drawing = parse_drawing(
+            vec![
+                "  0",
+                "SECTION",
+                "  2",
+                "OBJECTS",
+                "  0",
+                "PLOTSETTINGS",
+                "  6",
+                "some-view",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let views = drawing
+            .views
+            .iter()
+            .filter(|&v| v.name == "some-view")
+            .collect::<Vec<_>>();
+        assert_eq!(1, views.len());
     }
 }

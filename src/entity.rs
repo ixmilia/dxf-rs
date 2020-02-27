@@ -3225,13 +3225,15 @@ mod tests {
     fn normalize_mline_styles() {
         let mut file = Drawing::new();
         file.clear();
-        assert_eq!(0, file.objects.len());
+        let objects = file.objects().collect::<Vec<_>>();
+        assert_eq!(0, objects.len());
         let mut mline = MLine::default();
         mline.style_name = String::from("style name");
         file.add_entity(Entity::new(EntityType::MLine(mline)));
         file.normalize();
-        assert_eq!(1, file.objects.len());
-        match &file.objects[0].specific {
+        let objects = file.objects().collect::<Vec<_>>();
+        assert_eq!(1, objects.len());
+        match objects[0].specific {
             ObjectType::MLineStyle(ref ml) => assert_eq!("style name", ml.style_name),
             _ => panic!("expected an mline style"),
         }

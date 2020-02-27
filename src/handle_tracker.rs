@@ -1,6 +1,5 @@
 // Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-use crate::objects::ObjectCommon;
 use crate::tables::*;
 use crate::Block;
 
@@ -28,9 +27,6 @@ impl HandleTracker {
         self.get_next_handle(item.handle)
     }
     pub fn get_line_type_handle(&mut self, item: &LineType) -> u32 {
-        self.get_next_handle(item.handle)
-    }
-    pub fn get_object_handle(&mut self, item: &ObjectCommon) -> u32 {
         self.get_next_handle(item.handle)
     }
     pub fn get_style_handle(&mut self, item: &Style) -> u32 {

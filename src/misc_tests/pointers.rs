@@ -85,7 +85,8 @@ fn follow_object_pointer_to_entity_collection() {
         .join("\r\n")
         .as_str(),
     );
-    let group = match drawing.objects[0].specific {
+    let objects = drawing.objects().collect::<Vec<_>>();
+    let group = match objects[0].specific {
         ObjectType::Group(ref g) => g,
         _ => panic!("expected a group"),
     };
@@ -112,7 +113,7 @@ fn no_pointer_bound() {
 fn set_pointer_on_entity() {
     let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2007;
-    let mut material = Object {
+    let material = Object {
         common: Default::default(),
         specific: ObjectType::Material(Material {
             name: String::from("material-name"),
@@ -124,13 +125,13 @@ fn set_pointer_on_entity() {
         specific: EntityType::Line(Default::default()),
     };
     assert_eq!(0, material.common.handle);
-    line.common
-        .set_material(&mut material, &mut drawing)
-        .ok()
-        .unwrap();
+    drawing.add_object(material);
+
+    let material = drawing.objects().nth(0).unwrap();
     assert_eq!(1, material.common.handle);
-    drawing.objects.push(material);
+    line.common.set_material(material).ok().unwrap();
     drawing.add_entity(line);
+
     assert_contains(&drawing, vec!["  0", "MATERIAL", "  5", "1"].join("\r\n"));
     assert_contains(
         &drawing,

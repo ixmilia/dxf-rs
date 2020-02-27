@@ -419,11 +419,10 @@ mod tests {
         let mut file = Drawing::new();
         file.clear();
         assert_eq!(0, file.views.len());
-        file.objects
-            .push(Object::new(ObjectType::PlotSettings(PlotSettings {
-                plot_view_name: String::from("some view"),
-                ..Default::default()
-            })));
+        file.add_object(Object::new(ObjectType::PlotSettings(PlotSettings {
+            plot_view_name: String::from("some view"),
+            ..Default::default()
+        })));
         file.normalize();
         assert_eq!(1, file.views.len());
         assert_eq!("some view", file.views[0].name);

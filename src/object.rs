@@ -18,7 +18,6 @@ use crate::{
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
 use crate::enums::*;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
 use crate::objects::*;
 
@@ -1549,17 +1548,16 @@ impl Object {
         &self,
         version: AcadVersion,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
         T: Write,
     {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, writer, handle_tracker)?;
+            self.common.write(version, writer)?;
             if !self.apply_custom_writer(version, writer)? {
                 self.specific.write(version, writer)?;
-                self.post_write(version, writer, handle_tracker)?;
+                self.post_write(version, writer)?;
             }
             for x in &self.common.x_data {
                 x.write(version, writer)?;
@@ -1757,12 +1755,7 @@ impl Object {
 
         Ok(true)
     }
-    fn post_write<T>(
-        &self,
-        _version: AcadVersion,
-        _writer: &mut CodePairWriter<T>,
-        _handle_tracker: &mut HandleTracker,
-    ) -> DxfResult<()>
+    fn post_write<T>(&self, _version: AcadVersion, _writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write,
     {
@@ -1786,8 +1779,9 @@ mod tests {
             "OBJECTS",
             vec!["0", object_type, body.as_str()].join("\r\n").as_str(),
         );
-        assert_eq!(1, drawing.objects.len());
-        drawing.objects[0].to_owned()
+        let objects = drawing.objects().collect::<Vec<_>>();
+        assert_eq!(1, objects.len());
+        objects[0].clone()
     }
 
     #[test]
@@ -1797,7 +1791,7 @@ mod tests {
                 .join("\r\n")
                 .as_str(),
         );
-        assert_eq!(0, drawing.objects.len());
+        assert_eq!(0, drawing.objects().count());
     }
 
     #[test]
@@ -1820,7 +1814,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(0, drawing.objects.len());
+        assert_eq!(0, drawing.objects().count());
     }
 
     #[test]
@@ -1847,12 +1841,13 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.objects.len());
-        match drawing.objects[0].specific {
+        let objects = drawing.objects().collect::<Vec<_>>();
+        assert_eq!(2, objects.len());
+        match objects[0].specific {
             ObjectType::DictionaryVariable(_) => (),
             _ => panic!("expected a dictionary variable"),
         }
-        match drawing.objects[1].specific {
+        match objects[1].specific {
             ObjectType::ImageDefinition(_) => (),
             _ => panic!("expected an image definition"),
         }
@@ -1895,7 +1890,7 @@ mod tests {
             common: Default::default(),
             specific: ObjectType::ImageDefinition(Default::default()),
         };
-        drawing.objects.push(obj);
+        drawing.add_object(obj);
         assert_contains(&drawing, vec!["  0", "IMAGEDEF", "  5", "1"].join("\r\n"));
     }
 
@@ -1907,9 +1902,7 @@ mod tests {
             file_path: String::from("path/to/file"),
             ..Default::default()
         };
-        drawing
-            .objects
-            .push(Object::new(ObjectType::ImageDefinition(img)));
+        drawing.add_object(Object::new(ObjectType::ImageDefinition(img)));
         assert_contains(
             &drawing,
             vec![
@@ -1943,10 +1936,11 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        assert_eq!(2, drawing.objects.len());
+        let objects = drawing.objects().collect::<Vec<_>>();
+        assert_eq!(2, objects.len());
 
         // verify dictionary value
-        match drawing.objects[0].specific {
+        match objects[0].specific {
             ObjectType::DictionaryVariable(ref var) => {
                 assert_eq!("value", var.value);
             }
@@ -1954,7 +1948,7 @@ mod tests {
         }
 
         // verify image definition
-        match drawing.objects[1].specific {
+        match objects[1].specific {
             ObjectType::ImageDefinition(ref img) => {
                 assert_eq!("path/to/file", img.file_path);
                 assert_eq!(11, img.image_width);
@@ -1981,7 +1975,7 @@ mod tests {
     fn write_field_with_multiples_specific() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::LayerFilter(LayerFilter {
                 layer_names: vec![
@@ -2023,7 +2017,7 @@ mod tests {
     fn write_object_with_write_order() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004; // LAYER_FILTER is only supported up to 2004
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::LayerFilter(LayerFilter {
                 layer_names: vec![
@@ -2072,7 +2066,7 @@ mod tests {
         layout.set_is_ps_lt_scale(true);
         layout.set_is_lim_check(true);
         layout.tab_order = -54;
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::Layout(layout),
         });
@@ -2108,9 +2102,8 @@ mod tests {
     fn write_object_with_handles() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2007; // LIGHTLIST only supported up to 2007
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: ObjectCommon {
-                handle: 0xa1,
                 __owner_handle: 0xa2,
                 ..Default::default()
             },
@@ -2118,7 +2111,7 @@ mod tests {
         });
         assert_contains(
             &drawing,
-            vec!["  0", "LIGHTLIST", "  5", "A1", "330", "A2"].join("\r\n"),
+            vec!["  0", "LIGHTLIST", "  5", "1", "330", "A2"].join("\r\n"),
         );
     }
 
@@ -2144,7 +2137,7 @@ mod tests {
         dict.value_handles.insert(String::from("key1"), 0xAAAA);
         dict.value_handles.insert(String::from("key2"), 0xBBBB);
         let mut drawing = Drawing::new();
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::Dictionary(dict),
         });
@@ -2178,7 +2171,7 @@ mod tests {
     #[test]
     fn write_version_specific_object() {
         let mut drawing = Drawing::new();
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::AcadProxyObject(Default::default()),
         });
@@ -2227,7 +2220,7 @@ mod tests {
     fn write_extension_data() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14;
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: ObjectCommon {
                 extension_data_groups: vec![ExtensionGroup {
                     application_name: String::from("IXMILIA"),
@@ -2265,7 +2258,7 @@ mod tests {
     fn write_x_data() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
-        drawing.objects.push(Object {
+        drawing.add_object(Object {
             common: ObjectCommon {
                 x_data: vec![XData {
                     application_name: String::from("IXMILIA"),
@@ -2358,7 +2351,7 @@ mod tests {
             });
             let mut drawing = Drawing::new();
             drawing.header.version = max_version;
-            drawing.objects.push(Object {
+            drawing.add_object(Object {
                 common,
                 specific: expected_type,
             });
