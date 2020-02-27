@@ -773,7 +773,11 @@ impl Drawing {
         let mut entities = vec![];
         iter.read_entities_into_vec(&mut entities)?;
         for e in entities {
-            self.add_entity_no_handle_set(e);
+            if e.common.handle == 0 {
+                self.add_entity(e);
+            } else {
+                self.add_entity_no_handle_set(e);
+            }
         }
         Ok(())
     }
@@ -1308,6 +1312,33 @@ mod tests {
         drawing.add_entity(ent);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_ne!(0, entities[0].common.handle);
+    }
+
+    #[test]
+    fn entity_handle_is_set_during_read_if_not_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "  0", "ENDSEC", "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let line = drawing.entities().nth(0).unwrap();
+        assert_ne!(0, line.common.handle);
+    }
+
+    #[test]
+    fn entity_handle_is_honored_during_read_if_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "  5", "3333", "  0", "ENDSEC",
+                "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let line = drawing.entities().nth(0).unwrap();
+        assert_eq!(0x3333, line.common.handle);
     }
 
     #[test]
