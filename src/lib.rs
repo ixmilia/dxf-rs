@@ -61,7 +61,8 @@
 //! use dxf::entities::*;
 //!
 //! let mut drawing = Drawing::new();
-//! drawing.add_entity(Entity::new(EntityType::Line(Line::default())));
+//! let added_entity_ref = drawing.add_entity(Entity::new(EntityType::Line(Line::default())));
+//! // `added_entity_ref` is a reference to the newly added entity
 //! drawing.save_file("path/to/file.dxf")?;
 //! # Ok(())
 //! # }

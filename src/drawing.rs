@@ -250,7 +250,7 @@ impl Drawing {
         self.__entities.iter_mut()
     }
     /// Adds an entity to the `Drawing`.
-    pub fn add_entity(&mut self, mut entity: Entity) {
+    pub fn add_entity(&mut self, mut entity: Entity) -> &Entity {
         entity.common.handle = self.next_handle();
 
         // set child handles
@@ -273,7 +273,7 @@ impl Drawing {
         }
 
         // ensure invariants
-        self.add_entity_no_handle_set(entity);
+        self.add_entity_no_handle_set(entity)
     }
     /// Returns an iterator for all contained objects.
     pub fn objects(&self) -> impl Iterator<Item = &Object> {
@@ -284,13 +284,13 @@ impl Drawing {
         self.__objects.iter_mut()
     }
     /// Adds an object to the `Drawing`.
-    pub fn add_object(&mut self, mut obj: Object) {
+    pub fn add_object(&mut self, mut obj: Object) -> &Object {
         obj.common.handle = self.next_handle();
 
         // TODO: set child handles
 
         // ensure invariants
-        self.add_object_no_handle_set(obj);
+        self.add_object_no_handle_set(obj)
     }
     /// Clears all items from the `Drawing`.
     pub fn clear(&mut self) {
@@ -488,20 +488,22 @@ impl Drawing {
         self.header.next_available_handle += 1;
         result
     }
-    fn add_entity_no_handle_set(&mut self, entity: Entity) {
+    fn add_entity_no_handle_set(&mut self, entity: Entity) -> &Entity {
         self.ensure_mline_style_is_present_for_entity(&entity);
         self.ensure_dimension_style_is_present_for_entity(&entity);
         self.ensure_layer_is_present(&entity.common.layer);
         self.ensure_line_type_is_present(&entity.common.line_type_name);
         self.ensure_text_style_is_present_for_entity(&entity);
         self.__entities.push(entity);
+        self.__entities.last().unwrap()
     }
-    fn add_object_no_handle_set(&mut self, obj: Object) {
+    fn add_object_no_handle_set(&mut self, obj: Object) -> &Object {
         self.ensure_layer_is_present_for_object(&obj);
         self.ensure_line_type_is_present_for_object(&obj);
         self.ensure_text_style_is_present_for_object(&obj);
         self.ensure_view_is_present(&obj);
         self.__objects.push(obj);
+        self.__objects.last().unwrap()
     }
     fn ensure_mline_style_is_present_for_entity(&mut self, entity: &Entity) {
         if let EntityType::MLine(ref ml) = &entity.specific {
@@ -1314,9 +1316,8 @@ mod tests {
         };
         assert_eq!(0, ent.common.handle);
 
-        drawing.add_entity(ent);
-        let entities = drawing.entities().collect::<Vec<_>>();
-        assert_ne!(0, entities[0].common.handle);
+        let ent = drawing.add_entity(ent);
+        assert_ne!(0, ent.common.handle);
     }
 
     #[test]
@@ -1328,9 +1329,8 @@ mod tests {
         };
         assert_eq!(0, obj.common.handle);
 
-        drawing.add_object(obj);
-        let objects = drawing.objects().collect::<Vec<_>>();
-        assert_ne!(0, objects[0].common.handle);
+        let obj = drawing.add_object(obj);
+        assert_ne!(0, obj.common.handle);
     }
 
     #[test]
