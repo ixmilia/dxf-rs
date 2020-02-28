@@ -70,17 +70,13 @@ impl Header {
 
         Ok(header)
     }
-    pub(crate) fn write<T>(
-        &self,
-        writer: &mut CodePairWriter<T>,
-        next_available_handle: u32,
-    ) -> DxfResult<()>
+    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "HEADER"))?;
-        self.write_code_pairs(writer, next_available_handle)?;
+        self.write_code_pairs(writer)?;
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
@@ -345,7 +341,7 @@ $LUPREC
             Point::origin(),
             Point::origin(),
         ))));
-        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "14"].join("\r\n"));
+        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "15"].join("\r\n"));
     }
 
     #[test]

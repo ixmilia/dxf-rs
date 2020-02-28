@@ -202,7 +202,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
 
     ////////////////////////////////////////////////////////////////////// write
     fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write {\n");
+    fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     fun.push_str("        let ent = self;\n");
     for line in generate_write_code_pairs(&entity) {
@@ -326,7 +326,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             if name(&c) == "DimensionBase" {
                 fun.push_str("impl DimensionBase {\n");
                 fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-                fun.push_str("        where T: Write {\n");
+                fun.push_str("        where T: Write + ?Sized {\n");
                 fun.push_str("\n");
                 fun.push_str("        let ent = self;\n");
                 for line in generate_write_code_pairs(&c) {
@@ -555,7 +555,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 
 fn generate_write(fun: &mut String, element: &Element) {
     fun.push_str("    pub(crate) fn write<T>(&self, common: &EntityCommon, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write {\n");
+    fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     fun.push_str("        match self {\n");
     for entity in &element.children {

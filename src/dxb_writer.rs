@@ -26,11 +26,11 @@ impl<T: Write> DxbWriter<T> {
         self.writer.write_u8(0x1A)?;
         self.writer.write_u8(0x00)?;
 
-        let writing_block = drawing.entities().any(|_| true) && drawing.blocks.len() == 1;
+        let writing_block = drawing.entities().any(|_| true) && drawing.blocks().any(|_| true);
         if writing_block {
             // write block header
             self.write_item_type(DxbItemType::BlockBase)?;
-            let block = &drawing.blocks[0];
+            let block = drawing.blocks().nth(0).unwrap();
             self.write_n(block.base_point.x)?;
             self.write_n(block.base_point.y)?;
         }
@@ -45,7 +45,7 @@ impl<T: Write> DxbWriter<T> {
         self.write_w(last_color)?;
 
         if writing_block {
-            self.write_entities(&drawing.blocks[0].entities)?;
+            self.write_entities(&drawing.blocks().nth(0).unwrap().entities)?;
         } else {
             let groups = drawing.entities().group_by(|&e| e.common.layer.clone());
             for (layer, entities) in &groups {

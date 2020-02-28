@@ -89,7 +89,7 @@ impl XData {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         // not supported on < R2000
         if version >= AcadVersion::R2000 {
@@ -211,7 +211,7 @@ impl XDataItem {
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         match self {
             XDataItem::Str(ref s) => {

@@ -13,7 +13,6 @@ use crate::entities::Entity;
 use crate::entity_iter::EntityIter;
 use crate::enums::*;
 use crate::extension_data;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
 use crate::x_data;
 
@@ -159,7 +158,11 @@ impl Block {
                                 }
                             }
 
-                            drawing.blocks.push(current);
+                            if current.handle == 0 {
+                                drawing.add_block(current);
+                            } else {
+                                drawing.add_block_no_handle_set(current);
+                            }
                             break;
                         }
                         CodePair { code: 0, .. } => {
@@ -212,17 +215,13 @@ impl Block {
         version: AcadVersion,
         write_handles: bool,
         writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
-        if write_handles && self.handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(
-                5,
-                &as_handle(handle_tracker.get_block_handle(&self)),
-            ))?;
+        if write_handles {
+            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
         }
 
         if version >= AcadVersion::R14 {
@@ -346,14 +345,15 @@ mod tests {
         full_block.push("0");
         full_block.push("ENDBLK");
         let drawing = read_blocks_section(full_block);
-        assert_eq!(1, drawing.blocks.len());
-        drawing.blocks[0].to_owned()
+        let blocks = drawing.blocks().collect::<Vec<_>>();
+        assert_eq!(1, blocks.len());
+        blocks[0].clone()
     }
 
     #[test]
     fn read_empty_blocks_section_2() {
         let drawing = read_blocks_section(vec![]);
-        assert_eq!(0, drawing.blocks.len());
+        assert_eq!(0, drawing.blocks().count());
     }
 
     #[test]
@@ -397,7 +397,7 @@ mod tests {
             "100",
             "AcDbBlockEnd",
         ]);
-        assert_eq!(1, drawing.blocks.len());
+        assert_eq!(1, drawing.blocks().count());
     }
 
     #[test]
@@ -405,7 +405,7 @@ mod tests {
         let drawing = read_blocks_section(vec![
             "0", "BLOCK", "0", "ENDBLK", "0", "BLOCK", "0", "ENDBLK",
         ]);
-        assert_eq!(2, drawing.blocks.len())
+        assert_eq!(2, drawing.blocks().count())
     }
 
     #[test]
@@ -602,7 +602,7 @@ mod tests {
         });
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14; // extension group data only written on >= R14
-        drawing.blocks.push(block);
+        drawing.add_block(block);
         assert_contains(
             &drawing,
             vec![
@@ -669,7 +669,7 @@ mod tests {
         });
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000; // xdata only written on >= R2000
-        drawing.blocks.push(block);
+        drawing.add_block(block);
         assert_contains(
             &drawing,
             vec![
@@ -696,23 +696,24 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
         });
-        drawing.blocks.push(b1);
+        drawing.add_block(b1);
         let mut b2 = Block::default();
         b2.entities.push(Entity {
             common: Default::default(),
             specific: EntityType::Circle(Default::default()),
         });
-        drawing.blocks.push(b2);
+        drawing.add_block(b2);
         let written = to_test_string(&drawing);
         let reparsed = unwrap_drawing(Drawing::load(&mut written.as_bytes()));
-        assert_eq!(2, reparsed.blocks.len());
-        assert_eq!(1, reparsed.blocks[0].entities.len());
-        match reparsed.blocks[0].entities[0].specific {
+        let blocks = reparsed.blocks().collect::<Vec<_>>();
+        assert_eq!(2, blocks.len());
+        assert_eq!(1, blocks[0].entities.len());
+        match blocks[0].entities[0].specific {
             EntityType::Line(_) => (),
             _ => panic!("expected a line"),
         }
-        assert_eq!(1, reparsed.blocks[1].entities.len());
-        match reparsed.blocks[1].entities[0].specific {
+        assert_eq!(1, blocks[1].entities.len());
+        match blocks[1].entities[0].specific {
             EntityType::Circle(_) => (),
             _ => panic!("expected a circle"),
         }

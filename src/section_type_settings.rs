@@ -98,7 +98,7 @@ impl SectionTypeSettings {
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(1, "SectionTypeSettings"))?;
         writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;

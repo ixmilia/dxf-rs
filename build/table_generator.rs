@@ -323,7 +323,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
     fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("    where T: Write {\n");
+    fun.push_str("    where T: Write + ?Sized {\n");
     fun.push_str("\n");
     for table in &element.children {
         fun.push_str(&format!(
@@ -340,7 +340,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         let table_item = &table.children[0];
         fun.push_str("#[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
         fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
-        fun.push_str("    where T: Write {\n");
+        fun.push_str("    where T: Write + ?Sized {\n");
         fun.push_str("\n");
         fun.push_str(&format!(
             "    if !drawing.{collection}().any(|_| true) {{ // is empty\n",

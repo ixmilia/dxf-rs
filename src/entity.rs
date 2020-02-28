@@ -1328,7 +1328,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
@@ -1351,7 +1351,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
@@ -1386,7 +1386,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         dim.dimension_base.write(version, writer)?;
         if version >= AcadVersion::R13 {
@@ -1414,7 +1414,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         dim.dimension_base.write(version, writer)?;
         writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
@@ -1430,7 +1430,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         dim.dimension_base.write(version, writer)?;
         writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
@@ -1446,7 +1446,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         dim.dimension_base.write(version, writer)?;
         writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
@@ -1470,7 +1470,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         dim.dimension_base.write(version, writer)?;
         writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
@@ -1488,7 +1488,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
             "AcDb3dPolyline"
@@ -1550,7 +1550,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
         let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
@@ -1611,7 +1611,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         match self.specific {
             EntityType::Attribute(ref att) => {
@@ -1662,7 +1662,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         let m_text_common = EntityCommon {
             handle: 0, // TODO: set handle
@@ -1684,7 +1684,7 @@ impl Entity {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         let seqend = Entity {
             common: Default::default(),

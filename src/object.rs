@@ -1550,7 +1550,7 @@ impl Object {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if self.specific.is_supported_on_version(version) {
             writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
@@ -1572,7 +1572,7 @@ impl Object {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<bool>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         match self.specific {
             ObjectType::DataTable(ref data) => {
@@ -1757,7 +1757,7 @@ impl Object {
     }
     fn post_write<T>(&self, _version: AcadVersion, _writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         match self.specific {
             _ => (),

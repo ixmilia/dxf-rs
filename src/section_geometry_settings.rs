@@ -144,7 +144,7 @@ impl SectionGeometrySettings {
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
         writer.write_code_pair(&CodePair::new_i32(91, self.geometry_count))?;

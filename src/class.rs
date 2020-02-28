@@ -153,7 +153,7 @@ impl Class {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if version >= AcadVersion::R14 {
             writer.write_code_pair(&CodePair::new_str(0, "CLASS"))?;

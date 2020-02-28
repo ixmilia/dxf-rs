@@ -261,7 +261,7 @@ fn get_read_command(element: &Element) -> String {
 
 fn generate_add_code_pairs(fun: &mut String, element: &Element) {
     fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
-    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>, next_available_handle: u32) -> DxfResult<()>\n");
+    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     for v in &element.children {
@@ -304,11 +304,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
             let expected_type =
                 get_code_pair_type(ExpectedType::get_expected_type(code(&v)).unwrap());
             let field_name = field(&v);
-            let value = if field_name == "next_available_handle" {
-                String::from("next_available_handle")
-            } else {
-                format!("self.{}", field_name)
-            };
+            let value = format!("self.{}", field_name);
             let value = write_converter.replace("{}", &*value);
             fun.push_str(&format!(
                 "        {indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",

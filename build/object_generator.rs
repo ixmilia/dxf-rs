@@ -208,7 +208,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
 
     ////////////////////////////////////////////////////////////////////// write
     fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write {\n");
+    fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     fun.push_str("        let obj = self;\n");
     for line in generate_write_code_pairs(&object) {
@@ -554,7 +554,7 @@ fn generate_write(fun: &mut String, element: &Element) {
     let mut unused_writers = vec![];
     fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write {\n");
+    fun.push_str("        where T: Write + ?Sized {\n");
     fun.push_str("\n");
     fun.push_str("        match *self {\n");
     for object in &element.children {

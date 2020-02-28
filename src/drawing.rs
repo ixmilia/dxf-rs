@@ -22,7 +22,6 @@ use crate::{CodePair, CodePairValue, DxfError, DxfResult};
 use crate::dxb_reader::DxbReader;
 use crate::dxb_writer::DxbWriter;
 use crate::entity_iter::EntityIter;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
 use crate::object_iter::ObjectIter;
 
@@ -70,8 +69,8 @@ pub struct Drawing {
     /// Internal collection of view ports.
     __view_ports: Vec<ViewPort>,
 
-    /// The blocks contained by the drawing.
-    pub blocks: Vec<Block>,
+    /// Internal collection of blocks.
+    __blocks: Vec<Block>,
 
     /// Internal collection of entities.
     __entities: Vec<Entity>,
@@ -99,7 +98,7 @@ impl Drawing {
             __ucss: vec![],
             __views: vec![],
             __view_ports: vec![],
-            blocks: vec![],
+            __blocks: vec![],
             __entities: vec![],
             __objects: vec![],
             thumbnail: None,
@@ -184,35 +183,18 @@ impl Drawing {
         T: Write + ?Sized,
     {
         let text_as_ascii = self.header.version <= AcadVersion::R2004;
-
-        // write to memory while tracking the used handle values
-        let mut buf = vec![];
-        let mut handle_tracker = HandleTracker::new(self.header.next_available_handle);
-        {
-            let mut code_pair_writer =
-                CodePairWriter::new(&mut buf, as_ascii, text_as_ascii, self.header.version);
-            let write_handles =
-                self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
-            self.write_classes(&mut code_pair_writer)?;
-            self.write_tables(write_handles, &mut code_pair_writer)?;
-            self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
-            self.write_entities(write_handles, &mut code_pair_writer)?;
-            self.write_objects(&mut code_pair_writer)?;
-            self.write_thumbnail(&mut code_pair_writer)?;
-            code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
-        }
-
-        // write header to the final location
-        {
-            let mut final_writer =
-                CodePairWriter::new(writer, as_ascii, text_as_ascii, self.header.version);
-            final_writer.write_prelude()?;
-            self.header
-                .write(&mut final_writer, handle_tracker.get_current_next_handle())?;
-        }
-
-        // copy memory to final location
-        writer.write_all(&*buf)?;
+        let mut code_pair_writer =
+            CodePairWriter::new(writer, as_ascii, text_as_ascii, self.header.version);
+        let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        code_pair_writer.write_prelude()?;
+        self.header.write(&mut code_pair_writer)?;
+        self.write_classes(&mut code_pair_writer)?;
+        self.write_tables(write_handles, &mut code_pair_writer)?;
+        self.write_blocks(write_handles, &mut code_pair_writer)?;
+        self.write_entities(write_handles, &mut code_pair_writer)?;
+        self.write_objects(&mut code_pair_writer)?;
+        self.write_thumbnail(&mut code_pair_writer)?;
+        code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
@@ -361,6 +343,19 @@ impl Drawing {
         view_port.handle = self.next_handle();
         self.add_view_port_no_handle_set(view_port)
     }
+    /// Returns an iterator for all blocks.
+    pub fn blocks(&self) -> impl Iterator<Item = &Block> {
+        self.__blocks.iter()
+    }
+    /// Returns an iterator for all mutable blocks.
+    pub fn blocks_mut(&mut self) -> impl Iterator<Item = &mut Block> {
+        self.__blocks.iter_mut()
+    }
+    /// Add a block to the `Drawing`.
+    pub fn add_block(&mut self, mut block: Block) -> &Block {
+        block.handle = self.next_handle();
+        self.add_block_no_handle_set(block)
+    }
     /// Returns an iterator for all contained entities.
     pub fn entities(&self) -> impl Iterator<Item = &Entity> {
         self.__entities.iter()
@@ -424,7 +419,7 @@ impl Drawing {
         self.__ucss.clear();
         self.__views.clear();
         self.__view_ports.clear();
-        self.blocks.clear();
+        self.__blocks.clear();
         self.__entities.clear();
         self.__objects.clear();
         self.thumbnail = None;
@@ -468,7 +463,7 @@ impl Drawing {
                 return Some(DrawingItem::AppId(item));
             }
         }
-        for item in &self.blocks {
+        for item in &self.__blocks {
             if item.handle == handle {
                 return Some(DrawingItem::Block(item));
             }
@@ -533,7 +528,7 @@ impl Drawing {
                 return Some(DrawingItemMut::AppId(item));
             }
         }
-        for item in &mut self.blocks {
+        for item in &mut self.__blocks {
             if item.handle == handle {
                 return Some(DrawingItemMut::Block(item));
             }
@@ -608,6 +603,12 @@ impl Drawing {
         self.header.next_available_handle += 1;
         result
     }
+    pub(crate) fn add_block_no_handle_set(&mut self, block: Block) -> &Block {
+        self.ensure_layer_is_present_for_block(&block);
+        self.ensure_line_type_is_present_for_block(&block);
+        self.__blocks.push(block);
+        self.__blocks.last().unwrap()
+    }
     fn add_entity_no_handle_set(&mut self, entity: Entity) -> &Entity {
         self.ensure_mline_style_is_present_for_entity(&entity);
         self.ensure_dimension_style_is_present_for_entity(&entity);
@@ -644,7 +645,7 @@ impl Drawing {
         self.__dim_styles.last().unwrap()
     }
     pub(crate) fn add_layer_no_handle_set(&mut self, layer: Layer) -> &Layer {
-        // TODO: ensure invariants
+        self.ensure_line_type_is_present(&layer.line_type_name);
         self.__layers.push(layer);
         self.__layers.last().unwrap()
     }
@@ -728,6 +729,12 @@ impl Drawing {
             });
         }
     }
+    fn ensure_layer_is_present_for_block(&mut self, block: &Block) {
+        self.ensure_layer_is_present(&block.layer);
+        for ent in &block.entities {
+            self.ensure_layer_is_present(&ent.common.layer);
+        }
+    }
     fn ensure_layer_is_present_for_object(&mut self, obj: &Object) {
         match &obj.specific {
             ObjectType::LayerFilter(ref l) => {
@@ -749,6 +756,11 @@ impl Drawing {
                 name: String::from(layer_name),
                 ..Default::default()
             });
+        }
+    }
+    fn ensure_line_type_is_present_for_block(&mut self, block: &Block) {
+        for ent in &block.entities {
+            self.ensure_line_type_is_present(&ent.common.line_type_name);
         }
     }
     fn ensure_line_type_is_present_for_object(&mut self, obj: &Object) {
@@ -818,7 +830,7 @@ impl Drawing {
     }
     fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if self.classes.is_empty() {
             return Ok(());
@@ -835,7 +847,7 @@ impl Drawing {
     }
     fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
@@ -843,23 +855,18 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_blocks<T>(
-        &self,
-        write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
-    ) -> DxfResult<()>
+    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
-        if self.blocks.is_empty() {
+        if self.__blocks.is_empty() {
             return Ok(());
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "BLOCKS"))?;
-        for b in &self.blocks {
-            b.write(self.header.version, write_handles, writer, handle_tracker)?;
+        for b in &self.__blocks {
+            b.write(self.header.version, write_handles, writer)?;
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
@@ -871,7 +878,7 @@ impl Drawing {
         writer: &mut CodePairWriter<T>,
     ) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
@@ -884,7 +891,7 @@ impl Drawing {
     }
     fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
@@ -897,7 +904,7 @@ impl Drawing {
     }
     fn write_thumbnail<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if self.header.version >= AcadVersion::R2000 {
             if let Some(ref img) = self.thumbnail {
@@ -1194,8 +1201,8 @@ impl Drawing {
         Ok(())
     }
     fn normalize_blocks(&mut self) {
-        for i in 0..self.blocks.len() {
-            self.blocks[i].normalize();
+        for b in self.blocks_mut() {
+            b.normalize();
         }
     }
     fn normalize_entities(&mut self) {
@@ -1248,37 +1255,13 @@ impl Drawing {
     }
     fn ensure_layers(&mut self) {
         // ensure all layers that should exist do
-        let mut should_exist = HashSet::new();
-        should_exist.insert(String::from("0"));
-        for block in &self.blocks {
-            should_exist.insert(block.layer.clone());
-            for ent in &block.entities {
-                should_exist.insert(ent.common.layer.clone());
-            }
-        }
-
-        for name in &should_exist {
-            self.ensure_layer_is_present(name);
-        }
+        self.ensure_layer_is_present("0");
     }
     fn ensure_line_types(&mut self) {
         // ensure all line_types that should exist do
-        let mut should_exist = HashSet::new();
-        should_exist.insert(String::from("BYLAYER"));
-        should_exist.insert(String::from("BYBLOCK"));
-        should_exist.insert(String::from("CONTINUOUS"));
-        for layer in self.layers() {
-            should_exist.insert(layer.line_type_name.clone());
-        }
-        for block in &self.blocks {
-            for ent in &block.entities {
-                should_exist.insert(ent.common.line_type_name.clone());
-            }
-        }
-
-        for name in &should_exist {
-            self.ensure_line_type_is_present(name);
-        }
+        self.ensure_line_type_is_present("BYLAYER");
+        self.ensure_line_type_is_present("BYBLOCK");
+        self.ensure_line_type_is_present("CONTINUOUS");
     }
     fn ensure_text_styles(&mut self) {
         // ensure all styles that should exist do
@@ -1352,6 +1335,16 @@ mod tests {
     }
 
     #[test]
+    fn block_handle_is_set_on_add() {
+        let mut drawing = Drawing::new();
+        let block = Block::default();
+        assert_eq!(0, block.handle);
+
+        let block = drawing.add_block(block);
+        assert_ne!(0, block.handle);
+    }
+
+    #[test]
     fn entity_handle_is_set_on_add() {
         let mut drawing = Drawing::new();
         let ent = Entity {
@@ -1386,6 +1379,20 @@ mod tests {
 
         let layer = drawing.add_layer(layer);
         assert_ne!(0, layer.handle);
+    }
+
+    #[test]
+    fn block_handle_is_set_during_read_if_not_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "BLOCKS", "  0", "BLOCK", "  0", "ENDBLK", "  0",
+                "ENDSEC", "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let block = drawing.blocks().nth(0).unwrap();
+        assert_ne!(0, block.handle);
     }
 
     #[test]
@@ -1435,6 +1442,20 @@ mod tests {
         );
         let layer = drawing.layers().nth(0).unwrap();
         assert_ne!(0, layer.handle);
+    }
+
+    #[test]
+    fn block_handle_is_honored_during_read_if_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "BLOCKS", "  0", "BLOCK", "  5", "3333", "  0", "ENDBLK",
+                "  0", "ENDSEC", "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let block = drawing.blocks().nth(0).unwrap();
+        assert_eq!(0x3333, block.handle);
     }
 
     #[test]

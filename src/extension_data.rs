@@ -73,7 +73,7 @@ impl ExtensionGroup {
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
-        T: Write,
+        T: Write + ?Sized,
     {
         if !self.items.is_empty() {
             let mut full_group_name = String::new();
