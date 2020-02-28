@@ -121,12 +121,12 @@ fn round_trip() {
         specific: EntityType::Line(Default::default()),
     });
     assert_eq!(1, drawing.entities().count());
-    assert_eq!(1, drawing.layers.len());
+    assert_eq!(1, drawing.layers().count());
 
     // ensure they're still there
     let drawing = parse_drawing(&to_test_string(&drawing));
     assert_eq!(1, drawing.entities().count());
-    assert_eq!(1, drawing.layers.len());
+    assert_eq!(1, drawing.layers().count());
 }
 
 #[test]

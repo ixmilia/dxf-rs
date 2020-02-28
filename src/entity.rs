@@ -1842,7 +1842,7 @@ mod tests {
                 "  0",
                 "LINE",
                 "  5",
-                "1",
+                "10",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2140,7 +2140,7 @@ mod tests {
         });
         assert_contains(
             &drawing,
-            vec!["  0", "LINE", "  5", "1", "330", "A2"].join("\r\n"),
+            vec!["  0", "LINE", "  5", "10", "330", "A2"].join("\r\n"),
         );
     }
 
@@ -2438,7 +2438,7 @@ mod tests {
                 "  0",
                 "POLYLINE", // polyline
                 "  5",
-                "4",
+                "13",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2456,7 +2456,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 1
                 "  5",
-                "1",
+                "10",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2478,7 +2478,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 2
                 "  5",
-                "2",
+                "11",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2500,7 +2500,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 3
                 "  5",
-                "3",
+                "12",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2548,7 +2548,7 @@ mod tests {
                 "  0",
                 "POLYLINE", // polyline
                 "  5",
-                "2",
+                "11",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -2568,7 +2568,7 @@ mod tests {
                 "  0",
                 "VERTEX", // vertex 1
                 "  5",
-                "1",
+                "10",
                 "100",
                 "AcDbEntity",
                 "  8",
@@ -3243,7 +3243,7 @@ mod tests {
     fn normalize_dimension_styles() {
         let mut file = Drawing::new();
         file.clear();
-        assert_eq!(0, file.dim_styles.len());
+        assert_eq!(0, file.dim_styles().count());
         file.add_entity(Entity::new(EntityType::RadialDimension(RadialDimension {
             dimension_base: DimensionBase {
                 dimension_style_name: String::from("style name"),
@@ -3252,9 +3252,10 @@ mod tests {
             ..Default::default()
         })));
         file.normalize();
-        assert_eq!(3, file.dim_styles.len());
-        assert_eq!("ANNOTATIVE", file.dim_styles[0].name);
-        assert_eq!("STANDARD", file.dim_styles[1].name);
-        assert_eq!("style name", file.dim_styles[2].name);
+        let dim_styles = file.dim_styles().collect::<Vec<_>>();
+        assert_eq!(3, dim_styles.len());
+        assert_eq!("ANNOTATIVE", dim_styles[0].name);
+        assert_eq!("STANDARD", dim_styles[1].name);
+        assert_eq!("style name", dim_styles[2].name);
     }
 }

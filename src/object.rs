@@ -2111,7 +2111,7 @@ mod tests {
         });
         assert_contains(
             &drawing,
-            vec!["  0", "LIGHTLIST", "  5", "1", "330", "A2"].join("\r\n"),
+            vec!["  0", "LIGHTLIST", "  5", "10", "330", "A2"].join("\r\n"),
         );
     }
 

@@ -125,27 +125,26 @@ fn set_pointer_on_entity() {
         specific: EntityType::Line(Default::default()),
     };
     assert_eq!(0, material.common.handle);
-    drawing.add_object(material);
 
-    let material = drawing.objects().nth(0).unwrap();
-    assert_eq!(1, material.common.handle);
+    let material = drawing.add_object(material);
+    assert_eq!(0x10, material.common.handle);
     line.common.set_material(material).ok().unwrap();
     drawing.add_entity(line);
 
-    assert_contains(&drawing, vec!["  0", "MATERIAL", "  5", "1"].join("\r\n"));
+    assert_contains(&drawing, vec!["  0", "MATERIAL", "  5", "10"].join("\r\n"));
     assert_contains(
         &drawing,
         vec![
             "  0",
             "LINE",
             "  5",
-            "2",
+            "11",
             "100",
             "AcDbEntity",
             "  8",
             "0",
             "347",
-            "1", // handle of `material`
+            "10", // handle of `material`
         ]
         .join("\r\n"),
     );

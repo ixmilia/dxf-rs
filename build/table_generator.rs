@@ -38,7 +38,6 @@ use crate::{
 };
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
-use crate::handle_tracker::HandleTracker;
 use crate::helper_functions::*;
 use crate::extension_data;
 use crate::x_data;
@@ -186,6 +185,8 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 
     for table in &element.children {
         let table_item = &table.children[0];
+        let collection = attr(&table, "Collection");
+        let (item_type, _) = collection.split_at(collection.len() - 1); // remove the 's' suffix
 
         fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where I: Read {\n");
@@ -292,10 +293,18 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                        }\n");
         fun.push_str("                    }\n");
         fun.push_str("\n");
+        fun.push_str("                    if item.handle == 0 {\n");
         fun.push_str(&format!(
-            "                    drawing.{collection}.push(item);\n",
-            collection = attr(&table, "Collection")
+            "                        drawing.add_{item_type}(item);\n",
+            item_type = item_type
         ));
+        fun.push_str("                    }\n");
+        fun.push_str("                    else {\n");
+        fun.push_str(&format!(
+            "                        drawing.add_{item_type}_no_handle_set(item);\n",
+            item_type = item_type
+        ));
+        fun.push_str("                    }\n");
         fun.push_str("                }\n");
         fun.push_str("                else {\n");
         fun.push_str("                    // do nothing, probably the table's handle or flags\n");
@@ -313,12 +322,12 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
-    fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n");
+    fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
     fun.push_str("    where T: Write {\n");
     fun.push_str("\n");
     for table in &element.children {
         fun.push_str(&format!(
-            "    write_{collection}(drawing, write_handles, writer, handle_tracker)?;\n",
+            "    write_{collection}(drawing, write_handles, writer)?;\n",
             collection = attr(&table, "Collection")
         ));
     }
@@ -330,11 +339,11 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
     for table in &element.children {
         let table_item = &table.children[0];
         fun.push_str("#[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
-        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>, handle_tracker: &mut HandleTracker) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
+        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
         fun.push_str("    where T: Write {\n");
         fun.push_str("\n");
         fun.push_str(&format!(
-            "    if drawing.{collection}.is_empty() {{\n",
+            "    if !drawing.{collection}().any(|_| true) {{ // is empty\n",
             collection = attr(&table, "Collection")
         ));
         fun.push_str("        return Ok(()) // nothing to write\n");
@@ -352,15 +361,14 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         // fun.push_str("    }\n");
         // fun.push_str("\n");
 
-        let collection = attr(&table, "Collection");
-        let (item_type, _) = collection.split_at(collection.len() - 1); // remove the 's' suffix
+        let item_type = name(&table_item);
 
         fun.push_str(
             "    writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\"))?;\n",
         );
         fun.push_str("    writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n");
         fun.push_str(&format!(
-            "    for item in &drawing.{collection} {{\n",
+            "    for item in drawing.{collection}() {{\n",
             collection = attr(&table, "Collection")
         ));
         fun.push_str(&format!(
@@ -368,7 +376,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             type_string = attr(&table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(handle_tracker.get_{item_type}_handle(&item))))?;\n",
+        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(DrawingItem::{item_type}(&item).get_handle())))?;\n",
             item_type=item_type));
         fun.push_str("        }\n");
         fun.push_str("\n");

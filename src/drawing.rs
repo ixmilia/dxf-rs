@@ -49,24 +49,27 @@ pub struct Drawing {
     pub header: Header,
     /// The classes contained by the drawing.
     pub classes: Vec<Class>,
-    /// The AppIds contained by the drawing.
-    pub app_ids: Vec<AppId>,
-    /// The block records contained by the drawing.
-    pub block_records: Vec<BlockRecord>,
-    /// The dimension styles contained by the drawing.
-    pub dim_styles: Vec<DimStyle>,
-    /// The layers contained by the drawing.
-    pub layers: Vec<Layer>,
-    /// The line types contained by the drawing.
-    pub line_types: Vec<LineType>,
-    /// The visual styles contained by the drawing.
-    pub styles: Vec<Style>,
-    /// The user coordinate systems (UCS) contained by the drawing.
-    pub ucss: Vec<Ucs>,
-    /// The views contained by the drawing.
-    pub views: Vec<View>,
-    /// The view ports contained by the drawing.
-    pub view_ports: Vec<ViewPort>,
+
+    //------------------------------------------------------------------- tables
+    /// Internal collection of app ids.
+    __app_ids: Vec<AppId>,
+    /// Internal collection of block records.
+    __block_records: Vec<BlockRecord>,
+    /// Internal collection of dimension styles.
+    __dim_styles: Vec<DimStyle>,
+    /// Internal collection of layers.
+    __layers: Vec<Layer>,
+    /// Internal collection of line types.
+    __line_types: Vec<LineType>,
+    /// Internal collection of visual styles.
+    __styles: Vec<Style>,
+    /// Internal collection of user coordinate systems (UCS).
+    __ucss: Vec<Ucs>,
+    /// Internal collection of views.
+    __views: Vec<View>,
+    /// Internal collection of view ports.
+    __view_ports: Vec<ViewPort>,
+
     /// The blocks contained by the drawing.
     pub blocks: Vec<Block>,
 
@@ -87,15 +90,15 @@ impl Drawing {
         let mut drawing = Drawing {
             header: Header::default(),
             classes: vec![],
-            app_ids: vec![],
-            block_records: vec![],
-            dim_styles: vec![],
-            layers: vec![],
-            line_types: vec![],
-            styles: vec![],
-            ucss: vec![],
-            views: vec![],
-            view_ports: vec![],
+            __app_ids: vec![],
+            __block_records: vec![],
+            __dim_styles: vec![],
+            __layers: vec![],
+            __line_types: vec![],
+            __styles: vec![],
+            __ucss: vec![],
+            __views: vec![],
+            __view_ports: vec![],
             blocks: vec![],
             __entities: vec![],
             __objects: vec![],
@@ -191,7 +194,7 @@ impl Drawing {
             let write_handles =
                 self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
             self.write_classes(&mut code_pair_writer)?;
-            self.write_tables(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
+            self.write_tables(write_handles, &mut code_pair_writer)?;
             self.write_blocks(write_handles, &mut code_pair_writer, &mut handle_tracker)?;
             self.write_entities(write_handles, &mut code_pair_writer)?;
             self.write_objects(&mut code_pair_writer)?;
@@ -240,6 +243,123 @@ impl Drawing {
         let file = File::create(&path)?;
         let mut buf_writer = BufWriter::new(file);
         self.save_dxb(&mut buf_writer)
+    }
+    /// Returns an iterator for all app ids.
+    pub fn app_ids(&self) -> impl Iterator<Item = &AppId> {
+        self.__app_ids.iter()
+    }
+    /// Returns an iterator for all mutable app ids.
+    pub fn app_ids_mut(&mut self) -> impl Iterator<Item = &mut AppId> {
+        self.__app_ids.iter_mut()
+    }
+    /// Adds an app id to the `Drawing`.
+    pub fn add_app_id(&mut self, mut app_id: AppId) -> &AppId {
+        app_id.handle = self.next_handle();
+        self.add_app_id_no_handle_set(app_id)
+    }
+    /// Returns an iterator for all block records.
+    pub fn block_records(&self) -> impl Iterator<Item = &BlockRecord> {
+        self.__block_records.iter()
+    }
+    /// Returns an iterator for all mutable block records.
+    pub fn block_records_mut(&mut self) -> impl Iterator<Item = &mut BlockRecord> {
+        self.__block_records.iter_mut()
+    }
+    /// Adds a block record to the `Drawing`.
+    pub fn add_block_record(&mut self, mut block_record: BlockRecord) -> &BlockRecord {
+        block_record.handle = self.next_handle();
+        self.add_block_record_no_handle_set(block_record)
+    }
+    /// Returns an iterator for all dimension styles.
+    pub fn dim_styles(&self) -> impl Iterator<Item = &DimStyle> {
+        self.__dim_styles.iter()
+    }
+    /// Returns an iterator for all mutable dimension styles.
+    pub fn dim_styles_mut(&mut self) -> impl Iterator<Item = &mut DimStyle> {
+        self.__dim_styles.iter_mut()
+    }
+    /// Adds a dimension style to the `Drawing`.
+    pub fn add_dim_style(&mut self, mut dim_style: DimStyle) -> &DimStyle {
+        dim_style.handle = self.next_handle();
+        self.add_dim_style_no_handle_set(dim_style)
+    }
+    /// Returns an iterator for all layers.
+    pub fn layers(&self) -> impl Iterator<Item = &Layer> {
+        self.__layers.iter()
+    }
+    /// Returns an iterator for all mutable layers.
+    pub fn layers_mut(&mut self) -> impl Iterator<Item = &mut Layer> {
+        self.__layers.iter_mut()
+    }
+    /// Adds a layer to the `Drawing`.
+    pub fn add_layer(&mut self, mut layer: Layer) -> &Layer {
+        layer.handle = self.next_handle();
+        self.add_layer_no_handle_set(layer)
+    }
+    /// Returns an iterator for all line types.
+    pub fn line_types(&self) -> impl Iterator<Item = &LineType> {
+        self.__line_types.iter()
+    }
+    /// Returns an iterator for all mutable line types.
+    pub fn line_types_mut(&mut self) -> impl Iterator<Item = &mut LineType> {
+        self.__line_types.iter_mut()
+    }
+    /// Adds a line type to the `Drawing`.
+    pub fn add_line_type(&mut self, mut line_type: LineType) -> &LineType {
+        line_type.handle = self.next_handle();
+        self.add_line_type_no_handle_set(line_type)
+    }
+    /// Returns an iterator for all styles.
+    pub fn styles(&self) -> impl Iterator<Item = &Style> {
+        self.__styles.iter()
+    }
+    /// Returns an iterator for all mutable styles.
+    pub fn styles_mut(&mut self) -> impl Iterator<Item = &mut Style> {
+        self.__styles.iter_mut()
+    }
+    /// Adds a style to the `Drawing`.
+    pub fn add_style(&mut self, mut style: Style) -> &Style {
+        style.handle = self.next_handle();
+        self.add_style_no_handle_set(style)
+    }
+    /// Returns an iterator for all ucss.
+    pub fn ucss(&self) -> impl Iterator<Item = &Ucs> {
+        self.__ucss.iter()
+    }
+    /// Returns an iterator for all mutable ucss.
+    pub fn ucss_mut(&mut self) -> impl Iterator<Item = &mut Ucs> {
+        self.__ucss.iter_mut()
+    }
+    /// Add a ucs to the `Drawing`.
+    pub fn add_ucs(&mut self, mut ucs: Ucs) -> &Ucs {
+        ucs.handle = self.next_handle();
+        self.add_ucs_no_handle_set(ucs)
+    }
+    /// Returns an iterator for all views.
+    pub fn views(&self) -> impl Iterator<Item = &View> {
+        self.__views.iter()
+    }
+    /// Returns an iterator for all mutable views.
+    pub fn views_mut(&mut self) -> impl Iterator<Item = &mut View> {
+        self.__views.iter_mut()
+    }
+    /// Add a view to the `Drawing`.
+    pub fn add_view(&mut self, mut view: View) -> &View {
+        view.handle = self.next_handle();
+        self.add_view_no_handle_set(view)
+    }
+    /// Returns an iterator for all view ports.
+    pub fn view_ports(&self) -> impl Iterator<Item = &ViewPort> {
+        self.__view_ports.iter()
+    }
+    /// Returns an iterator for all mutable view ports.
+    pub fn view_ports_mut(&mut self) -> impl Iterator<Item = &mut ViewPort> {
+        self.__view_ports.iter_mut()
+    }
+    /// Add a view port to the `Drawing`.
+    pub fn add_view_port(&mut self, mut view_port: ViewPort) -> &ViewPort {
+        view_port.handle = self.next_handle();
+        self.add_view_port_no_handle_set(view_port)
     }
     /// Returns an iterator for all contained entities.
     pub fn entities(&self) -> impl Iterator<Item = &Entity> {
@@ -295,15 +415,15 @@ impl Drawing {
     /// Clears all items from the `Drawing`.
     pub fn clear(&mut self) {
         self.classes.clear();
-        self.app_ids.clear();
-        self.block_records.clear();
-        self.dim_styles.clear();
-        self.layers.clear();
-        self.line_types.clear();
-        self.styles.clear();
-        self.ucss.clear();
-        self.views.clear();
-        self.view_ports.clear();
+        self.__app_ids.clear();
+        self.__block_records.clear();
+        self.__dim_styles.clear();
+        self.__layers.clear();
+        self.__line_types.clear();
+        self.__styles.clear();
+        self.__ucss.clear();
+        self.__views.clear();
+        self.__view_ports.clear();
         self.blocks.clear();
         self.__entities.clear();
         self.__objects.clear();
@@ -331,19 +451,19 @@ impl Drawing {
         self.ensure_view_ports();
         self.ensure_ucs();
 
-        self.app_ids.sort_by(|a, b| a.name.cmp(&b.name));
-        self.block_records.sort_by(|a, b| a.name.cmp(&b.name));
-        self.dim_styles.sort_by(|a, b| a.name.cmp(&b.name));
-        self.layers.sort_by(|a, b| a.name.cmp(&b.name));
-        self.line_types.sort_by(|a, b| a.name.cmp(&b.name));
-        self.styles.sort_by(|a, b| a.name.cmp(&b.name));
-        self.ucss.sort_by(|a, b| a.name.cmp(&b.name));
-        self.views.sort_by(|a, b| a.name.cmp(&b.name));
-        self.view_ports.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__app_ids.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__block_records.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__dim_styles.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__layers.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__line_types.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__styles.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__ucss.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__views.sort_by(|a, b| a.name.cmp(&b.name));
+        self.__view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
     /// Gets a `DrawingItem` with the appropriate handle or `None`.
     pub fn get_item_by_handle(&'_ self, handle: u32) -> Option<DrawingItem<'_>> {
-        for item in &self.app_ids {
+        for item in &self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItem::AppId(item));
             }
@@ -353,12 +473,12 @@ impl Drawing {
                 return Some(DrawingItem::Block(item));
             }
         }
-        for item in &self.block_records {
+        for item in &self.__block_records {
             if item.handle == handle {
                 return Some(DrawingItem::BlockRecord(item));
             }
         }
-        for item in &self.dim_styles {
+        for item in &self.__dim_styles {
             if item.handle == handle {
                 return Some(DrawingItem::DimStyle(item));
             }
@@ -368,12 +488,12 @@ impl Drawing {
                 return Some(DrawingItem::Entity(item));
             }
         }
-        for item in &self.layers {
+        for item in &self.__layers {
             if item.handle == handle {
                 return Some(DrawingItem::Layer(item));
             }
         }
-        for item in &self.line_types {
+        for item in &self.__line_types {
             if item.handle == handle {
                 return Some(DrawingItem::LineType(item));
             }
@@ -383,22 +503,22 @@ impl Drawing {
                 return Some(DrawingItem::Object(item));
             }
         }
-        for item in &self.styles {
+        for item in &self.__styles {
             if item.handle == handle {
                 return Some(DrawingItem::Style(item));
             }
         }
-        for item in &self.ucss {
+        for item in &self.__ucss {
             if item.handle == handle {
                 return Some(DrawingItem::Ucs(item));
             }
         }
-        for item in &self.views {
+        for item in &self.__views {
             if item.handle == handle {
                 return Some(DrawingItem::View(item));
             }
         }
-        for item in &self.view_ports {
+        for item in &self.__view_ports {
             if item.handle == handle {
                 return Some(DrawingItem::ViewPort(item));
             }
@@ -408,7 +528,7 @@ impl Drawing {
     }
     /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
     pub fn get_item_by_handle_mut(&'_ mut self, handle: u32) -> Option<DrawingItemMut<'_>> {
-        for item in &mut self.app_ids {
+        for item in &mut self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItemMut::AppId(item));
             }
@@ -418,12 +538,12 @@ impl Drawing {
                 return Some(DrawingItemMut::Block(item));
             }
         }
-        for item in &mut self.block_records {
+        for item in &mut self.__block_records {
             if item.handle == handle {
                 return Some(DrawingItemMut::BlockRecord(item));
             }
         }
-        for item in &mut self.dim_styles {
+        for item in &mut self.__dim_styles {
             if item.handle == handle {
                 return Some(DrawingItemMut::DimStyle(item));
             }
@@ -433,12 +553,12 @@ impl Drawing {
                 return Some(DrawingItemMut::Entity(item));
             }
         }
-        for item in &mut self.layers {
+        for item in &mut self.__layers {
             if item.handle == handle {
                 return Some(DrawingItemMut::Layer(item));
             }
         }
-        for item in &mut self.line_types {
+        for item in &mut self.__line_types {
             if item.handle == handle {
                 return Some(DrawingItemMut::LineType(item));
             }
@@ -448,22 +568,22 @@ impl Drawing {
                 return Some(DrawingItemMut::Object(item));
             }
         }
-        for item in &mut self.styles {
+        for item in &mut self.__styles {
             if item.handle == handle {
                 return Some(DrawingItemMut::Style(item));
             }
         }
-        for item in &mut self.ucss {
+        for item in &mut self.__ucss {
             if item.handle == handle {
                 return Some(DrawingItemMut::Ucs(item));
             }
         }
-        for item in &mut self.views {
+        for item in &mut self.__views {
             if item.handle == handle {
                 return Some(DrawingItemMut::View(item));
             }
         }
-        for item in &mut self.view_ports {
+        for item in &mut self.__view_ports {
             if item.handle == handle {
                 return Some(DrawingItemMut::ViewPort(item));
             }
@@ -505,6 +625,70 @@ impl Drawing {
         self.__objects.push(obj);
         self.__objects.last().unwrap()
     }
+    pub(crate) fn add_app_id_no_handle_set(&mut self, app_id: AppId) -> &AppId {
+        // TODO: ensure invariants
+        self.__app_ids.push(app_id);
+        self.__app_ids.last().unwrap()
+    }
+    pub(crate) fn add_block_record_no_handle_set(
+        &mut self,
+        block_record: BlockRecord,
+    ) -> &BlockRecord {
+        // TODO: ensure invariants
+        self.__block_records.push(block_record);
+        self.__block_records.last().unwrap()
+    }
+    pub(crate) fn add_dim_style_no_handle_set(&mut self, dim_style: DimStyle) -> &DimStyle {
+        // TODO: ensure invariants
+        self.__dim_styles.push(dim_style);
+        self.__dim_styles.last().unwrap()
+    }
+    pub(crate) fn add_layer_no_handle_set(&mut self, layer: Layer) -> &Layer {
+        // TODO: ensure invariants
+        self.__layers.push(layer);
+        self.__layers.last().unwrap()
+    }
+    pub(crate) fn add_line_type_no_handle_set(&mut self, line_type: LineType) -> &LineType {
+        // TODO: ensure invariants
+        self.__line_types.push(line_type);
+        self.__line_types.last().unwrap()
+    }
+    pub(crate) fn add_style_no_handle_set(&mut self, style: Style) -> &Style {
+        // TODO: ensure invariants
+        self.__styles.push(style);
+        self.__styles.last().unwrap()
+    }
+    pub(crate) fn add_ucs_no_handle_set(&mut self, ucs: Ucs) -> &Ucs {
+        // TODO: ensure invariants
+        self.__ucss.push(ucs);
+        self.__ucss.last().unwrap()
+    }
+    pub(crate) fn add_view_no_handle_set(&mut self, view: View) -> &View {
+        // TODO: ensure invariants
+        self.__views.push(view);
+        self.__views.last().unwrap()
+    }
+    pub(crate) fn add_view_port_no_handle_set(&mut self, view_port: ViewPort) -> &ViewPort {
+        // TODO: ensure invariants
+        self.__view_ports.push(view_port);
+        self.__view_ports.last().unwrap()
+    }
+    fn ensure_app_id_is_present(&mut self, name: &str) {
+        if !self.app_ids().any(|a| a.name == *name) {
+            self.add_app_id(AppId {
+                name: String::from(name),
+                ..Default::default()
+            });
+        }
+    }
+    fn ensure_block_record_is_present(&mut self, name: &str) {
+        if !self.block_records().any(|b| b.name == name) {
+            self.add_block_record(BlockRecord {
+                name: String::from(name),
+                ..Default::default()
+            });
+        }
+    }
     fn ensure_mline_style_is_present_for_entity(&mut self, entity: &Entity) {
         if let EntityType::MLine(ref ml) = &entity.specific {
             if !self.objects().any(|o| match o.specific {
@@ -533,12 +717,15 @@ impl Drawing {
             _ => None,
         };
         if let Some(dim_style_name) = dim_style_name {
-            if !self.dim_styles.iter().any(|d| &d.name == dim_style_name) {
-                self.dim_styles.push(DimStyle {
-                    name: dim_style_name.clone(),
-                    ..Default::default()
-                });
-            }
+            self.ensure_dimension_style_is_present(&dim_style_name);
+        }
+    }
+    fn ensure_dimension_style_is_present(&mut self, dim_style_name: &str) {
+        if !self.dim_styles().any(|d| d.name == dim_style_name) {
+            self.add_dim_style(DimStyle {
+                name: String::from(dim_style_name),
+                ..Default::default()
+            });
         }
     }
     fn ensure_layer_is_present_for_object(&mut self, obj: &Object) {
@@ -557,8 +744,8 @@ impl Drawing {
         }
     }
     fn ensure_layer_is_present(&mut self, layer_name: &str) {
-        if !self.layers.iter().any(|l| l.name == *layer_name) {
-            self.layers.push(Layer {
+        if !self.layers().any(|l| l.name == *layer_name) {
+            self.add_layer(Layer {
                 name: String::from(layer_name),
                 ..Default::default()
             });
@@ -570,8 +757,8 @@ impl Drawing {
         }
     }
     fn ensure_line_type_is_present(&mut self, line_type_name: &str) {
-        if !self.line_types.iter().any(|lt| lt.name == *line_type_name) {
-            self.line_types.push(LineType {
+        if !self.line_types().any(|lt| lt.name == *line_type_name) {
+            self.add_line_type(LineType {
                 name: String::from(line_type_name),
                 ..Default::default()
             });
@@ -596,21 +783,37 @@ impl Drawing {
         }
     }
     fn ensure_text_style_is_present(&mut self, text_style_name: &str) {
-        if !self.styles.iter().any(|s| s.name == text_style_name) {
-            self.styles.push(Style {
+        if !self.styles().any(|s| s.name == text_style_name) {
+            self.add_style(Style {
                 name: String::from(text_style_name),
+                ..Default::default()
+            });
+        }
+    }
+    fn ensure_ucs_is_present(&mut self, ucs_name: &str) {
+        if !self.ucss().any(|u| u.name == ucs_name) {
+            self.add_ucs(Ucs {
+                name: String::from(ucs_name),
                 ..Default::default()
             });
         }
     }
     fn ensure_view_is_present(&mut self, obj: &Object) {
         if let ObjectType::PlotSettings(ref ps) = &obj.specific {
-            if !self.views.iter().any(|v| v.name == ps.plot_view_name) {
-                self.views.push(View {
+            if !self.views().any(|v| v.name == ps.plot_view_name) {
+                self.add_view(View {
                     name: ps.plot_view_name.clone(),
                     ..Default::default()
                 });
             }
+        }
+    }
+    fn ensure_view_port_is_present(&mut self, name: &str) {
+        if !self.view_ports().any(|v| v.name == name) {
+            self.add_view_port(ViewPort {
+                name: String::from(name),
+                ..Default::default()
+            });
         }
     }
     fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
@@ -630,18 +833,13 @@ impl Drawing {
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
-    fn write_tables<T>(
-        &self,
-        write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-        handle_tracker: &mut HandleTracker,
-    ) -> DxfResult<()>
+    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
     where
         T: Write,
     {
         writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
         writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
-        write_tables(&self, write_handles, writer, handle_tracker)?;
+        write_tables(&self, write_handles, writer)?;
         writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
         Ok(())
     }
@@ -1011,259 +1209,101 @@ impl Drawing {
         }
     }
     fn normalize_app_ids(&mut self) {
-        // gather existing app ids
-        let mut existing_app_ids = HashSet::new();
-        for app_id in &self.app_ids {
-            add_to_existing(&mut existing_app_ids, &app_id.name);
-        }
-
-        // prepare app ids that should exist
-        let should_exist = vec![
-            String::from("ACAD"),
-            String::from("ACADANNOTATIVE"),
-            String::from("ACAD_NAV_VCDISPLAY"),
-            String::from("ACAD_MLEADERVER"),
-        ];
-
         // ensure all app ids that should exist do
-        for name in &should_exist {
-            if !existing_app_ids.contains(name) {
-                existing_app_ids.insert(name.clone());
-                self.app_ids.push(AppId {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
+        self.ensure_app_id_is_present("ACAD");
+        self.ensure_app_id_is_present("ACADANNOTATIVE");
+        self.ensure_app_id_is_present("ACAD_NAV_VCDISPLAY");
+        self.ensure_app_id_is_present("ACAD_MLEADERVER");
     }
     fn normalize_block_records(&mut self) {
-        // gather existing block records
-        let mut existing_block_records = HashSet::new();
-        for block_record in &self.block_records {
-            add_to_existing(&mut existing_block_records, &block_record.name);
-        }
-
-        // prepare block records that should exist
-        let should_exist = vec![String::from("*MODEL_SPACE"), String::from("*PAPER_SPACE")];
-
         // ensure all block records that should exist do
-        for name in &should_exist {
-            if !existing_block_records.contains(name) {
-                existing_block_records.insert(name.clone());
-                self.block_records.push(BlockRecord {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
+        self.ensure_block_record_is_present("*MODEL_SPACE");
+        self.ensure_block_record_is_present("*PAPER_SPACE");
     }
     fn normalize_layers(&mut self) {
-        for i in 0..self.layers.len() {
-            self.layers[i].normalize();
+        self.ensure_layer_is_present(&self.header.current_layer.clone());
+        for l in self.layers_mut() {
+            l.normalize();
         }
     }
     fn normalize_text_styles(&mut self) {
-        for i in 0..self.styles.len() {
-            self.styles[i].normalize();
+        for s in self.styles_mut() {
+            s.normalize();
         }
     }
     fn normalize_view_ports(&mut self) {
-        for i in 0..self.view_ports.len() {
-            self.view_ports[i].normalize();
+        for v in self.view_ports_mut() {
+            v.normalize();
         }
     }
     fn normalize_views(&mut self) {
-        for i in 0..self.views.len() {
-            self.views[i].normalize();
+        for v in self.views_mut() {
+            v.normalize();
         }
     }
     fn ensure_dimension_styles(&mut self) {
-        // gather existing dimension style names
-        let mut existing_dim_styles = HashSet::new();
-        for dim_style in &self.dim_styles {
-            add_to_existing(&mut existing_dim_styles, &dim_style.name);
-        }
-
-        // find dimension style names that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &String::from("STANDARD"));
-        add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
-        for ent in &self.__entities {
-            match &ent.specific {
-                EntityType::RotatedDimension(ref d) => {
-                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
-                }
-                EntityType::RadialDimension(ref d) => {
-                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
-                }
-                EntityType::DiameterDimension(ref d) => {
-                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
-                }
-                EntityType::AngularThreePointDimension(ref d) => {
-                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
-                }
-                EntityType::OrdinateDimension(ref d) => {
-                    add_to_existing(&mut to_add, &d.dimension_base.dimension_style_name)
-                }
-                EntityType::Leader(ref l) => add_to_existing(&mut to_add, &l.dimension_style_name),
-                EntityType::Tolerance(ref t) => {
-                    add_to_existing(&mut to_add, &t.dimension_style_name)
-                }
-                _ => (),
-            }
-        }
-
         // ensure all dimension styles that should exist do
-        for name in &to_add {
-            if !existing_dim_styles.contains(name) {
-                existing_dim_styles.insert(name.clone());
-                self.dim_styles.push(DimStyle {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
+        self.ensure_dimension_style_is_present("STANDARD");
+        self.ensure_dimension_style_is_present("ANNOTATIVE");
     }
     fn ensure_layers(&mut self) {
-        // gather existing layer names
-        let mut existing_layers = HashSet::new();
-        for layer in &self.layers {
-            add_to_existing(&mut existing_layers, &layer.name);
-        }
-
-        // find layer names that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &String::from("0"));
-        add_to_existing(&mut to_add, &self.header.current_layer);
-        for block in &self.blocks {
-            add_to_existing(&mut to_add, &block.layer);
-            for ent in &block.entities {
-                add_to_existing(&mut to_add, &ent.common.layer);
-            }
-        }
-
         // ensure all layers that should exist do
-        for name in &to_add {
-            if !existing_layers.contains(name) {
-                existing_layers.insert(name.clone());
-                self.layers.push(Layer {
-                    name: name.clone(),
-                    ..Default::default()
-                });
+        let mut should_exist = HashSet::new();
+        should_exist.insert(String::from("0"));
+        for block in &self.blocks {
+            should_exist.insert(block.layer.clone());
+            for ent in &block.entities {
+                should_exist.insert(ent.common.layer.clone());
             }
+        }
+
+        for name in &should_exist {
+            self.ensure_layer_is_present(name);
         }
     }
     fn ensure_line_types(&mut self) {
-        // gather existing line type names
-        let mut existing_line_types = HashSet::new();
-        for line_type in &self.line_types {
-            add_to_existing(&mut existing_line_types, &line_type.name);
-        }
-
-        // find line_types that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &String::from("BYLAYER"));
-        add_to_existing(&mut to_add, &String::from("BYBLOCK"));
-        add_to_existing(&mut to_add, &String::from("CONTINUOUS"));
-        add_to_existing(&mut to_add, &self.header.current_entity_line_type);
-        add_to_existing(&mut to_add, &self.header.dimension_line_type);
-        for layer in &self.layers {
-            add_to_existing(&mut to_add, &layer.line_type_name);
+        // ensure all line_types that should exist do
+        let mut should_exist = HashSet::new();
+        should_exist.insert(String::from("BYLAYER"));
+        should_exist.insert(String::from("BYBLOCK"));
+        should_exist.insert(String::from("CONTINUOUS"));
+        for layer in self.layers() {
+            should_exist.insert(layer.line_type_name.clone());
         }
         for block in &self.blocks {
             for ent in &block.entities {
-                add_to_existing(&mut to_add, &ent.common.line_type_name);
+                should_exist.insert(ent.common.line_type_name.clone());
             }
         }
 
-        // ensure all line_types that should exist do
-        for name in &to_add {
-            if !existing_line_types.contains(name) {
-                existing_line_types.insert(name.clone());
-                self.line_types.push(LineType {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
+        for name in &should_exist {
+            self.ensure_line_type_is_present(name);
         }
     }
     fn ensure_text_styles(&mut self) {
-        // gather existing text style names
-        let mut existing_styles = HashSet::new();
-        for style in &self.styles {
-            add_to_existing(&mut existing_styles, &style.name);
-        }
-
-        // find styles that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &String::from("STANDARD"));
-        add_to_existing(&mut to_add, &String::from("ANNOTATIVE"));
-
         // ensure all styles that should exist do
-        for name in &to_add {
-            if !existing_styles.contains(name) {
-                existing_styles.insert(name.clone());
-                self.styles.push(Style {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
+        self.ensure_text_style_is_present("STANDARD");
+        self.ensure_text_style_is_present("ANNOTATIVE");
     }
     fn ensure_view_ports(&mut self) {
-        // gather existing view port names
-        let mut existing_view_ports = HashSet::new();
-        for vp in &self.view_ports {
-            add_to_existing(&mut existing_view_ports, &vp.name);
-        }
-
-        // find view ports that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &String::from("*ACTIVE"));
-
         // ensure all view ports that should exist do
-        for name in &to_add {
-            if !existing_view_ports.contains(name) {
-                existing_view_ports.insert(name.clone());
-                self.view_ports.push(ViewPort {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-            }
-        }
+        self.ensure_view_port_is_present("*ACTIVE");
     }
     fn ensure_ucs(&mut self) {
-        // gather existing ucs names
-        let mut existing_ucs = HashSet::new();
-        for ucs in &self.ucss {
-            add_to_existing(&mut existing_ucs, &ucs.name);
-        }
-
-        // find ucs that should exist
-        let mut to_add = HashSet::new();
-        add_to_existing(&mut to_add, &self.header.ucs_definition_name);
-        add_to_existing(&mut to_add, &self.header.ucs_name);
-        add_to_existing(&mut to_add, &self.header.ortho_ucs_reference);
-        add_to_existing(&mut to_add, &self.header.paperspace_ucs_definition_name);
-        add_to_existing(&mut to_add, &self.header.paperspace_ucs_name);
-        add_to_existing(&mut to_add, &self.header.paperspace_ortho_ucs_reference);
-
         // ensure all ucs that should exist do
-        for name in &to_add {
-            if !name.is_empty() && !existing_ucs.contains(name) {
-                existing_ucs.insert(name.clone());
-                self.ucss.push(Ucs {
-                    name: name.clone(),
-                    ..Default::default()
-                });
+        let mut should_exist = HashSet::new();
+        should_exist.insert(self.header.ucs_definition_name.clone());
+        should_exist.insert(self.header.ucs_name.clone());
+        should_exist.insert(self.header.ortho_ucs_reference.clone());
+        should_exist.insert(self.header.paperspace_ucs_definition_name.clone());
+        should_exist.insert(self.header.paperspace_ucs_name.clone());
+        should_exist.insert(self.header.paperspace_ortho_ucs_reference.clone());
+
+        for name in &should_exist {
+            if !name.is_empty() {
+                self.ensure_ucs_is_present(name);
             }
         }
-    }
-}
-
-fn add_to_existing(set: &mut HashSet<String>, val: &str) {
-    if !set.contains(val) {
-        set.insert(val.to_string());
     }
 }
 
@@ -1278,33 +1318,37 @@ mod tests {
     #[test]
     fn default_layers_are_present() {
         let drawing = Drawing::new();
-        assert_eq!(1, drawing.layers.len());
-        assert_eq!("0", drawing.layers[0].name);
+        let layers = drawing.layers().collect::<Vec<_>>();
+        assert_eq!(1, layers.len());
+        assert_eq!("0", layers[0].name);
     }
 
     #[test]
     fn default_dim_styles_are_present() {
         let drawing = Drawing::new();
-        assert_eq!(2, drawing.dim_styles.len());
-        assert_eq!("ANNOTATIVE", drawing.dim_styles[0].name);
-        assert_eq!("STANDARD", drawing.dim_styles[1].name);
+        let dim_styles = drawing.dim_styles().collect::<Vec<_>>();
+        assert_eq!(2, dim_styles.len());
+        assert_eq!("ANNOTATIVE", dim_styles[0].name);
+        assert_eq!("STANDARD", dim_styles[1].name);
     }
 
     #[test]
     fn default_line_types_are_present() {
         let drawing = Drawing::new();
-        assert_eq!(3, drawing.line_types.len());
-        assert_eq!("BYBLOCK", drawing.line_types[0].name);
-        assert_eq!("BYLAYER", drawing.line_types[1].name);
-        assert_eq!("CONTINUOUS", drawing.line_types[2].name);
+        let line_types = drawing.line_types().collect::<Vec<_>>();
+        assert_eq!(3, line_types.len());
+        assert_eq!("BYBLOCK", line_types[0].name);
+        assert_eq!("BYLAYER", line_types[1].name);
+        assert_eq!("CONTINUOUS", line_types[2].name);
     }
 
     #[test]
     fn default_text_styles_are_present() {
         let drawing = Drawing::new();
-        assert_eq!(2, drawing.styles.len());
-        assert_eq!("ANNOTATIVE", drawing.styles[0].name);
-        assert_eq!("STANDARD", drawing.styles[1].name);
+        let styles = drawing.styles().collect::<Vec<_>>();
+        assert_eq!(2, styles.len());
+        assert_eq!("ANNOTATIVE", styles[0].name);
+        assert_eq!("STANDARD", styles[1].name);
     }
 
     #[test]
@@ -1331,6 +1375,17 @@ mod tests {
 
         let obj = drawing.add_object(obj);
         assert_ne!(0, obj.common.handle);
+    }
+
+    #[test]
+    fn layer_handle_is_set_on_add() {
+        let mut drawing = Drawing::new();
+        drawing.clear();
+        let layer = Layer::default();
+        assert_eq!(0, layer.handle);
+
+        let layer = drawing.add_layer(layer);
+        assert_ne!(0, layer.handle);
     }
 
     #[test]
@@ -1369,6 +1424,20 @@ mod tests {
     }
 
     #[test]
+    fn layer_handle_is_set_during_read_if_not_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "TABLES", "  0", "TABLE", "  2", "LAYER", "  0", "LAYER",
+                "  0", "ENDTAB", "  0", "ENDSEC", "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let layer = drawing.layers().nth(0).unwrap();
+        assert_ne!(0, layer.handle);
+    }
+
+    #[test]
     fn entity_handle_is_honored_during_read_if_specified() {
         let drawing = parse_drawing(
             vec![
@@ -1404,6 +1473,20 @@ mod tests {
         );
         let obj = drawing.objects().nth(0).unwrap();
         assert_eq!(0x3333, obj.common.handle);
+    }
+
+    #[test]
+    fn layer_handle_is_honored_during_read_if_specified() {
+        let drawing = parse_drawing(
+            vec![
+                "  0", "SECTION", "  2", "TABLES", "  0", "TABLE", "  2", "LAYER", "  0", "LAYER",
+                "  5", "3333", "  0", "ENDTAB", "  0", "ENDSEC", "  0", "EOF",
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let layer = drawing.layers().nth(0).unwrap();
+        assert_eq!(0x3333, layer.handle);
     }
 
     #[test]
@@ -1531,8 +1614,7 @@ mod tests {
     fn dim_style_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
         let dim_styles = drawing
-            .dim_styles
-            .iter()
+            .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
             .collect::<Vec<_>>();
         assert_eq!(0, dim_styles.len());
@@ -1548,8 +1630,7 @@ mod tests {
             }),
         });
         let dim_styles = drawing
-            .dim_styles
-            .iter()
+            .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
             .collect::<Vec<_>>();
         assert_eq!(1, dim_styles.len());
@@ -1558,13 +1639,12 @@ mod tests {
     #[test]
     fn dim_style_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.dim_styles.push(DimStyle {
+        drawing.add_dim_style(DimStyle {
             name: String::from("some-dim-style"),
             ..Default::default()
         });
         let dim_styles = drawing
-            .dim_styles
-            .iter()
+            .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
             .collect::<Vec<_>>();
         assert_eq!(1, dim_styles.len());
@@ -1580,8 +1660,7 @@ mod tests {
             }),
         });
         let dim_styles = drawing
-            .dim_styles
-            .iter()
+            .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
             .collect::<Vec<_>>();
         assert_eq!(1, dim_styles.len());
@@ -1610,8 +1689,7 @@ mod tests {
             .as_str(),
         );
         let dim_styles = drawing
-            .dim_styles
-            .iter()
+            .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
             .collect::<Vec<_>>();
         assert_eq!(1, dim_styles.len());
@@ -1621,8 +1699,7 @@ mod tests {
     fn layer_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(0, layers.len());
@@ -1635,8 +1712,7 @@ mod tests {
             specific: EntityType::Line(Default::default()),
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1646,8 +1722,7 @@ mod tests {
     fn layer_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(0, layers.len());
@@ -1659,8 +1734,7 @@ mod tests {
             }),
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1669,13 +1743,12 @@ mod tests {
     #[test]
     fn layer_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.layers.push(Layer {
+        drawing.add_layer(Layer {
             name: String::from("some-layer"),
             ..Default::default()
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1688,8 +1761,7 @@ mod tests {
             specific: EntityType::Line(Default::default()),
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1698,13 +1770,12 @@ mod tests {
     #[test]
     fn layer_is_not_added_with_object_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.layers.push(Layer {
+        drawing.add_layer(Layer {
             name: String::from("some-layer"),
             ..Default::default()
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1716,8 +1787,7 @@ mod tests {
             }),
         });
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1744,8 +1814,7 @@ mod tests {
             .as_str(),
         );
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1772,8 +1841,7 @@ mod tests {
             .as_str(),
         );
         let layers = drawing
-            .layers
-            .iter()
+            .layers()
             .filter(|&l| l.name == "some-layer")
             .collect::<Vec<_>>();
         assert_eq!(1, layers.len());
@@ -1783,8 +1851,7 @@ mod tests {
     fn line_type_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(0, line_types.len());
@@ -1797,8 +1864,7 @@ mod tests {
             specific: EntityType::Line(Default::default()),
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1808,8 +1874,7 @@ mod tests {
     fn line_type_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(0, line_types.len());
@@ -1822,8 +1887,7 @@ mod tests {
             }),
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1832,13 +1896,12 @@ mod tests {
     #[test]
     fn line_type_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.line_types.push(LineType {
+        drawing.add_line_type(LineType {
             name: String::from("some-line-type"),
             ..Default::default()
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1851,8 +1914,7 @@ mod tests {
             specific: EntityType::Line(Default::default()),
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1861,13 +1923,12 @@ mod tests {
     #[test]
     fn line_type_is_not_added_with_object_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.line_types.push(LineType {
+        drawing.add_line_type(LineType {
             name: String::from("some-line-type"),
             ..Default::default()
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1880,8 +1941,7 @@ mod tests {
             }),
         });
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1908,8 +1968,7 @@ mod tests {
             .as_str(),
         );
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1936,8 +1995,7 @@ mod tests {
             .as_str(),
         );
         let line_types = drawing
-            .line_types
-            .iter()
+            .line_types()
             .filter(|&lt| lt.name == "some-line-type")
             .collect::<Vec<_>>();
         assert_eq!(1, line_types.len());
@@ -1947,8 +2005,7 @@ mod tests {
     fn text_style_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(0, text_styles.len());
@@ -1961,8 +2018,7 @@ mod tests {
             }),
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -1972,8 +2028,7 @@ mod tests {
     fn text_style_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(0, text_styles.len());
@@ -1986,8 +2041,7 @@ mod tests {
             }),
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -1996,13 +2050,12 @@ mod tests {
     #[test]
     fn text_style_is_not_added_with_entity_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.styles.push(Style {
+        drawing.add_style(Style {
             name: String::from("some-text-style"),
             ..Default::default()
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2015,8 +2068,7 @@ mod tests {
             }),
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2025,13 +2077,12 @@ mod tests {
     #[test]
     fn text_style_is_not_added_with_object_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.styles.push(Style {
+        drawing.add_style(Style {
             name: String::from("some-text-style"),
             ..Default::default()
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2044,8 +2095,7 @@ mod tests {
             }),
         });
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2072,8 +2122,7 @@ mod tests {
             .as_str(),
         );
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2100,8 +2149,7 @@ mod tests {
             .as_str(),
         );
         let text_styles = drawing
-            .styles
-            .iter()
+            .styles()
             .filter(|&s| s.name == "some-text-style")
             .collect::<Vec<_>>();
         assert_eq!(1, text_styles.len());
@@ -2111,8 +2159,7 @@ mod tests {
     fn view_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
         let views = drawing
-            .views
-            .iter()
+            .views()
             .filter(|&v| v.name == "some-view")
             .collect::<Vec<_>>();
         assert_eq!(0, views.len());
@@ -2125,8 +2172,7 @@ mod tests {
             }),
         });
         let views = drawing
-            .views
-            .iter()
+            .views()
             .filter(|&v| v.name == "some-view")
             .collect::<Vec<_>>();
         assert_eq!(1, views.len());
@@ -2135,13 +2181,12 @@ mod tests {
     #[test]
     fn view_is_not_added_with_object_if_already_present() {
         let mut drawing = Drawing::new();
-        drawing.views.push(View {
+        drawing.add_view(View {
             name: String::from("some-view"),
             ..Default::default()
         });
         let views = drawing
-            .views
-            .iter()
+            .views()
             .filter(|&v| v.name == "some-view")
             .collect::<Vec<_>>();
         assert_eq!(1, views.len());
@@ -2154,8 +2199,7 @@ mod tests {
             }),
         });
         let views = drawing
-            .views
-            .iter()
+            .views()
             .filter(|&v| v.name == "some-view")
             .collect::<Vec<_>>();
         assert_eq!(1, views.len());
@@ -2182,8 +2226,7 @@ mod tests {
             .as_str(),
         );
         let views = drawing
-            .views
-            .iter()
+            .views()
             .filter(|&v| v.name == "some-view")
             .collect::<Vec<_>>();
         assert_eq!(1, views.len());
