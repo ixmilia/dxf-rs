@@ -239,6 +239,10 @@ impl Drawing {
         app_id.handle = self.next_handle();
         self.add_app_id_no_handle_set(app_id)
     }
+    /// Removes the specified `AppId` from the `Drawing`.
+    pub fn remove_app_id(&mut self, index: usize) -> Option<AppId> {
+        Drawing::remove_item(&mut self.__app_ids, index)
+    }
     /// Returns an iterator for all block records.
     pub fn block_records(&self) -> impl Iterator<Item = &BlockRecord> {
         self.__block_records.iter()
@@ -251,6 +255,10 @@ impl Drawing {
     pub fn add_block_record(&mut self, mut block_record: BlockRecord) -> &BlockRecord {
         block_record.handle = self.next_handle();
         self.add_block_record_no_handle_set(block_record)
+    }
+    /// Removes the specified `BlockRecord` from the `Drawing`.
+    pub fn remove_block_record(&mut self, index: usize) -> Option<BlockRecord> {
+        Drawing::remove_item(&mut self.__block_records, index)
     }
     /// Returns an iterator for all dimension styles.
     pub fn dim_styles(&self) -> impl Iterator<Item = &DimStyle> {
@@ -265,6 +273,10 @@ impl Drawing {
         dim_style.handle = self.next_handle();
         self.add_dim_style_no_handle_set(dim_style)
     }
+    /// Removes the specified `DimStyle` from the `Drawing`.
+    pub fn remove_dim_style(&mut self, index: usize) -> Option<DimStyle> {
+        Drawing::remove_item(&mut self.__dim_styles, index)
+    }
     /// Returns an iterator for all layers.
     pub fn layers(&self) -> impl Iterator<Item = &Layer> {
         self.__layers.iter()
@@ -277,6 +289,10 @@ impl Drawing {
     pub fn add_layer(&mut self, mut layer: Layer) -> &Layer {
         layer.handle = self.next_handle();
         self.add_layer_no_handle_set(layer)
+    }
+    /// Removes the specified `Layer` from the `Drawing`.
+    pub fn remove_layer(&mut self, index: usize) -> Option<Layer> {
+        Drawing::remove_item(&mut self.__layers, index)
     }
     /// Returns an iterator for all line types.
     pub fn line_types(&self) -> impl Iterator<Item = &LineType> {
@@ -291,6 +307,10 @@ impl Drawing {
         line_type.handle = self.next_handle();
         self.add_line_type_no_handle_set(line_type)
     }
+    /// Removes the specified `LineType` from the `Drawing`.
+    pub fn remove_line_type(&mut self, index: usize) -> Option<LineType> {
+        Drawing::remove_item(&mut self.__line_types, index)
+    }
     /// Returns an iterator for all styles.
     pub fn styles(&self) -> impl Iterator<Item = &Style> {
         self.__styles.iter()
@@ -303,6 +323,10 @@ impl Drawing {
     pub fn add_style(&mut self, mut style: Style) -> &Style {
         style.handle = self.next_handle();
         self.add_style_no_handle_set(style)
+    }
+    /// Removes the specified `Style` from the `Drawing`.
+    pub fn remove_style(&mut self, index: usize) -> Option<Style> {
+        Drawing::remove_item(&mut self.__styles, index)
     }
     /// Returns an iterator for all ucss.
     pub fn ucss(&self) -> impl Iterator<Item = &Ucs> {
@@ -317,6 +341,10 @@ impl Drawing {
         ucs.handle = self.next_handle();
         self.add_ucs_no_handle_set(ucs)
     }
+    /// Removes the specified `Ucs` from the `Drawing`.
+    pub fn remove_ucs(&mut self, index: usize) -> Option<Ucs> {
+        Drawing::remove_item(&mut self.__ucss, index)
+    }
     /// Returns an iterator for all views.
     pub fn views(&self) -> impl Iterator<Item = &View> {
         self.__views.iter()
@@ -329,6 +357,10 @@ impl Drawing {
     pub fn add_view(&mut self, mut view: View) -> &View {
         view.handle = self.next_handle();
         self.add_view_no_handle_set(view)
+    }
+    /// Removes the specified `View` from the `Drawing`.
+    pub fn remove_view(&mut self, index: usize) -> Option<View> {
+        Drawing::remove_item(&mut self.__views, index)
     }
     /// Returns an iterator for all view ports.
     pub fn view_ports(&self) -> impl Iterator<Item = &ViewPort> {
@@ -343,6 +375,10 @@ impl Drawing {
         view_port.handle = self.next_handle();
         self.add_view_port_no_handle_set(view_port)
     }
+    /// Removes the specified `ViewPort` from the `Drawing`.
+    pub fn remove_view_port(&mut self, index: usize) -> Option<ViewPort> {
+        Drawing::remove_item(&mut self.__view_ports, index)
+    }
     /// Returns an iterator for all blocks.
     pub fn blocks(&self) -> impl Iterator<Item = &Block> {
         self.__blocks.iter()
@@ -355,6 +391,10 @@ impl Drawing {
     pub fn add_block(&mut self, mut block: Block) -> &Block {
         block.handle = self.next_handle();
         self.add_block_no_handle_set(block)
+    }
+    /// Removes the specified `Block` from the `Drawing`.
+    pub fn remove_block(&mut self, index: usize) -> Option<Block> {
+        Drawing::remove_item(&mut self.__blocks, index)
     }
     /// Returns an iterator for all contained entities.
     pub fn entities(&self) -> impl Iterator<Item = &Entity> {
@@ -390,6 +430,10 @@ impl Drawing {
         // ensure invariants
         self.add_entity_no_handle_set(entity)
     }
+    /// Removes the specified `Entity` from the `Drawing`.
+    pub fn remove_entity(&mut self, index: usize) -> Option<Entity> {
+        Drawing::remove_item(&mut self.__entities, index)
+    }
     /// Returns an iterator for all contained objects.
     pub fn objects(&self) -> impl Iterator<Item = &Object> {
         self.__objects.iter()
@@ -406,6 +450,10 @@ impl Drawing {
 
         // ensure invariants
         self.add_object_no_handle_set(obj)
+    }
+    /// Removes the specified `Object` from the `Drawing`.
+    pub fn remove_object(&mut self, index: usize) -> Option<Object> {
+        Drawing::remove_item(&mut self.__objects, index)
     }
     /// Clears all items from the `Drawing`.
     pub fn clear(&mut self) {
@@ -602,6 +650,13 @@ impl Drawing {
         let result = self.header.next_available_handle;
         self.header.next_available_handle += 1;
         result
+    }
+    fn remove_item<T>(collection: &mut Vec<T>, index: usize) -> Option<T> {
+        if index < collection.len() {
+            Some(collection.remove(index))
+        } else {
+            None
+        }
     }
     pub(crate) fn add_block_no_handle_set(&mut self, block: Block) -> &Block {
         self.ensure_layer_is_present_for_block(&block);
