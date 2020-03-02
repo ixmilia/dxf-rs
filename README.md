@@ -32,6 +32,12 @@ extern crate dxf;
 
 See the documentation [here](https://docs.rs/dxf/) on docs.rs.
 
+# Integration tests
+
+There are some integration/interop tests under `src/misc_tests/integration.rs`.  They currently only run on Windows when
+the ODA File Converter tool has been installed from the Open Design Alliance.  The tool can be found
+[here](https://www.opendesign.com/guestfiles/oda_file_converter).
+
 # DXF Reference
 
 Since I don't want to fall afoul of Autodesk's lawyers, this repo can't include the actual DXF documentation.  It can,

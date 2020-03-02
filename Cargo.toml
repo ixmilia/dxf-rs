@@ -34,3 +34,4 @@ xmltree = "0.8.0"
 
 [dev-dependencies]
 float-cmp = "0.6.0"
+glob = "0.3.0"
