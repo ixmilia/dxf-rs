@@ -2,7 +2,7 @@ use crate::entities::*;
 use crate::enums::*;
 use crate::*;
 
-use std::fs::{create_dir_all, remove_dir_all};
+use std::fs::{create_dir_all, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 use std::thread::panicking;
@@ -47,6 +47,25 @@ impl Oda {
         let exit_code = oda_convert
             .wait()
             .expect("Failed to wait for ODA converter");
+        let mut error_messages = String::from("");
+        for entry in glob(format!("{}/*.err", &self.output_path).as_str())
+            .expect("failed to glob for ODA error logs")
+        {
+            match entry {
+                Ok(path) if path.is_file() => {
+                    error_messages.push_str(format!("{}:\n", path.to_str().unwrap()).as_str());
+                    let error_contents = read_to_string(path).unwrap();
+                    error_messages.push_str(error_contents.as_str());
+                    error_messages.push_str("\n\n");
+                }
+                Ok(_) => (),
+                Err(_) => (),
+            }
+        }
+        if !error_messages.is_empty() {
+            panic!(format!("Error converting files:\n{}", error_messages));
+        }
+
         assert!(exit_code.success());
         Drawing::load_file(&format!("{}/drawing.dxf", self.output_path)).unwrap()
     }
