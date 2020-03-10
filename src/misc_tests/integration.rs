@@ -81,6 +81,7 @@ impl Oda {
             AcadVersion::R2007 => "ACAD2007",
             AcadVersion::R2010 => "ACAD2010",
             AcadVersion::R2013 => "ACAD2013",
+            AcadVersion::R2018 => "ACAD2018",
             _ => panic!("Unsupported ODA version {}", version),
         };
         String::from(s)
