@@ -98,30 +98,6 @@ impl fmt::Display for DxfError {
 }
 
 impl error::Error for DxfError {
-    fn description(&self) -> &str {
-        match *self {
-            DxfError::IoError(ref e) => e.description(),
-            DxfError::ImageError(ref e) => e.description(),
-            DxfError::ParseFloatError(ref e, _) => e.description(),
-            DxfError::ParseIntError(ref e, _) => e.description(),
-            DxfError::ParseError(_) => "there was a general parsing error",
-            DxfError::UnexpectedCode(_, _) => "an unexpected code was encountered",
-            DxfError::UnexpectedCodePair(_, _) => "an unexpected code pair was encountered",
-            DxfError::UnexpectedByte(_, _) => "an unexpected byte was encountered",
-            DxfError::UnexpectedEndOfInput => {
-                "the input unexpectedly ended before the drawing was completely loaded"
-            }
-            DxfError::UnexpectedEnumValue(_) => {
-                "the specified enum value does not fall into the expected range"
-            }
-            DxfError::UnexpectedEmptySet => "the set was not expected to be empty",
-            DxfError::ExpectedTableType(_) => "a 2/<table-type> code pair was expected",
-            DxfError::WrongValueType(_) => "the CodePairValue does not contain the requested type",
-            DxfError::InvalidBinaryFile => "the binary file is invalid",
-            DxfError::MalformedString => "the string is malformed",
-            DxfError::WrongItemType => "the specified item type is not correct",
-        }
-    }
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             DxfError::IoError(ref e) => Some(e),
