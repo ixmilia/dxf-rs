@@ -30,7 +30,7 @@ impl<T: Write> DxbWriter<T> {
         if writing_block {
             // write block header
             self.write_item_type(DxbItemType::BlockBase)?;
-            let block = drawing.blocks().nth(0).unwrap();
+            let block = drawing.blocks().next().unwrap();
             self.write_n(block.base_point.x)?;
             self.write_n(block.base_point.y)?;
         }
@@ -45,7 +45,7 @@ impl<T: Write> DxbWriter<T> {
         self.write_w(last_color)?;
 
         if writing_block {
-            self.write_entities(&drawing.blocks().nth(0).unwrap().entities)?;
+            self.write_entities(&drawing.blocks().next().unwrap().entities)?;
         } else {
             let groups = drawing.entities().group_by(|&e| e.common.layer.clone());
             for (layer, entities) in &groups {

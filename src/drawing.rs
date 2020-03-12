@@ -1446,7 +1446,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let block = drawing.blocks().nth(0).unwrap();
+        let block = drawing.blocks().next().unwrap();
         assert_ne!(0, block.handle);
     }
 
@@ -1459,7 +1459,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let line = drawing.entities().nth(0).unwrap();
+        let line = drawing.entities().next().unwrap();
         assert_ne!(0, line.common.handle);
     }
 
@@ -1481,7 +1481,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let obj = drawing.objects().nth(0).unwrap();
+        let obj = drawing.objects().next().unwrap();
         assert_ne!(0, obj.common.handle);
     }
 
@@ -1495,7 +1495,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let layer = drawing.layers().nth(0).unwrap();
+        let layer = drawing.layers().next().unwrap();
         assert_ne!(0, layer.handle);
     }
 
@@ -1509,7 +1509,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let block = drawing.blocks().nth(0).unwrap();
+        let block = drawing.blocks().next().unwrap();
         assert_eq!(0x3333, block.handle);
     }
 
@@ -1523,7 +1523,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let line = drawing.entities().nth(0).unwrap();
+        let line = drawing.entities().next().unwrap();
         assert_eq!(0x3333, line.common.handle);
     }
 
@@ -1547,7 +1547,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let obj = drawing.objects().nth(0).unwrap();
+        let obj = drawing.objects().next().unwrap();
         assert_eq!(0x3333, obj.common.handle);
     }
 
@@ -1561,7 +1561,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let layer = drawing.layers().nth(0).unwrap();
+        let layer = drawing.layers().next().unwrap();
         assert_eq!(0x3333, layer.handle);
     }
 
