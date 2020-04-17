@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) IxMilia.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Spec xmlns="http://IxMilia.com/Dxf/HeaderVariablesSpec">
   <Variable Name="ACADVER" Code="1" Type="AcadVersion" Field="version" DefaultValue="AcadVersion::R12" ReadConverter="AcadVersion::from_safe({})" WriteConverter="&amp;{}.to_string()" Comment="The AutoCAD drawing database version number." />
   <Variable Name="ACADMAINTVER" Code="70" Type="i16" Field="maintenance_version" DefaultValue="0" MinVersion="R14" Comment="Maintenance version number (should be ignored)." />
