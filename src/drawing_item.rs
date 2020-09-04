@@ -3,6 +3,7 @@ use crate::objects::*;
 use crate::tables::*;
 use crate::Block;
 
+#[derive(Debug)]
 pub enum DrawingItem<'a> {
     AppId(&'a AppId),
     Block(&'a Block),
