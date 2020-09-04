@@ -1304,7 +1304,7 @@ pub enum Units {
 }
 }
 
-#[derive(Clone, Copy, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct ViewMode {
     flags: i32,

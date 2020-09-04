@@ -73,7 +73,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     if name(&object) != "Object" {
         panic!("Expected first object to be 'Object'.");
     }
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Clone, Debug)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct ObjectCommon {\n");
     for c in &object.children {
@@ -114,7 +114,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     fun.push_str("}\n");
     fun.push_str("\n");
 
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Clone, Debug)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct Object {\n");
     fun.push_str("    pub common: ObjectCommon,\n");

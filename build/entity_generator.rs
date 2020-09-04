@@ -67,7 +67,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     if name(&entity) != "Entity" {
         panic!("Expected first entity to be 'Entity'.");
     }
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Debug, Clone)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct EntityCommon {\n");
     for c in &entity.children {
@@ -108,7 +108,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("}\n");
     fun.push_str("\n");
 
-    fun.push_str("#[derive(Clone)]\n");
+    fun.push_str("#[derive(Debug, Clone)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub struct Entity {\n");
     fun.push_str("    pub common: EntityCommon,\n");

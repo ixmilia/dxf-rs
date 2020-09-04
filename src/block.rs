@@ -15,7 +15,7 @@ use crate::helper_functions::*;
 use crate::x_data;
 
 /// A block is a collection of entities.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Block {
     /// The block's handle.
