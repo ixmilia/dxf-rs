@@ -149,15 +149,14 @@ impl Drawing {
         }
     }
     /// Loads a `Drawing` from disk, using a `BufReader`.
-    pub fn load_file(file_name: &str) -> DxfResult<Drawing> {
-        Drawing::load_file_with_encoding(file_name, encoding_rs::WINDOWS_1252)
+    pub fn load_file(path: impl AsRef<Path>) -> DxfResult<Drawing> {
+        Drawing::load_file_with_encoding(path, encoding_rs::WINDOWS_1252)
     }
     /// Loads a `Drawing` from disk, using a `BufReader` with the specified text encoding.
     pub fn load_file_with_encoding(
-        file_name: &str,
+        path: impl AsRef<Path>,
         encoding: &'static Encoding,
     ) -> DxfResult<Drawing> {
-        let path = Path::new(file_name);
         let file = File::open(&path)?;
         let mut buf_reader = BufReader::new(file);
         Drawing::load_with_encoding(&mut buf_reader, encoding)
@@ -196,15 +195,14 @@ impl Drawing {
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
-    pub fn save_file(&self, file_name: &str) -> DxfResult<()> {
-        self.save_file_internal(file_name, true)
+    pub fn save_file(&self, path: impl AsRef<Path>) -> DxfResult<()> {
+        self.save_file_internal(path, true)
     }
     /// Writes a `Drawing` as binary to disk, using a `BufWriter`.
-    pub fn save_file_binary(&self, file_name: &str) -> DxfResult<()> {
-        self.save_file_internal(file_name, false)
+    pub fn save_file_binary(&self, path: impl AsRef<Path>) -> DxfResult<()> {
+        self.save_file_internal(path, false)
     }
-    fn save_file_internal(&self, file_name: &str, as_ascii: bool) -> DxfResult<()> {
-        let path = Path::new(file_name);
+    fn save_file_internal(&self, path: impl AsRef<Path>, as_ascii: bool) -> DxfResult<()> {
         let file = File::create(&path)?;
         let mut writer = BufWriter::new(file);
         self.save_internal(&mut writer, as_ascii)
@@ -218,8 +216,7 @@ impl Drawing {
         writer.write(self)
     }
     /// Writes a `Drawing` as DXB to disk, using a `BufWriter`.
-    pub fn save_file_dxb(&self, file_name: &str) -> DxfResult<()> {
-        let path = Path::new(file_name);
+    pub fn save_file_dxb(&self, path: impl AsRef<Path>) -> DxfResult<()> {
         let file = File::create(&path)?;
         let mut buf_writer = BufWriter::new(file);
         self.save_dxb(&mut buf_writer)
