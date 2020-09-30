@@ -139,6 +139,39 @@ fn parse_with_leading_bom() {
 }
 
 #[test]
+fn parse_with_bom_like_in_the_middle() {
+    let head = "
+  0
+SECTION
+  2
+HEADER
+  9
+$PROJECTNAME
+  1"
+    .trim();
+    let tail = "
+  0
+ENDSEC
+  0
+EOF"
+    .trim();
+    let mut bytes = head.as_bytes().to_vec();
+    bytes.push(b'\r');
+    bytes.push(b'\n');
+    bytes.push(0xEF); // these three bytes represent the character `ｱ` in UTF8
+    bytes.push(0xBD);
+    bytes.push(0xB1);
+    bytes.push(b'\r');
+    bytes.push(b'\n');
+    for b in tail.as_bytes() {
+        bytes.push(*b);
+    }
+    let mut bytes = bytes.as_slice();
+    let drawing = unwrap_drawing(Drawing::load_with_encoding(&mut bytes, encoding_rs::UTF_8));
+    assert_eq!("ｱ", drawing.header.project_name);
+}
+
+#[test]
 fn parse_as_ascii_text() {
     // if version <= R2004 (AC1018) stream is ASCII
     let file = from_section(

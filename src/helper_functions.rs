@@ -276,7 +276,11 @@ pub(crate) fn read_color_value(layer: &mut Layer, color: i16) -> Color {
     Color::from_raw_value(color.abs())
 }
 
-pub(crate) fn read_line<T>(reader: &mut T, encoding: &'static Encoding) -> Option<DxfResult<String>>
+pub(crate) fn read_line<T>(
+    reader: &mut T,
+    allow_bom: bool,
+    encoding: &'static Encoding,
+) -> Option<DxfResult<String>>
 where
     T: Read + ?Sized,
 {
@@ -289,7 +293,7 @@ where
             Err(e) => return Some(Err(DxfError::IoError(e))),
         };
         match (i, b) {
-            (0, 0xEF) => {
+            (0, 0xEF) if allow_bom => {
                 skipping_bom = true;
             }
             (1, 0xBB) | (2, 0xBF) if skipping_bom => (), // skip UTF-8 BOM

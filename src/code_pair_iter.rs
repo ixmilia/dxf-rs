@@ -63,7 +63,7 @@ impl<T: Read> CodePairIter<T> {
         // Read code.  If no line is available, fail gracefully.
         let code_line = if self.read_first_line {
             self.offset += 1;
-            match read_line(&mut self.reader, encoding_rs::WINDOWS_1252) {
+            match read_line(&mut self.reader, true, encoding_rs::WINDOWS_1252) {
                 Some(Ok(v)) => v,
                 Some(Err(e)) => return Some(Err(e)),
                 None => return None,
@@ -86,7 +86,7 @@ impl<T: Read> CodePairIter<T> {
 
         // Read value.  If no line is available die horribly.
         self.offset += 1;
-        let value_line = match read_line(&mut self.reader, self.string_encoding) {
+        let value_line = match read_line(&mut self.reader, false, self.string_encoding) {
             Some(Ok(v)) => v,
             Some(Err(e)) => return Some(Err(e)),
             None => return Some(Err(DxfError::UnexpectedEndOfInput)),

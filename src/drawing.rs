@@ -116,7 +116,7 @@ impl Drawing {
     where
         T: Read + ?Sized,
     {
-        let first_line = match read_line(reader, encoding) {
+        let first_line = match read_line(reader, true, encoding) {
             Some(Ok(line)) => line,
             Some(Err(e)) => return Err(e),
             None => return Err(DxfError::UnexpectedEndOfInput),
