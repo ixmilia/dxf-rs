@@ -144,8 +144,8 @@ impl XDataItem {
             XDATA_HANDLE => Ok(XDataItem::Handle(pair.as_handle()?)),
             XDATA_THREEREALS => Ok(XDataItem::ThreeReals(
                 pair.assert_f64()?,
-                XDataItem::read_double(iter, pair.code)?,
-                XDataItem::read_double(iter, pair.code)?,
+                XDataItem::read_double(iter, pair.code + 10)?,
+                XDataItem::read_double(iter, pair.code + 20)?,
             )),
             XDATA_WORLDSPACEDISPLACEMENT => Ok(XDataItem::WorldSpaceDisplacement(
                 XDataItem::read_point(iter, pair.assert_f64()?, pair.code)?,
@@ -189,8 +189,8 @@ impl XDataItem {
     {
         Ok(Point::new(
             first,
-            XDataItem::read_double(iter, expected_code)?,
-            XDataItem::read_double(iter, expected_code)?,
+            XDataItem::read_double(iter, expected_code + 10)?,
+            XDataItem::read_double(iter, expected_code + 20)?,
         ))
     }
     fn read_vector<I>(
@@ -203,8 +203,8 @@ impl XDataItem {
     {
         Ok(Vector::new(
             first,
-            XDataItem::read_double(iter, expected_code)?,
-            XDataItem::read_double(iter, expected_code)?,
+            XDataItem::read_double(iter, expected_code + 10)?,
+            XDataItem::read_double(iter, expected_code + 20)?,
         ))
     }
     pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
@@ -237,23 +237,25 @@ impl XDataItem {
             }
             XDataItem::ThreeReals(x, y, z) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, *x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, *y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, *z))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS + 10, *y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS + 20, *z))?;
             }
             XDataItem::WorldSpacePosition(ref p) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.z))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 10, p.y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 20, p.z))?;
             }
             XDataItem::WorldSpaceDisplacement(ref p) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.z))?;
+                writer
+                    .write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 10, p.y))?;
+                writer
+                    .write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 20, p.z))?;
             }
             XDataItem::WorldDirection(ref v) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.z))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION + 10, v.y))?;
+                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION + 20, v.z))?;
             }
             XDataItem::Real(f) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_REAL, *f))?;
@@ -272,5 +274,186 @@ impl XDataItem {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::enums::AcadVersion;
+    use crate::helper_functions::tests::*;
+    use crate::objects::*;
+    use crate::x_data::{XData, XDataItem};
+    use crate::{Drawing, Point, Vector};
+
+    fn read_x_data_items(lines: Vec<&str>) -> Vec<XDataItem> {
+        let drawing = from_section(
+            "OBJECTS",
+            vec![
+                "0",
+                "ACAD_PROXY_OBJECT",
+                "1001",
+                "TEST_APPLICATION_NAME",
+                lines.join("\r\n").as_str(),
+            ]
+            .join("\r\n")
+            .as_str(),
+        );
+        let objects = drawing.objects().collect::<Vec<_>>();
+        assert_eq!(1, objects.len());
+        assert_eq!(1, objects[0].common.x_data.len());
+        let x_data = objects[0].common.x_data[0].clone();
+        assert_eq!("TEST_APPLICATION_NAME", x_data.application_name);
+        x_data.items
+    }
+
+    fn read_x_data_item(lines: Vec<&str>) -> XDataItem {
+        let items = read_x_data_items(lines);
+        assert_eq!(1, items.len());
+        items[0].clone()
+    }
+
+    fn write_x_data_item(item: XDataItem) -> String {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        drawing.add_object(Object {
+            common: ObjectCommon {
+                x_data: vec![XData {
+                    application_name: String::from("TEST_APPLICATION_NAME"),
+                    items: vec![item],
+                }],
+                ..Default::default()
+            },
+            specific: ObjectType::AcadProxyObject(AcadProxyObject::default()),
+        });
+        to_test_string(&drawing)
+    }
+
+    #[test]
+    fn read_3_reals() {
+        let item = read_x_data_item(vec!["1010", "1.0", "1020", "2.0", "1030", "3.0"]);
+        match item {
+            XDataItem::ThreeReals(x, y, z) => {
+                assert_eq!(1.0, x);
+                assert_eq!(2.0, y);
+                assert_eq!(3.0, z);
+            }
+            _ => panic!("expected 3 reals"),
+        }
+    }
+
+    #[test]
+    fn read_world_space_position() {
+        let item = read_x_data_item(vec!["1011", "1.0", "1021", "2.0", "1031", "3.0"]);
+        match item {
+            XDataItem::WorldSpacePosition(p) => {
+                assert_eq!(1.0, p.x);
+                assert_eq!(2.0, p.y);
+                assert_eq!(3.0, p.z);
+            }
+            _ => panic!("expected 3 reals"),
+        }
+    }
+
+    #[test]
+    fn read_world_space_displacement() {
+        let item = read_x_data_item(vec!["1012", "1.0", "1022", "2.0", "1032", "3.0"]);
+        match item {
+            XDataItem::WorldSpaceDisplacement(p) => {
+                assert_eq!(1.0, p.x);
+                assert_eq!(2.0, p.y);
+                assert_eq!(3.0, p.z);
+            }
+            _ => panic!("expected 3 reals"),
+        }
+    }
+
+    #[test]
+    fn read_world_direction() {
+        let item = read_x_data_item(vec!["1013", "1.0", "1023", "2.0", "1033", "3.0"]);
+        match item {
+            XDataItem::WorldDirection(v) => {
+                assert_eq!(1.0, v.x);
+                assert_eq!(2.0, v.y);
+                assert_eq!(3.0, v.z);
+            }
+            _ => panic!("expected 3 reals"),
+        }
+    }
+
+    #[test]
+    fn write_3_reals() {
+        let actual = write_x_data_item(XDataItem::ThreeReals(1.0, 2.0, 3.0));
+        let expected = vec![
+            "1001",
+            "TEST_APPLICATION_NAME",
+            "1010",
+            "1.0",
+            "1020",
+            "2.0",
+            "1030",
+            "3.0",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n");
+        assert!(actual.contains(&expected));
+    }
+
+    #[test]
+    fn write_world_space_position() {
+        let actual = write_x_data_item(XDataItem::WorldSpacePosition(Point::new(1.0, 2.0, 3.0)));
+        let expected = vec![
+            "1001",
+            "TEST_APPLICATION_NAME",
+            "1011",
+            "1.0",
+            "1021",
+            "2.0",
+            "1031",
+            "3.0",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n");
+        assert!(actual.contains(&expected));
+    }
+
+    #[test]
+    fn write_world_space_displacement() {
+        let actual =
+            write_x_data_item(XDataItem::WorldSpaceDisplacement(Point::new(1.0, 2.0, 3.0)));
+        let expected = vec![
+            "1001",
+            "TEST_APPLICATION_NAME",
+            "1012",
+            "1.0",
+            "1022",
+            "2.0",
+            "1032",
+            "3.0",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n");
+        assert!(actual.contains(&expected));
+    }
+
+    #[test]
+    fn write_world_direction() {
+        let actual = write_x_data_item(XDataItem::WorldDirection(Vector::new(1.0, 2.0, 3.0)));
+        let expected = vec![
+            "1001",
+            "TEST_APPLICATION_NAME",
+            "1013",
+            "1.0",
+            "1023",
+            "2.0",
+            "1033",
+            "3.0",
+            "  0",
+            "ENDSEC",
+        ]
+        .join("\r\n");
+        assert!(actual.contains(&expected));
     }
 }
