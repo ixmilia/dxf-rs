@@ -24,7 +24,7 @@
     <Field Name="proxy_object_class_id" Code="90" Type="i32" DefaultValue="499" />
     <Field Name="application_object_class_id" Code="91" Type="i32" DefaultValue="500" />
     <Field Name="size_in_bits" Code="93" Type="i32" DefaultValue="0" />
-    <Field Name="binary_object_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="binary_object_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_ids" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="__object_ids_a" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__object_ids_b" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
@@ -168,7 +168,7 @@
     <Field Name="__double_value" Code="140" Type="f64" DefaultValue="0.0" />
     <Field Name="__id_value" Code="330" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" WriteConverter="&amp;as_handle({})" />
     <Field Name="__binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" />
-    <Field Name="__binary_data" Code="310" Type="String" DefaultValue="String::new()" />
+    <Field Name="__binary_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" />
     <Field Name="__format_string_code301" Code="301" Type="String" DefaultValue="String::new()" />
     <Field Name="__format_string_overflow" Code="9" Type="String" DefaultValue="String::new()" />
     <Field Name="__format_string_length" Code="98" Type="i32" DefaultValue="0" />
@@ -1188,12 +1188,12 @@
   -->
   <Object Name="VbaProject" SubclassMarker="AcDbVbaProject" TypeString="VBA_PROJECT" MinVersion="R2000">
     <Field Name="data" Code="310" Type="u8" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="__hex_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="__hex_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbVbaProject")' />
       <WriteSpecificValue Code="90" Value="obj.data.len() as i32" />
-      <Foreach Field="obj.get_hex_strings()?">
-        <WriteSpecificValue Code="310" Value="item" />
+      <Foreach Field="obj.__hex_data">
+        <WriteSpecificValue Code="310" Value="item.clone()" />
       </Foreach>
     </WriteOrder>
   </Object>

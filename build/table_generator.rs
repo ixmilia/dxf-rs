@@ -436,16 +436,20 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_string({code}, &as_handle(*x)))?;\n",
                             indent=indent, code=code));
                     } else {
-                        let typ = ExpectedType::get_expected_type(code).unwrap();
-                        let typ = get_code_pair_type(typ);
-                        let deref = if typ == "string" { "" } else { "*" };
+                        let expected_type = ExpectedType::get_expected_type(code).unwrap();
+                        let typ = get_code_pair_type(&expected_type);
+                        let val = match expected_type {
+                            ExpectedType::Str => "x",
+                            ExpectedType::Binary => "x.clone()",
+                            _ => "*x",
+                        };
                         fun.push_str(&format!(
                             "{indent}        for x in &item.{field} {{\n",
                             indent = indent,
                             field = name(&field)
                         ));
-                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {deref}x))?;\n",
-                            indent=indent, typ=typ, code=code, deref=deref));
+                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;\n",
+                            indent=indent, typ=typ, code=code, val=val));
                     }
                     fun.push_str(&format!("{indent}        }}\n", indent = indent));
                 } else {
@@ -457,7 +461,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 indent=indent, code=code, field=name(&field)));
                         } else {
                             let typ = ExpectedType::get_expected_type(code).unwrap();
-                            let typ = get_code_pair_type(typ);
+                            let typ = get_code_pair_type(&typ);
                             let value = format!("item.{}", name(&field));
                             let write_converter = if attr(&field, "WriteConverter").is_empty() {
                                 String::from("{}")

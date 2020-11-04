@@ -690,7 +690,7 @@ fn generate_write_code_pairs_for_write_order(
             }
             let code = code(&write_command);
             let expected_type = ExpectedType::get_expected_type(code).unwrap();
-            let typ = get_code_pair_type(expected_type);
+            let typ = get_code_pair_type(&expected_type);
             if predicates.len() > 0 {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
             }
@@ -761,11 +761,12 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         let val = match (&*field.name, &expected_type) {
             ("Pointer", _) => "*v",
             (_, &ExpectedType::Str) => "&v",
+            (_, &ExpectedType::Binary) => "v.clone()",
             _ => "*v",
         };
         let write_converter = get_write_converter(&field);
         let to_write = write_converter.replace("{}", val);
-        let typ = get_code_pair_type(expected_type);
+        let typ = get_code_pair_type(&expected_type);
         let normalized_field_name = if field.name == "Pointer" {
             format!("__{}_handle", name(&field))
         } else {
@@ -828,7 +829,7 @@ fn get_write_converter(field: &Element) -> String {
 
 fn get_write_converter_with_code(code: i32, field: &Element) -> String {
     let expected_type = ExpectedType::get_expected_type(code).unwrap();
-    let typ = get_code_pair_type(expected_type);
+    let typ = get_code_pair_type(&expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
     if field.name == "Pointer" {
         write_converter = String::from("&as_handle({})");
@@ -846,7 +847,7 @@ fn get_write_converter_with_code(code: i32, field: &Element) -> String {
 
 fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
     let expected_type = ExpectedType::get_expected_type(code).unwrap();
-    let typ = get_code_pair_type(expected_type);
+    let typ = get_code_pair_type(&expected_type);
     let write_converter = get_write_converter_with_code(code, &field);
     let normalized_field_name = if field.name == "Pointer" {
         format!("__{}_handle", name(&field))

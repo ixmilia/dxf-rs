@@ -12,7 +12,7 @@
             <Field Name="explodability" Code="280" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
             <Field Name="scalability" Code="281" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
 
-            <Field Name="__bitmap_preview_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
+            <Field Name="__bitmap_preview_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
         </TableItem>
     </Table>
     <Table Collection="dim_styles" TypeString="DIMSTYLE" TableClassName="AcDbDimStyleTable">

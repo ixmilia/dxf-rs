@@ -71,24 +71,6 @@ impl DataTable {
 }
 
 //------------------------------------------------------------------------------
-//                                                                    VbaProject
-//------------------------------------------------------------------------------
-impl VbaProject {
-    pub(crate) fn get_hex_strings(&self) -> DxfResult<Vec<String>> {
-        let mut result = vec![];
-        for s in self.data.chunks(128) {
-            let mut line = String::new();
-            for b in s {
-                line.push_str(&format!("{:02X}", b));
-            }
-            result.push(line);
-        }
-
-        Ok(result)
-    }
-}
-
-//------------------------------------------------------------------------------
 //                                                                  ObjectCommon
 //------------------------------------------------------------------------------
 impl ObjectCommon {
@@ -146,7 +128,7 @@ impl Object {
                                     }
                                 }
 
-                                obj.post_parse(pair.offset)?;
+                                obj.post_parse()?;
                             }
 
                             return Ok(Some(obj));
@@ -192,7 +174,7 @@ impl Object {
         }
         Ok(())
     }
-    fn post_parse(&mut self, entity_offset: usize) -> DxfResult<()> {
+    fn post_parse(&mut self) -> DxfResult<()> {
         match self.specific {
             ObjectType::AcadProxyObject(ref mut proxy) => {
                 for item in &proxy.__object_ids_a {
@@ -286,8 +268,10 @@ impl Object {
             ObjectType::VbaProject(ref mut vba) => {
                 // each char in each _hex_data should be added to `data` byte array
                 let mut result = vec![];
-                for s in &vba.__hex_data {
-                    parse_hex_string(s, &mut result, entity_offset)?;
+                for b1 in &vba.__hex_data {
+                    for b2 in b1 {
+                        result.push(*b2);
+                    }
                 }
 
                 vba.data = result;

@@ -96,8 +96,86 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
 
                 self.writer.write_u8(0)?;
             }
+            CodePairValue::Binary(ref buf) => {
+                self.writer.write_u8(buf.len() as u8)?;
+                for b in buf {
+                    self.writer.write_u8(*b)?;
+                }
+            }
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::code_pair_writer::CodePairWriter;
+    use crate::enums::AcadVersion;
+    use crate::CodePair;
+    use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
+
+    fn write_in_binary(pair: &CodePair) -> Vec<u8> {
+        let mut buf = Cursor::new(vec![]);
+        let mut writer = CodePairWriter {
+            writer: &mut buf,
+            as_text: false,
+            text_as_ascii: true,
+            version: AcadVersion::R2004,
+        };
+        writer
+            .write_binary_code_pair(&pair)
+            .expect("expected write to succeed");
+        buf.seek(SeekFrom::Start(0))
+            .expect("expected seek to succeed");
+        buf.into_inner()
+    }
+
+    fn write_in_ascii(pair: &CodePair) -> String {
+        let mut buf = Cursor::new(vec![]);
+        let mut writer = CodePairWriter {
+            writer: &mut buf,
+            as_text: true,
+            text_as_ascii: true,
+            version: AcadVersion::R2004,
+        };
+        writer
+            .write_ascii_code_pair(&pair)
+            .expect("expected write to succeed");
+        buf.seek(SeekFrom::Start(0))
+            .expect("expected seek to succeed");
+        let reader = BufReader::new(&mut buf);
+        reader
+            .lines()
+            .map(|l| l.unwrap())
+            .fold(String::new(), |a, l| a + l.as_str() + "\r\n")
+    }
+
+    #[test]
+    fn write_string_in_binary() {
+        let pair = CodePair::new_str(1, "A");
+        let actual = write_in_binary(&pair);
+
+        // code 0x0001, value 0x41 = "A", NUL
+        let expected: Vec<u8> = vec![0x01, 0x00, 0x41, 0x00];
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn write_binary_chunk_in_binary() {
+        let pair = CodePair::new_binary(310, vec![0x01, 0x02]);
+        let actual = write_in_binary(&pair);
+
+        // code 0x136, length 2, data [0x01, 0x02]
+        let expected: Vec<u8> = vec![0x36, 0x01, 0x02, 0x01, 0x02];
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn write_binary_chunk_in_ascii() {
+        let pair = CodePair::new_binary(310, vec![0x01, 0x02]);
+        let actual = write_in_ascii(&pair);
+        let expected = "310\r\n0102\r\n";
+        assert_eq!(expected, actual);
     }
 }

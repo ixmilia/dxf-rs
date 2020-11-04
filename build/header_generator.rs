@@ -300,7 +300,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
         };
         if code(&v) > 0 {
             let expected_type =
-                get_code_pair_type(ExpectedType::get_expected_type(code(&v)).unwrap());
+                get_code_pair_type(&ExpectedType::get_expected_type(code(&v)).unwrap());
             let field_name = field(&v);
             let value = format!("self.{}", field_name);
             let value = write_converter.replace("{}", &*value);

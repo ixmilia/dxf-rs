@@ -965,11 +965,8 @@ impl Drawing {
                 let length = data.len() - 14; // skip 14 byte bmp header
                 writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
                 for s in data[14..].chunks(128) {
-                    let mut line = String::new();
-                    for b in s {
-                        line.push_str(&format!("{:02X}", b));
-                    }
-                    writer.write_code_pair(&CodePair::new_string(310, &line))?;
+                    let pair = CodePair::new_binary(310, s.to_vec());
+                    writer.write_code_pair(&pair)?;
                 }
                 writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
             }
@@ -1142,7 +1139,10 @@ impl Drawing {
                     break;
                 }
                 Some(Ok(pair @ CodePair { code: 310, .. })) => {
-                    parse_hex_string(&pair.assert_string()?, &mut data, pair.offset)?;
+                    let line_data = pair.assert_binary()?;
+                    for b in line_data {
+                        data.push(b);
+                    }
                 }
                 Some(Ok(pair)) => {
                     return Err(DxfError::UnexpectedCode(pair.code, pair.offset));

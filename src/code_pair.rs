@@ -33,6 +33,9 @@ impl CodePair {
     pub fn new_string(code: i32, val: &str) -> Self {
         CodePair::new(code, CodePairValue::Str(val.to_string()), 0)
     }
+    pub fn new_binary(code: i32, val: Vec<u8>) -> Self {
+        CodePair::new(code, CodePairValue::Binary(val), 0)
+    }
     pub fn new_i16(code: i32, val: i16) -> Self {
         CodePair::new(code, CodePairValue::Short(val), 0)
     }
@@ -75,6 +78,12 @@ impl CodePair {
     pub fn assert_string(&self) -> DxfResult<String> {
         match self.value {
             CodePairValue::Str(ref s) => Ok(s.clone()),
+            _ => Err(DxfError::WrongValueType(self.offset)),
+        }
+    }
+    pub fn assert_binary(&self) -> DxfResult<Vec<u8>> {
+        match self.value {
+            CodePairValue::Binary(ref b) => Ok(b.clone()),
             _ => Err(DxfError::WrongValueType(self.offset)),
         }
     }

@@ -1907,8 +1907,11 @@ mod tests {
 
     #[test]
     fn read_field_with_multiples_common() {
-        let ent = read_entity("LINE", vec!["310", "one", "310", "two"].join("\r\n"));
-        assert_eq!(vec!["one", "two"], ent.common.preview_image_data);
+        let ent = read_entity("LINE", vec!["310", "0102", "310", "0304"].join("\r\n"));
+        assert_eq!(
+            vec![vec![0x01, 0x02], vec![0x03, 0x04]],
+            ent.common.preview_image_data
+        );
     }
 
     #[test]
@@ -1917,12 +1920,12 @@ mod tests {
         drawing.header.version = AcadVersion::R2000;
         drawing.add_entity(Entity {
             common: EntityCommon {
-                preview_image_data: vec![String::from("one"), String::from("two")],
+                preview_image_data: vec![vec![0x01, 0x02], vec![0x03, 0x04]],
                 ..Default::default()
             },
             specific: EntityType::Line(Default::default()),
         });
-        assert_contains(&drawing, vec!["310", "one", "310", "two"].join("\r\n"));
+        assert_contains(&drawing, vec!["310", "0102", "310", "0304"].join("\r\n"));
     }
 
     #[test]

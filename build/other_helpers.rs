@@ -8,16 +8,18 @@ pub fn get_reader_function(typ: &ExpectedType) -> &str {
         &ExpectedType::Short => "assert_i16",
         &ExpectedType::Double => "assert_f64",
         &ExpectedType::Str => "assert_string",
+        &ExpectedType::Binary => "assert_binary",
     }
 }
 
-pub fn get_code_pair_type(typ: ExpectedType) -> String {
+pub fn get_code_pair_type(typ: &ExpectedType) -> String {
     match typ {
-        ExpectedType::Boolean => String::from("bool"),
-        ExpectedType::Integer => String::from("i32"),
-        ExpectedType::Long => String::from("i64"),
-        ExpectedType::Short => String::from("i16"),
-        ExpectedType::Double => String::from("f64"),
-        ExpectedType::Str => String::from("string"),
+        &ExpectedType::Boolean => String::from("bool"),
+        &ExpectedType::Integer => String::from("i32"),
+        &ExpectedType::Long => String::from("i64"),
+        &ExpectedType::Short => String::from("i16"),
+        &ExpectedType::Double => String::from("f64"),
+        &ExpectedType::Str => String::from("string"),
+        &ExpectedType::Binary => String::from("binary"),
     }
 }

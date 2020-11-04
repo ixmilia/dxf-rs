@@ -12,6 +12,7 @@ pub enum CodePairValue {
     Short(i16),
     Double(f64),
     Str(String),
+    Binary(Vec<u8>),
 }
 
 // internal visibility only
@@ -93,6 +94,7 @@ impl Clone for CodePairValue {
             CodePairValue::Short(s) => CodePairValue::Short(*s),
             CodePairValue::Double(d) => CodePairValue::Double(*d),
             CodePairValue::Str(ref s) => CodePairValue::Str(String::from(s.as_str())),
+            CodePairValue::Binary(ref b) => CodePairValue::Binary(b.clone()),
         }
     }
 }
@@ -106,6 +108,13 @@ impl Debug for CodePairValue {
             CodePairValue::Short(s) => write!(f, "{: >6}", s),
             CodePairValue::Double(d) => write!(f, "{}", format_f64(*d)),
             CodePairValue::Str(ref s) => write!(f, "{}", s),
+            CodePairValue::Binary(ref b) => {
+                let mut line = String::new();
+                for s in b {
+                    line.push_str(&format!("{:02X}", s));
+                }
+                write!(f, "{}", line)
+            }
         }
     }
 }

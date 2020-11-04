@@ -122,6 +122,13 @@ impl<T: Read> CodePairIter<T> {
                 let value_line = CodePairValue::un_escape_string(&value_line);
                 CodePairValue::Str(value_line.into_owned())
             }
+            ExpectedType::Binary => {
+                let mut data = vec![];
+                match parse_hex_string(&value_line, &mut data, self.offset) {
+                    Ok(()) => CodePairValue::Binary(data),
+                    Err(e) => return Some(Err(e)),
+                }
+            }
         };
 
         Some(Ok(CodePair::new(code, value, code_offset)))
@@ -198,6 +205,15 @@ impl<T: Read> CodePairIter<T> {
                     value.len() + 1, // +1 to account for the NULL terminator
                 )
             }
+            ExpectedType::Binary => {
+                let length = try_from_dxf_result!(read_u8_strict(&mut self.reader)) as usize;
+                let mut data = vec![];
+                for _ in 0..length {
+                    data.push(try_from_dxf_result!(read_u8_strict(&mut self.reader)));
+                }
+
+                (CodePairValue::Binary(data), length + 1) // +1 to account for initial length byte
+            }
         };
         self.offset += read_bytes;
         self.returned_binary_pair = true;
@@ -243,5 +259,75 @@ impl<T: Read> Iterator for CodePairIter<T> {
                 None => return None,
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::code_pair_iter::CodePairIter;
+
+    #[test]
+    fn read_string_in_binary() {
+        // code 0x0001, value 0x41 = "A", NUL
+        let data: Vec<u8> = vec![0x01, 0x00, 0x41, 0x00];
+        let mut reader = CodePairIter::<&[u8]> {
+            reader: data.as_slice(),
+            string_encoding: encoding_rs::WINDOWS_1252,
+            first_line: String::from("not-important"),
+            read_first_line: true,
+            read_as_text: false,
+            is_post_r13_binary: true,
+            returned_binary_pair: true,
+            binary_detection_complete: true,
+            offset: 0,
+        };
+        let pair = reader.read_code_pair_binary().unwrap().unwrap();
+        assert_eq!(1, pair.code);
+        assert_eq!("A", pair.assert_string().expect("should be a string"));
+    }
+
+    #[test]
+    fn read_binary_chunk_in_binary() {
+        // code 0x136, length 2, data [0x01, 0x02]
+        let data: Vec<u8> = vec![0x36, 0x01, 0x02, 0x01, 0x02];
+        let mut reader = CodePairIter::<&[u8]> {
+            reader: data.as_slice(),
+            string_encoding: encoding_rs::WINDOWS_1252,
+            first_line: String::from("not-important"),
+            read_first_line: true,
+            read_as_text: false,
+            is_post_r13_binary: true,
+            returned_binary_pair: true,
+            binary_detection_complete: true,
+            offset: 0,
+        };
+        let pair = reader.read_code_pair_binary().unwrap().unwrap();
+        assert_eq!(310, pair.code);
+        assert_eq!(
+            vec![0x01, 0x02],
+            pair.assert_binary().expect("should be binary")
+        );
+    }
+
+    #[test]
+    fn read_binary_chunk_in_ascii() {
+        let data = "310\r\n0102";
+        let mut reader = CodePairIter::<&[u8]> {
+            reader: data.as_bytes(),
+            string_encoding: encoding_rs::WINDOWS_1252,
+            first_line: String::from("not-important"),
+            read_first_line: true,
+            read_as_text: true,
+            is_post_r13_binary: false,
+            returned_binary_pair: false,
+            binary_detection_complete: true,
+            offset: 0,
+        };
+        let pair = reader.read_code_pair_text().unwrap().unwrap();
+        assert_eq!(310, pair.code);
+        assert_eq!(
+            vec![0x01, 0x02],
+            pair.assert_binary().expect("should be binary")
+        );
     }
 }

@@ -684,7 +684,7 @@ fn generate_write_code_pairs_for_write_order(
             }
             let code = code(&write_command);
             let expected_type = ExpectedType::get_expected_type(code).unwrap();
-            let typ = get_code_pair_type(expected_type);
+            let typ = get_code_pair_type(&expected_type);
             if predicates.len() > 0 {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
             }
@@ -755,10 +755,10 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         let val = if field.name == "Pointer" {
             "&as_handle(*v)"
         } else {
-            if expected_type == ExpectedType::Str {
-                "&v"
-            } else {
-                "*v"
+            match expected_type {
+                ExpectedType::Str => "&v",
+                ExpectedType::Binary => "v.clone()",
+                _ => "*v",
             }
         };
         let normalized_field_name = if field.name == "Pointer" {
@@ -766,7 +766,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         } else {
             name(&field)
         };
-        let typ = get_code_pair_type(expected_type);
+        let typ = get_code_pair_type(&expected_type);
         commands.push(format!(
             "{indent}for v in &ent.{field} {{",
             indent = indent,
@@ -819,7 +819,7 @@ fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
 
 fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
     let expected_type = ExpectedType::get_expected_type(code).unwrap();
-    let typ = get_code_pair_type(expected_type);
+    let typ = get_code_pair_type(&expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
     if field.name == "Pointer" {
         write_converter = String::from("&as_handle({})");

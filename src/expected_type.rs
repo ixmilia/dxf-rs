@@ -7,6 +7,7 @@ pub enum ExpectedType {
     Short,
     Double,
     Str,
+    Binary,
 }
 
 impl ExpectedType {
@@ -31,7 +32,7 @@ impl ExpectedType {
             280..=289 => Some(ExpectedType::Short),
             290..=299 => Some(ExpectedType::Boolean),
             300..=309 => Some(ExpectedType::Str),
-            310..=319 => Some(ExpectedType::Str),
+            310..=319 => Some(ExpectedType::Binary),
             320..=329 => Some(ExpectedType::Str),
             330..=369 => Some(ExpectedType::Str),
             370..=379 => Some(ExpectedType::Short),

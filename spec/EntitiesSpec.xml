@@ -19,7 +19,7 @@
     <Field Name="line_type_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_i16(!{})" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="image_byte_count" Code="92" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2000" />
-    <Field Name="preview_image_data" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
+    <Field Name="preview_image_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R2000" />
     <Field Name="color_24_bit" Code="420" Type="i32" DefaultValue="0" DisableWritingDefault="true" MinVersion="R2004" />
     <Field Name="color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2004" />
     <Field Name="transparency" Code="440" Type="i32" DefaultValue="0" MinVersion="R2004" />
@@ -93,9 +93,9 @@
     <Field Name="proxy_entity_class_id" Code="90" Type="i32" DefaultValue="498" />
     <Field Name="application_entity_class_id" Code="91" Type="i32" DefaultValue="500" />
     <Field Name="graphics_data_size" Code="92" Type="i32" DefaultValue="0" />
-    <Field Name="graphics_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="graphics_data_string" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="entity_data_size" Code="93" Type="i32" DefaultValue="0" />
-    <Field Name="entity_data_string" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="entity_data_string" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_id_1" Code="330" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_id_2" Code="340" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="object_id_3" Code="350" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
@@ -772,13 +772,13 @@
   <Entity Name="OleFrame" SubclassMarker="AcDbOleFrame" TypeString="OLEFRAME" MinVersion="R13">
     <Field Name="version_number" Code="70" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="binary_data_strings" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbOleFrame")' />
       <WriteField Field="version_number" />
       <WriteField Field="binary_data_length" />
       <Foreach Field="ent.binary_data_strings">
-        <WriteSpecificValue Code="310" Value="item" />
+        <WriteSpecificValue Code="310" Value="item.clone()" />
       </Foreach>
       <WriteSpecificValue Code="1" Value='&amp;String::from("OLE")' />
     </WriteOrder>
@@ -796,7 +796,7 @@
     <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="enum_from_number!(OleObjectType, Static, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="enum_from_number!(TileModeDescriptor, InTiledViewport, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
-    <Field Name="binary_data_strings" Code="310" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="binary_data_strings" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbOle2Frame")' />
       <WriteField Field="version_number" />
@@ -807,7 +807,7 @@
       <WriteField Field="tile_mode" />
       <WriteField Field="binary_data_length" />
       <Foreach Field="ent.binary_data_strings">
-        <WriteSpecificValue Code="310" Value="item" />
+        <WriteSpecificValue Code="310" Value="item.clone()" />
       </Foreach>
       <WriteSpecificValue Code="1" Value='&amp;String::from("OLE")' />
     </WriteOrder>
