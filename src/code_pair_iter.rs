@@ -265,11 +265,9 @@ impl<T: Read> Iterator for CodePairIter<T> {
 #[cfg(test)]
 mod tests {
     use crate::code_pair_iter::CodePairIter;
+    use crate::CodePair;
 
-    #[test]
-    fn read_string_in_binary() {
-        // code 0x0001, value 0x41 = "A", NUL
-        let data: Vec<u8> = vec![0x01, 0x00, 0x41, 0x00];
+    fn read_in_binary(data: Vec<u8>) -> CodePair {
         let mut reader = CodePairIter::<&[u8]> {
             reader: data.as_slice(),
             string_encoding: encoding_rs::WINDOWS_1252,
@@ -281,7 +279,13 @@ mod tests {
             binary_detection_complete: true,
             offset: 0,
         };
-        let pair = reader.read_code_pair_binary().unwrap().unwrap();
+        reader.read_code_pair_binary().unwrap().unwrap()
+    }
+
+    #[test]
+    fn read_string_in_binary() {
+        // code 0x0001, value 0x41 = "A", NUL
+        let pair = read_in_binary(vec![0x01, 0x00, 0x41, 0x00]);
         assert_eq!(1, pair.code);
         assert_eq!("A", pair.assert_string().expect("should be a string"));
     }
@@ -289,19 +293,7 @@ mod tests {
     #[test]
     fn read_binary_chunk_in_binary() {
         // code 0x136, length 2, data [0x01, 0x02]
-        let data: Vec<u8> = vec![0x36, 0x01, 0x02, 0x01, 0x02];
-        let mut reader = CodePairIter::<&[u8]> {
-            reader: data.as_slice(),
-            string_encoding: encoding_rs::WINDOWS_1252,
-            first_line: String::from("not-important"),
-            read_first_line: true,
-            read_as_text: false,
-            is_post_r13_binary: true,
-            returned_binary_pair: true,
-            binary_detection_complete: true,
-            offset: 0,
-        };
-        let pair = reader.read_code_pair_binary().unwrap().unwrap();
+        let pair = read_in_binary(vec![0x36, 0x01, 0x02, 0x01, 0x02]);
         assert_eq!(310, pair.code);
         assert_eq!(
             vec![0x01, 0x02],
@@ -329,5 +321,13 @@ mod tests {
             vec![0x01, 0x02],
             pair.assert_binary().expect("should be binary")
         );
+    }
+
+    #[test]
+    fn read_code_450_in_binary() {
+        // code 450 = 0x1C2, value = 37 (0x25)
+        let pair = read_in_binary(vec![0xC2, 0x01, 0x25, 0x00, 0x00, 0x00]);
+        assert_eq!(450, pair.code);
+        assert_eq!(37, pair.assert_i32().expect("should be int"));
     }
 }

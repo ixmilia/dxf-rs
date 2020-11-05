@@ -43,7 +43,7 @@ impl ExpectedType {
             420..=429 => Some(ExpectedType::Integer),
             430..=439 => Some(ExpectedType::Str),
             440..=449 => Some(ExpectedType::Integer),
-            450..=459 => Some(ExpectedType::Long),
+            450..=459 => Some(ExpectedType::Integer),
             460..=469 => Some(ExpectedType::Double),
             470..=479 => Some(ExpectedType::Str),
             480..=481 => Some(ExpectedType::Str),

@@ -178,4 +178,13 @@ mod tests {
         let expected = "310\r\n0102\r\n";
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn write_code_450_in_binary() {
+        let pair = CodePair::new_i32(450, 37);
+        let actual = write_in_binary(&pair);
+
+        // code 450 = 0x1C2, value = 37 (0x25)
+        assert_eq!(vec![0xC2, 0x01, 0x25, 0x00, 0x00, 0x00], actual);
+    }
 }
