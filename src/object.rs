@@ -1741,9 +1741,10 @@ impl Object {
     where
         T: Write + ?Sized,
     {
-        match self.specific {
-            _ => (),
-        }
+        // use the following pattern if this method is needed
+        // match self.specific {
+        //     _ => (),
+        // }
 
         Ok(())
     }

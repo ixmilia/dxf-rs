@@ -1669,16 +1669,11 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let mline_styles = drawing
-            .objects()
-            .filter(|&o| match o.specific {
-                ObjectType::MLineStyle(ref mline_style) => {
-                    mline_style.style_name == "some-mline-style"
-                }
-                _ => false,
-            })
-            .collect::<Vec<_>>();
-        assert_eq!(1, mline_styles.len());
+        let mline_styles = drawing.objects().filter(|&o| match o.specific {
+            ObjectType::MLineStyle(ref mline_style) => mline_style.style_name == "some-mline-style",
+            _ => false,
+        });
+        assert_eq!(1, mline_styles.count());
     }
 
     #[test]
@@ -1759,11 +1754,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let dim_styles = drawing
-            .dim_styles()
-            .filter(|&d| d.name == "some-dim-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, dim_styles.len());
+        let dim_styles = drawing.dim_styles().filter(|&d| d.name == "some-dim-style");
+        assert_eq!(1, dim_styles.count());
     }
 
     #[test]
@@ -1884,11 +1876,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer");
+        assert_eq!(1, layers.count());
     }
 
     #[test]
@@ -1911,11 +1900,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer");
+        assert_eq!(1, layers.count());
     }
 
     #[test]
@@ -2040,9 +2026,8 @@ mod tests {
         );
         let line_types = drawing
             .line_types()
-            .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .filter(|&lt| lt.name == "some-line-type");
+        assert_eq!(1, line_types.count());
     }
 
     #[test]
@@ -2067,9 +2052,8 @@ mod tests {
         );
         let line_types = drawing
             .line_types()
-            .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .filter(|&lt| lt.name == "some-line-type");
+        assert_eq!(1, line_types.count());
     }
 
     #[test]
@@ -2192,11 +2176,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let text_styles = drawing
-            .styles()
-            .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+        let text_styles = drawing.styles().filter(|&s| s.name == "some-text-style");
+        assert_eq!(1, text_styles.count());
     }
 
     #[test]
@@ -2219,11 +2200,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let text_styles = drawing
-            .styles()
-            .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+        let text_styles = drawing.styles().filter(|&s| s.name == "some-text-style");
+        assert_eq!(1, text_styles.count());
     }
 
     #[test]
@@ -2296,10 +2274,7 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let views = drawing
-            .views()
-            .filter(|&v| v.name == "some-view")
-            .collect::<Vec<_>>();
-        assert_eq!(1, views.len());
+        let views = drawing.views().filter(|&v| v.name == "some-view");
+        assert_eq!(1, views.count());
     }
 }

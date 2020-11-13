@@ -3,8 +3,6 @@ use std::fmt;
 use std::io;
 use std::num;
 
-use image;
-
 use crate::CodePair;
 
 #[derive(Debug)]

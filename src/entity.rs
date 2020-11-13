@@ -1718,8 +1718,8 @@ mod tests {
                 .join("\r\n")
                 .as_str(),
         );
-        let entities = drawing.entities().collect::<Vec<_>>();
-        assert_eq!(0, entities.len());
+        let entities = drawing.entities();
+        assert_eq!(0, entities.count());
     }
 
     #[test]
@@ -1742,8 +1742,8 @@ mod tests {
             .join("\r\n")
             .as_str(),
         );
-        let entities = drawing.entities().collect::<Vec<_>>();
-        assert_eq!(0, entities.len());
+        let entities = drawing.entities();
+        assert_eq!(0, entities.count());
     }
 
     #[test]
