@@ -1167,12 +1167,11 @@ impl Drawing {
         let palette_size = match dib_header_size {
             40 => {
                 // BITMAPINFOHEADER
-                let bpp = LittleEndian::read_u16(&data[header_length + 14..]) as usize;
                 let palette_color_count =
                     LittleEndian::read_u32(&data[header_length + 32..]) as usize;
-                bpp * palette_color_count
+                palette_color_count * 4 // always 4 bytes: BGRA
             }
-            _ => return Ok(false),
+            _ => return Ok(false), // only BITMAPINFOHEADER is currently supported
         };
 
         // set the image data offset

@@ -444,12 +444,36 @@ fn write_binary_file() {
 }
 
 #[test]
-fn thumbnail_round_trip() {
-    // prepare 1x1 px image, red pixel
+fn thumbnail_round_trip_rgb8() {
+    // 1x1 px image, red pixel
     let mut imgbuf = image::ImageBuffer::new(1, 1);
     imgbuf.put_pixel(0, 0, image::Rgb([255u8, 0, 0]));
     let thumbnail = DynamicImage::ImageRgb8(imgbuf);
 
+    let round_tripped = round_trip_thumbnail(thumbnail);
+    assert_eq!((1, 1), round_tripped.dimensions());
+    assert_eq!(
+        image::Rgba([255u8, 0, 0, 255]),
+        round_tripped.get_pixel(0, 0)
+    );
+}
+
+#[test]
+fn thumbnail_round_trip_grayscale() {
+    // 1x1 px grayscale image, white
+    let mut imgbuf = image::ImageBuffer::new(1, 1);
+    imgbuf.put_pixel(0, 0, image::Luma([255]));
+    let thumbnail = DynamicImage::ImageLuma8(imgbuf);
+
+    let round_tripped = round_trip_thumbnail(thumbnail);
+    assert_eq!((1, 1), round_tripped.dimensions());
+    assert_eq!(
+        image::Rgba([255u8, 255, 255, 255]),
+        round_tripped.get_pixel(0, 0)
+    ); // it comes back as RGB
+}
+
+fn round_trip_thumbnail(thumbnail: image::DynamicImage) -> image::DynamicImage {
     // write drawing with thumbnail
     let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2000; // thumbnails are only written >= R2000
@@ -459,7 +483,5 @@ fn thumbnail_round_trip() {
 
     // re-read the drawing
     let drawing = parse_drawing(&*drawing_text);
-    let thumbnail = drawing.thumbnail.unwrap();
-    assert_eq!((1, 1), thumbnail.dimensions());
-    assert_eq!(image::Rgba([255u8, 0, 0, 255]), thumbnail.get_pixel(0, 0));
+    drawing.thumbnail.unwrap()
 }
