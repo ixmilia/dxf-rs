@@ -1,6 +1,3 @@
-extern crate byteorder;
-use self::byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
-
 extern crate encoding_rs;
 use self::encoding_rs::Encoding;
 
@@ -28,6 +25,8 @@ use crate::class::Class;
 
 use crate::code_pair_iter::CodePairIter;
 use crate::code_pair_writer::CodePairWriter;
+
+use crate::thumbnail;
 
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
@@ -1002,7 +1001,7 @@ impl Drawing {
                                 "ENTITIES" => drawing.read_entities(iter)?,
                                 "OBJECTS" => drawing.read_objects(iter)?,
                                 "THUMBNAILIMAGE" => {
-                                    let _ = drawing.read_thumbnail(iter)?;
+                                    drawing.thumbnail = thumbnail::read_thumbnail(iter)?;
                                 }
                                 _ => Drawing::swallow_section(iter)?,
                             }
@@ -1101,91 +1100,6 @@ impl Drawing {
         }
 
         Ok(())
-    }
-    fn read_thumbnail<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<bool>
-    where
-        T: Read,
-    {
-        // get the length; we don't really care about this since we'll just read whatever's there
-        let length_pair = next_pair!(iter);
-        let _length = match length_pair.code {
-            90 => length_pair.assert_i32()? as usize,
-            _ => {
-                return Err(DxfError::UnexpectedCode(
-                    length_pair.code,
-                    length_pair.offset,
-                ))
-            }
-        };
-
-        // prepend the BMP header that always seems to be missing from DXF files
-        let mut data: Vec<u8> = vec![
-            b'B', b'M', // magic number
-            0x00, 0x00, 0x00, 0x00, // file length (calculated later)
-            0x00, 0x00, // reserved
-            0x00, 0x00, // reserved
-            0x00, 0x00, 0x00, 0x00, // image data offset (calculated later)
-        ];
-        let header_length = data.len();
-        let file_length_offset = 2;
-        let image_data_offset_offset = 10;
-
-        // read the hex data
-        loop {
-            match iter.next() {
-                Some(Ok(pair @ CodePair { code: 0, .. })) => {
-                    // likely 0/ENDSEC
-                    iter.put_back(Ok(pair));
-                    break;
-                }
-                Some(Ok(pair @ CodePair { code: 310, .. })) => {
-                    let line_data = pair.assert_binary()?;
-                    for b in line_data {
-                        data.push(b);
-                    }
-                }
-                Some(Ok(pair)) => {
-                    return Err(DxfError::UnexpectedCode(pair.code, pair.offset));
-                }
-                Some(Err(e)) => return Err(e),
-                None => break,
-            }
-        }
-
-        // set the file length
-        let mut length_bytes = vec![];
-        length_bytes.write_i32::<LittleEndian>(data.len() as i32)?;
-        data[file_length_offset] = length_bytes[0];
-        data[file_length_offset + 1] = length_bytes[1];
-        data[file_length_offset + 2] = length_bytes[2];
-        data[file_length_offset + 3] = length_bytes[3];
-
-        // calculate the image data offset
-        let dib_header_size = LittleEndian::read_i32(&data[header_length..]) as usize;
-
-        // calculate the palette size
-        let palette_size = match dib_header_size {
-            40 => {
-                // BITMAPINFOHEADER
-                let palette_color_count =
-                    LittleEndian::read_u32(&data[header_length + 32..]) as usize;
-                palette_color_count * 4 // always 4 bytes: BGRA
-            }
-            _ => return Ok(false), // only BITMAPINFOHEADER is currently supported
-        };
-
-        // set the image data offset
-        let image_data_offset = header_length + dib_header_size + palette_size;
-        let mut offset_bytes = vec![];
-        offset_bytes.write_i32::<LittleEndian>(image_data_offset as i32)?;
-        data[image_data_offset_offset] = offset_bytes[0];
-        data[image_data_offset_offset + 1] = offset_bytes[1];
-        data[image_data_offset_offset + 2] = offset_bytes[2];
-        data[image_data_offset_offset + 3] = offset_bytes[3];
-
-        let image = image::load_from_memory(&data)?;
-        self.thumbnail = Some(image);
-        Ok(true)
     }
     fn read_section_item<I, F>(
         &mut self,

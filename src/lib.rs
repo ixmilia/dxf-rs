@@ -150,6 +150,7 @@ mod x_data;
 pub use crate::x_data::*;
 
 mod table;
+mod thumbnail;
 
 mod drawing;
 pub use crate::drawing::Drawing;
