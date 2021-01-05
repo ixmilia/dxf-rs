@@ -9,6 +9,7 @@ const FILE_LENGTH_OFFSET: usize = 2;
 const IMAGE_DATA_OFFSET_OFFSET: usize = 10;
 
 const BITMAPINFOHEADER_SIZE: usize = 40;
+const BITMAPV4HEADER_SIZE: usize = 108;
 
 pub(crate) fn read_thumbnail<T>(
     iter: &mut CodePairPutBack<T>,
@@ -91,7 +92,7 @@ fn update_thumbnail_data_offset_in_situ(data: &mut Vec<u8>) -> DxfResult<bool> {
 
     // calculate the palette size
     let palette_size = match dib_header_size {
-        BITMAPINFOHEADER_SIZE => {
+        BITMAPINFOHEADER_SIZE | BITMAPV4HEADER_SIZE => {
             let palette_color_count = get_u32(&data, FILE_HEADER_LENGTH + 32)? as usize;
             palette_color_count * 4 // always 4 bytes: BGRA
         }
@@ -151,6 +152,88 @@ fn set_thumbnail_offset_for_bitmapinfoheader_palette_256() {
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
     assert_eq!(0x0432, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+}
+
+#[test]
+fn set_thumbnail_offset_for_bitmapv4header_non_palette() {
+    let mut data: Vec<u8> = vec![
+        b'B', b'M', // magic number
+        0x00, 0x00, 0x00, 0x00, // file length; not needed for this test
+        0x00, 0x00, // reserved
+        0x00, 0x00, // reserved
+        0x00, 0x00, 0x00, 0x00, // the image data offset that will be filled in
+        0x6C, 0x00, 0x00, 0x00, // BITMAPV4HEADER length
+        0x00, 0x00, 0x00, 0x00, // width (not needed)
+        0x00, 0x00, 0x00, 0x00, // height (not needed)
+        0x00, 0x00, // color planes (not needed)
+        0x00, 0x00, // bits per pixel (not needed)
+        0x00, 0x00, 0x00, 0x00, // compression (not needed)
+        0x00, 0x00, 0x00, 0x00, // image size (not needed)
+        0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
+        0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
+        0x00, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
+        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
+        0x00, 0x00, 0x00, 0x00, // red mask
+        0x00, 0x00, 0x00, 0x00, // green mask
+        0x00, 0x00, 0x00, 0x00, // blue mask
+        0x00, 0x00, 0x00, 0x00, // alpha mask
+        0x00, 0x00, 0x00, 0x00, // color space type
+        0x00, 0x00, 0x00, 0x00, // red triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // green triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // blue triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // gamma red
+        0x00, 0x00, 0x00, 0x00, // gamma green
+        0x00, 0x00, 0x00, 0x00, // gamma blue
+    ];
+    assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
+    assert_eq!(0x7A, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+}
+
+#[test]
+fn set_thumbnail_offset_for_bitmapv4header_palette_256() {
+    let mut data: Vec<u8> = vec![
+        b'B', b'M', // magic number
+        0x00, 0x00, 0x00, 0x00, // file length; not needed for this test
+        0x00, 0x00, // reserved
+        0x00, 0x00, // reserved
+        0x00, 0x00, 0x00, 0x00, // the image data offset that will be filled in
+        0x6C, 0x00, 0x00, 0x00, // BITMAPV4HEADER length
+        0x00, 0x00, 0x00, 0x00, // width (not needed)
+        0x00, 0x00, 0x00, 0x00, // height (not needed)
+        0x00, 0x00, // color planes (not needed)
+        0x00, 0x00, // bits per pixel (not needed)
+        0x00, 0x00, 0x00, 0x00, // compression (not needed)
+        0x00, 0x00, 0x00, 0x00, // image size (not needed)
+        0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
+        0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
+        0xFF, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
+        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
+        0x00, 0x00, 0x00, 0x00, // red mask
+        0x00, 0x00, 0x00, 0x00, // green mask
+        0x00, 0x00, 0x00, 0x00, // blue mask
+        0x00, 0x00, 0x00, 0x00, // alpha mask
+        0x00, 0x00, 0x00, 0x00, // color space type
+        0x00, 0x00, 0x00, 0x00, // red triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // green triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // blue triple
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, //
+        0x00, 0x00, 0x00, 0x00, // gamma red
+        0x00, 0x00, 0x00, 0x00, // gamma green
+        0x00, 0x00, 0x00, 0x00, // gamma blue
+    ];
+    assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
+    assert_eq!(0x0476, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 fn read_thumbnail_from_bytes(data: &[u8]) -> DxfResult<Option<image::DynamicImage>> {
