@@ -8,8 +8,7 @@ const FILE_HEADER_LENGTH: usize = 14;
 const FILE_LENGTH_OFFSET: usize = 2;
 const IMAGE_DATA_OFFSET_OFFSET: usize = 10;
 
-const BITMAPINFOHEADER_SIZE: usize = 40;
-const BITMAPV4HEADER_SIZE: usize = 108;
+const BITMAP_HEADER_PALETTE_COUNT_OFFSET: usize = 32;
 
 pub(crate) fn read_thumbnail<T>(
     iter: &mut CodePairPutBack<T>,
@@ -91,12 +90,14 @@ fn update_thumbnail_data_offset_in_situ(data: &mut Vec<u8>) -> DxfResult<bool> {
     let dib_header_size = get_i32(&data, FILE_HEADER_LENGTH)? as usize;
 
     // calculate the palette size
-    let palette_size = match dib_header_size {
-        BITMAPINFOHEADER_SIZE | BITMAPV4HEADER_SIZE => {
-            let palette_color_count = get_u32(&data, FILE_HEADER_LENGTH + 32)? as usize;
-            palette_color_count * 4 // always 4 bytes: BGRA
-        }
-        _ => return Ok(false),
+    let palette_size = if dib_header_size >= BITMAP_HEADER_PALETTE_COUNT_OFFSET + 4 {
+        let palette_color_count = get_u32(
+            &data,
+            FILE_HEADER_LENGTH + BITMAP_HEADER_PALETTE_COUNT_OFFSET,
+        )? as usize;
+        palette_color_count * 4 // always 4 bytes: BGRA
+    } else {
+        return Ok(false);
     };
 
     // set the image data offset
@@ -123,8 +124,9 @@ fn set_thumbnail_offset_for_bitmapinfoheader_non_palette() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0x00, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
-        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
+        0x00, 0x00, 0x00,
+        0x00, // color palette count (0 means default of 2^n)
+              // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
     assert_eq!(0x36, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
@@ -147,8 +149,9 @@ fn set_thumbnail_offset_for_bitmapinfoheader_palette_256() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0xFF, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
-        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
+        0xFF, 0x00, 0x00,
+        0x00, // color palette count (0 means default of 2^n)
+              // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
     assert_eq!(0x0432, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
@@ -171,25 +174,9 @@ fn set_thumbnail_offset_for_bitmapv4header_non_palette() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0x00, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
-        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
-        0x00, 0x00, 0x00, 0x00, // red mask
-        0x00, 0x00, 0x00, 0x00, // green mask
-        0x00, 0x00, 0x00, 0x00, // blue mask
-        0x00, 0x00, 0x00, 0x00, // alpha mask
-        0x00, 0x00, 0x00, 0x00, // color space type
-        0x00, 0x00, 0x00, 0x00, // red triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // green triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // blue triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // gamma red
-        0x00, 0x00, 0x00, 0x00, // gamma green
-        0x00, 0x00, 0x00, 0x00, // gamma blue
+        0x00, 0x00, 0x00,
+        0x00, // color palette count (0 means default of 2^n)
+              // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
     assert_eq!(0x7A, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
@@ -212,25 +199,9 @@ fn set_thumbnail_offset_for_bitmapv4header_palette_256() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0xFF, 0x00, 0x00, 0x00, // color palette count (0 means default of 2^n)
-        0x00, 0x00, 0x00, 0x00, // important colors used (not needed)
-        0x00, 0x00, 0x00, 0x00, // red mask
-        0x00, 0x00, 0x00, 0x00, // green mask
-        0x00, 0x00, 0x00, 0x00, // blue mask
-        0x00, 0x00, 0x00, 0x00, // alpha mask
-        0x00, 0x00, 0x00, 0x00, // color space type
-        0x00, 0x00, 0x00, 0x00, // red triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // green triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // blue triple
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, //
-        0x00, 0x00, 0x00, 0x00, // gamma red
-        0x00, 0x00, 0x00, 0x00, // gamma green
-        0x00, 0x00, 0x00, 0x00, // gamma blue
+        0xFF, 0x00, 0x00,
+        0x00, // color palette count (0 means default of 2^n)
+              // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
     assert_eq!(0x0476, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
