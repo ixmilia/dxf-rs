@@ -960,7 +960,7 @@ impl Drawing {
                 writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
                 writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
                 let mut data = vec![];
-                img.write_to(&mut data, image::ImageFormat::BMP)?;
+                img.write_to(&mut data, image::ImageFormat::Bmp)?;
                 let length = data.len() - 14; // skip 14 byte bmp header
                 writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
                 for s in data[14..].chunks(128) {
