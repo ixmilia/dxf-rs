@@ -149,12 +149,12 @@ fn set_thumbnail_offset_for_bitmapinfoheader_palette_256() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0xFF, 0x00, 0x00,
+        0x00, 0x01, 0x00,
         0x00, // color palette count (0 means default of 2^n)
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x0432, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x0436, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 #[test]
@@ -199,12 +199,12 @@ fn set_thumbnail_offset_for_bitmapv4header_palette_256() {
         0x00, 0x00, 0x00, 0x00, // image size (not needed)
         0x00, 0x00, 0x00, 0x00, // horizontal resolution (not needed)
         0x00, 0x00, 0x00, 0x00, // vertical resolution (not needed)
-        0xFF, 0x00, 0x00,
+        0x00, 0x01, 0x00,
         0x00, // color palette count (0 means default of 2^n)
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x0476, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x047A, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 fn read_thumbnail_from_bytes(data: &[u8]) -> DxfResult<Option<image::DynamicImage>> {
