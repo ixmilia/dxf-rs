@@ -29,6 +29,7 @@ use crate::{
     DxfError,
     DxfResult,
     ExtensionGroup,
+    Handle,
     LineWeight,
     Point,
     Vector,
@@ -61,9 +62,9 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
         fun.push_str(&format!("pub struct {name} {{\n", name = name(&table_item)));
         fun.push_str("    pub name: String,\n");
-        fun.push_str("    pub handle: u32,\n");
+        fun.push_str("    pub handle: Handle,\n");
         fun.push_str("    #[doc(hidden)]\n");
-        fun.push_str("    pub __owner_handle: u32,\n");
+        fun.push_str("    pub __owner_handle: Handle,\n");
         fun.push_str("    pub extension_data_groups: Vec<ExtensionGroup>,\n");
         fun.push_str("    pub x_data: Vec<XData>,\n");
         for field in &table_item.children {
@@ -75,7 +76,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
             if !seen_fields.contains(&name) {
                 seen_fields.insert(name.clone());
                 let mut typ = if field.name == "Pointer" {
-                    String::from("u32")
+                    String::from("Handle")
                 } else {
                     attr(&field, "Type")
                 };
@@ -100,8 +101,8 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("    fn default() -> Self {\n");
         fun.push_str(&format!("        {name} {{\n", name = name(&table_item)));
         fun.push_str("            name: String::new(),\n");
-        fun.push_str("            handle: 0,\n");
-        fun.push_str("            __owner_handle: 0,\n");
+        fun.push_str("            handle: Handle::empty(),\n");
+        fun.push_str("            __owner_handle: Handle::empty(),\n");
         fun.push_str("            extension_data_groups: vec![],\n");
         fun.push_str("            x_data: vec![],\n");
         for field in &table_item.children {
@@ -114,7 +115,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
                 seen_fields.insert(name.clone());
                 let default_value = match (&*field.name, allow_multiples(&field)) {
                     ("Pointer", true) => String::from("vec![]"),
-                    ("Pointer", false) => String::from("0"),
+                    ("Pointer", false) => String::from("Handle::empty()"),
                     (_, _) => attr(&field, "DefaultValue"),
                 };
                 fun.push_str(&format!(
@@ -292,7 +293,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push_str("                        }\n");
         fun.push_str("                    }\n");
         fun.push_str("\n");
-        fun.push_str("                    if item.handle == 0 {\n");
+        fun.push_str("                    if item.handle.is_empty() {\n");
         fun.push_str(&format!(
             "                        drawing.add_{item_type}(item);\n",
             item_type = item_type
@@ -375,7 +376,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             type_string = attr(&table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &as_handle(DrawingItem::{item_type}(&item).get_handle())))?;\n",
+        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &DrawingItem::{item_type}(&item).get_handle().as_string()))?;\n",
             item_type=item_type));
         fun.push_str("        }\n");
         fun.push_str("\n");
@@ -433,7 +434,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             indent = indent,
                             field = name(&field)
                         ));
-                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_string({code}, &as_handle(*x)))?;\n",
+                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_string({code}, &x.as_string()))?;\n",
                             indent=indent, code=code));
                     } else {
                         let expected_type = ExpectedType::get_expected_type(code).unwrap();
@@ -457,7 +458,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                     if codes.len() == 1 {
                         let code = codes[0];
                         if field.name == "Pointer" {
-                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_string({code}, &as_handle(item.__{field}_handle)))?;\n",
+                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_string({code}, &item.__{field}_handle.as_string()))?;\n",
                                 indent=indent, code=code, field=name(&field)));
                         } else {
                             let typ = ExpectedType::get_expected_type(code).unwrap();

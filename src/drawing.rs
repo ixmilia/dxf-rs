@@ -12,7 +12,7 @@ use crate::header::*;
 use crate::objects::*;
 use crate::tables::*;
 
-use crate::{CodePair, CodePairValue, DxfError, DxfResult};
+use crate::{CodePair, CodePairValue, DxfError, DxfResult, Handle};
 
 use crate::dxb_reader::DxbReader;
 use crate::dxb_writer::DxbWriter;
@@ -36,7 +36,7 @@ use std::collections::HashSet;
 use std::iter::Iterator;
 use std::path::Path;
 
-pub(crate) const AUTO_REPLACE_HANDLE: u32 = 0xFFFF_FFFF;
+pub(crate) const AUTO_REPLACE_HANDLE: Handle = Handle(0xFFFF_FFFF_FFFF_FFFF);
 
 /// Represents a DXF drawing.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -466,7 +466,7 @@ impl Drawing {
         self.__objects.clear();
         self.thumbnail = None;
 
-        self.header.next_available_handle = 1;
+        self.header.next_available_handle = Handle(1);
     }
     /// Normalizes the `Drawing` by ensuring expected items are present.
     pub fn normalize(&mut self) {
@@ -499,7 +499,7 @@ impl Drawing {
         self.__view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
     /// Gets a `DrawingItem` with the appropriate handle or `None`.
-    pub fn get_item_by_handle(&'_ self, handle: u32) -> Option<DrawingItem<'_>> {
+    pub fn get_item_by_handle(&'_ self, handle: Handle) -> Option<DrawingItem<'_>> {
         for item in &self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItem::AppId(item));
@@ -564,7 +564,7 @@ impl Drawing {
         None
     }
     /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
-    pub fn get_item_by_handle_mut(&'_ mut self, handle: u32) -> Option<DrawingItemMut<'_>> {
+    pub fn get_item_by_handle_mut(&'_ mut self, handle: Handle) -> Option<DrawingItemMut<'_>> {
         for item in &mut self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItemMut::AppId(item));
@@ -628,10 +628,11 @@ impl Drawing {
 
         None
     }
-    pub(crate) fn assign_and_get_handle(&mut self, item: &mut DrawingItemMut) -> u32 {
-        if item.get_handle() == 0 {
+    pub(crate) fn assign_and_get_handle(&mut self, item: &mut DrawingItemMut) -> Handle {
+        if item.get_handle().is_empty() {
             item.set_handle(self.header.next_available_handle);
-            self.header.next_available_handle += 1;
+            self.header.next_available_handle =
+                self.header.next_available_handle.next_handle_value();
         }
 
         item.get_handle()
@@ -640,9 +641,9 @@ impl Drawing {
 
 // private implementation
 impl Drawing {
-    pub(crate) fn next_handle(&mut self) -> u32 {
+    pub(crate) fn next_handle(&mut self) -> Handle {
         let result = self.header.next_available_handle;
-        self.header.next_available_handle += 1;
+        self.header.next_available_handle = self.header.next_available_handle.next_handle_value();
         result
     }
     fn remove_item<T>(collection: &mut Vec<T>, index: usize) -> Option<T> {
@@ -1078,7 +1079,7 @@ impl Drawing {
         let mut entities = vec![];
         iter.read_entities_into_vec(&mut entities)?;
         for e in entities {
-            if e.common.handle == 0 {
+            if e.common.handle.is_empty() {
                 self.add_entity(e);
             } else {
                 self.add_entity_no_handle_set(e);
@@ -1092,7 +1093,7 @@ impl Drawing {
     {
         let iter = put_back(ObjectIter { iter });
         for o in iter {
-            if o.common.handle == 0 {
+            if o.common.handle.is_empty() {
                 self.add_object(o);
             } else {
                 self.add_object_no_handle_set(o);
@@ -1301,10 +1302,10 @@ mod tests {
     fn block_handle_is_set_on_add() {
         let mut drawing = Drawing::new();
         let block = Block::default();
-        assert_eq!(0, block.handle);
+        assert_eq!(Handle(0), block.handle);
 
         let block = drawing.add_block(block);
-        assert_ne!(0, block.handle);
+        assert_ne!(Handle(0), block.handle);
     }
 
     #[test]
@@ -1314,10 +1315,10 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
         };
-        assert_eq!(0, ent.common.handle);
+        assert_eq!(Handle(0), ent.common.handle);
 
         let ent = drawing.add_entity(ent);
-        assert_ne!(0, ent.common.handle);
+        assert_ne!(Handle(0), ent.common.handle);
     }
 
     #[test]
@@ -1327,10 +1328,10 @@ mod tests {
             common: Default::default(),
             specific: ObjectType::PlaceHolder(Default::default()),
         };
-        assert_eq!(0, obj.common.handle);
+        assert_eq!(Handle(0), obj.common.handle);
 
         let obj = drawing.add_object(obj);
-        assert_ne!(0, obj.common.handle);
+        assert_ne!(Handle(0), obj.common.handle);
     }
 
     #[test]
@@ -1338,10 +1339,10 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.clear();
         let layer = Layer::default();
-        assert_eq!(0, layer.handle);
+        assert_eq!(Handle(0), layer.handle);
 
         let layer = drawing.add_layer(layer);
-        assert_ne!(0, layer.handle);
+        assert_ne!(Handle(0), layer.handle);
     }
 
     #[test]
@@ -1355,7 +1356,7 @@ mod tests {
             .as_str(),
         );
         let block = drawing.blocks().next().unwrap();
-        assert_ne!(0, block.handle);
+        assert_ne!(Handle(0), block.handle);
     }
 
     #[test]
@@ -1368,7 +1369,7 @@ mod tests {
             .as_str(),
         );
         let line = drawing.entities().next().unwrap();
-        assert_ne!(0, line.common.handle);
+        assert_ne!(Handle(0), line.common.handle);
     }
 
     #[test]
@@ -1390,7 +1391,7 @@ mod tests {
             .as_str(),
         );
         let obj = drawing.objects().next().unwrap();
-        assert_ne!(0, obj.common.handle);
+        assert_ne!(Handle(0), obj.common.handle);
     }
 
     #[test]
@@ -1404,7 +1405,7 @@ mod tests {
             .as_str(),
         );
         let layer = drawing.layers().next().unwrap();
-        assert_ne!(0, layer.handle);
+        assert_ne!(Handle(0), layer.handle);
     }
 
     #[test]
@@ -1418,7 +1419,7 @@ mod tests {
             .as_str(),
         );
         let block = drawing.blocks().next().unwrap();
-        assert_eq!(0x3333, block.handle);
+        assert_eq!(Handle(0x3333), block.handle);
     }
 
     #[test]
@@ -1432,7 +1433,7 @@ mod tests {
             .as_str(),
         );
         let line = drawing.entities().next().unwrap();
-        assert_eq!(0x3333, line.common.handle);
+        assert_eq!(Handle(0x3333), line.common.handle);
     }
 
     #[test]
@@ -1456,7 +1457,7 @@ mod tests {
             .as_str(),
         );
         let obj = drawing.objects().next().unwrap();
-        assert_eq!(0x3333, obj.common.handle);
+        assert_eq!(Handle(0x3333), obj.common.handle);
     }
 
     #[test]
@@ -1470,7 +1471,7 @@ mod tests {
             .as_str(),
         );
         let layer = drawing.layers().next().unwrap();
-        assert_eq!(0x3333, layer.handle);
+        assert_eq!(Handle(0x3333), layer.handle);
     }
 
     #[test]
@@ -1481,12 +1482,12 @@ mod tests {
             specific: EntityType::Line(Line::default()),
         });
         assert_eq!(1, drawing.entities().count());
-        assert_ne!(0, drawing.header.next_available_handle);
-        assert_ne!(1, drawing.header.next_available_handle);
+        assert_ne!(Handle(0), drawing.header.next_available_handle);
+        assert_ne!(Handle(1), drawing.header.next_available_handle);
 
         drawing.clear();
         assert_eq!(0, drawing.entities().count());
-        assert_eq!(1, drawing.header.next_available_handle);
+        assert_eq!(Handle(1), drawing.header.next_available_handle);
     }
 
     #[test]

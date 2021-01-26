@@ -27,6 +27,7 @@ use crate::{
     DxfError,
     DxfResult,
     ExtensionGroup,
+    Handle,
     LwPolylineVertex,
     Point,
     Vector,
@@ -89,9 +90,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
             }
             "Pointer" => {
                 let typ = if allow_multiples(&c) {
-                    "Vec<u32>"
+                    "Vec<Handle>"
                 } else {
-                    "u32"
+                    "Handle"
                 };
                 fun.push_str("    #[doc(hidden)]\n");
                 fun.push_str(&format!(
@@ -130,7 +131,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
             }
             "Pointer" => {
                 fun.push_str(&format!(
-                    "            __{name}_handle: 0,\n",
+                    "            __{name}_handle: Handle::empty(),\n",
                     name = name(c)
                 ));
             }
@@ -266,9 +267,9 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                     }
                     "Pointer" => {
                         let typ = if allow_multiples(&f) {
-                            "Vec<u32>"
+                            "Vec<Handle>"
                         } else {
-                            "u32"
+                            "Handle"
                         };
                         fun.push_str("    #[doc(hidden)]\n");
                         fun.push_str(&format!(
@@ -302,7 +303,11 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                         ));
                     }
                     "Pointer" => {
-                        let val = if allow_multiples(&f) { "vec![]" } else { "0" };
+                        let val = if allow_multiples(&f) {
+                            "vec![]"
+                        } else {
+                            "Handle::empty()"
+                        };
                         fun.push_str(&format!(
                             "            __{name}_handle: {val},\n",
                             name = name(f),
@@ -753,7 +758,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     if allow_multiples(&field) {
         let expected_type = ExpectedType::get_expected_type(codes(&field)[0]).unwrap();
         let val = if field.name == "Pointer" {
-            "&as_handle(*v)"
+            "&v.as_string()"
         } else {
             match expected_type {
                 ExpectedType::Str => "&v",
@@ -822,7 +827,7 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     let typ = get_code_pair_type(&expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
     if field.name == "Pointer" {
-        write_converter = String::from("&as_handle({})");
+        write_converter = String::from("&{}.as_string()");
     }
     if write_converter.is_empty() {
         if typ == "string" {
@@ -842,7 +847,7 @@ fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&
     }
     let writer = write_converter.replace("{}", &field_access);
     if name(&field) == "handle" && code == 5 {
-        String::from("CodePair::new_string(5, &as_handle(self.handle))")
+        String::from("CodePair::new_string(5, &self.handle.as_string())")
     } else {
         format!(
             "CodePair::new_{typ}({code}, {writer})",

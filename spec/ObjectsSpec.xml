@@ -5,14 +5,14 @@
 
   -->
   <Object Name="Object" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" />
+    <Field Name="handle" Code="5" Type="Handle" DefaultValue="Handle::empty()" ReaderOverride="pair.as_handle()?" />
     <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="x_data" Code="1001" Type="XData" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="owner" Code="330" />
     <WriteOrder>
       <WriteField Field="handle" />
       <WriteExtensionData />
-      <WriteField Field="owner" DontWriteIfValueIs="0" />
+      <WriteField Field="owner" DontWriteIfValueIs="Handle(0)" />
     </WriteOrder>
   </Object>
   <!--
@@ -54,8 +54,8 @@
   -->
   <Object Name="DictionaryWithDefault" SubclassMarker="AcDbDictionaryWithDefault" TypeString="ACDBDICTIONARYWDFLT" GenerateReaderFunction="false" GenerateWriterFunction="false" MinVersion="R2000">
     <Field Name="duplicate_record_handling" Code="281" Type="DictionaryDuplicateRecordHandling" DefaultValue="DictionaryDuplicateRecordHandling::NotApplicable" />
-    <Field Name="default_handle" Code="340" Type="u32" DefaultValue="0" />
-    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, u32&gt;" DefaultValue="HashMap::new()" />
+    <Field Name="default_handle" Code="340" Type="Handle" DefaultValue="Handle::empty()" />
+    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, Handle&gt;" DefaultValue="HashMap::new()" />
   </Object>
   <!--
 
@@ -99,7 +99,7 @@
   <Object Name="Dictionary" SubclassMarker="AcDbDictionary" TypeString="DICTIONARY" GenerateReaderFunction="false" GenerateWriterFunction="false">
     <Field Name="is_hard_owner" Code="280" Type="bool" DefaultValue="false" />
     <Field Name="duplicate_record_handling" Code="281" Type="DictionaryDuplicateRecordHandling" DefaultValue="DictionaryDuplicateRecordHandling::NotApplicable" />
-    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, u32&gt;" DefaultValue="HashMap::new()" />
+    <Field Name="value_handles" Code="5" Type="HashMap&lt;String, Handle&gt;" DefaultValue="HashMap::new()" />
   </Object>
   <!--
 
@@ -166,7 +166,7 @@
     <!-- internal properties -->
     <Field Name="__long_value" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="__double_value" Code="140" Type="f64" DefaultValue="0.0" />
-    <Field Name="__id_value" Code="330" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" WriteConverter="&amp;as_handle({})" />
+    <Field Name="__id_value" Code="330" Type="Handle" DefaultValue="Handle(0)" ReaderOverride="pair.as_handle()?" WriteConverter="&amp;{}.as_string()" />
     <Field Name="__binary_data_buffer_size" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="__binary_data" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" />
     <Field Name="__format_string_code301" Code="301" Type="String" DefaultValue="String::new()" />
@@ -188,8 +188,8 @@
       <WriteField Field="evaluation_error_code" />
       <WriteSpecificValue Code="97" Value="obj.__objects_handle.len() as i32" />
       <Foreach Field="obj.__objects_handle">
-        <WriteSpecificValue Code="330" Value="&amp;as_handle(*item)" MaxVersion="R2007" />
-        <WriteSpecificValue Code="331" Value="&amp;as_handle(*item)" MinVersion="R2010" />
+        <WriteSpecificValue Code="330" Value="&amp;item.as_string()" MaxVersion="R2007" />
+        <WriteSpecificValue Code="331" Value="&amp;item.as_string()" MinVersion="R2010" />
       </Foreach>
       <WriteSpecificValue Code="93" Value="obj.field_data_keys.len() as i32" />
       <WriteField Field="field_data_keys" />

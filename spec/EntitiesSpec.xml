@@ -5,7 +5,7 @@
 
   -->
   <Entity Name="Entity" SubclassMarker="" TypeString="">
-    <Field Name="handle" Code="5" Type="u32" DefaultValue="0" ReaderOverride="pair.as_handle()?" />
+    <Field Name="handle" Code="5" Type="Handle" DefaultValue="Handle::empty()" ReaderOverride="pair.as_handle()?" />
     <Field Name="extension_data_groups" Code="102" Type="ExtensionGroup" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="x_data" Code="1001" Type="XData" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="owner" Code="330" />
@@ -28,7 +28,7 @@
     <WriteOrder>
       <WriteField Field="handle" WriteCondition="write_handles" />
       <WriteExtensionData />
-      <WriteField Field="owner" WriteCondition="write_handles" DontWriteIfValueIs="0" />
+      <WriteField Field="owner" WriteCondition="write_handles" DontWriteIfValueIs="Handle(0)" />
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbEntity")' />
       <WriteField Field="is_in_paper_space" />
       <WriteField Field="layer" />
@@ -483,7 +483,7 @@
     <Field Name="column_spacing" Code="44" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
-    <Field Name="__attributes_and_handles" Code="10" Type="(Attribute, u32)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
+    <Field Name="__attributes_and_handles" Code="10" Type="(Attribute, Handle)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' />
       <WriteSpecificValue Code="66" Value="as_i16(ent.attributes().count() > 0)" />
@@ -850,7 +850,7 @@
     <Field Name="smooth_surface_n_density" Code="74" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="surface_type" Code="75" Type="PolylineCurvedAndSmoothSurfaceType" DefaultValue="PolylineCurvedAndSmoothSurfaceType::None" ReadConverter="enum_from_number!(PolylineCurvedAndSmoothSurfaceType, None, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="__vertices_and_handles" Code="10" Type="(Vertex, u32)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
+    <Field Name="__vertices_and_handles" Code="10" Type="(Vertex, Handle)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
   </Entity>
   <!--
 

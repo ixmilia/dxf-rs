@@ -2,7 +2,7 @@ use std::io::{Read, Write};
 
 use crate::{
     CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
-    ExtensionGroup, Point, XData,
+    ExtensionGroup, Handle, Point, XData,
 };
 
 use crate::code_pair_put_back::CodePairPutBack;
@@ -19,9 +19,9 @@ use crate::x_data;
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Block {
     /// The block's handle.
-    pub handle: u32,
+    pub handle: Handle,
     #[doc(hidden)]
-    pub __owner_handle: u32,
+    pub __owner_handle: Handle,
     /// The name of the layer containing the block.
     pub layer: String,
     /// The name of the block.
@@ -103,8 +103,8 @@ impl Block {
 impl Default for Block {
     fn default() -> Self {
         Block {
-            handle: 0,
-            __owner_handle: 0,
+            handle: Handle::empty(),
+            __owner_handle: Handle::empty(),
             layer: String::from("0"),
             name: String::new(),
             flags: 0,
@@ -156,7 +156,7 @@ impl Block {
                                 }
                             }
 
-                            if current.handle == 0 {
+                            if current.handle.is_empty() {
                                 drawing.add_block(current);
                             } else {
                                 drawing.add_block_no_handle_set(current);
@@ -219,7 +219,7 @@ impl Block {
     {
         writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
         if write_handles {
-            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
+            writer.write_code_pair(&CodePair::new_string(5, &self.handle.as_string()))?;
         }
 
         if version >= AcadVersion::R14 {
@@ -229,9 +229,11 @@ impl Block {
         }
 
         if version >= AcadVersion::R13 {
-            if self.__owner_handle != 0 {
-                writer
-                    .write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
+            if !self.__owner_handle.is_empty() {
+                writer.write_code_pair(&CodePair::new_string(
+                    330,
+                    &self.__owner_handle.as_string(),
+                ))?;
             }
 
             writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
@@ -265,8 +267,8 @@ impl Block {
         }
 
         writer.write_code_pair(&CodePair::new_str(0, "ENDBLK"))?;
-        if write_handles && self.handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(5, &as_handle(self.handle)))?;
+        if write_handles && !self.handle.is_empty() {
+            writer.write_code_pair(&CodePair::new_string(5, &self.handle.as_string()))?;
         }
 
         if version >= AcadVersion::R14 {
@@ -275,8 +277,8 @@ impl Block {
             }
         }
 
-        if version >= AcadVersion::R2000 && self.__owner_handle != 0 {
-            writer.write_code_pair(&CodePair::new_string(330, &as_handle(self.__owner_handle)))?;
+        if version >= AcadVersion::R2000 && !self.__owner_handle.is_empty() {
+            writer.write_code_pair(&CodePair::new_string(330, &self.__owner_handle.as_string()))?;
         }
 
         if version >= AcadVersion::R13 {

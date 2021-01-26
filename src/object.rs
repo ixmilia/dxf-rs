@@ -1605,7 +1605,7 @@ impl Object {
                                 Some(DataTableValue::Handle(val)) => {
                                     writer.write_code_pair(&CodePair::new_string(
                                         331,
-                                        &as_handle(val),
+                                        &val.as_string(),
                                     ))?;
                                 }
                                 None => (),
@@ -1629,7 +1629,7 @@ impl Object {
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
                     if let Some(value) = dict.value_handles.get(key) {
                         writer.write_code_pair(&CodePair::new_string(3, key))?;
-                        writer.write_code_pair(&CodePair::new_string(code, &as_handle(*value)))?;
+                        writer.write_code_pair(&CodePair::new_string(code, &value.as_string()))?;
                     }
                 }
             }
@@ -1641,12 +1641,14 @@ impl Object {
                         dict.duplicate_record_handling as i16,
                     ))?;
                 }
-                writer
-                    .write_code_pair(&CodePair::new_string(340, &as_handle(dict.default_handle)))?;
+                writer.write_code_pair(&CodePair::new_string(
+                    340,
+                    &dict.default_handle.as_string(),
+                ))?;
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
                     if let Some(value) = dict.value_handles.get(key) {
                         writer.write_code_pair(&CodePair::new_string(3, key))?;
-                        writer.write_code_pair(&CodePair::new_string(350, &as_handle(*value)))?;
+                        writer.write_code_pair(&CodePair::new_string(350, &value.as_string()))?;
                     }
                 }
             }
@@ -1655,7 +1657,7 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_i32(90, ll.version))?;
                 writer.write_code_pair(&CodePair::new_i32(90, ll.__lights_handle.len() as i32))?;
                 for light in &ll.__lights_handle {
-                    writer.write_code_pair(&CodePair::new_string(5, &as_handle(*light)))?;
+                    writer.write_code_pair(&CodePair::new_string(5, &light.as_string()))?;
                     // TODO: write the light's real name
                     writer.write_code_pair(&CodePair::new_string(1, &String::new()))?;
                 }
@@ -1697,12 +1699,13 @@ impl Object {
                 }
                 writer.write_code_pair(&CodePair::new_string(
                     340,
-                    &as_handle(ss.__page_setup_wizard_handle),
+                    &ss.__page_setup_wizard_handle.as_string(),
                 ))?;
-                writer.write_code_pair(&CodePair::new_string(341, &as_handle(ss.__view_handle)))?;
+                writer
+                    .write_code_pair(&CodePair::new_string(341, &ss.__view_handle.as_string()))?;
                 writer.write_code_pair(&CodePair::new_string(
                     342,
-                    &as_handle(ss.__visual_style_handle),
+                    &ss.__visual_style_handle.as_string(),
                 ))?;
                 writer.write_code_pair(&CodePair::new_i16(74, ss.shade_plot_type))?;
                 writer.write_code_pair(&CodePair::new_i16(75, ss.viewports_per_page as i16))?;
@@ -1719,7 +1722,7 @@ impl Object {
                 writer.write_code_pair(&CodePair::new_bool(294, ss.label_viewports))?;
                 writer.write_code_pair(&CodePair::new_string(
                     343,
-                    &as_handle(ss.__text_style_handle),
+                    &ss.__text_style_handle.as_string(),
                 ))?;
             }
             ObjectType::XRecordObject(ref xr) => {
@@ -1839,7 +1842,7 @@ mod tests {
     #[test]
     fn read_common_object_fields() {
         let obj = read_object("IMAGEDEF", vec!["5", "DEADBEEF"].join("\r\n"));
-        assert_eq!(0xDEAD_BEEF, obj.common.handle);
+        assert_eq!(Handle(0xDEAD_BEEF), obj.common.handle);
     }
 
     #[test]
@@ -2073,8 +2076,8 @@ mod tests {
             ]
             .join("\r\n"),
         );
-        assert_eq!(0xa1, obj.common.handle);
-        assert_eq!(0xa2, obj.common.__owner_handle);
+        assert_eq!(Handle(0xa1), obj.common.handle);
+        assert_eq!(Handle(0xa2), obj.common.__owner_handle);
         match obj.specific {
             ObjectType::LightList(_) => (),
             _ => panic!("expected a light list"),
@@ -2087,7 +2090,7 @@ mod tests {
         drawing.header.version = AcadVersion::R2007; // LIGHTLIST only supported up to 2007
         drawing.add_object(Object {
             common: ObjectCommon {
-                __owner_handle: 0xa2,
+                __owner_handle: Handle(0xa2),
                 ..Default::default()
             },
             specific: ObjectType::LightList(Default::default()),
@@ -2107,8 +2110,8 @@ mod tests {
         match dict.specific {
             ObjectType::Dictionary(ref dict) => {
                 assert_eq!(2, dict.value_handles.len());
-                assert_eq!(Some(&0xAAAA), dict.value_handles.get("key1"));
-                assert_eq!(Some(&0xBBBB), dict.value_handles.get("key2"));
+                assert_eq!(Some(&Handle(0xAAAA)), dict.value_handles.get("key1"));
+                assert_eq!(Some(&Handle(0xBBBB)), dict.value_handles.get("key2"));
             }
             _ => panic!("expected a dictionary"),
         }
@@ -2117,8 +2120,10 @@ mod tests {
     #[test]
     fn write_dictionary() {
         let mut dict = Dictionary::default();
-        dict.value_handles.insert(String::from("key1"), 0xAAAA);
-        dict.value_handles.insert(String::from("key2"), 0xBBBB);
+        dict.value_handles
+            .insert(String::from("key1"), Handle(0xAAAA));
+        dict.value_handles
+            .insert(String::from("key2"), Handle(0xBBBB));
         let mut drawing = Drawing::new();
         drawing.add_object(Object {
             common: Default::default(),

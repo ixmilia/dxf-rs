@@ -115,10 +115,6 @@ pub(crate) fn as_duration(d: f64) -> StdDuration {
     StdDuration::from_secs(d as u64)
 }
 
-pub(crate) fn as_handle(h: u32) -> String {
-    format!("{:X}", h)
-}
-
 pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
     let mut reconstructed = String::new();
     let s = if s.starts_with('{') && s.ends_with('}') {

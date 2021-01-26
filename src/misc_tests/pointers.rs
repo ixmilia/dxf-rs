@@ -122,10 +122,10 @@ fn set_pointer_on_entity() {
         common: Default::default(),
         specific: EntityType::Line(Default::default()),
     };
-    assert_eq!(0, material.common.handle);
+    assert_eq!(Handle(0), material.common.handle);
 
     let material = drawing.add_object(material);
-    assert_eq!(0x10, material.common.handle);
+    assert_eq!(Handle(0x10), material.common.handle);
     line.common.set_material(material).ok().unwrap();
     drawing.add_entity(line);
 

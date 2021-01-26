@@ -1,7 +1,7 @@
 use crate::entities::*;
 use crate::objects::*;
 use crate::tables::*;
-use crate::Block;
+use crate::{Block, Handle};
 
 #[derive(Debug)]
 pub enum DrawingItem<'a> {
@@ -20,7 +20,7 @@ pub enum DrawingItem<'a> {
 }
 
 impl<'a> DrawingItem<'a> {
-    pub fn get_handle(&self) -> u32 {
+    pub fn get_handle(&self) -> Handle {
         match self {
             DrawingItem::AppId(ref app_id) => app_id.handle,
             DrawingItem::Block(ref b) => b.handle,
@@ -54,7 +54,7 @@ pub enum DrawingItemMut<'a> {
 }
 
 impl<'a> DrawingItemMut<'a> {
-    pub fn get_handle(&self) -> u32 {
+    pub fn get_handle(&self) -> Handle {
         match self {
             DrawingItemMut::AppId(ref app_id) => app_id.handle,
             DrawingItemMut::Block(ref b) => b.handle,
@@ -70,7 +70,7 @@ impl<'a> DrawingItemMut<'a> {
             DrawingItemMut::ViewPort(ref v) => v.handle,
         }
     }
-    pub fn set_handle(&mut self, handle: u32) {
+    pub fn set_handle(&mut self, handle: Handle) {
         match self {
             DrawingItemMut::AppId(ref mut app_id) => app_id.handle = handle,
             DrawingItemMut::Block(ref mut b) => b.handle = handle,

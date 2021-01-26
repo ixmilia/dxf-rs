@@ -1,4 +1,4 @@
-use crate::Point;
+use crate::{Handle, Point};
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -9,5 +9,5 @@ pub enum DataTableValue {
     Str(String),
     Point2D(Point),
     Point3D(Point),
-    Handle(u32),
+    Handle(Handle),
 }

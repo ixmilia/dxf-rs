@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 
-use crate::{CodePair, DxfResult, SectionGeometrySettings};
+use crate::{CodePair, DxfResult, Handle, SectionGeometrySettings};
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
@@ -11,8 +11,8 @@ use crate::helper_functions::*;
 pub struct SectionTypeSettings {
     pub section_type: i32,
     pub is_generation_option: bool,
-    pub source_object_handles: Vec<u32>,
-    pub destination_object_handle: u32,
+    pub source_object_handles: Vec<Handle>,
+    pub destination_object_handle: Handle,
     pub destination_file_name: String,
     pub geometry_settings: Vec<SectionGeometrySettings>,
 }
@@ -23,7 +23,7 @@ impl Default for SectionTypeSettings {
             section_type: 0,
             is_generation_option: false,
             source_object_handles: vec![],
-            destination_object_handle: 0,
+            destination_object_handle: Handle::empty(),
             destination_file_name: String::new(),
             geometry_settings: vec![],
         }
@@ -109,11 +109,11 @@ impl SectionTypeSettings {
             self.source_object_handles.len() as i32,
         ))?;
         for handle in &self.source_object_handles {
-            writer.write_code_pair(&CodePair::new_string(330, &as_handle(*handle)))?;
+            writer.write_code_pair(&CodePair::new_string(330, &handle.as_string()))?;
         }
         writer.write_code_pair(&CodePair::new_string(
             331,
-            &as_handle(self.destination_object_handle),
+            &self.destination_object_handle.as_string(),
         ))?;
         writer.write_code_pair(&CodePair::new_string(1, &self.destination_file_name))?;
         writer.write_code_pair(&CodePair::new_i32(93, self.geometry_settings.len() as i32))?;

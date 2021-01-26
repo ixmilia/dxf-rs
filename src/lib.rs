@@ -136,6 +136,9 @@ pub use crate::code_pair_value::CodePairValue;
 mod data_table_value;
 pub use crate::data_table_value::DataTableValue;
 
+mod handle;
+pub use crate::handle::Handle;
+
 #[macro_use]
 mod helper_functions;
 

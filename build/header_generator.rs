@@ -24,6 +24,7 @@ use crate::{
     Color,
     DxfError,
     DxfResult,
+    Handle,
     LineWeight,
     Point,
     Vector,

@@ -5,7 +5,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use self::byteorder::{BigEndian, ByteOrder};
 
-use crate::{CodePairValue, DxfError, DxfResult};
+use crate::{CodePairValue, DxfError, DxfResult, Handle};
 
 use crate::helper_functions::parse_hex_string;
 
@@ -97,13 +97,13 @@ impl CodePair {
 }
 
 impl CodePair {
-    pub(crate) fn as_handle(&self) -> DxfResult<u32> {
+    pub(crate) fn as_handle(&self) -> DxfResult<Handle> {
         let mut bytes = vec![];
         parse_hex_string(&self.assert_string()?, &mut bytes, self.offset)?;
-        while bytes.len() < 4 {
+        while bytes.len() < 8 {
             bytes.insert(0, 0);
         }
-        Ok(BigEndian::read_u32(&bytes))
+        Ok(Handle(BigEndian::read_u64(&bytes)))
     }
 }
 
@@ -128,13 +128,26 @@ impl PartialEq for CodePair {
 
 #[cfg(test)]
 mod tests {
-    use crate::CodePair;
+    use crate::{CodePair, Handle};
 
     #[test]
     fn as_handle() {
-        assert_eq!(0x00, CodePair::new_str(0, "0").as_handle().unwrap());
-        assert_eq!(0x01, CodePair::new_str(0, "1").as_handle().unwrap());
-        assert_eq!(0xABCD, CodePair::new_str(0, "ABCD").as_handle().unwrap());
+        assert_eq!(Handle(0x00), CodePair::new_str(0, "0").as_handle().unwrap());
+        assert_eq!(Handle(0x01), CodePair::new_str(0, "1").as_handle().unwrap());
+        assert_eq!(
+            Handle(0xABCD),
+            CodePair::new_str(0, "ABCD").as_handle().unwrap()
+        );
+        assert_eq!(
+            Handle(0xABCDABCD),
+            CodePair::new_str(0, "ABCDABCD").as_handle().unwrap()
+        );
+        assert_eq!(
+            Handle(0xABCDABCDABCDABCD),
+            CodePair::new_str(0, "ABCDABCDABCDABCD")
+                .as_handle()
+                .unwrap()
+        );
     }
 
     #[test]

@@ -3,7 +3,7 @@
 use enum_primitive::FromPrimitive;
 use std::io::{Read, Write};
 
-use crate::{CodePair, Color, DxfError, DxfResult, Point, Vector};
+use crate::{CodePair, Color, DxfError, DxfResult, Handle, Point, Vector};
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
@@ -1663,7 +1663,7 @@ impl Entity {
         T: Write + ?Sized,
     {
         let m_text_common = EntityCommon {
-            handle: 0, // TODO: set handle
+            handle: Handle::empty(), // TODO: set handle
             __owner_handle: self.common.handle,
             is_in_paper_space: self.common.is_in_paper_space,
             layer: self.common.layer.clone(),
@@ -2120,10 +2120,12 @@ mod tests {
             ]
             .join("\r\n"),
         );
-        assert_eq!(0xa1, ent.common.handle);
-        assert_eq!(0xa2, ent.common.__owner_handle);
+        assert_eq!(Handle(0xa1), ent.common.handle);
+        assert_eq!(Handle(0xa2), ent.common.__owner_handle);
         match ent.specific {
-            EntityType::Solid3D(ref solid) => assert_eq!(0xa3, solid.__history_object_handle),
+            EntityType::Solid3D(ref solid) => {
+                assert_eq!(Handle(0xa3), solid.__history_object_handle)
+            }
             _ => panic!("expected a 3DSOLID entity"),
         }
     }
@@ -2134,7 +2136,7 @@ mod tests {
         drawing.header.version = AcadVersion::R2000;
         drawing.add_entity(Entity {
             common: EntityCommon {
-                __owner_handle: 0xa2,
+                __owner_handle: Handle(0xa2),
                 ..Default::default()
             },
             specific: EntityType::Line(Default::default()),

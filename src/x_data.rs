@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 
-use crate::{CodePair, DxfError, DxfResult, Point, Vector};
+use crate::{CodePair, DxfError, DxfResult, Handle, Point, Vector};
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
@@ -39,7 +39,7 @@ pub enum XDataItem {
     ControlGroup(Vec<XDataItem>),
     LayerName(String),
     BinaryData(Vec<u8>),
-    Handle(u32),
+    Handle(Handle),
     ThreeReals(f64, f64, f64),
     WorldSpacePosition(Point),
     WorldSpaceDisplacement(Point),
@@ -233,7 +233,7 @@ impl XDataItem {
                 writer.write_code_pair(&CodePair::new_string(XDATA_BINARYDATA, &line))?;
             }
             XDataItem::Handle(h) => {
-                writer.write_code_pair(&CodePair::new_string(XDATA_HANDLE, &as_handle(*h)))?;
+                writer.write_code_pair(&CodePair::new_string(XDATA_HANDLE, &h.as_string()))?;
             }
             XDataItem::ThreeReals(x, y, z) => {
                 writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, *x))?;
