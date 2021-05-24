@@ -63,7 +63,7 @@ impl Oda {
             }
         }
         if !error_messages.is_empty() {
-            panic!(format!("Error converting files:\n{}", error_messages));
+            panic!("Error converting files:\n{}", error_messages);
         }
 
         assert!(exit_code.success());
