@@ -127,7 +127,7 @@ impl Display for CodePairValue {
 
 pub(crate) fn escape_control_characters(val: &str) -> String {
     fn needs_escaping(c: char) -> bool {
-        let c = c as u8;
+        let c = c as u32;
         c <= 0x1F || c == 0x5E
     }
 
@@ -200,7 +200,7 @@ pub(crate) fn escape_unicode_to_ascii(val: &str) -> String {
 }
 
 #[test]
-fn test_unicode_escape() {
+fn test_unicode_escape_1() {
     // values in the middle of a string
     assert_eq!(
         "Rep\\U+00E8re pi\\U+00E8ce",
@@ -209,6 +209,14 @@ fn test_unicode_escape() {
 
     // value is the entire string
     assert_eq!("\\U+4F60\\U+597D", escape_unicode_to_ascii("你好"));
+}
+
+#[test]
+fn test_unicode_escape_2() {
+    assert_eq!(
+        "\\U+0410\\U+0430\\U+042F\\U+044F",
+        escape_unicode_to_ascii("АаЯя")
+    );
 }
 
 pub(crate) fn un_escape_ascii_to_unicode(val: &str) -> String {

@@ -187,4 +187,12 @@ mod tests {
         // code 450 = 0x1C2, value = 37 (0x25)
         assert_eq!(vec![0xC2, 0x01, 0x25, 0x00, 0x00, 0x00], actual);
     }
+
+    #[test]
+    fn write_unicode_in_ascii() {
+        let pair = CodePair::new_str(1, "АаЯя");
+        let actual = write_in_ascii(&pair);
+        let expected = "  1\r\n\\U+0410\\U+0430\\U+042F\\U+044F\r\n";
+        assert_eq!(expected, actual);
+    }
 }
