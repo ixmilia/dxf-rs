@@ -1,0 +1,8 @@
+[package]
+name = "dxf-examples"
+version = "0.1.0"
+authors = ["Brett V. Forsgren <brett.forsgren@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+dxf = { path = "../" }
