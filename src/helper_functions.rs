@@ -115,7 +115,7 @@ pub(crate) fn as_duration(d: f64) -> StdDuration {
     StdDuration::from_secs(d as u64)
 }
 
-pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
+pub(crate) fn as_uuid(s: String) -> Uuid {
     let mut reconstructed = String::new();
     let s = if s.starts_with('{') && s.ends_with('}') {
         // reconstruct the string without the braces
@@ -128,15 +128,20 @@ pub(crate) fn as_uuid(s: String, offset: usize) -> DxfResult<Uuid> {
         s.as_str()
     };
     match Uuid::parse_str(s) {
-        Ok(uuid) => Ok(uuid),
-        Err(_) => Err(DxfError::ParseError(offset)),
+        Ok(uuid) => uuid,
+        Err(_) => Uuid::nil(),
     }
 }
 
 #[test]
 fn parse_regular_and_windows_style_uuids_test() {
-    let _regular = as_uuid(String::from("a2a7a23e-975b-4b54-968c-150d4c32a9b6"), 0).unwrap();
-    let _windows = as_uuid(String::from("{a2a7a23e-975b-4b54-968c-150d4c32a9b6}"), 0).unwrap();
+    let _regular = as_uuid(String::from("a2a7a23e-975b-4b54-968c-150d4c32a9b6"));
+    let _windows = as_uuid(String::from("{a2a7a23e-975b-4b54-968c-150d4c32a9b6}"));
+}
+
+#[test]
+fn parse_empty_uuid_test() {
+    let _empty = as_uuid(String::from(""));
 }
 
 pub(crate) fn as_i16(b: bool) -> i16 {
