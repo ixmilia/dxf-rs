@@ -99,7 +99,7 @@ impl CodePair {
 impl CodePair {
     pub(crate) fn as_handle(&self) -> DxfResult<Handle> {
         let mut bytes = vec![];
-        parse_hex_string(&self.assert_string()?, &mut bytes, self.offset)?;
+        parse_hex_string(&self.assert_string()?.trim(), &mut bytes, self.offset)?;
         while bytes.len() < 8 {
             bytes.insert(0, 0);
         }
@@ -147,6 +147,10 @@ mod tests {
             CodePair::new_str(0, "ABCDABCDABCDABCD")
                 .as_handle()
                 .unwrap()
+        );
+        assert_eq!(
+            Handle(0xAB),
+            CodePair::new_str(0, "  AB  ").as_handle().unwrap()
         );
     }
 
