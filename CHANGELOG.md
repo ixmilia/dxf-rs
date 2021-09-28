@@ -1,6 +1,14 @@
 Changelog
 =========
 
+## 0.5.0
+
+- Update to Rust 2018 edition.
+- Improve entity handle consistency.
+- Migrate to MIT license.
+- Improve compatibility with non-standard code pair values.
+- Improve `THUMBNAILIMAGE` compatibility.
+
 ## 0.4.0
 
 - Add support for R2018 drawings.

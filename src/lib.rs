@@ -6,14 +6,14 @@
 //!
 //! ``` toml
 //! [dependencies]
-//! dxf = "0.4.0"
+//! dxf = "0.5.0"
 //! ```
 //!
 //! Or if you want [serde](https://github.com/serde-rs/serde) support, enable the `serialize` feature:
 //!
 //! ``` toml
 //! [dependencies]
-//! dxf = { version = "0.4.0", features = ["serialize"] }
+//! dxf = { version = "0.5.0", features = ["serialize"] }
 //! ```
 //!
 //! > Note that `serde` support is intended to aid in debugging and since the serialized format is heavily
