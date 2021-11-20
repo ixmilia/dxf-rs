@@ -1,5 +1,4 @@
 use crate::{CodePair, Color, DxfResult};
-use std::io::Read;
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::helper_functions::*;
@@ -39,10 +38,7 @@ pub struct TableCellStyle {
 // internal visibility only
 impl TableCellStyle {
     #[allow(clippy::cognitive_complexity)]
-    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<TableCellStyle>>
-    where
-        I: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Option<TableCellStyle>> {
         let mut seen_name = false;
         let mut style = TableCellStyle::default();
         loop {

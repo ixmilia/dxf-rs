@@ -1,19 +1,14 @@
-use std::io::Read;
-
 use crate::code_pair_iter::CodePairIter;
 use crate::dxf_result::DxfResult;
 use crate::CodePair;
 
-pub(crate) struct CodePairPutBack<T: Read> {
+pub(crate) struct CodePairPutBack {
     top: Vec<DxfResult<CodePair>>,
-    iter: CodePairIter<T>,
+    iter: Box<dyn CodePairIter>,
 }
 
-impl<T: Read> CodePairPutBack<T> {
-    pub fn from_code_pair_iter(iter: CodePairIter<T>) -> Self
-    where
-        T: Read,
-    {
+impl CodePairPutBack {
+    pub fn from_code_pair_iter(iter: Box<dyn CodePairIter>) -> Self {
         CodePairPutBack { top: vec![], iter }
     }
     pub fn put_back(&mut self, item: DxfResult<CodePair>) {
@@ -24,12 +19,18 @@ impl<T: Read> CodePairPutBack<T> {
     }
 }
 
-impl<T: Read> Iterator for CodePairPutBack<T> {
+impl Iterator for CodePairPutBack {
     type Item = DxfResult<CodePair>;
 
     fn next(&mut self) -> Option<DxfResult<CodePair>> {
         if self.top.is_empty() {
-            self.iter.next()
+            loop {
+                let pair = self.iter.next();
+                match pair {
+                    Some(Ok(CodePair { code, .. })) if code == 999 => (), // a 999 comment code, try again
+                    _ => return pair,
+                }
+            }
         } else {
             Some(self.top.pop().unwrap())
         }

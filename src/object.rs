@@ -2,7 +2,7 @@
 
 use enum_primitive::FromPrimitive;
 use itertools::Itertools;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::ops::Add;
 
 extern crate chrono;
@@ -96,10 +96,7 @@ impl Object {
         self.common.normalize();
         // no object-specific values to set
     }
-    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<Object>>
-    where
-        I: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Option<Object>> {
         loop {
             match iter.next() {
                 // first code pair must be 0/object-type
@@ -161,14 +158,7 @@ impl Object {
             }
         }
     }
-    fn apply_code_pair<I>(
-        &mut self,
-        pair: &CodePair,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
         if !self.specific.try_apply_code_pair(&pair)? {
             self.common.apply_individual_pair(&pair, iter)?;
         }
@@ -282,10 +272,7 @@ impl Object {
 
         Ok(())
     }
-    fn apply_custom_reader<I>(&mut self, iter: &mut CodePairPutBack<I>) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+    fn apply_custom_reader(&mut self, iter: &mut CodePairPutBack) -> DxfResult<bool> {
         match self.specific {
             ObjectType::DataTable(ref mut data) => {
                 Object::apply_custom_reader_datatable(&mut self.common, data, iter)
@@ -329,14 +316,11 @@ impl Object {
             _ => Ok(false), // no custom reader
         }
     }
-    fn apply_custom_reader_datatable<I>(
+    fn apply_custom_reader_datatable(
         common: &mut ObjectCommon,
         data: &mut DataTable,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_column_count = false;
         let mut read_row_count = false;
         let mut _current_column_code = 0;
@@ -461,14 +445,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_dictionary<I>(
+    fn apply_custom_reader_dictionary(
         common: &mut ObjectCommon,
         dict: &mut Dictionary,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut last_entry_name = String::new();
         loop {
             let pair = next_pair!(iter);
@@ -497,14 +478,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_dictionarywithdefault<I>(
+    fn apply_custom_reader_dictionarywithdefault(
         common: &mut ObjectCommon,
         dict: &mut DictionaryWithDefault,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut last_entry_name = String::new();
         loop {
             let pair = next_pair!(iter);
@@ -533,14 +511,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_layout<I>(
+    fn apply_custom_reader_layout(
         common: &mut ObjectCommon,
         layout: &mut Layout,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut is_reading_plot_settings = true;
         loop {
             let pair = next_pair!(iter);
@@ -654,14 +629,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_lightlist<I>(
+    fn apply_custom_reader_lightlist(
         common: &mut ObjectCommon,
         ll: &mut LightList,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_version_number = false;
         loop {
             let pair = next_pair!(iter);
@@ -691,14 +663,11 @@ impl Object {
         }
     }
     #[allow(clippy::cognitive_complexity)]
-    fn apply_custom_reader_material<I>(
+    fn apply_custom_reader_material(
         common: &mut ObjectCommon,
         mat: &mut Material,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_diffuse_map_file_name = false;
         let mut is_reading_normal = false;
         let mut read_diffuse_map_blend_factor = false;
@@ -1105,14 +1074,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_mlinestyle<I>(
+    fn apply_custom_reader_mlinestyle(
         common: &mut ObjectCommon,
         mline: &mut MLineStyle,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_element_count = false;
         loop {
             let pair = next_pair!(iter);
@@ -1157,14 +1123,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_sectionsettings<I>(
+    fn apply_custom_reader_sectionsettings(
         common: &mut ObjectCommon,
         ss: &mut SectionSettings,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         loop {
             let pair = next_pair!(iter);
             match pair.code {
@@ -1184,14 +1147,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_sortentstable<I>(
+    fn apply_custom_reader_sortentstable(
         common: &mut ObjectCommon,
         sort: &mut SortentsTable,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut is_ready_for_sort_handles = false;
         loop {
             let pair = next_pair!(iter);
@@ -1221,14 +1181,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_spatialfilter<I>(
+    fn apply_custom_reader_spatialfilter(
         common: &mut ObjectCommon,
         sf: &mut SpatialFilter,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_front_clipping_plane = false;
         let mut set_inverse_matrix = false;
         let mut matrix_list = vec![];
@@ -1318,14 +1275,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_sunstudy<I>(
+    fn apply_custom_reader_sunstudy(
         common: &mut ObjectCommon,
         ss: &mut SunStudy,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut seen_version = false;
         let mut reading_hours = false;
         let mut julian_day = None;
@@ -1432,14 +1386,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_tabletyle<I>(
+    fn apply_custom_reader_tabletyle(
         common: &mut ObjectCommon,
         ts: &mut TableStyle,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut read_version = false;
         loop {
             let pair = next_pair!(iter);
@@ -1484,14 +1435,11 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_xrecordobject<I>(
+    fn apply_custom_reader_xrecordobject(
         common: &mut ObjectCommon,
         xr: &mut XRecordObject,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut reading_data = false;
         loop {
             let pair = next_pair!(iter);
@@ -1760,11 +1708,12 @@ mod tests {
     use crate::objects::*;
     use crate::*;
 
-    fn read_object(object_type: &str, body: String) -> Object {
-        let drawing = from_section(
-            "OBJECTS",
-            vec!["0", object_type, body.as_str()].join("\r\n").as_str(),
-        );
+    fn read_object(object_type: &str, body: Vec<CodePair>) -> Object {
+        let mut pairs = vec![CodePair::new_str(0, object_type)];
+        for pair in body {
+            pairs.push(pair);
+        }
+        let drawing = from_section("OBJECTS", pairs);
         let objects = drawing.objects().collect::<Vec<_>>();
         assert_eq!(1, objects.len());
         objects[0].clone()
@@ -1772,61 +1721,40 @@ mod tests {
 
     #[test]
     fn read_empty_objects_section() {
-        let drawing = parse_drawing(
-            vec!["0", "SECTION", "2", "OBJECTS", "0", "ENDSEC", "0", "EOF"]
-                .join("\r\n")
-                .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(0, drawing.objects().count());
     }
 
     #[test]
     fn read_unsupported_object() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "OBJECTS",
-                "0",
-                "UNSUPPORTED_OBJECT",
-                "1",
-                "unsupported string",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "UNSUPPORTED_OBJECT"),
+            CodePair::new_str(1, "unsupported string"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(0, drawing.objects().count());
     }
 
     #[test]
     fn read_unsupported_object_between_supported_objects() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "OBJECTS",
-                "0",
-                "DICTIONARYVAR",
-                "0",
-                "UNSUPPORTED_OBJECT",
-                "1",
-                "unsupported string",
-                "0",
-                "IMAGEDEF",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "DICTIONARYVAR"),
+            CodePair::new_str(0, "UNSUPPORTED_OBJECT"),
+            CodePair::new_str(1, "unsupported string"),
+            CodePair::new_str(0, "IMAGEDEF"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let objects = drawing.objects().collect::<Vec<_>>();
         assert_eq!(2, objects.len());
         match objects[0].specific {
@@ -1841,7 +1769,7 @@ mod tests {
 
     #[test]
     fn read_common_object_fields() {
-        let obj = read_object("IMAGEDEF", vec!["5", "DEADBEEF"].join("\r\n"));
+        let obj = read_object("IMAGEDEF", vec![CodePair::new_str(5, "DEADBEEF")]);
         assert_eq!(Handle(0xDEAD_BEEF), obj.common.handle);
     }
 
@@ -1850,14 +1778,10 @@ mod tests {
         let obj = read_object(
             "IMAGEDEF",
             vec![
-                "1",
-                "path/to/file", // path
-                "10",
-                "11", // image_width
-                "20",
-                "22", // image_height
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1, "path/to/file"), // path
+                CodePair::new_f64(10, 11.0),          // image_width
+                CodePair::new_f64(20, 22.0),          // image_height
+            ],
         );
         match obj.specific {
             ObjectType::ImageDefinition(ref img) => {
@@ -1908,19 +1832,12 @@ mod tests {
         let drawing = from_section(
             "OBJECTS",
             vec![
-                "0",
-                "DICTIONARYVAR",
-                "1",
-                "value", // value
-                "0",
-                "IMAGEDEF",
-                "1",
-                "path/to/file", // file_path
-                "10",
-                "11", // image_width
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "DICTIONARYVAR"),
+                CodePair::new_str(1, "value"), // value
+                CodePair::new_str(0, "IMAGEDEF"),
+                CodePair::new_str(1, "path/to/file"), // file_path
+                CodePair::new_f64(10, 11.0),          // image_width
+            ],
         );
         let objects = drawing.objects().collect::<Vec<_>>();
         assert_eq!(2, objects.len());
@@ -1947,7 +1864,11 @@ mod tests {
     fn read_field_with_multiples_specific() {
         let obj = read_object(
             "LAYER_FILTER",
-            vec!["8", "one", "8", "two", "8", "three"].join("\r\n"),
+            vec![
+                CodePair::new_str(8, "one"),
+                CodePair::new_str(8, "two"),
+                CodePair::new_str(8, "three"),
+            ],
         );
         match obj.specific {
             ObjectType::LayerFilter(ref layer_filter) => {
@@ -1982,10 +1903,9 @@ mod tests {
         let obj = read_object(
             "VBA_PROJECT",
             vec![
-                "310", "deadbeef", // data
-                "310", "01234567",
-            ]
-            .join("\r\n"),
+                CodePair::new_binary(310, vec![0xDE, 0xAD, 0xBE, 0xEF]), // data
+                CodePair::new_binary(310, vec![0x01, 0x23, 0x45, 0x67]),
+            ],
         );
         match obj.specific {
             ObjectType::VbaProject(ref vba) => {
@@ -2033,7 +1953,13 @@ mod tests {
 
     #[test]
     fn read_object_with_flags() {
-        let obj = read_object("LAYOUT", vec!["100", "AcDbLayout", "70", "3"].join("\r\n"));
+        let obj = read_object(
+            "LAYOUT",
+            vec![
+                CodePair::new_str(100, "AcDbLayout"),
+                CodePair::new_i16(70, 3),
+            ],
+        );
         match obj.specific {
             ObjectType::Layout(ref layout) => {
                 assert!(layout.get_is_ps_lt_scale());
@@ -2071,10 +1997,9 @@ mod tests {
         let obj = read_object(
             "LIGHTLIST",
             vec![
-                "5", "A1", // handle
-                "330", "A2", // owner handle
-            ]
-            .join("\r\n"),
+                CodePair::new_str(5, "A1"),
+                CodePair::new_str(330, "A2"), // owner handle
+            ],
         );
         assert_eq!(Handle(0xa1), obj.common.handle);
         assert_eq!(Handle(0xa2), obj.common.__owner_handle);
@@ -2105,7 +2030,12 @@ mod tests {
     fn read_dictionary() {
         let dict = read_object(
             "DICTIONARY",
-            vec!["  3", "key1", "350", "AAAA", "  3", "key2", "350", "BBBB"].join("\r\n"),
+            vec![
+                CodePair::new_str(3, "key1"),
+                CodePair::new_str(350, "AAAA"),
+                CodePair::new_str(3, "key2"),
+                CodePair::new_str(350, "BBBB"),
+            ],
         );
         match dict.specific {
             ObjectType::Dictionary(ref dict) => {
@@ -2141,11 +2071,11 @@ mod tests {
         let ss = read_object(
             "SUNSTUDY",
             vec![
-                "290", "1", // use_subset
-                "290", "3", // hours
-                "290", "4", "290", "5",
-            ]
-            .join("\r\n"),
+                CodePair::new_bool(290, true), // use_subset
+                CodePair::new_i16(290, 3),     // hours
+                CodePair::new_i16(290, 4),
+                CodePair::new_i16(290, 5),
+            ],
         );
         match ss.specific {
             ObjectType::SunStudy(ref ss) => {
@@ -2191,7 +2121,11 @@ mod tests {
     fn read_extension_data() {
         let obj = read_object(
             "IDBUFFER",
-            vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+            vec![
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
+            ],
         );
         assert_eq!(1, obj.common.extension_data_groups.len());
         let group = &obj.common.extension_data_groups[0];
@@ -2231,7 +2165,10 @@ mod tests {
     fn read_x_data() {
         let obj = read_object(
             "IDBUFFER",
-            vec!["1001", "IXMILIA", "1000", "some string"].join("\r\n"),
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_str(1000, "some string"),
+            ],
         );
         assert_eq!(1, obj.common.x_data.len());
         let x = &obj.common.x_data[0];
@@ -2273,18 +2210,12 @@ mod tests {
             let obj = read_object(
                 type_string,
                 vec![
-                    "102",
-                    "{IXMILIA", // read extension data
-                    "  1",
-                    "some string",
-                    "102",
-                    "}",
-                    "1001",
-                    "IXMILIA", // read x data
-                    "1040",
-                    "1.1",
-                ]
-                .join("\r\n"),
+                    CodePair::new_str(102, "{IXMILIA"), // read extension data
+                    CodePair::new_str(1, "some string"),
+                    CodePair::new_str(102, "}"),
+                    CodePair::new_str(1001, "IXMILIA"), // read x data
+                    CodePair::new_f64(1040, 1.1),
+                ],
             );
 
             // validate specific

@@ -6,36 +6,20 @@ use crate::*;
 
 #[test]
 fn follow_entity_pointer_to_object() {
-    let drawing = parse_drawing(
-        vec![
-            "  0",
-            "SECTION",
-            "  2",
-            "OBJECTS",
-            "  0",
-            "MATERIAL",
-            "  5",
-            "ABCD",
-            "  1",
-            "material-name",
-            "  0",
-            "ENDSEC",
-            "  0",
-            "SECTION",
-            "  2",
-            "ENTITIES",
-            "  0",
-            "LINE",
-            "347",
-            "ABCD",
-            "  0",
-            "ENDSEC",
-            "  0",
-            "EOF",
-        ]
-        .join("\r\n")
-        .as_str(),
-    );
+    let drawing = drawing_from_pairs(vec![
+        CodePair::new_str(0, "SECTION"),
+        CodePair::new_str(2, "OBJECTS"),
+        CodePair::new_str(0, "MATERIAL"),
+        CodePair::new_str(5, "ABCD"),
+        CodePair::new_str(1, "material-name"),
+        CodePair::new_str(0, "ENDSEC"),
+        CodePair::new_str(0, "SECTION"),
+        CodePair::new_str(2, "ENTITIES"),
+        CodePair::new_str(0, "LINE"),
+        CodePair::new_str(347, "ABCD"),
+        CodePair::new_str(0, "ENDSEC"),
+        CodePair::new_str(0, "EOF"),
+    ]);
     let entities = drawing.entities().collect::<Vec<_>>();
     let line_common = match entities[0] {
         Entity {
@@ -53,36 +37,20 @@ fn follow_entity_pointer_to_object() {
 
 #[test]
 fn follow_object_pointer_to_entity_collection() {
-    let drawing = parse_drawing(
-        vec![
-            "  0",
-            "SECTION",
-            "  2",
-            "OBJECTS",
-            "  0",
-            "GROUP",
-            "340",
-            "ABCD",
-            "  0",
-            "ENDSEC",
-            "  0",
-            "SECTION",
-            "  2",
-            "ENTITIES",
-            "  0",
-            "TEXT",
-            "  5",
-            "ABCD",
-            "  1",
-            "text value",
-            "  0",
-            "ENDSEC",
-            "  0",
-            "EOF",
-        ]
-        .join("\r\n")
-        .as_str(),
-    );
+    let drawing = drawing_from_pairs(vec![
+        CodePair::new_str(0, "SECTION"),
+        CodePair::new_str(2, "OBJECTS"),
+        CodePair::new_str(0, "GROUP"),
+        CodePair::new_str(340, "ABCD"),
+        CodePair::new_str(0, "ENDSEC"),
+        CodePair::new_str(0, "SECTION"),
+        CodePair::new_str(2, "ENTITIES"),
+        CodePair::new_str(0, "TEXT"),
+        CodePair::new_str(5, "ABCD"),
+        CodePair::new_str(1, "text value"),
+        CodePair::new_str(0, "ENDSEC"),
+        CodePair::new_str(0, "EOF"),
+    ]);
     let objects = drawing.objects().collect::<Vec<_>>();
     let group = match objects[0].specific {
         ObjectType::Group(ref g) => g,
@@ -99,7 +67,7 @@ fn follow_object_pointer_to_entity_collection() {
 
 #[test]
 fn no_pointer_bound() {
-    let drawing = from_section("ENTITIES", vec!["  0", "LINE"].join("\r\n").as_str());
+    let drawing = from_section("ENTITIES", vec![CodePair::new_str(0, "LINE")]);
     let entities = drawing.entities().collect::<Vec<_>>();
     match entities[0].common.get_material(&drawing) {
         None => (),

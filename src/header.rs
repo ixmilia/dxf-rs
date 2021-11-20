@@ -1,6 +1,6 @@
 // other implementation is in `generated/header.rs`
 
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::code_pair_writer::CodePairWriter;
@@ -21,10 +21,7 @@ impl Header {
         default_if_empty(&mut self.dimension_style_name, "STANDARD");
         default_if_empty(&mut self.file_name, ".");
     }
-    pub(crate) fn read<T>(iter: &mut CodePairPutBack<T>) -> DxfResult<Header>
-    where
-        T: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Header> {
         let mut header = Header::default();
         loop {
             match iter.next() {
@@ -90,59 +87,40 @@ mod tests {
 
     #[test]
     fn empty_header() {
-        let _file = parse_drawing(
-            vec!["0", "SECTION", "2", "HEADER", "0", "ENDSEC", "0", "EOF"]
-                .join("\n")
-                .as_str(),
-        );
+        let _file = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "HEADER"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
     }
 
     #[test]
     fn specific_header_values() {
-        let file = from_section(
+        let file = from_section_pairs(
             "HEADER",
-            "
-  9
-$ACADMAINTVER
- 70
-16
-  9
-$ACADVER
-  1
-AC1012
-  9
-$ANGBASE
- 50
-5.5E1
-  9
-$ANGDIR
- 70
-1
-  9
-$ATTMODE
- 70
-1
-  9
-$AUNITS
- 70
-3
-  9
-$AUPREC
- 70
-7
-  9
-$CLAYER
-  8
-<current layer>
-  9
-$LUNITS
- 70
-6
-  9
-$LUPREC
- 70
-7"
-            .trim_start(),
+            vec![
+                CodePair::new_str(9, "$ACADMAINTVER"),
+                CodePair::new_i16(70, 16),
+                CodePair::new_str(9, "$ACADVER"),
+                CodePair::new_str(1, "AC1012"),
+                CodePair::new_str(9, "$ANGBASE"),
+                CodePair::new_f64(50, 55.0),
+                CodePair::new_str(9, "$ANGDIR"),
+                CodePair::new_i16(70, 1),
+                CodePair::new_str(9, "$ATTMODE"),
+                CodePair::new_i16(70, 1),
+                CodePair::new_str(9, "$AUNITS"),
+                CodePair::new_i16(70, 3),
+                CodePair::new_str(9, "$AUPREC"),
+                CodePair::new_i16(70, 7),
+                CodePair::new_str(9, "$CLAYER"),
+                CodePair::new_str(8, "<current layer>"),
+                CodePair::new_str(9, "$LUNITS"),
+                CodePair::new_i16(70, 6),
+                CodePair::new_str(9, "$LUPREC"),
+                CodePair::new_i16(70, 7),
+            ],
         );
         assert_eq!(16, file.header.maintenance_version);
         assert_eq!(AcadVersion::R13, file.header.version);
@@ -163,9 +141,10 @@ $LUPREC
     fn read_alternate_version() {
         let file = from_section(
             "HEADER",
-            vec!["  9", "$ACADVER", "  1", "15.05"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$ACADVER"),
+                CodePair::new_str(1, "15.05"),
+            ],
         );
         assert_eq!(AcadVersion::R2000, file.header.version);
     }
@@ -174,9 +153,10 @@ $LUPREC
     fn read_invalid_version() {
         let file = from_section(
             "HEADER",
-            vec!["  9", "$ACADVER", "  1", "AC3.14159"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$ACADVER"),
+                CodePair::new_str(1, "AC3.14159"),
+            ],
         );
         assert_eq!(AcadVersion::R12, file.header.version);
     }
@@ -185,9 +165,12 @@ $LUPREC
     fn read_multi_value_variable() {
         let file = from_section(
             "HEADER",
-            vec!["9", "$EXTMIN", "10", "1.1", "20", "2.2", "30", "3.3"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$EXTMIN"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+            ],
         );
         assert_eq!(
             Point::new(1.1, 2.2, 3.3),
@@ -230,7 +213,7 @@ $LUPREC
     fn read_header_flags() {
         let file = from_section(
             "HEADER",
-            vec!["9", "$OSMODE", "70", "12"].join("\r\n").as_str(),
+            vec![CodePair::new_str(9, "$OSMODE"), CodePair::new_i16(70, 12)],
         );
         assert!(!file.header.get_end_point_snap());
         assert!(!file.header.get_mid_point_snap());
@@ -271,18 +254,20 @@ $LUPREC
         // read $CMLSTYLE as code 7
         let file = from_section(
             "HEADER",
-            vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$CMLSTYLE"),
+                CodePair::new_str(7, "cml-style-7"),
+            ],
         );
         assert_eq!("cml-style-7", file.header.current_multiline_style);
 
         // read $CMLSTYLE as code 2
         let file = from_section(
             "HEADER",
-            vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$CMLSTYLE"),
+                CodePair::new_str(2, "cml-style-2"),
+            ],
         );
         assert_eq!("cml-style-2", file.header.current_multiline_style);
     }
@@ -312,9 +297,10 @@ $LUPREC
     fn read_drawing_edit_duration() {
         let file = from_section(
             "HEADER",
-            vec!["  9", "$TDINDWG", " 40", "100.0"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(9, "$TDINDWG"),
+                CodePair::new_f64(40, 100.0),
+            ],
         );
         assert_eq!(Duration::from_secs(100), file.header.time_in_drawing);
     }
@@ -333,7 +319,10 @@ $LUPREC
     fn write_proper_handseed_on_read_file() {
         let mut drawing = from_section(
             "HEADER",
-            vec!["  9", "$HANDSEED", "  5", "11"].join("\r\n").as_str(),
+            vec![
+                CodePair::new_str(9, "$HANDSEED"),
+                CodePair::new_str(5, "11"),
+            ],
         );
         drawing.add_entity(Entity::new(EntityType::Line(Line::new(
             Point::origin(),

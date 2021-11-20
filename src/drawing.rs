@@ -23,7 +23,7 @@ use crate::object_iter::ObjectIter;
 use crate::block::Block;
 use crate::class::Class;
 
-use crate::code_pair_iter::CodePairIter;
+use crate::code_pair_iter::{new_code_pair_iter_from_reader, CodePairIter};
 use crate::code_pair_writer::CodePairWriter;
 
 use crate::thumbnail;
@@ -104,9 +104,9 @@ impl Drawing {
         drawing
     }
     /// Loads a `Drawing` from anything that implements the `Read` trait.
-    pub fn load<T>(reader: &mut T) -> DxfResult<Drawing>
+    pub fn load<'a, T>(reader: &mut T) -> DxfResult<Drawing>
     where
-        T: Read + ?Sized,
+        T: Read + 'a + ?Sized,
     {
         Drawing::load_with_encoding(reader, encoding_rs::WINDOWS_1252)
     }
@@ -126,25 +126,29 @@ impl Drawing {
                 reader.load()
             }
             _ => {
-                let reader = CodePairIter::new(reader, encoding, first_line);
-                let mut drawing = Drawing::new();
-                drawing.clear();
-                let mut iter = CodePairPutBack::from_code_pair_iter(reader);
-                Drawing::read_sections(&mut drawing, &mut iter)?;
-                match iter.next() {
-                    Some(Ok(CodePair {
-                        code: 0,
-                        value: CodePairValue::Str(ref s),
-                        ..
-                    })) if s == "EOF" => Ok(drawing),
-                    Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(
-                        pair,
-                        String::from("expected 0/EOF"),
-                    )),
-                    Some(Err(e)) => Err(e),
-                    None => Ok(drawing),
-                }
+                let iter = new_code_pair_iter_from_reader(reader, encoding, first_line)?;
+                Drawing::load_from_iter(iter)
             }
+        }
+    }
+    /// Loads a `Drawing` from the specified `CodePairIter`.
+    pub(crate) fn load_from_iter(iter: Box<dyn CodePairIter>) -> DxfResult<Drawing> {
+        let mut drawing = Drawing::new();
+        drawing.clear();
+        let mut iter = CodePairPutBack::from_code_pair_iter(iter);
+        Drawing::read_sections(&mut drawing, &mut iter)?;
+        match iter.next() {
+            Some(Ok(CodePair {
+                code: 0,
+                value: CodePairValue::Str(ref s),
+                ..
+            })) if s == "EOF" => Ok(drawing),
+            Some(Ok(pair)) => Err(DxfError::UnexpectedCodePair(
+                pair,
+                String::from("expected 0/EOF"),
+            )),
+            Some(Err(e)) => Err(e),
+            None => Ok(drawing),
         }
     }
     /// Loads a `Drawing` from disk, using a `BufReader`.
@@ -973,10 +977,7 @@ impl Drawing {
         }
         Ok(())
     }
-    fn read_sections<T>(drawing: &mut Drawing, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
-    where
-        T: Read,
-    {
+    fn read_sections(drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {
         loop {
             match iter.next() {
                 Some(Ok(pair @ CodePair { code: 0, .. })) => match &*pair.assert_string()? {
@@ -1052,10 +1053,7 @@ impl Drawing {
 
         Ok(())
     }
-    fn swallow_section<T>(iter: &mut CodePairPutBack<T>) -> DxfResult<()>
-    where
-        T: Read,
-    {
+    fn swallow_section(iter: &mut CodePairPutBack) -> DxfResult<()> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -1071,10 +1069,7 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_entities<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
-    where
-        T: Read,
-    {
+    fn read_entities(&mut self, iter: &mut CodePairPutBack) -> DxfResult<()> {
         let mut iter = EntityIter { iter };
         let mut entities = vec![];
         iter.read_entities_into_vec(&mut entities)?;
@@ -1087,10 +1082,7 @@ impl Drawing {
         }
         Ok(())
     }
-    fn read_objects<T>(&mut self, iter: &mut CodePairPutBack<T>) -> DxfResult<()>
-    where
-        T: Read,
-    {
+    fn read_objects(&mut self, iter: &mut CodePairPutBack) -> DxfResult<()> {
         let iter = put_back(ObjectIter { iter });
         for o in iter {
             if o.common.handle.is_empty() {
@@ -1102,15 +1094,14 @@ impl Drawing {
 
         Ok(())
     }
-    fn read_section_item<I, F>(
+    fn read_section_item<F>(
         &mut self,
-        iter: &mut CodePairPutBack<I>,
+        iter: &mut CodePairPutBack,
         item_type: &str,
         callback: F,
     ) -> DxfResult<()>
     where
-        I: Read,
-        F: Fn(&mut Drawing, &mut CodePairPutBack<I>) -> DxfResult<()>,
+        F: Fn(&mut Drawing, &mut CodePairPutBack) -> DxfResult<()>,
     {
         loop {
             match iter.next() {
@@ -1140,10 +1131,7 @@ impl Drawing {
 
         Ok(())
     }
-    pub(crate) fn swallow_table<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    pub(crate) fn swallow_table(iter: &mut CodePairPutBack) -> DxfResult<()> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -1347,129 +1335,116 @@ mod tests {
 
     #[test]
     fn block_handle_is_set_during_read_if_not_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "BLOCKS", "  0", "BLOCK", "  0", "ENDBLK", "  0",
-                "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "BLOCKS"),
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(0, "ENDBLK"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let block = drawing.blocks().next().unwrap();
         assert_ne!(Handle(0), block.handle);
     }
 
     #[test]
     fn entity_handle_is_set_during_read_if_not_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let line = drawing.entities().next().unwrap();
         assert_ne!(Handle(0), line.common.handle);
     }
 
     #[test]
     fn object_handle_is_set_during_read_if_not_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "ACDBPLACEHOLDER",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "ACDBPLACEHOLDER"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let obj = drawing.objects().next().unwrap();
         assert_ne!(Handle(0), obj.common.handle);
     }
 
     #[test]
     fn layer_handle_is_set_during_read_if_not_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "TABLES", "  0", "TABLE", "  2", "LAYER", "  0", "LAYER",
-                "  0", "ENDTAB", "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "TABLES"),
+            CodePair::new_str(0, "TABLE"),
+            CodePair::new_str(2, "LAYER"),
+            CodePair::new_str(0, "LAYER"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let layer = drawing.layers().next().unwrap();
         assert_ne!(Handle(0), layer.handle);
     }
 
     #[test]
     fn block_handle_is_honored_during_read_if_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "BLOCKS", "  0", "BLOCK", "  5", "3333", "  0", "ENDBLK",
-                "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "BLOCKS"),
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(5, "3333"),
+            CodePair::new_str(0, "ENDBLK"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let block = drawing.blocks().next().unwrap();
         assert_eq!(Handle(0x3333), block.handle);
     }
 
     #[test]
     fn entity_handle_is_honored_during_read_if_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "  5", "3333", "  0", "ENDSEC",
-                "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(5, "3333"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let line = drawing.entities().next().unwrap();
         assert_eq!(Handle(0x3333), line.common.handle);
     }
 
     #[test]
     fn object_handle_is_honored_during_read_if_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "ACDBPLACEHOLDER",
-                "  5",
-                "3333",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "ACDBPLACEHOLDER"),
+            CodePair::new_str(5, "3333"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let obj = drawing.objects().next().unwrap();
         assert_eq!(Handle(0x3333), obj.common.handle);
     }
 
     #[test]
     fn layer_handle_is_honored_during_read_if_specified() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "TABLES", "  0", "TABLE", "  2", "LAYER", "  0", "LAYER",
-                "  5", "3333", "  0", "ENDTAB", "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "TABLES"),
+            CodePair::new_str(0, "TABLE"),
+            CodePair::new_str(2, "LAYER"),
+            CodePair::new_str(0, "LAYER"),
+            CodePair::new_str(5, "3333"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let layer = drawing.layers().next().unwrap();
         assert_eq!(Handle(0x3333), layer.handle);
     }
@@ -1565,24 +1540,14 @@ mod tests {
 
     #[test]
     fn mline_style_is_added_with_entity_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "ENTITIES",
-                "  0",
-                "MLINE",
-                "  2",
-                "some-mline-style",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "MLINE"),
+            CodePair::new_str(2, "some-mline-style"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let mline_styles = drawing.objects().filter(|&o| match o.specific {
             ObjectType::MLineStyle(ref mline_style) => mline_style.style_name == "some-mline-style",
             _ => false,
@@ -1648,26 +1613,15 @@ mod tests {
 
     #[test]
     fn dim_style_is_added_with_entity_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "ENTITIES",
-                "  0",
-                "DIMENSION",
-                "  3",
-                "some-dim-style",
-                "100",
-                "AcDbRadialDimension",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "DIMENSION"),
+            CodePair::new_str(3, "some-dim-style"),
+            CodePair::new_str(100, "AcDbRadialDimension"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let dim_styles = drawing.dim_styles().filter(|&d| d.name == "some-dim-style");
         assert_eq!(1, dim_styles.count());
     }
@@ -1772,48 +1726,28 @@ mod tests {
 
     #[test]
     fn layer_is_added_with_entity_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "ENTITIES",
-                "  0",
-                "LINE",
-                "  8",
-                "some-layer",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(8, "some-layer"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let layers = drawing.layers().filter(|&l| l.name == "some-layer");
         assert_eq!(1, layers.count());
     }
 
     #[test]
     fn layer_is_added_with_object_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "LAYER_FILTER",
-                "  8",
-                "some-layer",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "LAYER_FILTER"),
+            CodePair::new_str(8, "some-layer"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let layers = drawing.layers().filter(|&l| l.name == "some-layer");
         assert_eq!(1, layers.count());
     }
@@ -1920,24 +1854,14 @@ mod tests {
 
     #[test]
     fn line_type_is_added_with_entity_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "ENTITIES",
-                "  0",
-                "LINE",
-                "  6",
-                "some-line-type",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(6, "some-line-type"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type");
@@ -1946,24 +1870,14 @@ mod tests {
 
     #[test]
     fn line_type_is_added_with_object_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "MLINESTYLE",
-                "  2",
-                "some-line-type",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "MLINESTYLE"),
+            CodePair::new_str(2, "some-line-type"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type");
@@ -2072,48 +1986,28 @@ mod tests {
 
     #[test]
     fn text_style_is_added_with_entity_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "ENTITIES",
-                "  0",
-                "TEXT",
-                "  7",
-                "some-text-style",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "TEXT"),
+            CodePair::new_str(7, "some-text-style"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let text_styles = drawing.styles().filter(|&s| s.name == "some-text-style");
         assert_eq!(1, text_styles.count());
     }
 
     #[test]
     fn text_style_is_added_with_object_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "MLINESTYLE",
-                "  2",
-                "some-text-style",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "MLINESTYLE"),
+            CodePair::new_str(2, "some-text-style"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let text_styles = drawing.styles().filter(|&s| s.name == "some-text-style");
         assert_eq!(1, text_styles.count());
     }
@@ -2170,24 +2064,14 @@ mod tests {
 
     #[test]
     fn view_is_added_with_object_on_file_read() {
-        let drawing = parse_drawing(
-            vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "PLOTSETTINGS",
-                "  6",
-                "some-view",
-                "  0",
-                "ENDSEC",
-                "  0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "OBJECTS"),
+            CodePair::new_str(0, "PLOTSETTINGS"),
+            CodePair::new_str(6, "some-view"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let views = drawing.views().filter(|&v| v.name == "some-view");
         assert_eq!(1, views.count());
     }

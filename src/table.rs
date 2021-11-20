@@ -68,76 +68,53 @@ mod tests {
     use crate::tables::*;
     use crate::*;
 
-    fn read_table(table_name: &str, value_pairs: Vec<&str>) -> Drawing {
+    fn read_table(table_name: &str, value_pairs: Vec<CodePair>) -> Drawing {
         let mut pairs = vec![
-            "0",
-            "SECTION",
-            "2",
-            "TABLES",
-            "0",
-            "TABLE",
-            "2",
-            table_name,
-            "100",
-            "AcDbSymbolTable",
-            "70",
-            "0",
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "TABLES"),
+            CodePair::new_str(0, "TABLE"),
+            CodePair::new_str(2, table_name),
+            CodePair::new_str(100, "AcDbSymbolTable"),
+            CodePair::new_i16(70, 0),
         ];
-
         for pair in value_pairs {
             pairs.push(pair);
         }
-
-        pairs.push("0");
-        pairs.push("ENDTAB");
-        pairs.push("0");
-        pairs.push("ENDSEC");
-        pairs.push("0");
-        pairs.push("EOF");
-
-        parse_drawing(pairs.join("\r\n").as_str())
+        pairs.push(CodePair::new_str(0, "ENDTAB"));
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
+        pairs.push(CodePair::new_str(0, "EOF"));
+        drawing_from_pairs(pairs)
     }
 
     #[test]
     fn read_unsupported_table() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "TABLES",
-                "0",
-                "TABLE",
-                "2",
-                "UNSUPPORTED",
-                "0",
-                "UNSUPPORTED",
-                "2",
-                "unsupported-name",
-                "0",
-                "ENDTAB",
-                "0",
-                "TABLE",
-                "2",
-                "LAYER",
-                "0",
-                "LAYER",
-                "0",
-                "ENDTAB",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "TABLES"),
+            CodePair::new_str(0, "TABLE"),
+            CodePair::new_str(2, "UNSUPPORTED"),
+            CodePair::new_str(0, "UNSUPPORTED"),
+            CodePair::new_str(2, "unsupported-name"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "TABLE"),
+            CodePair::new_str(2, "LAYER"),
+            CodePair::new_str(0, "LAYER"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(1, drawing.layers().count());
     }
 
     #[test]
     fn read_single_layer() {
-        let drawing = read_table("LAYER", vec!["0", "LAYER", "2", "layer-name"]);
+        let drawing = read_table(
+            "LAYER",
+            vec![
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_str(2, "layer-name"),
+            ],
+        );
         let layers = drawing.layers().collect::<Vec<_>>();
         assert_eq!(1, layers.len());
         assert_eq!("layer-name", layers[0].name);
@@ -145,53 +122,27 @@ mod tests {
 
     #[test]
     fn read_variable_table_items() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "TABLES",
-                // no app ids
-                "0",
-                "TABLE",
-                "2",
-                "APPID",
-                "0",
-                "ENDTAB",
-                // 1 layer
-                "0",
-                "TABLE",
-                "2",
-                "LAYER",
-                "0",
-                "LAYER",
-                "2",
-                "layer-name",
-                "0",
-                "ENDTAB",
-                // 2 styles
-                "0",
-                "TABLE",
-                "2",
-                "STYLE",
-                "0",
-                "STYLE",
-                "40",
-                "1.1",
-                "0",
-                "STYLE",
-                "40",
-                "2.2",
-                "0",
-                "ENDTAB",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "TABLES"),
+            CodePair::new_str(0, "TABLE"), // no app ids
+            CodePair::new_str(2, "APPID"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "TABLE"), // 1 layer
+            CodePair::new_str(2, "LAYER"),
+            CodePair::new_str(0, "LAYER"),
+            CodePair::new_str(2, "layer-name"),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "TABLE"), // 2 styles
+            CodePair::new_str(2, "STYLE"),
+            CodePair::new_str(0, "STYLE"),
+            CodePair::new_f64(40, 1.1),
+            CodePair::new_str(0, "STYLE"),
+            CodePair::new_f64(40, 2.2),
+            CodePair::new_str(0, "ENDTAB"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(0, drawing.block_records().count()); // not listed in file, but make sure there are still 0
         assert_eq!(0, drawing.app_ids().count());
         let layers = drawing.layers().collect::<Vec<_>>();
@@ -205,7 +156,10 @@ mod tests {
 
     #[test]
     fn read_layer_color_and_layer_is_on() {
-        let drawing = read_table("LAYER", vec!["0", "LAYER", "62", "5"]);
+        let drawing = read_table(
+            "LAYER",
+            vec![CodePair::new_str(0, "LAYER"), CodePair::new_i16(62, 5)],
+        );
         let layers = drawing.layers().collect::<Vec<_>>();
         let layer = layers[0];
         assert_eq!(Some(5), layer.color.index());
@@ -214,7 +168,10 @@ mod tests {
 
     #[test]
     fn read_layer_color_and_layer_is_off() {
-        let drawing = read_table("LAYER", vec!["0", "LAYER", "62", "-5"]);
+        let drawing = read_table(
+            "LAYER",
+            vec![CodePair::new_str(0, "LAYER"), CodePair::new_i16(62, -5)],
+        );
         let layers = drawing.layers().collect::<Vec<_>>();
         let layer = layers[0];
         assert_eq!(Some(5), layer.color.index());
@@ -280,14 +237,10 @@ mod tests {
         let drawing = read_table(
             "LAYER",
             vec![
-                "  0",
-                "LAYER",
-                "102",
-                "{IXMILIA",
-                "  1",
-                "some string",
-                "102",
-                "}",
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
             ],
         );
         let layers = drawing.layers().collect::<Vec<_>>();
@@ -329,7 +282,11 @@ mod tests {
     fn read_table_item_with_x_data() {
         let drawing = read_table(
             "LAYER",
-            vec!["  0", "LAYER", "1001", "IXMILIA", "1040", "1.1"],
+            vec![
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+            ],
         );
         let layers = drawing.layers().collect::<Vec<_>>();
         let layer = layers[0];

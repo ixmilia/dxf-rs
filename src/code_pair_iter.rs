@@ -3,63 +3,82 @@ use crate::{CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
 use crate::code_pair_value::un_escape_ascii_to_unicode;
 use crate::helper_functions::*;
 use encoding_rs::Encoding;
-use std::io::Read;
+use std::io::{Cursor, Read};
 
-pub(crate) struct CodePairIter<T: Read> {
+pub(crate) trait CodePairIter: Iterator<Item = DxfResult<CodePair>> {
+    fn read_as_utf8(&mut self);
+}
+
+/// Directly returns code pairs; primarily used in tests.
+pub(crate) struct DirectCodePairIter {
+    pairs: Vec<CodePair>,
+    offset: usize,
+}
+
+impl CodePairIter for DirectCodePairIter {
+    fn read_as_utf8(&mut self) {
+        // noop
+    }
+}
+
+impl Iterator for DirectCodePairIter {
+    type Item = DxfResult<CodePair>;
+    fn next(&mut self) -> Option<DxfResult<CodePair>> {
+        if self.offset < self.pairs.len() {
+            let pair = self.pairs[self.offset].clone();
+            self.offset += 1;
+            return Some(Ok(pair));
+        }
+
+        None
+    }
+}
+
+#[cfg(test)]
+impl DirectCodePairIter {
+    pub(crate) fn new(pairs: Vec<CodePair>) -> Self {
+        DirectCodePairIter { pairs, offset: 0 }
+    }
+}
+
+/// Returns code pairs as read from text.  Handles the most common DXF files and when parsed from strings.
+pub(crate) struct TextCodePairIter<T: Read> {
     reader: T,
     string_encoding: &'static Encoding,
     first_line: String,
     read_first_line: bool,
-    read_as_text: bool,
-    is_post_r13_binary: bool,
-    returned_binary_pair: bool,
-    binary_detection_complete: bool,
     offset: usize,
 }
 
-impl<T: Read> CodePairIter<T> {
-    pub fn new(reader: T, string_encoding: &'static Encoding, first_line: String) -> Self {
-        CodePairIter {
+impl<T: Read> CodePairIter for TextCodePairIter<T> {
+    fn read_as_utf8(&mut self) {
+        self.string_encoding = encoding_rs::UTF_8;
+    }
+}
+
+impl<T: Read> Iterator for TextCodePairIter<T> {
+    type Item = DxfResult<CodePair>;
+    fn next(&mut self) -> Option<DxfResult<CodePair>> {
+        self.read_code_pair()
+    }
+}
+
+impl<T: Read> TextCodePairIter<T> {
+    pub fn new(
+        reader: T,
+        string_encoding: &'static Encoding,
+        first_line: String,
+        offset: usize,
+    ) -> Self {
+        TextCodePairIter {
             reader,
             string_encoding,
             first_line,
             read_first_line: false,
-            read_as_text: true,
-            is_post_r13_binary: false,
-            returned_binary_pair: false,
-            binary_detection_complete: false,
-            offset: 0,
+            offset,
         }
     }
-    pub fn read_as_utf8(&mut self) {
-        self.string_encoding = encoding_rs::UTF_8;
-    }
-    fn detect_binary_or_text_file(&mut self) -> DxfResult<()> {
-        match &*self.first_line {
-            "AutoCAD Binary DXF" => {
-                // swallow the next two bytes
-                assert_or_err!(
-                    try_option_io_result_into_err!(read_u8(&mut self.reader)),
-                    0x1A,
-                    18
-                );
-                assert_or_err!(
-                    try_option_io_result_into_err!(read_u8(&mut self.reader)),
-                    0x00,
-                    19
-                );
-                self.read_as_text = false;
-                self.offset = 20;
-            }
-            _ => {
-                self.read_as_text = true;
-                self.offset = 1;
-            }
-        }
-        self.binary_detection_complete = true;
-        Ok(())
-    }
-    fn read_code_pair_text(&mut self) -> Option<DxfResult<CodePair>> {
+    fn read_code_pair(&mut self) -> Option<DxfResult<CodePair>> {
         // Read code.  If no line is available, fail gracefully.
         let code_line = if self.read_first_line {
             self.offset += 1;
@@ -133,7 +152,39 @@ impl<T: Read> CodePairIter<T> {
 
         Some(Ok(CodePair::new(code, value, code_offset)))
     }
-    fn read_code_pair_binary(&mut self) -> Option<DxfResult<CodePair>> {
+}
+
+/// Returns code pairs as read from a binary file.  Usually created _after_ the first line of a file has been read.
+pub(crate) struct BinaryCodePairIter<T: Read> {
+    reader: T,
+    code_size_detection_complete: bool,
+    codes_are_two_bytes: bool,
+    offset: usize,
+}
+
+impl<T: Read> CodePairIter for BinaryCodePairIter<T> {
+    fn read_as_utf8(&mut self) {
+        // noop
+    }
+}
+
+impl<T: Read> Iterator for BinaryCodePairIter<T> {
+    type Item = DxfResult<CodePair>;
+    fn next(&mut self) -> Option<DxfResult<CodePair>> {
+        self.read_code_pair()
+    }
+}
+
+impl<T: Read> BinaryCodePairIter<T> {
+    pub fn new(reader: T, offset: usize) -> Self {
+        BinaryCodePairIter {
+            reader,
+            code_size_detection_complete: false,
+            codes_are_two_bytes: false,
+            offset,
+        }
+    }
+    fn read_code_pair(&mut self) -> Option<DxfResult<CodePair>> {
         // Read code.  If no data is available, fail gracefully.
         let mut code = match read_u8(&mut self.reader) {
             Some(Ok(c)) => i32::from(c),
@@ -143,7 +194,7 @@ impl<T: Read> CodePairIter<T> {
         self.offset += 1;
 
         // If reading a larger code and no data is available, die horribly.
-        if self.is_post_r13_binary {
+        if self.codes_are_two_bytes {
             // post R13 codes are 2 bytes, read the second byte of the code
             let high_byte = i32::from(try_from_dxf_result!(read_u8_strict(&mut self.reader)));
             code += high_byte << 8;
@@ -162,7 +213,7 @@ impl<T: Read> CodePairIter<T> {
         let (value, read_bytes) = match expected_type {
             ExpectedType::Boolean => {
                 // after R13 bools are encoded as a single byte
-                let (b_value, read_bytes) = if self.is_post_r13_binary {
+                let (b_value, read_bytes) = if self.codes_are_two_bytes {
                     (
                         i16::from(try_from_dxf_result!(read_u8_strict(&mut self.reader))),
                         1,
@@ -190,13 +241,13 @@ impl<T: Read> CodePairIter<T> {
             ),
             ExpectedType::Str => {
                 let mut value = try_from_dxf_result!(self.read_string_binary());
-                if !self.returned_binary_pair && code == 0 && value == "" {
+                if !self.code_size_detection_complete && code == 0 && value == "" {
                     // If this is the first pair being read and the code is 0, the only valid string value is "SECTION".
                     // If the read value is instead empty, that means the string reader found a single 0x00 byte which
                     // indicates that this is a post R13 binary file where codes are always read as 2 bytes.  The 0x00
                     // byte was really the second byte of {0x00, 0x00}, so we need to do one more string read to catch
                     // the reader up.
-                    self.is_post_r13_binary = true;
+                    self.codes_are_two_bytes = true;
                     self.offset += 1; // account for the NULL byte that was interpreted as an empty string
                     value = try_from_dxf_result!(self.read_string_binary()); // now read the actual value
                 }
@@ -216,7 +267,7 @@ impl<T: Read> CodePairIter<T> {
             }
         };
         self.offset += read_bytes;
-        self.returned_binary_pair = true;
+        self.code_size_detection_complete = true;
 
         Some(Ok(CodePair::new(code, value, self.offset)))
     }
@@ -235,57 +286,65 @@ impl<T: Read> CodePairIter<T> {
     }
 }
 
-impl<T: Read> Iterator for CodePairIter<T> {
-    type Item = DxfResult<CodePair>;
-    fn next(&mut self) -> Option<DxfResult<CodePair>> {
-        loop {
-            if !self.binary_detection_complete {
-                match self.detect_binary_or_text_file() {
-                    Ok(_) => (),
-                    Err(e) => return Some(Err(e)),
-                }
-            }
+//---------------------------
 
-            let pair = if self.read_as_text {
-                self.read_code_pair_text()
-            } else {
-                self.read_code_pair_binary()
-            };
-
-            match pair {
-                Some(Ok(CodePair { code, .. })) if code != 999 => return pair,
-                Some(Ok(_)) => (), // a 999 comment code, try again
-                Some(Err(_)) => return pair,
-                None => return None,
-            }
+pub(crate) fn new_code_pair_iter_from_reader<T>(
+    mut reader: T,
+    string_encoding: &'static Encoding,
+    first_line: String,
+) -> DxfResult<Box<dyn CodePairIter>>
+where
+    T: Read,
+{
+    let mut bytes = vec![];
+    reader.read_to_end(&mut bytes)?;
+    let mut cursor = Cursor::new(bytes);
+    let iter: Box<dyn CodePairIter> = match &*first_line {
+        "AutoCAD Binary DXF" => {
+            // swallow 0x1A,0x00
+            assert_or_err!(
+                try_option_io_result_into_err!(read_u8(&mut cursor)),
+                0x1A,
+                18
+            );
+            assert_or_err!(
+                try_option_io_result_into_err!(read_u8(&mut cursor)),
+                0x00,
+                19
+            );
+            Box::new(BinaryCodePairIter::new(cursor, 20))
         }
-    }
+        _ => Box::new(TextCodePairIter::new(
+            cursor,
+            string_encoding,
+            first_line,
+            1,
+        )),
+    };
+    Ok(iter)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::code_pair_iter::CodePairIter;
+    use crate::code_pair_iter::{BinaryCodePairIter, TextCodePairIter};
     use crate::CodePair;
 
-    fn read_in_binary(data: Vec<u8>) -> CodePair {
-        let mut reader = CodePairIter::<&[u8]> {
+    use super::DirectCodePairIter;
+
+    fn read_in_binary(codes_are_two_bytes: bool, data: Vec<u8>) -> CodePair {
+        let mut reader = BinaryCodePairIter {
             reader: data.as_slice(),
-            string_encoding: encoding_rs::WINDOWS_1252,
-            first_line: String::from("not-important"),
-            read_first_line: true,
-            read_as_text: false,
-            is_post_r13_binary: true,
-            returned_binary_pair: true,
-            binary_detection_complete: true,
+            code_size_detection_complete: true,
+            codes_are_two_bytes,
             offset: 0,
         };
-        reader.read_code_pair_binary().unwrap().unwrap()
+        reader.read_code_pair().unwrap().unwrap()
     }
 
     #[test]
     fn read_string_in_binary() {
         // code 0x0001, value 0x41 = "A", NUL
-        let pair = read_in_binary(vec![0x01, 0x00, 0x41, 0x00]);
+        let pair = read_in_binary(true, vec![0x01, 0x00, 0x41, 0x00]);
         assert_eq!(1, pair.code);
         assert_eq!("A", pair.assert_string().expect("should be a string"));
     }
@@ -293,7 +352,7 @@ mod tests {
     #[test]
     fn read_binary_chunk_in_binary() {
         // code 0x136, length 2, data [0x01, 0x02]
-        let pair = read_in_binary(vec![0x36, 0x01, 0x02, 0x01, 0x02]);
+        let pair = read_in_binary(true, vec![0x36, 0x01, 0x02, 0x01, 0x02]);
         assert_eq!(310, pair.code);
         assert_eq!(
             vec![0x01, 0x02],
@@ -301,21 +360,20 @@ mod tests {
         );
     }
 
-    #[test]
-    fn read_binary_chunk_in_ascii() {
-        let data = "310\r\n0102";
-        let mut reader = CodePairIter::<&[u8]> {
+    fn read_in_text(data: &str) -> CodePair {
+        let mut reader = TextCodePairIter::<&[u8]> {
             reader: data.as_bytes(),
             string_encoding: encoding_rs::WINDOWS_1252,
             first_line: String::from("not-important"),
             read_first_line: true,
-            read_as_text: true,
-            is_post_r13_binary: false,
-            returned_binary_pair: false,
-            binary_detection_complete: true,
             offset: 0,
         };
-        let pair = reader.read_code_pair_text().unwrap().unwrap();
+        reader.read_code_pair().unwrap().unwrap()
+    }
+
+    #[test]
+    fn read_binary_chunk_in_ascii() {
+        let pair = read_in_text("310\r\n0102");
         assert_eq!(310, pair.code);
         assert_eq!(
             vec![0x01, 0x02],
@@ -326,8 +384,26 @@ mod tests {
     #[test]
     fn read_code_450_in_binary() {
         // code 450 = 0x1C2, value = 37 (0x25)
-        let pair = read_in_binary(vec![0xC2, 0x01, 0x25, 0x00, 0x00, 0x00]);
+        let pair = read_in_binary(true, vec![0xC2, 0x01, 0x25, 0x00, 0x00, 0x00]);
         assert_eq!(450, pair.code);
         assert_eq!(37, pair.assert_i32().expect("should be int"));
+    }
+
+    #[test]
+    fn read_code_pairs_directly() {
+        // really just a smoke test to verify the direct code pair reader
+        let mut reader = DirectCodePairIter::new(vec![
+            CodePair::new_f64(10, 1.0),
+            CodePair::new_str(1, "abc"),
+        ]);
+        assert_eq!(
+            Some(CodePair::new_f64(10, 1.0)),
+            reader.next().unwrap().ok()
+        );
+        assert_eq!(
+            Some(CodePair::new_str(1, "abc")),
+            reader.next().unwrap().ok()
+        );
+        assert!(reader.next().is_none());
     }
 }

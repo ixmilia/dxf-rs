@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, DxfError, DxfResult};
 
@@ -24,14 +24,11 @@ pub enum ExtensionGroupItem {
 }
 
 impl ExtensionGroup {
-    pub(crate) fn read_group<I>(
+    pub(crate) fn read_group(
         application_name: String,
-        iter: &mut CodePairPutBack<I>,
+        iter: &mut CodePairPutBack,
         offset: usize,
-    ) -> DxfResult<ExtensionGroup>
-    where
-        I: Read,
-    {
+    ) -> DxfResult<ExtensionGroup> {
         if !application_name.starts_with('{') {
             return Err(DxfError::ParseError(offset));
         }

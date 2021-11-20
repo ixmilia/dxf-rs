@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, DxfError, DxfResult, Handle, Point, Vector};
 
@@ -52,13 +52,10 @@ pub enum XDataItem {
 }
 
 impl XData {
-    pub(crate) fn read_item<I>(
+    pub(crate) fn read_item(
         application_name: String,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<XData>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<XData> {
         let mut xdata = XData {
             application_name,
             items: vec![],
@@ -104,10 +101,7 @@ impl XData {
 }
 
 impl XDataItem {
-    fn read_item<I>(pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<XDataItem>
-    where
-        I: Read,
-    {
+    fn read_item(pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<XDataItem> {
         match pair.code {
             XDATA_STRING => Ok(XDataItem::Str(pair.assert_string()?)),
             XDATA_CONTROLGROUP => {
@@ -168,10 +162,7 @@ impl XDataItem {
             _ => Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
         }
     }
-    fn read_double<T>(iter: &mut CodePairPutBack<T>, expected_code: i32) -> DxfResult<f64>
-    where
-        T: Read,
-    {
+    fn read_double(iter: &mut CodePairPutBack, expected_code: i32) -> DxfResult<f64> {
         match iter.next() {
             Some(Ok(ref pair)) if pair.code == expected_code => Ok(pair.assert_f64()?),
             Some(Ok(pair)) => Err(DxfError::UnexpectedCode(pair.code, pair.offset)),
@@ -179,28 +170,18 @@ impl XDataItem {
             None => Err(DxfError::UnexpectedEndOfInput),
         }
     }
-    fn read_point<I>(
-        iter: &mut CodePairPutBack<I>,
-        first: f64,
-        expected_code: i32,
-    ) -> DxfResult<Point>
-    where
-        I: Read,
-    {
+    fn read_point(iter: &mut CodePairPutBack, first: f64, expected_code: i32) -> DxfResult<Point> {
         Ok(Point::new(
             first,
             XDataItem::read_double(iter, expected_code + 10)?,
             XDataItem::read_double(iter, expected_code + 20)?,
         ))
     }
-    fn read_vector<I>(
-        iter: &mut CodePairPutBack<I>,
+    fn read_vector(
+        iter: &mut CodePairPutBack,
         first: f64,
         expected_code: i32,
-    ) -> DxfResult<Vector>
-    where
-        I: Read,
-    {
+    ) -> DxfResult<Vector> {
         Ok(Vector::new(
             first,
             XDataItem::read_double(iter, expected_code + 10)?,
@@ -279,25 +260,22 @@ impl XDataItem {
 
 #[cfg(test)]
 mod tests {
+    use crate::code_pair::CodePair;
     use crate::enums::AcadVersion;
     use crate::helper_functions::tests::*;
     use crate::objects::*;
     use crate::x_data::{XData, XDataItem};
     use crate::{Drawing, Point, Vector};
 
-    fn read_x_data_items(lines: Vec<&str>) -> Vec<XDataItem> {
-        let drawing = from_section(
-            "OBJECTS",
-            vec![
-                "0",
-                "ACAD_PROXY_OBJECT",
-                "1001",
-                "TEST_APPLICATION_NAME",
-                lines.join("\r\n").as_str(),
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+    fn read_x_data_items(values: Vec<CodePair>) -> Vec<XDataItem> {
+        let mut pairs = vec![
+            CodePair::new_str(0, "ACAD_PROXY_OBJECT"),
+            CodePair::new_str(1001, "TEST_APPLICATION_NAME"),
+        ];
+        for pair in values {
+            pairs.push(pair);
+        }
+        let drawing = from_section("OBJECTS", pairs);
         let objects = drawing.objects().collect::<Vec<_>>();
         assert_eq!(1, objects.len());
         assert_eq!(1, objects[0].common.x_data.len());
@@ -306,8 +284,8 @@ mod tests {
         x_data.items
     }
 
-    fn read_x_data_item(lines: Vec<&str>) -> XDataItem {
-        let items = read_x_data_items(lines);
+    fn read_x_data_item(values: Vec<CodePair>) -> XDataItem {
+        let items = read_x_data_items(values);
         assert_eq!(1, items.len());
         items[0].clone()
     }
@@ -330,7 +308,11 @@ mod tests {
 
     #[test]
     fn read_3_reals() {
-        let item = read_x_data_item(vec!["1010", "1.0", "1020", "2.0", "1030", "3.0"]);
+        let item = read_x_data_item(vec![
+            CodePair::new_f64(1010, 1.0),
+            CodePair::new_f64(1020, 2.0),
+            CodePair::new_f64(1030, 3.0),
+        ]);
         match item {
             XDataItem::ThreeReals(x, y, z) => {
                 assert_eq!(1.0, x);
@@ -343,7 +325,11 @@ mod tests {
 
     #[test]
     fn read_world_space_position() {
-        let item = read_x_data_item(vec!["1011", "1.0", "1021", "2.0", "1031", "3.0"]);
+        let item = read_x_data_item(vec![
+            CodePair::new_f64(1011, 1.0),
+            CodePair::new_f64(1021, 2.0),
+            CodePair::new_f64(1031, 3.0),
+        ]);
         match item {
             XDataItem::WorldSpacePosition(p) => {
                 assert_eq!(1.0, p.x);
@@ -356,7 +342,11 @@ mod tests {
 
     #[test]
     fn read_world_space_displacement() {
-        let item = read_x_data_item(vec!["1012", "1.0", "1022", "2.0", "1032", "3.0"]);
+        let item = read_x_data_item(vec![
+            CodePair::new_f64(1012, 1.0),
+            CodePair::new_f64(1022, 2.0),
+            CodePair::new_f64(1032, 3.0),
+        ]);
         match item {
             XDataItem::WorldSpaceDisplacement(p) => {
                 assert_eq!(1.0, p.x);
@@ -369,7 +359,11 @@ mod tests {
 
     #[test]
     fn read_world_direction() {
-        let item = read_x_data_item(vec!["1013", "1.0", "1023", "2.0", "1033", "3.0"]);
+        let item = read_x_data_item(vec![
+            CodePair::new_f64(1013, 1.0),
+            CodePair::new_f64(1023, 2.0),
+            CodePair::new_f64(1033, 3.0),
+        ]);
         match item {
             XDataItem::WorldDirection(v) => {
                 assert_eq!(1.0, v.x);

@@ -1,7 +1,7 @@
 // other implementation is in `generated/entities.rs`
 
 use enum_primitive::FromPrimitive;
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, Color, DxfError, DxfResult, Handle, Point, Vector};
 
@@ -407,10 +407,7 @@ impl Entity {
         self.common.normalize();
         // no entity-specific values to set
     }
-    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<Entity>>
-    where
-        I: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Option<Entity>> {
         'new_entity: loop {
             match iter.next() {
                 // first code pair must be 0/entity-type
@@ -673,14 +670,7 @@ impl Entity {
             }
         }
     }
-    fn apply_code_pair<I>(
-        &mut self,
-        pair: &CodePair,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
         if !self.specific.try_apply_code_pair(&pair)? {
             self.common.apply_individual_pair(&pair, iter)?;
         }
@@ -797,10 +787,7 @@ impl Entity {
 
         Ok(())
     }
-    fn apply_custom_reader<I>(&mut self, iter: &mut CodePairPutBack<I>) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+    fn apply_custom_reader(&mut self, iter: &mut CodePairPutBack) -> DxfResult<bool> {
         match self.specific {
             EntityType::Attribute(ref mut att) => {
                 Entity::apply_custom_reader_attribute(&mut self.common, att, iter)
@@ -817,14 +804,11 @@ impl Entity {
             _ => Ok(false), // no custom reader
         }
     }
-    fn apply_custom_reader_attribute<I>(
+    fn apply_custom_reader_attribute(
         common: &mut EntityCommon,
         att: &mut Attribute,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let xrecord_text = "AcDbXrecord";
         let mut last_subclass_marker = String::new();
         let mut is_version_set = false;
@@ -968,14 +952,11 @@ impl Entity {
             }
         }
     }
-    fn apply_custom_reader_attributedefinition<I>(
+    fn apply_custom_reader_attributedefinition(
         common: &mut EntityCommon,
         att: &mut AttributeDefinition,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let xrecord_text = "AcDbXrecord";
         let mut last_subclass_marker = String::new();
         let mut is_version_set = false;
@@ -1122,14 +1103,11 @@ impl Entity {
             }
         }
     }
-    fn apply_custom_reader_lwpolyline<I>(
+    fn apply_custom_reader_lwpolyline(
         common: &mut EntityCommon,
         poly: &mut LwPolyline,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         loop {
             let pair = next_pair!(iter);
             match pair.code {
@@ -1179,14 +1157,11 @@ impl Entity {
             }
         }
     }
-    fn apply_custom_reader_mtext<I>(
+    fn apply_custom_reader_mtext(
         common: &mut EntityCommon,
         mtext: &mut MText,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<bool>
-    where
-        I: Read,
-    {
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
         let mut reading_column_data = false;
         let mut read_column_count = false;
         loop {
@@ -1701,11 +1676,12 @@ mod tests {
     use crate::objects::*;
     use crate::*;
 
-    fn read_entity(entity_type: &str, body: String) -> Entity {
-        let drawing = from_section(
-            "ENTITIES",
-            vec!["0", entity_type, body.as_str()].join("\r\n").as_str(),
-        );
+    fn read_entity(entity_type: &str, body: Vec<CodePair>) -> Entity {
+        let mut pairs = vec![CodePair::new_str(0, entity_type)];
+        for pair in body {
+            pairs.push(pair);
+        }
+        let drawing = from_section("ENTITIES", pairs);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
         entities[0].clone()
@@ -1713,63 +1689,42 @@ mod tests {
 
     #[test]
     fn read_empty_entities_section() {
-        let drawing = parse_drawing(
-            vec!["0", "SECTION", "2", "ENTITIES", "0", "ENDSEC", "0", "EOF"]
-                .join("\r\n")
-                .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities();
         assert_eq!(0, entities.count());
     }
 
     #[test]
     fn read_unsupported_entity() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "ENTITIES",
-                "0",
-                "UNSUPPORTED_ENTITY",
-                "1",
-                "unsupported string",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "UNSUPPORTED_ENTITY"),
+            CodePair::new_str(1, "unsupported string"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities();
         assert_eq!(0, entities.count());
     }
 
     #[test]
     fn read_unsupported_entity_between_supported_entities() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "ENTITIES",
-                "0",
-                "LINE",
-                "0",
-                "UNSUPPORTED_ENTITY",
-                "1",
-                "unsupported string",
-                "0",
-                "CIRCLE",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "UNSUPPORTED_ENTITY"),
+            CodePair::new_str(1, "unsupported string"),
+            CodePair::new_str(0, "CIRCLE"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
         match entities[0].specific {
@@ -1784,13 +1739,13 @@ mod tests {
 
     #[test]
     fn read_entity_with_no_values() {
-        let drawing = parse_drawing(
-            vec![
-                "0", "SECTION", "2", "ENTITIES", "0", "LINE", "0", "ENDSEC", "0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
         match entities[0].specific {
@@ -1801,7 +1756,7 @@ mod tests {
 
     #[test]
     fn read_common_entity_fields() {
-        let ent = read_entity("LINE", vec!["8", "layer"].join("\r\n"));
+        let ent = read_entity("LINE", vec![CodePair::new_str(8, "layer")]);
         assert_eq!("layer", ent.common.layer);
     }
 
@@ -1810,11 +1765,13 @@ mod tests {
         let ent = read_entity(
             "LINE",
             vec![
-                "10", "1.1", // p1
-                "20", "2.2", "30", "3.3", "11", "4.4", // p2
-                "21", "5.5", "31", "6.6",
-            ]
-            .join("\r\n"),
+                CodePair::new_f64(10, 1.1), // p1
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_f64(11, 4.4), // p2
+                CodePair::new_f64(21, 5.5),
+                CodePair::new_f64(31, 6.6),
+            ],
         );
         match ent.specific {
             EntityType::Line(ref line) => {
@@ -1874,14 +1831,19 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "0", "CIRCLE", "10", "1.1", // center
-                "20", "2.2", "30", "3.3", "40", "4.4", // radius
-                "0", "LINE", "10", "5.5", // p1
-                "20", "6.6", "30", "7.7", "11", "8.8", // p2
-                "21", "9.9", "31", "10.1",
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "CIRCLE"),
+                CodePair::new_f64(10, 1.1), // center
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_f64(40, 4.4), // radius
+                CodePair::new_str(0, "LINE"),
+                CodePair::new_f64(10, 5.5), // p1
+                CodePair::new_f64(20, 6.6),
+                CodePair::new_f64(30, 7.7),
+                CodePair::new_f64(11, 8.8), // p2
+                CodePair::new_f64(21, 9.9),
+                CodePair::new_f64(31, 10.1),
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -1907,7 +1869,13 @@ mod tests {
 
     #[test]
     fn read_field_with_multiples_common() {
-        let ent = read_entity("LINE", vec!["310", "0102", "310", "0304"].join("\r\n"));
+        let ent = read_entity(
+            "LINE",
+            vec![
+                CodePair::new_binary(310, vec![0x01, 0x02]),
+                CodePair::new_binary(310, vec![0x03, 0x04]),
+            ],
+        );
         assert_eq!(
             vec![vec![0x01, 0x02], vec![0x03, 0x04]],
             ent.common.preview_image_data
@@ -1932,7 +1900,12 @@ mod tests {
     fn read_field_with_multiples_specific() {
         let ent = read_entity(
             "3DSOLID",
-            vec!["1", "one-1", "1", "one-2", "3", "three-1", "3", "three-2"].join("\r\n"),
+            vec![
+                CodePair::new_str(1, "one-1"),
+                CodePair::new_str(1, "one-2"),
+                CodePair::new_str(3, "three-1"),
+                CodePair::new_str(3, "three-2"),
+            ],
         );
         match ent.specific {
             EntityType::Solid3D(ref solid3d) => {
@@ -1969,12 +1942,13 @@ mod tests {
         let ent = read_entity(
             "IMAGE",
             vec![
-                "14", "1.1", // clipping_vertices[0]
-                "24", "2.2", "14", "3.3", // clipping_vertices[1]
-                "24", "4.4", "14", "5.5", // clipping_vertices[2]
-                "24", "6.6",
-            ]
-            .join("\r\n"),
+                CodePair::new_f64(14, 1.1), // clipping vertices[0]
+                CodePair::new_f64(24, 2.2),
+                CodePair::new_f64(14, 3.3), // clipping vertices[1]
+                CodePair::new_f64(24, 4.4),
+                CodePair::new_f64(14, 5.5), // clipping vertices[2]
+                CodePair::new_f64(24, 6.6),
+            ],
         );
         match ent.specific {
             EntityType::Image(ref image) => {
@@ -2029,13 +2003,13 @@ mod tests {
         let ent = read_entity(
             "MTEXT",
             vec![
-                "50", "1.1", // rotation angle
-                "75", "7", // column type
-                "50", "3", // column count
-                "50", "10", // column values
-                "50", "20", "50", "30",
-            ]
-            .join("\r\n"),
+                CodePair::new_f64(50, 1.1),  // rotation angle
+                CodePair::new_i16(75, 7),    // column type
+                CodePair::new_f64(50, 3.0),  // column count
+                CodePair::new_f64(50, 10.0), // column values
+                CodePair::new_f64(50, 20.0),
+                CodePair::new_f64(50, 30.0),
+            ],
         );
         match ent.specific {
             EntityType::MText(ref mtext) => {
@@ -2056,11 +2030,9 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "  0", "MTEXT", // has a custom reader
-                "  0", "LINE", // uses the auto-generated reader
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "MTEXT"), // has a custom reader
+                CodePair::new_str(0, "LINE"),  // uses the auto-generated reader
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -2076,7 +2048,7 @@ mod tests {
 
     #[test]
     fn read_entity_with_flags() {
-        let ent = read_entity("IMAGE", vec!["70", "5"].join("\r\n"));
+        let ent = read_entity("IMAGE", vec![CodePair::new_i16(70, 5)]);
         match ent.specific {
             EntityType::Image(ref image) => {
                 assert!(image.get_show_image());
@@ -2114,11 +2086,10 @@ mod tests {
         let ent = read_entity(
             "3DSOLID",
             vec![
-                "5", "A1", // handle
-                "330", "A2", // owner handle
-                "350", "A3", // history_object pointer
-            ]
-            .join("\r\n"),
+                CodePair::new_str(5, "A1"),   // handle
+                CodePair::new_str(330, "A2"), // owner handle
+                CodePair::new_str(350, "A3"), // history_object pointer
+            ],
         );
         assert_eq!(Handle(0xa1), ent.common.handle);
         assert_eq!(Handle(0xa2), ent.common.__owner_handle);
@@ -2175,14 +2146,21 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "  0", "POLYLINE", // polyline sentinel
-                "  0", "VERTEX", // vertex 1
-                " 10", "1.1", " 20", "2.1", " 30", "3.1", "  0", "VERTEX", // vertex 2
-                " 10", "1.2", " 20", "2.2", " 30", "3.2", "  0", "VERTEX", // vertex 3
-                " 10", "1.3", " 20", "2.3", " 30", "3.3", "  0", "SEQEND", // end sequence
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "VERTEX"),   // vertex 1
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_str(0, "VERTEX"), // vertex 2
+                CodePair::new_f64(10, 1.2),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.2),
+                CodePair::new_str(0, "VERTEX"), // vertex 3
+                CodePair::new_f64(10, 1.3),
+                CodePair::new_f64(20, 2.3),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_str(0, "SEQEND"), // end sequence
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2215,15 +2193,21 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "  0", "POLYLINE", // polyline sentinel
-                "  0", "VERTEX", // vertex 1
-                " 10", "1.1", " 20", "2.1", " 30", "3.1", "  0", "VERTEX", // vertex 2
-                " 10", "1.2", " 20", "2.2", " 30", "3.2", "  0", "VERTEX", // vertex 3
-                " 10", "1.3", " 20", "2.3", " 30", "3.3",
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "VERTEX"),   // vertex 1
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_str(0, "VERTEX"), // vertex 2
+                CodePair::new_f64(10, 1.2),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.2),
+                CodePair::new_str(0, "VERTEX"), // vertex 3
+                CodePair::new_f64(10, 1.3),
+                CodePair::new_f64(20, 2.3),
+                CodePair::new_f64(30, 3.3),
                 // no end sequence
-            ]
-            .join("\r\n")
-            .as_str(),
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2255,7 +2239,10 @@ mod tests {
     fn read_empty_polyline() {
         let drawing = from_section(
             "ENTITIES",
-            vec!["0", "POLYLINE", "0", "SEQEND"].join("\r\n").as_str(),
+            vec![
+                CodePair::new_str(0, "POLYLINE"),
+                CodePair::new_str(0, "SEQEND"),
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2267,7 +2254,7 @@ mod tests {
 
     #[test]
     fn read_empty_polyline_without_seqend() {
-        let drawing = from_section("ENTITIES", vec!["0", "POLYLINE"].join("\r\n").as_str());
+        let drawing = from_section("ENTITIES", vec![CodePair::new_str(0, "POLYLINE")]);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
         match entities[0].specific {
@@ -2281,15 +2268,22 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "  0", "POLYLINE", // polyline sentinel
-                "  0", "VERTEX", // vertex 1
-                " 10", "1.1", " 20", "2.1", " 30", "3.1", "  0", "VERTEX", // vertex 2
-                " 10", "1.2", " 20", "2.2", " 30", "3.2", "  0", "VERTEX", // vertex 3
-                " 10", "1.3", " 20", "2.3", " 30", "3.3", "  0", "SEQEND", // end sequence
-                "  0", "LINE", // trailing entity
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "VERTEX"),   // vertex 1
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_str(0, "VERTEX"), // vertex 2
+                CodePair::new_f64(10, 1.2),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.2),
+                CodePair::new_str(0, "VERTEX"), // vertex 3
+                CodePair::new_f64(10, 1.3),
+                CodePair::new_f64(20, 2.3),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_str(0, "SEQEND"), // end sequence
+                CodePair::new_str(0, "LINE"),   // trailing entity
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -2327,15 +2321,22 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "  0", "POLYLINE", // polyline sentinel
-                "  0", "VERTEX", // vertex 1
-                " 10", "1.1", " 20", "2.1", " 30", "3.1", "  0", "VERTEX", // vertex 2
-                " 10", "1.2", " 20", "2.2", " 30", "3.2", "  0", "VERTEX", // vertex 3
-                " 10", "1.3", " 20", "2.3", " 30", "3.3", // no end sequence
-                "  0", "LINE", // trailing entity
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "VERTEX"),   // vertex 1
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_str(0, "VERTEX"), // vertex 2
+                CodePair::new_f64(10, 1.2),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.2),
+                CodePair::new_str(0, "VERTEX"), // vertex 3
+                CodePair::new_f64(10, 1.3),
+                CodePair::new_f64(20, 2.3),
+                CodePair::new_f64(30, 3.3),
+                // no end sequence
+                CodePair::new_str(0, "LINE"), // trailing entity
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -2372,9 +2373,11 @@ mod tests {
     fn read_empty_polyline_with_trailing_entity() {
         let drawing = from_section(
             "ENTITIES",
-            vec!["0", "POLYLINE", "0", "SEQEND", "0", "LINE"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "SEQEND"),   // end sequence
+                CodePair::new_str(0, "LINE"),     // trailing entity
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -2392,7 +2395,10 @@ mod tests {
     fn read_empty_polyline_without_seqend_with_trailing_entity() {
         let drawing = from_section(
             "ENTITIES",
-            vec!["0", "POLYLINE", "0", "LINE"].join("\r\n").as_str(),
+            vec![
+                CodePair::new_str(0, "POLYLINE"), // polyline sentinel
+                CodePair::new_str(0, "LINE"),     // trailing entity
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
@@ -2597,7 +2603,10 @@ mod tests {
     fn read_lw_polyline_with_no_vertices() {
         let drawing = from_section(
             "ENTITIES",
-            vec!["0", "LWPOLYLINE", "43", "43.0"].join("\r\n").as_str(),
+            vec![
+                CodePair::new_str(0, "LWPOLYLINE"),
+                CodePair::new_f64(43, 43.0),
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2615,26 +2624,15 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "0",
-                "LWPOLYLINE",
-                "43",
-                "43.0",
-                // vertex 1
-                "10",
-                "1.1",
-                "20",
-                "2.1",
-                "40",
-                "40.1",
-                "41",
-                "41.1",
-                "42",
-                "42.1",
-                "91",
-                "91",
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "LWPOLYLINE"),
+                CodePair::new_f64(43, 43.0), // constant width
+                CodePair::new_f64(10, 1.1),  // vertex 1
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(40, 40.1), // starting width
+                CodePair::new_f64(41, 41.1), // ending width
+                CodePair::new_f64(42, 42.1), // bulge
+                CodePair::new_i32(91, 91),   // id
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2659,39 +2657,21 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "0",
-                "LWPOLYLINE",
-                "43",
-                "43.0",
-                // vertex 1
-                "10",
-                "1.1",
-                "20",
-                "2.1",
-                "40",
-                "40.1",
-                "41",
-                "41.1",
-                "42",
-                "42.1",
-                "91",
-                "91",
-                // vertex 2
-                "10",
-                "1.2",
-                "20",
-                "2.2",
-                "40",
-                "40.2",
-                "41",
-                "41.2",
-                "42",
-                "42.2",
-                "91",
-                "92",
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "LWPOLYLINE"),
+                CodePair::new_f64(43, 43.0), // constant width
+                CodePair::new_f64(10, 1.1),  // vertex 1
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(40, 40.1), // starting width
+                CodePair::new_f64(41, 41.1), // ending width
+                CodePair::new_f64(42, 42.1), // bulge
+                CodePair::new_i32(91, 91),   // id
+                CodePair::new_f64(10, 1.2),  // vertex 1
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(40, 40.2), // starting width
+                CodePair::new_f64(41, 41.2), // ending width
+                CodePair::new_f64(42, 42.2), // bulge
+                CodePair::new_i32(91, 92),   // id
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2779,24 +2759,15 @@ mod tests {
         let ent = read_entity(
             "DIMENSION",
             vec![
-                "1",
-                "text",
-                "100",
-                "AcDbOrdinateDimension",
-                "13",
-                "1.1", // definition_point_2
-                "23",
-                "2.2",
-                "33",
-                "3.3",
-                "14",
-                "4.4", // definition_point_3
-                "24",
-                "5.5",
-                "34",
-                "6.6",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1, "text"),
+                CodePair::new_str(100, "AcDbOrdinateDimension"),
+                CodePair::new_f64(13, 1.1), // definition_point_2
+                CodePair::new_f64(23, 2.2),
+                CodePair::new_f64(33, 3.3),
+                CodePair::new_f64(14, 4.4), // definition_point_3
+                CodePair::new_f64(24, 5.5),
+                CodePair::new_f64(34, 6.6),
+            ],
         );
         match ent.specific {
             EntityType::OrdinateDimension(ref dim) => {
@@ -2813,23 +2784,14 @@ mod tests {
         let drawing = from_section(
             "ENTITIES",
             vec![
-                "0",
-                "DIMENSION",
-                "1",
-                "text",
-                "100",
-                "AcDbSomeUnsupportedDimensionType",
-                "10",
-                "1.1",
-                "20",
-                "2.2",
-                "30",
-                "3.3",
-                "0",
-                "LINE",
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "DIMENSION"),
+                CodePair::new_str(1, "text"),
+                CodePair::new_str(100, "AcDbSomeUnsupportedDimensionType"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_str(0, "LINE"),
+            ],
         );
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2877,14 +2839,11 @@ mod tests {
         let file = from_section(
             "ENTITIES",
             vec![
-                "  0", "INSERT", " 66", "0", // no attributes
-                "  0",
-                "ATTRIB", // this is a separate attribute, not tied to the `INSERT` entity
-                "  0",
-                "SEQEND", // this is a separate `SEQEND` entity, not tied to the `INSERT` entity
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "INSERT"),
+                CodePair::new_i16(66, 0),       // no attributes
+                CodePair::new_str(0, "ATTRIB"), // this is a separate attribute, not tiee to the `INSERT` entity
+                CodePair::new_str(0, "SEQEND"), // this is a separate `SEQEND` entity, not tiee to the `INSERT` entity
+            ],
         );
         let entities = file.entities().collect::<Vec<_>>();
         assert_eq!(3, entities.len());
@@ -2907,13 +2866,12 @@ mod tests {
         let file = from_section(
             "ENTITIES",
             vec![
-                "  0", "INSERT", " 66", "1", // includes attributes
-                "  0", "ATTRIB", // these are embedded attributes tied to the `INSERT` entity
-                "  0", "ATTRIB", "  0",
-                "SEQEND", // this is an embedded `SEQEND` entity tied to the `INSERT` entity
-            ]
-            .join("\r\n")
-            .as_str(),
+                CodePair::new_str(0, "INSERT"),
+                CodePair::new_i16(66, 1),       // includes attributes
+                CodePair::new_str(0, "ATTRIB"), // these are embedded attributes tied to the `INSERT` enttiy
+                CodePair::new_str(0, "ATTRIB"),
+                CodePair::new_str(0, "SEQEND"), // this is an embedded `SEQEND` entity tied to the `INSERT` entity
+            ],
         );
         let entities = file.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2966,9 +2924,11 @@ mod tests {
     fn read_attribute_with_attached_mtext() {
         let file = from_section(
             "ENTITIES",
-            vec!["  0", "ATTRIB", "  0", "MTEXT", "  1", "m_text"]
-                .join("\r\n")
-                .as_str(),
+            vec![
+                CodePair::new_str(0, "ATTRIB"),
+                CodePair::new_str(0, "MTEXT"),
+                CodePair::new_str(1, "m_text"),
+            ],
         );
         let entities = file.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -3013,7 +2973,11 @@ mod tests {
     fn read_extension_data() {
         let ent = read_entity(
             "LINE",
-            vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+            vec![
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
+            ],
         );
         assert_eq!(1, ent.common.extension_data_groups.len());
         let group = &ent.common.extension_data_groups[0];
@@ -3053,7 +3017,10 @@ mod tests {
     fn read_x_data() {
         let ent = read_entity(
             "LINE",
-            vec!["1001", "IXMILIA", "1000", "some string"].join("\r\n"),
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_str(1000, "some string"),
+            ],
         );
         assert_eq!(1, ent.common.x_data.len());
         let x = &ent.common.x_data[0];
@@ -3090,14 +3057,16 @@ mod tests {
 
     #[test]
     fn read_entity_after_extension_data() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "102", "{IXMILIA", "102", "}",
-                "  0", "CIRCLE", "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(102, "{IXMILIA"),
+            CodePair::new_str(102, "}"),
+            CodePair::new_str(0, "CIRCLE"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
         match entities[0].specific {
@@ -3112,14 +3081,15 @@ mod tests {
 
     #[test]
     fn read_entity_after_x_data() {
-        let drawing = parse_drawing(
-            vec![
-                "  0", "SECTION", "  2", "ENTITIES", "  0", "LINE", "1001", "IXMILIA", "  0",
-                "CIRCLE", "  0", "ENDSEC", "  0", "EOF",
-            ]
-            .join("\r\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "ENTITIES"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(1001, "IXMILIA"),
+            CodePair::new_str(0, "CIRCLE"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(2, entities.len());
         match entities[0].specific {
@@ -3139,20 +3109,13 @@ mod tests {
             let ent = read_entity(
                 type_string,
                 vec![
-                    "100",
-                    subclass,
-                    "102",
-                    "{IXMILIA", // read extension data
-                    "  1",
-                    "some string",
-                    "102",
-                    "}",
-                    "1001",
-                    "IXMILIA", // read x data
-                    "1040",
-                    "1.1",
-                ]
-                .join("\r\n"),
+                    CodePair::new_str(100, subclass),
+                    CodePair::new_str(102, "{IXMILIA"), // read extension data
+                    CodePair::new_str(1, "some string"),
+                    CodePair::new_str(102, "}"),
+                    CodePair::new_str(1001, "IXMILIA"), // read x data
+                    CodePair::new_f64(1040, 1.1),
+                ],
             );
 
             // validate specific

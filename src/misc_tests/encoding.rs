@@ -59,9 +59,10 @@ fn empty_file_no_trailing_newline() {
 fn unsupported_section() {
     let _file = from_section(
         "UNSUPPORTED_SECTION",
-        vec!["1", "garbage value 1", "2", "garbage value 2"]
-            .join("\n")
-            .as_str(),
+        vec![
+            CodePair::new_str(1, "garbage value 1"),
+            CodePair::new_str(1, "garbage value 2"),
+        ],
     );
 }
 
@@ -80,16 +81,22 @@ fn read_lf_and_crlf() {
 
 #[test]
 fn read_file_with_comments() {
-    let file = parse_drawing(
-        vec![
-            "999", "comment", "0", "SECTION", "999", "", // empty comment
-            "2", "ENTITIES", "0", "LINE", "999", "comment", "10", "1.1", "999", "comment", "20",
-            "2.2", "999", "comment", "0", "ENDSEC", "0", "EOF", "999", "comment",
-        ]
-        .join("\r\n")
-        .trim(),
-    );
-    let entities = file.entities().collect::<Vec<_>>();
+    let drawing = drawing_from_pairs(vec![
+        CodePair::new_str(999, "comment"),
+        CodePair::new_str(0, "SECTION"),
+        CodePair::new_str(999, ""), // empty comment
+        CodePair::new_str(2, "ENTITIES"),
+        CodePair::new_str(0, "LINE"),
+        CodePair::new_str(999, "comment"),
+        CodePair::new_f64(10, 1.1),
+        CodePair::new_str(999, "comment"),
+        CodePair::new_f64(20, 2.2),
+        CodePair::new_str(999, "comment"),
+        CodePair::new_str(0, "ENDSEC"),
+        CodePair::new_str(0, "EOF"),
+        CodePair::new_str(9, "comment"),
+    ]);
+    let entities = drawing.entities().collect::<Vec<_>>();
     assert_eq!(1, entities.len());
     match entities[0].specific {
         EntityType::Line(ref line) => {
@@ -103,7 +110,7 @@ fn read_file_with_comments() {
 fn enum_out_of_bounds() {
     let file = from_section(
         "HEADER",
-        vec!["  9", "$DIMZIN", " 70", "     8"].join("\r\n").trim(),
+        vec![CodePair::new_str(9, "$DIMZIN"), CodePair::new_i16(70, 8)],
     );
     assert_eq!(
         UnitZeroSuppression::SuppressZeroFeetAndZeroInches,
@@ -174,9 +181,12 @@ EOF"
 #[test]
 fn parse_as_ascii_text() {
     // if version <= R2004 (AC1018) stream is ASCII
-    let file = from_section(
-        "HEADER",
-        "
+    let drawing = parse_drawing(
+        r"
+  0
+SECTION
+  2
+HEADER
   9
 $ACADVER
   1
@@ -184,29 +194,51 @@ AC1018
   9
 $PROJECTNAME
   1
-\\U+00E8"
-            .trim_start(),
+\U+00E8
+  0
+ENDSEC
+  0
+EOF
+"
+        .trim(),
     );
-    assert_eq!("è", file.header.project_name);
+    assert_eq!("è", drawing.header.project_name);
 }
 
 #[test]
 fn parse_as_utf8_text() {
     // if version >= R2007 (AC1021) stream is UTF-8
-    let file = from_section(
-        "HEADER",
-        "
+    let mut bytes = vec![];
+    bytes.extend_from_slice(
+        r"
+  0
+SECTION
+  2
+HEADER
   9
 $ACADVER
   1
-AC1021
+AC1018
   9
 $PROJECTNAME
-  1
-è"
-        .trim_start(),
+  1"
+        .trim()
+        .as_bytes(),
     );
-    assert_eq!("è", file.header.project_name);
+    bytes.push(b'\n');
+    bytes.push(232); // è
+    bytes.push(b'\n');
+    bytes.extend_from_slice(
+        r"
+  0
+ENDSEC
+  0
+EOF"
+        .trim()
+        .as_bytes(),
+    );
+    let drawing = Drawing::load(&mut bytes.as_slice()).ok().unwrap();
+    assert_eq!("è", drawing.header.project_name);
 }
 
 #[test]

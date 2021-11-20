@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{
     CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
@@ -121,13 +121,7 @@ impl Default for Block {
 
 // internal visibility only
 impl Block {
-    pub(crate) fn read_block<I>(
-        drawing: &mut Drawing,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    pub(crate) fn read_block(drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {
         // match code pair:
         //   0/ENDBLK -> swallow code pairs and return
         //   0/* -> read entity and add to collection
@@ -323,28 +317,26 @@ mod tests {
     use crate::helper_functions::tests::*;
     use crate::*;
 
-    fn read_blocks_section(content: Vec<&str>) -> Drawing {
-        let mut file = String::new();
-        file.push_str(vec!["0", "SECTION", "2", "BLOCKS"].join("\n").as_str());
-        file.push('\n');
-        for line in content {
-            file.push_str(line);
-            file.push('\n');
+    fn read_blocks_section(content: Vec<CodePair>) -> Drawing {
+        let mut pairs = vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "BLOCKS"),
+        ];
+        for pair in content {
+            pairs.push(pair);
         }
-        file.push_str(vec!["0", "ENDSEC", "0", "EOF"].join("\n").as_str());
-        parse_drawing(file.as_str())
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
+        pairs.push(CodePair::new_str(0, "EOF"));
+        drawing_from_pairs(pairs)
     }
 
-    fn read_single_block(content: Vec<&str>) -> Block {
-        let mut full_block = vec![];
-        full_block.push("0");
-        full_block.push("BLOCK");
-        for line in content {
-            full_block.push(line);
+    fn read_single_block(content: Vec<CodePair>) -> Block {
+        let mut pairs = vec![CodePair::new_str(0, "BLOCK")];
+        for pair in content {
+            pairs.push(pair);
         }
-        full_block.push("0");
-        full_block.push("ENDBLK");
-        let drawing = read_blocks_section(full_block);
+        pairs.push(CodePair::new_str(0, "ENDBLK"));
+        let drawing = read_blocks_section(pairs);
         let blocks = drawing.blocks().collect::<Vec<_>>();
         assert_eq!(1, blocks.len());
         blocks[0].clone()
@@ -364,14 +356,10 @@ mod tests {
     #[test]
     fn read_block_specific_values() {
         let block = read_single_block(vec![
-            "2",
-            "block-name",
-            "10",
-            "1.1",
-            "20",
-            "2.2",
-            "30",
-            "3.3",
+            CodePair::new_string(2, "block-name"),
+            CodePair::new_f64(10, 1.1),
+            CodePair::new_f64(20, 2.2),
+            CodePair::new_f64(30, 3.3),
         ]);
         assert_eq!("block-name", block.name);
         assert_eq!(0, block.entities.len());
@@ -382,20 +370,13 @@ mod tests {
     fn read_with_end_block_values() {
         // these values should be ignored
         let drawing = read_blocks_section(vec![
-            "0",
-            "BLOCK",
-            "0",
-            "ENDBLK",
-            "5",
-            "1", // handle
-            "330",
-            "2", // owner handle
-            "100",
-            "AcDbEntity",
-            "8",
-            "layer-name",
-            "100",
-            "AcDbBlockEnd",
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(0, "ENDBLK"),
+            CodePair::new_str(5, "1"),   // handle
+            CodePair::new_str(330, "2"), // owner handle
+            CodePair::new_str(100, "AcDbEntity"),
+            CodePair::new_str(8, "layer-name"),
+            CodePair::new_str(100, "AcDbBlockEnd"),
         ]);
         assert_eq!(1, drawing.blocks().count());
     }
@@ -403,7 +384,10 @@ mod tests {
     #[test]
     fn read_multiple_blocks() {
         let drawing = read_blocks_section(vec![
-            "0", "BLOCK", "0", "ENDBLK", "0", "BLOCK", "0", "ENDBLK",
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(0, "ENDBLK"),
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(0, "ENDBLK"),
         ]);
         assert_eq!(2, drawing.blocks().count())
     }
@@ -411,8 +395,13 @@ mod tests {
     #[test]
     fn read_block_with_single_entity() {
         let block = read_single_block(vec![
-            "0", "LINE", "10", "1.1", "20", "2.2", "30", "3.3", "11", "4.4", "21", "5.5", "31",
-            "6.6",
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_f64(10, 1.1),
+            CodePair::new_f64(20, 2.2),
+            CodePair::new_f64(30, 3.3),
+            CodePair::new_f64(11, 4.4),
+            CodePair::new_f64(21, 5.5),
+            CodePair::new_f64(31, 6.6),
         ]);
         assert_eq!(1, block.entities.len());
         match block.entities[0].specific {
@@ -426,7 +415,10 @@ mod tests {
 
     #[test]
     fn read_block_with_multiple_entities() {
-        let block = read_single_block(vec!["0", "LINE", "0", "CIRCLE"]);
+        let block = read_single_block(vec![
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "CIRCLE"),
+        ]);
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Line(_) => (),
@@ -440,7 +432,10 @@ mod tests {
 
     #[test]
     fn read_block_with_unsupported_entity_first() {
-        let block = read_single_block(vec!["0", "UNSUPPORTED_ENTITY", "0", "LINE"]);
+        let block = read_single_block(vec![
+            CodePair::new_str(0, "UNSUPPORTED_ENTITY"),
+            CodePair::new_str(0, "LINE"),
+        ]);
         assert_eq!(1, block.entities.len());
         match block.entities[0].specific {
             EntityType::Line(_) => (),
@@ -450,7 +445,10 @@ mod tests {
 
     #[test]
     fn read_block_with_unsupported_entity_last() {
-        let block = read_single_block(vec!["0", "LINE", "0", "UNSUPPORTED_ENTITY"]);
+        let block = read_single_block(vec![
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "UNSUPPORTED_ENTITY"),
+        ]);
         assert_eq!(1, block.entities.len());
         match block.entities[0].specific {
             EntityType::Line(_) => (),
@@ -460,7 +458,11 @@ mod tests {
 
     #[test]
     fn read_block_with_unsupported_entity_in_the_middle() {
-        let block = read_single_block(vec!["0", "LINE", "0", "UNSUPPORTED_ENTITY", "0", "CIRCLE"]);
+        let block = read_single_block(vec![
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(0, "UNSUPPORTED_ENTITY"),
+            CodePair::new_str(0, "CIRCLE"),
+        ]);
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Line(_) => (),
@@ -475,7 +477,11 @@ mod tests {
     #[test]
     fn read_block_with_polyline() {
         let block = read_single_block(vec![
-            "0", "POLYLINE", "0", "VERTEX", "0", "VERTEX", "0", "VERTEX", "0", "SEQEND",
+            CodePair::new_str(0, "POLYLINE"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "SEQEND"),
         ]);
         assert_eq!(1, block.entities.len());
         match block.entities[0].specific {
@@ -489,8 +495,12 @@ mod tests {
     #[test]
     fn read_block_with_polyline_and_another_entity() {
         let block = read_single_block(vec![
-            "0", "POLYLINE", "0", "VERTEX", "0", "VERTEX", "0", "VERTEX", "0", "SEQEND", "0",
-            "LINE",
+            CodePair::new_str(0, "POLYLINE"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "SEQEND"),
+            CodePair::new_str(0, "LINE"),
         ]);
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
@@ -508,7 +518,11 @@ mod tests {
     #[test]
     fn read_block_with_polyline_without_seqend_and_another_entity() {
         let block = read_single_block(vec![
-            "0", "POLYLINE", "0", "VERTEX", "0", "VERTEX", "0", "VERTEX", "0", "LINE",
+            CodePair::new_str(0, "POLYLINE"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "VERTEX"),
+            CodePair::new_str(0, "LINE"),
         ]);
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
@@ -525,7 +539,10 @@ mod tests {
 
     #[test]
     fn read_block_with_empty_polyline_without_seqend_and_another_entity() {
-        let block = read_single_block(vec!["0", "POLYLINE", "0", "LINE"]);
+        let block = read_single_block(vec![
+            CodePair::new_str(0, "POLYLINE"),
+            CodePair::new_str(0, "LINE"),
+        ]);
         assert_eq!(2, block.entities.len());
         match block.entities[0].specific {
             EntityType::Polyline(ref p) => {
@@ -549,18 +566,12 @@ mod tests {
     #[test]
     fn read_extension_group_data() {
         let block = read_single_block(vec![
-            "102",
-            "{IXMILIA",
-            "  1",
-            "some string",
-            "102",
-            "{NESTED",
-            " 10",
-            "1.1",
-            "102",
-            "}",
-            "102",
-            "}",
+            CodePair::new_str(102, "{IXMILIA"),
+            CodePair::new_str(1, "some string"),
+            CodePair::new_str(102, "{NESTED"),
+            CodePair::new_f64(10, 1.1),
+            CodePair::new_str(102, "}"),
+            CodePair::new_str(102, "}"),
         ]);
         assert_eq!(1, block.extension_data_groups.len());
         let x = &block.extension_data_groups[0];
@@ -626,16 +637,11 @@ mod tests {
     #[test]
     fn read_x_data() {
         let block = read_single_block(vec![
-            "1001",
-            "IXMILIA",
-            "1000",
-            "some string",
-            "1002",
-            "{",
-            "1040",
-            "1.1",
-            "1002",
-            "}",
+            CodePair::new_str(1001, "IXMILIA"),
+            CodePair::new_str(1000, "some string"),
+            CodePair::new_str(1002, "{"),
+            CodePair::new_f64(1040, 1.1),
+            CodePair::new_str(1002, "}"),
         ]);
         assert_eq!(1, block.x_data.len());
         let x = &block.x_data[0];

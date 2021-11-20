@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, Color, DxfResult};
 
@@ -51,12 +51,7 @@ impl Default for SectionGeometrySettings {
 
 // internal visibility only
 impl SectionGeometrySettings {
-    pub(crate) fn read<I>(
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<Option<SectionGeometrySettings>>
-    where
-        I: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Option<SectionGeometrySettings>> {
         // check the first pair; only code 90 can start one of these
         match iter.next() {
             Some(Ok(pair @ CodePair { code: 90, .. })) => {

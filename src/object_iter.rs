@@ -1,13 +1,11 @@
-use std::io::Read;
-
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::objects::Object;
 
-pub(crate) struct ObjectIter<'a, I: 'a + Read> {
-    pub iter: &'a mut CodePairPutBack<I>,
+pub(crate) struct ObjectIter<'a> {
+    pub iter: &'a mut CodePairPutBack,
 }
 
-impl<'a, I: 'a + Read> Iterator for ObjectIter<'a, I> {
+impl<'a> Iterator for ObjectIter<'a> {
     type Item = Object;
 
     fn next(&mut self) -> Option<Object> {

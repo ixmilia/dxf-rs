@@ -521,6 +521,7 @@ fn parse_hex_string_test() {
 #[cfg(test)]
 #[allow(dead_code)]
 pub mod tests {
+    use crate::code_pair_iter::DirectCodePairIter;
     use crate::*;
     use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
@@ -531,24 +532,41 @@ pub mod tests {
         }
     }
 
+    pub fn drawing_from_pairs(pairs: Vec<CodePair>) -> Drawing {
+        println!("reading from pairs: {:?}", pairs);
+        let iter = DirectCodePairIter::new(pairs);
+        let iter = Box::new(iter);
+        unwrap_drawing(Drawing::load_from_iter(iter))
+    }
+
     pub fn parse_drawing(s: &str) -> Drawing {
         unwrap_drawing(Drawing::load(&mut s.as_bytes()))
     }
 
-    pub fn from_section(section: &str, body: &str) -> Drawing {
-        let text = vec![
-            "0",
-            "SECTION",
-            "2",
-            section,
-            body.trim(),
-            "0",
-            "ENDSEC",
-            "0",
-            "EOF",
-        ]
-        .join("\n");
-        parse_drawing(text.trim())
+    pub fn from_section_pairs(section: &str, body: Vec<CodePair>) -> Drawing {
+        let mut pairs = vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, section),
+        ];
+        for pair in body {
+            pairs.push(pair);
+        }
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
+        pairs.push(CodePair::new_str(0, "EOF"));
+        drawing_from_pairs(pairs)
+    }
+
+    pub fn from_section(section: &str, body: Vec<CodePair>) -> Drawing {
+        let mut pairs = vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, section),
+        ];
+        for pair in body {
+            pairs.push(pair);
+        }
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
+        pairs.push(CodePair::new_str(0, "EOF"));
+        drawing_from_pairs(pairs)
     }
 
     pub fn to_test_string(drawing: &Drawing) -> String {

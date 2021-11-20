@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::drawing::AUTO_REPLACE_HANDLE;
 use crate::entities::*;
@@ -7,11 +5,11 @@ use crate::DxfResult;
 
 use itertools::{put_back, PutBack};
 
-pub(crate) struct EntityIter<'a, T: 'a + Read> {
-    pub iter: &'a mut CodePairPutBack<T>,
+pub(crate) struct EntityIter<'a> {
+    pub iter: &'a mut CodePairPutBack,
 }
 
-impl<'a, I: 'a + Read> Iterator for EntityIter<'a, I> {
+impl<'a> Iterator for EntityIter<'a> {
     type Item = Entity;
 
     fn next(&mut self) -> Option<Entity> {
@@ -22,7 +20,7 @@ impl<'a, I: 'a + Read> Iterator for EntityIter<'a, I> {
     }
 }
 
-impl<'a, I: 'a + Read> EntityIter<'a, I> {
+impl<'a> EntityIter<'a> {
     pub(crate) fn read_entities_into_vec(&mut self, entities: &mut Vec<Entity>) -> DxfResult<()> {
         collect_entities(self, entities)
     }

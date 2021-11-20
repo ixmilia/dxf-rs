@@ -44,7 +44,7 @@ use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
 use crate::objects::*;
 
-use std::io::{Read, Write};
+use std::io::Write;
 ".trim_start());
     fun.push_str("\n");
     generate_base_entity(&mut fun, &element);
@@ -155,9 +155,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     }
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n");
-    fun.push_str("        where I: Read {\n");
-    fun.push_str("\n");
+    fun.push_str("    pub(crate) fn apply_individual_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {\n");
     fun.push_str("        match pair.code {\n");
     for c in &entity.children {
         if c.name == "Field" {

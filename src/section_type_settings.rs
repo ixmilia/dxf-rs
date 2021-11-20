@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, DxfResult, Handle, SectionGeometrySettings};
 
@@ -32,10 +32,7 @@ impl Default for SectionTypeSettings {
 
 // internal visibility only
 impl SectionTypeSettings {
-    pub(crate) fn read<I>(iter: &mut CodePairPutBack<I>) -> DxfResult<Option<SectionTypeSettings>>
-    where
-        I: Read,
-    {
+    pub(crate) fn read(iter: &mut CodePairPutBack) -> DxfResult<Option<SectionTypeSettings>> {
         // check the first pair and only continue if it's not 0
         match iter.next() {
             Some(Ok(pair @ CodePair { code: 0, .. })) => {

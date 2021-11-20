@@ -49,7 +49,7 @@ use crate::entities::*;
 use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
 use std::collections::HashMap;
-use std::io::{Read, Write};
+use std::io::Write;
 
 extern crate chrono;
 use self::chrono::{DateTime, Local};
@@ -161,9 +161,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     }
 
     ////////////////////////////////////////////////////// apply_individual_pair
-    fun.push_str("    pub(crate) fn apply_individual_pair<I>(&mut self, pair: &CodePair, iter: &mut CodePairPutBack<I>) -> DxfResult<bool>\n");
-    fun.push_str("        where I: Read {\n");
-    fun.push_str("\n");
+    fun.push_str("    pub(crate) fn apply_individual_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<bool> {\n");
     fun.push_str("        match pair.code {\n");
     for c in &object.children {
         if c.name == "Field" {

@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::{CodePair, Drawing, DxfError, DxfResult};
 
@@ -118,13 +118,7 @@ impl Default for Class {
 
 // internal visibility only
 impl Class {
-    pub(crate) fn read_classes<I>(
-        drawing: &mut Drawing,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    pub(crate) fn read_classes(drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {
         loop {
             match iter.next() {
                 Some(Ok(pair)) => {
@@ -181,14 +175,7 @@ impl Class {
 
 // private implementation
 impl Class {
-    fn read_class<I>(
-        typ: &str,
-        drawing: &mut Drawing,
-        iter: &mut CodePairPutBack<I>,
-    ) -> DxfResult<()>
-    where
-        I: Read,
-    {
+    fn read_class(typ: &str, drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {
         let mut class = Class::default();
 
         // R13 has alternate values for the code pairs
@@ -260,42 +247,34 @@ mod tests {
     use crate::helper_functions::tests::*;
     use crate::*;
 
-    fn read_single_class(version_str: &str, body: Vec<&str>) -> Class {
-        let mut lines = vec![
-            "0",
-            "SECTION",
-            "2",
-            "HEADER",
-            "9",
-            "$ACADVER",
-            "1",
-            version_str,
-            "0",
-            "ENDSEC",
-            "0",
-            "SECTION",
-            "2",
-            "CLASSES",
+    fn read_single_class(version_str: &str, body: Vec<CodePair>) -> Class {
+        let mut pairs = vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "HEADER"),
+            CodePair::new_str(9, "$ACADVER"),
+            CodePair::new_str(1, version_str),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "CLASSES"),
         ];
-        for line in body {
-            lines.push(line);
+        for pair in body {
+            pairs.push(pair);
         }
-        lines.push("0");
-        lines.push("ENDSEC");
-        lines.push("0");
-        lines.push("EOF");
-        let drawing = parse_drawing(lines.join("\n").as_str());
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
+        pairs.push(CodePair::new_str(0, "EOF"));
+        let drawing = drawing_from_pairs(pairs);
         assert_eq!(1, drawing.classes.len());
         drawing.classes[0].to_owned()
     }
 
     #[test]
     fn read_empty_classes_section() {
-        let drawing = parse_drawing(
-            vec!["0", "SECTION", "2", "CLASSES", "0", "ENDSEC", "0", "EOF"]
-                .join("\n")
-                .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "CLASSES"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(0, drawing.classes.len());
     }
 
@@ -304,20 +283,13 @@ mod tests {
         let class = read_single_class(
             "AC1012",
             vec![
-                "0",
-                "record-name",
-                "1",
-                "class-name",
-                "2",
-                "application-name",
-                "90",
-                "42",
-                "91",
-                "43",
-                "280",
-                "1",
-                "281",
-                "1",
+                CodePair::new_str(0, "record-name"),
+                CodePair::new_str(1, "class-name"),
+                CodePair::new_str(2, "application-name"),
+                CodePair::new_i32(90, 42),
+                CodePair::new_i32(91, 43),
+                CodePair::new_i16(280, 1),
+                CodePair::new_i16(281, 1),
             ],
         );
         assert_eq!("record-name", class.record_name);
@@ -335,22 +307,14 @@ mod tests {
         let class = read_single_class(
             "AC1015",
             vec![
-                "0",
-                "CLASS",
-                "1",
-                "record-name",
-                "2",
-                "class-name",
-                "3",
-                "application-name",
-                "90",
-                "42",
-                "91",
-                "43",
-                "280",
-                "1",
-                "281",
-                "1",
+                CodePair::new_str(0, "CLASS"),
+                CodePair::new_str(1, "record-name"),
+                CodePair::new_str(2, "class-name"),
+                CodePair::new_str(3, "application-name"),
+                CodePair::new_i32(90, 42),
+                CodePair::new_i32(91, 43),
+                CodePair::new_i16(280, 1),
+                CodePair::new_i16(281, 1),
             ],
         );
         assert_eq!("record-name", class.record_name);
@@ -365,47 +329,37 @@ mod tests {
 
     #[test]
     fn read_multiple_classes_r13() {
-        let drawing = parse_drawing(
-            vec![
-                "0",
-                "SECTION",
-                "2",
-                "HEADER",
-                "9",
-                "$ACADVER",
-                "1",
-                "AC1012",
-                "0",
-                "ENDSEC",
-                "0",
-                "SECTION",
-                "2",
-                "CLASSES",
-                "0",
-                "some class 1",
-                "0",
-                "some class 2",
-                "0",
-                "ENDSEC",
-                "0",
-                "EOF",
-            ]
-            .join("\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "HEADER"),
+            CodePair::new_str(9, "$ACADVER"),
+            CodePair::new_str(1, "AC1012"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "CLASSES"),
+            CodePair::new_str(0, "some class 1"),
+            CodePair::new_str(0, "some class 2"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(2, drawing.classes.len());
     }
 
     #[test]
     fn read_multiple_classes_r14() {
-        let drawing = parse_drawing(
-            vec![
-                "0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1014", "0", "ENDSEC", "0",
-                "SECTION", "2", "CLASSES", "0", "CLASS", "0", "CLASS", "0", "ENDSEC", "0", "EOF",
-            ]
-            .join("\n")
-            .as_str(),
-        );
+        let drawing = drawing_from_pairs(vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "HEADER"),
+            CodePair::new_str(9, "$ACADVER"),
+            CodePair::new_str(1, "AC1014"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "CLASSES"),
+            CodePair::new_str(0, "CLASS"),
+            CodePair::new_str(0, "CLASS"),
+            CodePair::new_str(0, "ENDSEC"),
+            CodePair::new_str(0, "EOF"),
+        ]);
         assert_eq!(2, drawing.classes.len());
     }
 

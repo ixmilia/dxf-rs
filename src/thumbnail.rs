@@ -2,20 +2,13 @@ use crate::code_pair_put_back::CodePairPutBack;
 
 use crate::{CodePair, DxfError, DxfResult};
 
-use std::io::Read;
-
 const FILE_HEADER_LENGTH: usize = 14;
 const FILE_LENGTH_OFFSET: usize = 2;
 const IMAGE_DATA_OFFSET_OFFSET: usize = 10;
 
 const BITMAP_HEADER_PALETTE_COUNT_OFFSET: usize = 32;
 
-pub(crate) fn read_thumbnail<T>(
-    iter: &mut CodePairPutBack<T>,
-) -> DxfResult<Option<image::DynamicImage>>
-where
-    T: Read,
-{
+pub(crate) fn read_thumbnail(iter: &mut CodePairPutBack) -> DxfResult<Option<image::DynamicImage>> {
     match read_thumbnail_bytes_from_code_pairs(iter)? {
         Some(mut data) => {
             if update_thumbnail_data_offset_in_situ(&mut data)? {
@@ -28,12 +21,7 @@ where
     }
 }
 
-fn read_thumbnail_bytes_from_code_pairs<T>(
-    iter: &mut CodePairPutBack<T>,
-) -> DxfResult<Option<Vec<u8>>>
-where
-    T: Read,
-{
+fn read_thumbnail_bytes_from_code_pairs(iter: &mut CodePairPutBack) -> DxfResult<Option<Vec<u8>>> {
     // get the length; we don't really care about this since we'll just read whatever's there
     let _length = match iter.next() {
         Some(Ok(pair @ CodePair { code: 0, .. })) => {

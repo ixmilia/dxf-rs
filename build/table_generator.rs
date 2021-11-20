@@ -43,7 +43,7 @@ use crate::x_data;
 
 use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
-use std::io::{Read, Write};
+use std::io::Write;
 ".trim_start());
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);
@@ -146,9 +146,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_reader(fun: &mut String, element: &Element) {
-    fun.push_str("pub(crate) fn read_specific_table<I>(drawing: &mut Drawing, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n");
-    fun.push_str("    where I: Read {\n");
-    fun.push_str("\n");
+    fun.push_str("pub(crate) fn read_specific_table(drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {\n");
     fun.push_str("    match iter.next() {\n");
     fun.push_str("        Some(Ok(pair)) => {\n");
     fun.push_str("            if pair.code != 2 {\n");
@@ -188,9 +186,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         let collection = attr(&table, "Collection");
         let (item_type, _) = collection.split_at(collection.len() - 1); // remove the 's' suffix
 
-        fun.push_str(&format!("fn read_{collection}<I>(drawing: &mut Drawing, iter: &mut CodePairPutBack<I>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
-        fun.push_str("    where I: Read {\n");
-        fun.push_str("\n");
+        fun.push_str(&format!("fn read_{collection}(drawing: &mut Drawing, iter: &mut CodePairPutBack) -> DxfResult<()> {{\n", collection=attr(&table, "Collection")));
         fun.push_str("    loop {\n");
         fun.push_str("        match iter.next() {\n");
         fun.push_str("            Some(Ok(pair)) => {\n");
