@@ -1560,7 +1560,9 @@ impl Entity {
                     };
                     a.add_code_pairs(pairs, version, write_handles);
                 }
-                Entity::add_code_pairs_seqend(pairs, version, write_handles);
+                if ins.__attributes_and_handles.len() > 0 {
+                    Entity::add_code_pairs_seqend(pairs, version, write_handles);
+                }
             }
             EntityType::Polyline(ref poly) => {
                 for (v, vertex_handle) in &poly.__vertices_and_handles {
@@ -2768,6 +2770,15 @@ mod tests {
             EntityType::Insert(ref ins) => assert_eq!(2, ins.attributes().count()),
             _ => panic!("exepcted an INSERT"),
         }
+    }
+
+    #[test]
+    fn write_insert_no_embedded_attributes() {
+        let mut drawing = Drawing::new();
+        let ins = Insert::default();
+        let ent = Entity::new(EntityType::Insert(ins));
+        drawing.add_entity(ent);
+        assert_not_contains_pairs(&drawing, vec![CodePair::new_str(0, "SEQEND")]);
     }
 
     #[test]
