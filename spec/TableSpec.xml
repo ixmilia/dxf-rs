@@ -3,7 +3,7 @@
         <TableItem Name="AppId" ClassName="AcDbRegAppTableRecord">
         </TableItem>
     </Table>
-    <Table Collection="block_records" TypeString="BLOCK_RECORD">
+    <Table Collection="block_records" TypeString="BLOCK_RECORD" MinVersion="R13">
         <TableItem Name="BlockRecord" ClassName="AcDbBlockTableRecord" HasFlags="false">
             <Pointer Name="layout" Code="340" MinVersion="R2000" />
 

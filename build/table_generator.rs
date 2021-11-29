@@ -320,10 +320,29 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         "pub(crate) fn add_table_code_pairs(drawing: &Drawing, pairs: &mut Vec<CodePair>, write_handles: bool) {\n",
     );
     for table in &element.children {
+        let mut indention = "";
+        let mut predicates = vec![];
+        if !min_version(&table).is_empty() {
+            indention = "    ";
+            predicates.push(format!(
+                "drawing.header.version >= AcadVersion::{}",
+                min_version(&table)
+            ));
+        }
+        if predicates.len() != 0 {
+            fun.push_str(&format!(
+                "    if {predicate} {{\n",
+                predicate = predicates.join(" && ")
+            ));
+        }
         fun.push_str(&format!(
-            "    add_{collection}_code_pairs(pairs, drawing, write_handles);\n",
-            collection = attr(&table, "Collection")
+            "    {indention}add_{collection}_code_pairs(pairs, drawing, write_handles);\n",
+            collection = attr(&table, "Collection"),
+            indention = indention
         ));
+        if predicates.len() != 0 {
+            fun.push_str("    }\n");
+        }
     }
 
     fun.push_str("}\n");

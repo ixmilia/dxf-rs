@@ -404,4 +404,18 @@ mod tests {
         assert_eq!(1, ucss.len());
         assert_eq!("primary ucs", ucss[0].name);
     }
+
+    #[test]
+    fn block_record_table_not_written_on_r12() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R12;
+        assert_not_contains_pairs(&drawing, vec![CodePair::new_str(0, "BLOCK_RECORD")]);
+    }
+
+    #[test]
+    fn block_record_table_is_written_on_r13() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "BLOCK_RECORD")]);
+    }
 }
