@@ -1,9 +1,6 @@
-use std::io::Write;
-
 use crate::{CodePair, Color, DxfResult};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -135,27 +132,23 @@ impl SectionGeometrySettings {
 
         Ok(Some(gs))
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
-        writer.write_code_pair(&CodePair::new_i32(91, self.geometry_count))?;
-        writer.write_code_pair(&CodePair::new_i32(92, self.bit_flags))?;
-        writer.write_code_pair(&CodePair::new_i16(63, self.color.get_raw_value()))?;
-        writer.write_code_pair(&CodePair::new_string(8, &self.layer_name))?;
-        writer.write_code_pair(&CodePair::new_string(6, &self.line_type_name))?;
-        writer.write_code_pair(&CodePair::new_f64(40, self.line_type_scale))?;
-        writer.write_code_pair(&CodePair::new_string(1, &self.plot_style_name))?;
-        writer.write_code_pair(&CodePair::new_i16(370, self.line_weight))?;
-        writer.write_code_pair(&CodePair::new_i16(70, self.face_transparency))?;
-        writer.write_code_pair(&CodePair::new_i16(71, self.edge_transparency))?;
-        writer.write_code_pair(&CodePair::new_i16(72, self.hatch_pattern_type))?;
-        writer.write_code_pair(&CodePair::new_string(2, &self.hatch_pattern_name))?;
-        writer.write_code_pair(&CodePair::new_f64(41, self.hatch_angle))?;
-        writer.write_code_pair(&CodePair::new_f64(42, self.hatch_scale))?;
-        writer.write_code_pair(&CodePair::new_f64(43, self.hatch_spacing))?;
-        writer.write_code_pair(&CodePair::new_str(3, "SectionGeometrySettingsEnd"))?;
-        Ok(())
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>) {
+        pairs.push(CodePair::new_i32(90, self.section_type));
+        pairs.push(CodePair::new_i32(91, self.geometry_count));
+        pairs.push(CodePair::new_i32(92, self.bit_flags));
+        pairs.push(CodePair::new_i16(63, self.color.get_raw_value()));
+        pairs.push(CodePair::new_string(8, &self.layer_name));
+        pairs.push(CodePair::new_string(6, &self.line_type_name));
+        pairs.push(CodePair::new_f64(40, self.line_type_scale));
+        pairs.push(CodePair::new_string(1, &self.plot_style_name));
+        pairs.push(CodePair::new_i16(370, self.line_weight));
+        pairs.push(CodePair::new_i16(70, self.face_transparency));
+        pairs.push(CodePair::new_i16(71, self.edge_transparency));
+        pairs.push(CodePair::new_i16(72, self.hatch_pattern_type));
+        pairs.push(CodePair::new_string(2, &self.hatch_pattern_name));
+        pairs.push(CodePair::new_f64(41, self.hatch_angle));
+        pairs.push(CodePair::new_f64(42, self.hatch_scale));
+        pairs.push(CodePair::new_f64(43, self.hatch_spacing));
+        pairs.push(CodePair::new_str(3, "SectionGeometrySettingsEnd"));
     }
 }

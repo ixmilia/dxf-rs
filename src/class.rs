@@ -1,9 +1,6 @@
-use std::io::Write;
-
 use crate::{CodePair, Drawing, DxfError, DxfResult};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::enums::*;
 use crate::helper_functions::*;
 
@@ -139,37 +136,28 @@ impl Class {
 
         Ok(())
     }
-    pub(crate) fn write<T>(
-        &self,
-        version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {
         if version >= AcadVersion::R14 {
-            writer.write_code_pair(&CodePair::new_str(0, "CLASS"))?;
-            writer.write_code_pair(&CodePair::new_string(1, &self.record_name))?;
-            writer.write_code_pair(&CodePair::new_string(2, &self.class_name))?;
-            writer.write_code_pair(&CodePair::new_string(3, &self.application_name))?;
-            writer.write_code_pair(&CodePair::new_i32(90, self.proxy_capability_flags))?;
+            pairs.push(CodePair::new_str(0, "CLASS"));
+            pairs.push(CodePair::new_string(1, &self.record_name));
+            pairs.push(CodePair::new_string(2, &self.class_name));
+            pairs.push(CodePair::new_string(3, &self.application_name));
+            pairs.push(CodePair::new_i32(90, self.proxy_capability_flags));
             if version >= AcadVersion::R2004 {
-                writer.write_code_pair(&CodePair::new_i32(91, self.instance_count as i32))?;
+                pairs.push(CodePair::new_i32(91, self.instance_count as i32));
             }
         } else {
-            writer.write_code_pair(&CodePair::new_string(0, &self.record_name))?;
-            writer.write_code_pair(&CodePair::new_string(1, &self.class_name))?;
-            writer.write_code_pair(&CodePair::new_string(2, &self.application_name))?;
-            writer.write_code_pair(&CodePair::new_i32(90, self.version_number))?;
+            pairs.push(CodePair::new_string(0, &self.record_name));
+            pairs.push(CodePair::new_string(1, &self.class_name));
+            pairs.push(CodePair::new_string(2, &self.application_name));
+            pairs.push(CodePair::new_i32(90, self.version_number));
         }
 
-        writer.write_code_pair(&CodePair::new_i16(
+        pairs.push(CodePair::new_i16(
             280,
             as_i16(!self.was_class_loaded_with_file),
-        ))?;
-        writer.write_code_pair(&CodePair::new_i16(281, as_i16(self.is_entity)))?;
-
-        Ok(())
+        ));
+        pairs.push(CodePair::new_i16(281, as_i16(self.is_entity)));
     }
 }
 
@@ -366,8 +354,7 @@ mod tests {
     #[test]
     fn dont_write_classes_section_if_no_classes() {
         let drawing = Drawing::new();
-        let contents = to_test_string(&drawing);
-        assert!(!contents.contains("CLASSES"));
+        assert_not_contains_pairs(&drawing, vec![CodePair::new_str(0, "CLASSES")]);
     }
 
     #[test]
@@ -385,29 +372,19 @@ mod tests {
             is_entity: true,
         };
         drawing.classes.push(class);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "CLASSES",
-                "  0",
-                "record-name",
-                "  1",
-                "class-name",
-                "  2",
-                "application-name",
-                " 90",
-                "       42",
-                "280",
-                "     1",
-                "281",
-                "     1",
-                "  0",
-                "ENDSEC",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "CLASSES"),
+                CodePair::new_str(0, "record-name"),
+                CodePair::new_str(1, "class-name"),
+                CodePair::new_str(2, "application-name"),
+                CodePair::new_i32(90, 42),
+                CodePair::new_i16(280, 1),
+                CodePair::new_i16(281, 1),
+                CodePair::new_str(0, "ENDSEC"),
+            ],
         );
     }
 
@@ -426,31 +403,20 @@ mod tests {
             is_entity: true,
         };
         drawing.classes.push(class);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "CLASSES",
-                "  0",
-                "CLASS",
-                "  1",
-                "record-name",
-                "  2",
-                "class-name",
-                "  3",
-                "application-name",
-                " 90",
-                "       43",
-                "280",
-                "     1",
-                "281",
-                "     1",
-                "  0",
-                "ENDSEC",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "CLASSES"),
+                CodePair::new_str(0, "CLASS"),
+                CodePair::new_str(1, "record-name"),
+                CodePair::new_str(2, "class-name"),
+                CodePair::new_str(3, "application-name"),
+                CodePair::new_i32(90, 43),
+                CodePair::new_i16(280, 1),
+                CodePair::new_i16(281, 1),
+                CodePair::new_str(0, "ENDSEC"),
+            ],
         );
     }
 }

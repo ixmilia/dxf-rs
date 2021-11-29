@@ -97,21 +97,19 @@ fn set_pointer_on_entity() {
     line.common.set_material(material).ok().unwrap();
     drawing.add_entity(line);
 
-    assert_contains(&drawing, vec!["  0", "MATERIAL", "  5", "10"].join("\r\n"));
-    assert_contains(
+    assert_contains_pairs(
+        &drawing,
+        vec![CodePair::new_str(0, "MATERIAL"), CodePair::new_str(5, "10")],
+    );
+
+    assert_contains_pairs(
         &drawing,
         vec![
-            "  0",
-            "LINE",
-            "  5",
-            "11",
-            "100",
-            "AcDbEntity",
-            "  8",
-            "0",
-            "347",
-            "10", // handle of `material`
-        ]
-        .join("\r\n"),
+            CodePair::new_str(0, "LINE"),
+            CodePair::new_str(5, "11"),
+            CodePair::new_str(100, "AcDbEntity"),
+            CodePair::new_str(8, "0"),
+            CodePair::new_str(347, "10"), // handle of `material`
+        ],
     );
 }

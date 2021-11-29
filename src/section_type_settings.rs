@@ -1,9 +1,6 @@
-use std::io::Write;
-
 use crate::{CodePair, DxfResult, Handle, SectionGeometrySettings};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::helper_functions::*;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -91,34 +88,30 @@ impl SectionTypeSettings {
             }
         }
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(1, "SectionTypeSettings"))?;
-        writer.write_code_pair(&CodePair::new_i32(90, self.section_type))?;
-        writer.write_code_pair(&CodePair::new_i32(
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>) {
+        pairs.push(CodePair::new_str(1, "SectionTypeSettings"));
+        pairs.push(CodePair::new_i32(90, self.section_type));
+        pairs.push(CodePair::new_i32(
             91,
             i32::from(as_i16(self.is_generation_option)),
-        ))?;
-        writer.write_code_pair(&CodePair::new_i32(
+        ));
+        pairs.push(CodePair::new_i32(
             92,
             self.source_object_handles.len() as i32,
-        ))?;
+        ));
         for handle in &self.source_object_handles {
-            writer.write_code_pair(&CodePair::new_string(330, &handle.as_string()))?;
+            pairs.push(CodePair::new_string(330, &handle.as_string()));
         }
-        writer.write_code_pair(&CodePair::new_string(
+        pairs.push(CodePair::new_string(
             331,
             &self.destination_object_handle.as_string(),
-        ))?;
-        writer.write_code_pair(&CodePair::new_string(1, &self.destination_file_name))?;
-        writer.write_code_pair(&CodePair::new_i32(93, self.geometry_settings.len() as i32))?;
-        writer.write_code_pair(&CodePair::new_str(2, "SectionGeometrySettings"))?;
+        ));
+        pairs.push(CodePair::new_string(1, &self.destination_file_name));
+        pairs.push(CodePair::new_i32(93, self.geometry_settings.len() as i32));
+        pairs.push(CodePair::new_str(2, "SectionGeometrySettings"));
         for geometry_settings in &self.geometry_settings {
-            geometry_settings.write(writer)?;
+            geometry_settings.add_code_pairs(pairs);
         }
-        writer.write_code_pair(&CodePair::new_str(3, "SectionTypeSettingsEnd"))?;
-        Ok(())
+        pairs.push(CodePair::new_str(3, "SectionTypeSettingsEnd"));
     }
 }

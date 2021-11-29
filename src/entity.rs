@@ -1,12 +1,10 @@
 // other implementation is in `generated/entities.rs`
 
 use enum_primitive::FromPrimitive;
-use std::io::Write;
 
 use crate::{CodePair, Color, DxfError, DxfResult, Handle, Point, Vector};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::entities::*;
 use crate::enums::*;
 use crate::helper_functions::*;
@@ -1294,305 +1292,263 @@ impl Entity {
             }
         }
     }
-    pub(crate) fn write<T>(
+    pub(crate) fn add_code_pairs(
         &self,
+        pairs: &mut Vec<CodePair>,
         version: AcadVersion,
         write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    ) {
         if self.specific.is_supported_on_version(version) {
-            writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, write_handles, writer)?;
-            if !self.apply_custom_writer(version, writer)? {
-                self.specific.write(&self.common, version, writer)?;
+            pairs.push(CodePair::new_str(0, self.specific.to_type_string()));
+            self.common.add_code_pairs(pairs, version, write_handles);
+            if !self.add_custom_code_pairs(pairs, version) {
+                self.specific.add_code_pairs(pairs, &self.common, version);
             }
 
-            self.post_write(version, write_handles, writer)?;
+            self.add_post_code_pairs(pairs, version, write_handles);
             for x in &self.common.x_data {
-                x.write(version, writer)?;
+                x.add_code_pairs(pairs, version);
             }
         }
-
-        Ok(())
     }
-    fn apply_custom_writer<T>(
-        &self,
-        version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
+    fn add_custom_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) -> bool {
         match self.specific {
             EntityType::RotatedDimension(ref dim) => {
-                Entity::apply_custom_writer_rotateddimension(dim, version, writer)?;
+                Entity::add_custom_code_pairs_rotateddimension(pairs, dim, version);
             }
             EntityType::RadialDimension(ref dim) => {
-                Entity::apply_custom_writer_radialdimension(dim, version, writer)?;
+                Entity::add_custom_code_pairs_radialdimension(pairs, dim, version);
             }
             EntityType::DiameterDimension(ref dim) => {
-                Entity::apply_custom_writer_diameterdimension(dim, version, writer)?;
+                Entity::add_custom_code_pairs_diameterdimension(pairs, dim, version);
             }
             EntityType::AngularThreePointDimension(ref dim) => {
-                Entity::apply_custom_writer_angularthreepointdimension(dim, version, writer)?;
+                Entity::add_custom_code_pairs_angularthreepointdimension(pairs, dim, version);
             }
             EntityType::OrdinateDimension(ref dim) => {
-                Entity::apply_custom_writer_ordinatedimension(dim, version, writer)?;
+                Entity::add_custom_code_pairs_ordinatedimension(pairs, dim, version);
             }
             EntityType::Polyline(ref poly) => {
-                Entity::apply_custom_writer_polyline(poly, version, writer)?;
+                Entity::add_custom_code_pairs_polyline(pairs, poly, version);
             }
             EntityType::Vertex(ref v) => {
-                Entity::apply_custom_writer_vertex(v, version, writer)?;
+                Entity::add_custom_code_pairs_vertex(pairs, v, version);
             }
-            _ => return Ok(false), // no custom writer
+            _ => return false, // no custom code pairs
         }
 
-        Ok(true)
+        true
     }
-    fn apply_custom_writer_rotateddimension<T>(
+    fn add_custom_code_pairs_rotateddimension(
+        pairs: &mut Vec<CodePair>,
         dim: &RotatedDimension,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        dim.dimension_base.write(version, writer)?;
+    ) -> bool {
+        dim.dimension_base.add_code_pairs(pairs, version);
         if version >= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbAlignedDimension"))?;
+            pairs.push(CodePair::new_str(100, "AcDbAlignedDimension"));
         }
-        writer.write_code_pair(&CodePair::new_f64(12, dim.insertion_point.x))?;
-        writer.write_code_pair(&CodePair::new_f64(22, dim.insertion_point.y))?;
-        writer.write_code_pair(&CodePair::new_f64(32, dim.insertion_point.z))?;
-        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-        writer.write_code_pair(&CodePair::new_f64(50, dim.rotation_angle))?;
-        writer.write_code_pair(&CodePair::new_f64(52, dim.extension_line_angle))?;
+        pairs.push(CodePair::new_f64(12, dim.insertion_point.x));
+        pairs.push(CodePair::new_f64(22, dim.insertion_point.y));
+        pairs.push(CodePair::new_f64(32, dim.insertion_point.z));
+        pairs.push(CodePair::new_f64(13, dim.definition_point_2.x));
+        pairs.push(CodePair::new_f64(23, dim.definition_point_2.y));
+        pairs.push(CodePair::new_f64(33, dim.definition_point_2.z));
+        pairs.push(CodePair::new_f64(14, dim.definition_point_3.x));
+        pairs.push(CodePair::new_f64(24, dim.definition_point_3.y));
+        pairs.push(CodePair::new_f64(34, dim.definition_point_3.z));
+        pairs.push(CodePair::new_f64(50, dim.rotation_angle));
+        pairs.push(CodePair::new_f64(52, dim.extension_line_angle));
         if version >= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbRotatedDimension"))?;
+            pairs.push(CodePair::new_str(100, "AcDbRotatedDimension"));
         }
-        Ok(true)
+        true
     }
-    fn apply_custom_writer_radialdimension<T>(
+    fn add_custom_code_pairs_radialdimension(
+        pairs: &mut Vec<CodePair>,
         dim: &RadialDimension,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        dim.dimension_base.write(version, writer)?;
-        writer.write_code_pair(&CodePair::new_str(100, "AcDbRadialDimension"))?;
-        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
-        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
-        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
-        writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
-        Ok(true)
+    ) -> bool {
+        dim.dimension_base.add_code_pairs(pairs, version);
+        pairs.push(CodePair::new_str(100, "AcDbRadialDimension"));
+        pairs.push(CodePair::new_f64(15, dim.definition_point_2.x));
+        pairs.push(CodePair::new_f64(25, dim.definition_point_2.y));
+        pairs.push(CodePair::new_f64(35, dim.definition_point_2.z));
+        pairs.push(CodePair::new_f64(40, dim.leader_length));
+        true
     }
-    fn apply_custom_writer_diameterdimension<T>(
+    fn add_custom_code_pairs_diameterdimension(
+        pairs: &mut Vec<CodePair>,
         dim: &DiameterDimension,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        dim.dimension_base.write(version, writer)?;
-        writer.write_code_pair(&CodePair::new_str(100, "AcDbDiametricDimension"))?;
-        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_2.x))?;
-        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_2.y))?;
-        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_2.z))?;
-        writer.write_code_pair(&CodePair::new_f64(40, dim.leader_length))?;
-        Ok(true)
+    ) -> bool {
+        dim.dimension_base.add_code_pairs(pairs, version);
+        pairs.push(CodePair::new_str(100, "AcDbDiametricDimension"));
+        pairs.push(CodePair::new_f64(15, dim.definition_point_2.x));
+        pairs.push(CodePair::new_f64(25, dim.definition_point_2.y));
+        pairs.push(CodePair::new_f64(35, dim.definition_point_2.z));
+        pairs.push(CodePair::new_f64(40, dim.leader_length));
+        true
     }
-    fn apply_custom_writer_angularthreepointdimension<T>(
+    fn add_custom_code_pairs_angularthreepointdimension(
+        pairs: &mut Vec<CodePair>,
         dim: &AngularThreePointDimension,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        dim.dimension_base.write(version, writer)?;
-        writer.write_code_pair(&CodePair::new_str(100, "AcDb3PointAngularDimension"))?;
-        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-        writer.write_code_pair(&CodePair::new_f64(15, dim.definition_point_4.x))?;
-        writer.write_code_pair(&CodePair::new_f64(25, dim.definition_point_4.y))?;
-        writer.write_code_pair(&CodePair::new_f64(35, dim.definition_point_4.z))?;
-        writer.write_code_pair(&CodePair::new_f64(16, dim.definition_point_5.x))?;
-        writer.write_code_pair(&CodePair::new_f64(26, dim.definition_point_5.y))?;
-        writer.write_code_pair(&CodePair::new_f64(36, dim.definition_point_5.z))?;
-        Ok(true)
+    ) -> bool {
+        dim.dimension_base.add_code_pairs(pairs, version);
+        pairs.push(CodePair::new_str(100, "AcDb3PointAngularDimension"));
+        pairs.push(CodePair::new_f64(13, dim.definition_point_2.x));
+        pairs.push(CodePair::new_f64(23, dim.definition_point_2.y));
+        pairs.push(CodePair::new_f64(33, dim.definition_point_2.z));
+        pairs.push(CodePair::new_f64(14, dim.definition_point_3.x));
+        pairs.push(CodePair::new_f64(24, dim.definition_point_3.y));
+        pairs.push(CodePair::new_f64(34, dim.definition_point_3.z));
+        pairs.push(CodePair::new_f64(15, dim.definition_point_4.x));
+        pairs.push(CodePair::new_f64(25, dim.definition_point_4.y));
+        pairs.push(CodePair::new_f64(35, dim.definition_point_4.z));
+        pairs.push(CodePair::new_f64(16, dim.definition_point_5.x));
+        pairs.push(CodePair::new_f64(26, dim.definition_point_5.y));
+        pairs.push(CodePair::new_f64(36, dim.definition_point_5.z));
+        true
     }
-    fn apply_custom_writer_ordinatedimension<T>(
+    fn add_custom_code_pairs_ordinatedimension(
+        pairs: &mut Vec<CodePair>,
         dim: &OrdinateDimension,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        dim.dimension_base.write(version, writer)?;
-        writer.write_code_pair(&CodePair::new_str(100, "AcDbOrdinateDimension"))?;
-        writer.write_code_pair(&CodePair::new_f64(13, dim.definition_point_2.x))?;
-        writer.write_code_pair(&CodePair::new_f64(23, dim.definition_point_2.y))?;
-        writer.write_code_pair(&CodePair::new_f64(33, dim.definition_point_2.z))?;
-        writer.write_code_pair(&CodePair::new_f64(14, dim.definition_point_3.x))?;
-        writer.write_code_pair(&CodePair::new_f64(24, dim.definition_point_3.y))?;
-        writer.write_code_pair(&CodePair::new_f64(34, dim.definition_point_3.z))?;
-        Ok(true)
+    ) -> bool {
+        dim.dimension_base.add_code_pairs(pairs, version);
+        pairs.push(CodePair::new_str(100, "AcDbOrdinateDimension"));
+        pairs.push(CodePair::new_f64(13, dim.definition_point_2.x));
+        pairs.push(CodePair::new_f64(23, dim.definition_point_2.y));
+        pairs.push(CodePair::new_f64(33, dim.definition_point_2.z));
+        pairs.push(CodePair::new_f64(14, dim.definition_point_3.x));
+        pairs.push(CodePair::new_f64(24, dim.definition_point_3.y));
+        pairs.push(CodePair::new_f64(34, dim.definition_point_3.z));
+        true
     }
-    fn apply_custom_writer_polyline<T>(
+    fn add_custom_code_pairs_polyline(
+        pairs: &mut Vec<CodePair>,
         poly: &Polyline,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
+    ) -> bool {
         let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
             "AcDb3dPolyline"
         } else {
             "AcDb2dPolyline"
         };
-        writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
+        pairs.push(CodePair::new_str(100, subclass_marker));
         if version <= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_i16(66, as_i16(poly.contains_vertices)))?;
+            pairs.push(CodePair::new_i16(66, as_i16(poly.contains_vertices)));
         }
         if version >= AcadVersion::R12 {
-            writer.write_code_pair(&CodePair::new_f64(10, poly.location.x))?;
-            writer.write_code_pair(&CodePair::new_f64(20, poly.location.y))?;
-            writer.write_code_pair(&CodePair::new_f64(30, poly.location.z))?;
+            pairs.push(CodePair::new_f64(10, poly.location.x));
+            pairs.push(CodePair::new_f64(20, poly.location.y));
+            pairs.push(CodePair::new_f64(30, poly.location.z));
         }
         if poly.thickness != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(39, poly.thickness))?;
+            pairs.push(CodePair::new_f64(39, poly.thickness));
         }
         if poly.flags != 0 {
-            writer.write_code_pair(&CodePair::new_i16(70, poly.flags as i16))?;
+            pairs.push(CodePair::new_i16(70, poly.flags as i16));
         }
         if poly.default_starting_width != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(40, poly.default_starting_width))?;
+            pairs.push(CodePair::new_f64(40, poly.default_starting_width));
         }
         if poly.default_ending_width != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(41, poly.default_ending_width))?;
+            pairs.push(CodePair::new_f64(41, poly.default_ending_width));
         }
         if poly.polygon_mesh_m_vertex_count != 0 {
-            writer.write_code_pair(&CodePair::new_i16(
+            pairs.push(CodePair::new_i16(
                 71,
                 poly.polygon_mesh_m_vertex_count as i16,
-            ))?;
+            ));
         }
         if poly.polygon_mesh_n_vertex_count != 0 {
-            writer.write_code_pair(&CodePair::new_i16(
+            pairs.push(CodePair::new_i16(
                 72,
                 poly.polygon_mesh_n_vertex_count as i16,
-            ))?;
+            ));
         }
         if poly.smooth_surface_m_density != 0 {
-            writer.write_code_pair(&CodePair::new_i16(73, poly.smooth_surface_m_density as i16))?;
+            pairs.push(CodePair::new_i16(73, poly.smooth_surface_m_density as i16));
         }
         if poly.smooth_surface_n_density != 0 {
-            writer.write_code_pair(&CodePair::new_i16(74, poly.smooth_surface_n_density as i16))?;
+            pairs.push(CodePair::new_i16(74, poly.smooth_surface_n_density as i16));
         }
         if poly.surface_type != PolylineCurvedAndSmoothSurfaceType::None {
-            writer.write_code_pair(&CodePair::new_i16(75, poly.surface_type as i16))?;
+            pairs.push(CodePair::new_i16(75, poly.surface_type as i16));
         }
         if poly.normal != Vector::z_axis() {
-            writer.write_code_pair(&CodePair::new_f64(210, poly.normal.x))?;
-            writer.write_code_pair(&CodePair::new_f64(220, poly.normal.y))?;
-            writer.write_code_pair(&CodePair::new_f64(230, poly.normal.z))?;
+            pairs.push(CodePair::new_f64(210, poly.normal.x));
+            pairs.push(CodePair::new_f64(220, poly.normal.y));
+            pairs.push(CodePair::new_f64(230, poly.normal.z));
         }
-        Ok(true)
+        true
     }
-    fn apply_custom_writer_vertex<T>(
+    fn add_custom_code_pairs_vertex(
+        pairs: &mut Vec<CodePair>,
         v: &Vertex,
         version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(100, "AcDbVertex"))?;
+    ) -> bool {
+        pairs.push(CodePair::new_str(100, "AcDbVertex"));
         let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
             "AcDb3dPolylineVertex"
         } else {
             "AcDb2dVertex"
         };
-        writer.write_code_pair(&CodePair::new_str(100, subclass_marker))?;
-        writer.write_code_pair(&CodePair::new_f64(10, v.location.x))?;
-        writer.write_code_pair(&CodePair::new_f64(20, v.location.y))?;
-        writer.write_code_pair(&CodePair::new_f64(30, v.location.z))?;
+        pairs.push(CodePair::new_str(100, subclass_marker));
+        pairs.push(CodePair::new_f64(10, v.location.x));
+        pairs.push(CodePair::new_f64(20, v.location.y));
+        pairs.push(CodePair::new_f64(30, v.location.z));
         if v.starting_width != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(40, v.starting_width))?;
+            pairs.push(CodePair::new_f64(40, v.starting_width));
         }
         if v.ending_width != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(41, v.ending_width))?;
+            pairs.push(CodePair::new_f64(41, v.ending_width));
         }
         if v.bulge != 0.0 {
-            writer.write_code_pair(&CodePair::new_f64(42, v.bulge))?;
+            pairs.push(CodePair::new_f64(42, v.bulge));
         }
-        writer.write_code_pair(&CodePair::new_i16(70, v.flags as i16))?;
-        writer.write_code_pair(&CodePair::new_f64(50, v.curve_fit_tangent_direction))?;
+        pairs.push(CodePair::new_i16(70, v.flags as i16));
+        pairs.push(CodePair::new_f64(50, v.curve_fit_tangent_direction));
         if version >= AcadVersion::R13 {
             if v.polyface_mesh_vertex_index1 != 0 {
-                writer.write_code_pair(&CodePair::new_i16(
-                    71,
-                    v.polyface_mesh_vertex_index1 as i16,
-                ))?;
+                pairs.push(CodePair::new_i16(71, v.polyface_mesh_vertex_index1 as i16));
             }
             if v.polyface_mesh_vertex_index2 != 0 {
-                writer.write_code_pair(&CodePair::new_i16(
-                    72,
-                    v.polyface_mesh_vertex_index2 as i16,
-                ))?;
+                pairs.push(CodePair::new_i16(72, v.polyface_mesh_vertex_index2 as i16));
             }
             if v.polyface_mesh_vertex_index3 != 0 {
-                writer.write_code_pair(&CodePair::new_i16(
-                    73,
-                    v.polyface_mesh_vertex_index3 as i16,
-                ))?;
+                pairs.push(CodePair::new_i16(73, v.polyface_mesh_vertex_index3 as i16));
             }
             if v.polyface_mesh_vertex_index4 != 0 {
-                writer.write_code_pair(&CodePair::new_i16(
-                    74,
-                    v.polyface_mesh_vertex_index4 as i16,
-                ))?;
+                pairs.push(CodePair::new_i16(74, v.polyface_mesh_vertex_index4 as i16));
             }
         }
         if version >= AcadVersion::R2010 {
-            writer.write_code_pair(&CodePair::new_i32(91, v.identifier))?;
+            pairs.push(CodePair::new_i32(91, v.identifier));
         }
-        Ok(true)
+        true
     }
-    fn post_write<T>(
+    fn add_post_code_pairs(
         &self,
+        pairs: &mut Vec<CodePair>,
         version: AcadVersion,
         write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    ) {
         match self.specific {
-            EntityType::Attribute(ref att) => {
-                self.write_attribute_m_text(att.m_text.clone(), version, write_handles, writer)?
-            }
-            EntityType::AttributeDefinition(ref att) => {
-                self.write_attribute_m_text(att.m_text.clone(), version, write_handles, writer)?
-            }
+            EntityType::Attribute(ref att) => self.add_code_pairs_attribute_m_text(
+                pairs,
+                att.m_text.clone(),
+                version,
+                write_handles,
+            ),
+            EntityType::AttributeDefinition(ref att) => self.add_code_pairs_attribute_m_text(
+                pairs,
+                att.m_text.clone(),
+                version,
+                write_handles,
+            ),
             EntityType::Insert(ref ins) => {
                 for (a, att_handle) in &ins.__attributes_and_handles {
                     let a = Entity {
@@ -1602,9 +1558,9 @@ impl Entity {
                         },
                         specific: EntityType::Attribute(a.clone()),
                     };
-                    a.write(version, write_handles, writer)?;
+                    a.add_code_pairs(pairs, version, write_handles);
                 }
-                Entity::write_seqend(version, write_handles, writer)?;
+                Entity::add_code_pairs_seqend(pairs, version, write_handles);
             }
             EntityType::Polyline(ref poly) => {
                 for (v, vertex_handle) in &poly.__vertices_and_handles {
@@ -1618,25 +1574,20 @@ impl Entity {
                         },
                         specific: EntityType::Vertex(v),
                     };
-                    v.write(version, write_handles, writer)?;
+                    v.add_code_pairs(pairs, version, write_handles);
                 }
-                Entity::write_seqend(version, write_handles, writer)?;
+                Entity::add_code_pairs_seqend(pairs, version, write_handles);
             }
             _ => (),
         }
-
-        Ok(())
     }
-    fn write_attribute_m_text<T>(
+    fn add_code_pairs_attribute_m_text(
         &self,
+        pairs: &mut Vec<CodePair>,
         m_text: MText,
         version: AcadVersion,
         write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    ) {
         let m_text_common = EntityCommon {
             handle: Handle::empty(), // TODO: set handle
             __owner_handle: self.common.handle,
@@ -1648,23 +1599,14 @@ impl Entity {
             common: m_text_common,
             specific: EntityType::MText(m_text),
         };
-        m_text.write(version, write_handles, writer)?;
-        Ok(())
+        m_text.add_code_pairs(pairs, version, write_handles);
     }
-    fn write_seqend<T>(
-        version: AcadVersion,
-        write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    fn add_code_pairs_seqend(pairs: &mut Vec<CodePair>, version: AcadVersion, write_handles: bool) {
         let seqend = Entity {
             common: Default::default(),
             specific: EntityType::Seqend(Default::default()),
         };
-        seqend.write(version, write_handles, writer)?;
-        Ok(())
+        seqend.add_code_pairs(pairs, version, write_handles);
     }
 }
 
@@ -1791,19 +1733,14 @@ mod tests {
         };
         ent.common.layer = "some-layer".to_owned();
         drawing.add_entity(ent);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "LINE",
-                "  5",
-                "10",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "some-layer",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "LINE"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "some-layer"),
+            ],
         );
     }
 
@@ -1816,13 +1753,17 @@ mod tests {
             ..Default::default()
         };
         drawing.add_entity(Entity::new(EntityType::Line(line)));
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100", "AcDbLine", " 10", "1.1", " 20", "2.2", " 30", "3.3", " 11", "4.4", " 21",
-                "5.5", " 31", "6.6",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbLine"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_f64(11, 4.4),
+                CodePair::new_f64(21, 5.5),
+                CodePair::new_f64(31, 6.6),
+            ],
         );
     }
 
@@ -1893,7 +1834,13 @@ mod tests {
             },
             specific: EntityType::Line(Default::default()),
         });
-        assert_contains(&drawing, vec!["310", "0102", "310", "0304"].join("\r\n"));
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_binary(310, vec![0x01, 0x02]),
+                CodePair::new_binary(310, vec![0x03, 0x04]),
+            ],
+        );
     }
 
     #[test]
@@ -1928,12 +1875,14 @@ mod tests {
                 ..Default::default()
             }),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  1", "one-1", "  1", "one-2", "  3", "three-1", "  3", "three-2",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1, "one-1"),
+                CodePair::new_str(1, "one-2"),
+                CodePair::new_str(3, "three-1"),
+                CodePair::new_str(3, "three-2"),
+            ],
         );
     }
 
@@ -1976,25 +1925,17 @@ mod tests {
                 ..Default::default()
             }),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                " 91",
-                "        3",
-                " 14",
-                "1.1",
-                " 24",
-                "2.2",
-                " 14",
-                "3.3",
-                " 24",
-                "4.4",
-                " 14",
-                "5.5",
-                " 24",
-                "6.6",
-            ]
-            .join("\r\n"),
+                CodePair::new_i32(91, 3),
+                CodePair::new_f64(14, 1.1),
+                CodePair::new_f64(24, 2.2),
+                CodePair::new_f64(14, 3.3),
+                CodePair::new_f64(24, 4.4),
+                CodePair::new_f64(14, 5.5),
+                CodePair::new_f64(24, 6.6),
+            ],
         );
     }
 
@@ -2070,14 +2011,13 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Image(image),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                " 70", "     5", // flags
-                "280", "     1", // sentinels to make sure we're not reading a header value
-                "281", "    50",
-            ]
-            .join("\r\n"),
+                CodePair::new_i16(70, 5),  // flags
+                CodePair::new_i16(280, 1), // sentinels to make sure we're not reading a header value
+                CodePair::new_i16(281, 50),
+            ],
         );
     }
 
@@ -2112,9 +2052,13 @@ mod tests {
             },
             specific: EntityType::Line(Default::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  0", "LINE", "  5", "10", "330", "A2"].join("\r\n"),
+            vec![
+                CodePair::new_str(0, "LINE"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(330, "A2"),
+            ],
         );
     }
 
@@ -2128,16 +2072,24 @@ mod tests {
 
         // 3DSOLID not supported in R12 and below
         drawing.header.version = AcadVersion::R12;
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  0", "SECTION", "  2", "ENTITIES", "  0", "ENDSEC"].join("\r\n"),
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "ENTITIES"),
+                CodePair::new_str(0, "ENDSEC"),
+            ],
         );
 
         // but it is in R13 and above
         drawing.header.version = AcadVersion::R13;
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  0", "SECTION", "  2", "ENTITIES", "  0", "3DSOLID"].join("\r\n"),
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "ENTITIES"),
+                CodePair::new_str(0, "3DSOLID"),
+            ],
         );
     }
 
@@ -2441,97 +2393,53 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Polyline(poly),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "POLYLINE", // polyline
-                "  5",
-                "13",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDb2dPolyline",
-                " 66",
-                "     1",
-                " 10",
-                "0.0",
-                " 20",
-                "0.0",
-                " 30",
-                "0.0",
-                "  0",
-                "VERTEX", // vertex 1
-                "  5",
-                "10",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDbVertex",
-                "100",
-                "AcDb2dVertex",
-                " 10",
-                "1.1",
-                " 20",
-                "2.1",
-                " 30",
-                "3.1",
-                " 70",
-                "     0",
-                " 50",
-                "0.0",
-                "  0",
-                "VERTEX", // vertex 2
-                "  5",
-                "11",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDbVertex",
-                "100",
-                "AcDb2dVertex",
-                " 10",
-                "1.2",
-                " 20",
-                "2.2",
-                " 30",
-                "3.2",
-                " 70",
-                "     0",
-                " 50",
-                "0.0",
-                "  0",
-                "VERTEX", // vertex 3
-                "  5",
-                "12",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDbVertex",
-                "100",
-                "AcDb2dVertex",
-                " 10",
-                "1.3",
-                " 20",
-                "2.3",
-                " 30",
-                "3.3",
-                " 70",
-                "     0",
-                " 50",
-                "0.0",
-                "  0",
-                "SEQEND", // end sequence
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "POLYLINE"), // polyline
+                CodePair::new_str(5, "13"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDb2dPolyline"),
+                CodePair::new_i16(66, 1),
+                CodePair::new_f64(10, 0.0),
+                CodePair::new_f64(20, 0.0),
+                CodePair::new_f64(30, 0.0),
+                CodePair::new_str(0, "VERTEX"), // vertex 1
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDbVertex"),
+                CodePair::new_str(100, "AcDb2dVertex"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_i16(70, 0),
+                CodePair::new_f64(50, 0.0),
+                CodePair::new_str(0, "VERTEX"), // vertex 2
+                CodePair::new_str(5, "11"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDbVertex"),
+                CodePair::new_str(100, "AcDb2dVertex"),
+                CodePair::new_f64(10, 1.2),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.2),
+                CodePair::new_i16(70, 0),
+                CodePair::new_f64(50, 0.0),
+                CodePair::new_str(0, "VERTEX"), // vertex 3
+                CodePair::new_str(5, "12"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDbVertex"),
+                CodePair::new_str(100, "AcDb2dVertex"),
+                CodePair::new_f64(10, 1.3),
+                CodePair::new_f64(20, 2.3),
+                CodePair::new_f64(30, 3.3),
+                CodePair::new_i16(70, 0),
+                CodePair::new_f64(50, 0.0),
+                CodePair::new_str(0, "SEQEND"), // end sequence
+            ],
         );
     }
 
@@ -2551,51 +2459,30 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Polyline(poly),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "POLYLINE", // polyline
-                "  5",
-                "11",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDb3dPolyline", // 3d = true
-                " 66",
-                "     1",
-                " 10",
-                "0.0",
-                " 20",
-                "0.0",
-                " 30",
-                "0.0",
-                " 70",
-                "     8", // 3d = true
-                "  0",
-                "VERTEX", // vertex 1
-                "  5",
-                "10",
-                "100",
-                "AcDbEntity",
-                "  8",
-                "0",
-                "100",
-                "AcDbVertex",
-                "100",
-                "AcDb3dPolylineVertex", // 3d = true
-                " 10",
-                "1.1",
-                " 20",
-                "2.1",
-                " 30",
-                "3.1",
-                " 70",
-                "    32", // 3d = true
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "POLYLINE"), // polyline
+                CodePair::new_str(5, "11"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDb3dPolyline"), // 3d = true
+                CodePair::new_i16(66, 1),
+                CodePair::new_f64(10, 0.0),
+                CodePair::new_f64(20, 0.0),
+                CodePair::new_f64(30, 0.0),
+                CodePair::new_i16(70, 8),       // 3d = true
+                CodePair::new_str(0, "VERTEX"), // vertex 1
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(100, "AcDbEntity"),
+                CodePair::new_str(8, "0"),
+                CodePair::new_str(100, "AcDbVertex"),
+                CodePair::new_str(100, "AcDb3dPolylineVertex"), // 3d = true
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_f64(30, 3.1),
+                CodePair::new_i16(70, 32), // 3d = true
+            ],
         );
     }
 
@@ -2718,39 +2605,23 @@ mod tests {
             id: 92,
         });
         drawing.add_entity(Entity::new(EntityType::LwPolyline(poly)));
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100",
-                "AcDbPolyline",
-                " 90",
-                "        2",
-                " 70",
-                "     0",
-                " 43",
-                "43.0",
-                // vertex 1
-                " 10",
-                "1.1",
-                " 20",
-                "2.1",
-                " 91",
-                "        0",
-                // vertex 2
-                " 10",
-                "1.2",
-                " 20",
-                "2.2",
-                " 91",
-                "       92",
-                " 40",
-                "40.2",
-                " 41",
-                "41.2",
-                " 42",
-                "42.2",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbPolyline"),
+                CodePair::new_i32(90, 2), // number of vertices
+                CodePair::new_i16(70, 0),
+                CodePair::new_f64(43, 43.0), // constant width
+                CodePair::new_f64(10, 1.1),  // vertex 1
+                CodePair::new_f64(20, 2.1),
+                CodePair::new_i32(91, 0),
+                CodePair::new_f64(10, 1.2), // vertex 2
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_i32(91, 92),
+                CodePair::new_f64(40, 40.2), // starting width
+                CodePair::new_f64(41, 41.2), // ending width
+                CodePair::new_f64(42, 42.2), // bulge
+            ],
         );
     }
 
@@ -2814,23 +2685,17 @@ mod tests {
         let ent = Entity::new(EntityType::RadialDimension(dim));
         let mut drawing = Drawing::new();
         drawing.add_entity(ent);
-        assert_contains(&drawing, vec!["  0", "DIMENSION"].join("\r\n"));
-        assert_contains(&drawing, vec!["  1", "some-text"].join("\r\n"));
-        assert_contains(
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "DIMENSION")]);
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(1, "some-text")]);
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100",
-                "AcDbRadialDimension",
-                " 15",
-                "1.1", // definition_point_2
-                " 25",
-                "2.2",
-                " 35",
-                "3.3",
-                " 40",
-                "0.0", // leader_length
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbRadialDimension"),
+                CodePair::new_f64(15, 1.1), // definition_point_2
+                CodePair::new_f64(25, 2.2),
+                CodePair::new_f64(35, 3.3),
+                CodePair::new_f64(40, 0.0), // leader_length
+            ],
         );
     }
 
@@ -2888,19 +2753,16 @@ mod tests {
         ins.add_attribute(&mut drawing, Attribute::default());
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
-        assert_contains(&drawing, vec!["  0", "INSERT"].join("\r\n"));
-        assert_contains(
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "INSERT")]);
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100",
-                "AcDbBlockReference",
-                " 66",
-                "     1", // contains attributes
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbBlockReference"),
+                CodePair::new_i16(66, 1), // contains attributes
+            ],
         );
-        assert_contains(&drawing, vec!["  0", "ATTRIB"].join("\r\n"));
-        assert_contains(&drawing, vec!["  0", "SEQEND"].join("\r\n"));
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "ATTRIB")]);
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "SEQEND")]);
     }
 
     #[test]
@@ -2911,7 +2773,8 @@ mod tests {
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
 
-        let drawing = parse_drawing(&to_test_string(&drawing));
+        let drawing = drawing_from_pairs(drawing.get_code_pairs().unwrap());
+
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
         match entities[0].specific {
@@ -2943,8 +2806,8 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R13; // MTEXT is only written on R13+
         drawing.add_entity(Entity::new(EntityType::Attribute(Default::default())));
-        assert_contains(&drawing, vec!["  0", "ATTRIB"].join("\r\n"));
-        assert_contains(&drawing, vec!["  0", "MTEXT"].join("\r\n"));
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "ATTRIB")]);
+        assert_contains_pairs(&drawing, vec![CodePair::new_str(0, "MTEXT")]);
     }
 
     #[test]
@@ -2960,7 +2823,8 @@ mod tests {
         drawing.header.version = AcadVersion::R13; // MTEXT is only written on R13+
         drawing.add_entity(Entity::new(EntityType::Attribute(att)));
 
-        let drawing = parse_drawing(&to_test_string(&drawing));
+        let drawing = drawing_from_pairs(drawing.get_code_pairs().unwrap());
+
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
         match entities[0].specific {
@@ -3007,9 +2871,13 @@ mod tests {
             },
             specific: EntityType::Line(Line::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+            vec![
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
+            ],
         );
     }
 
@@ -3045,13 +2913,13 @@ mod tests {
             },
             specific: EntityType::Line(Line::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "1001", "IXMILIA", "1040", "1.1", "  0",
-                "ENDSEC", // xdata is written after all the entity's other code pairs
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(0, "ENDSEC"), // xdata is written after all the entity's other code pairs
+            ],
         );
     }
 
@@ -3169,19 +3037,26 @@ mod tests {
             } else {
                 type_string
             };
-            assert_contains(&drawing, vec!["  0", type_string].join("\r\n"));
+            assert_contains_pairs(&drawing, vec![CodePair::new_str(0, type_string)]);
             if max_version >= AcadVersion::R14 {
                 // only written on R14+
-                assert_contains(
+                assert_contains_pairs(
                     &drawing,
-                    vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+                    vec![
+                        CodePair::new_str(102, "{IXMILIA"),
+                        CodePair::new_str(1, "some string"),
+                        CodePair::new_str(102, "}"),
+                    ],
                 );
             }
             if max_version >= AcadVersion::R2000 {
                 // only written on R2000+
-                assert_contains(
+                assert_contains_pairs(
                     &drawing,
-                    vec!["1001", "IXMILIA", "1040", "1.1"].join("\r\n"),
+                    vec![
+                        CodePair::new_str(1001, "IXMILIA"),
+                        CodePair::new_f64(1040, 1.1),
+                    ],
                 );
             }
         }

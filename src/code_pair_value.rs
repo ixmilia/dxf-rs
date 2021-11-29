@@ -179,11 +179,6 @@ pub(crate) fn escape_control_characters(val: &str) -> String {
     result
 }
 
-#[test]
-fn test_escape_control_characters() {
-    assert_eq!("a^G^ ^^ b", escape_control_characters("a\u{7}^\u{1E} b"));
-}
-
 pub(crate) fn escape_unicode_to_ascii(val: &str) -> String {
     let mut result = String::from("");
 
@@ -197,26 +192,6 @@ pub(crate) fn escape_unicode_to_ascii(val: &str) -> String {
     }
 
     result
-}
-
-#[test]
-fn test_unicode_escape_1() {
-    // values in the middle of a string
-    assert_eq!(
-        "Rep\\U+00E8re pi\\U+00E8ce",
-        escape_unicode_to_ascii("Repère pièce")
-    );
-
-    // value is the entire string
-    assert_eq!("\\U+4F60\\U+597D", escape_unicode_to_ascii("你好"));
-}
-
-#[test]
-fn test_unicode_escape_2() {
-    assert_eq!(
-        "\\U+0410\\U+0430\\U+042F\\U+044F",
-        escape_unicode_to_ascii("АаЯя")
-    );
 }
 
 pub(crate) fn un_escape_ascii_to_unicode(val: &str) -> String {
@@ -261,18 +236,6 @@ pub(crate) fn un_escape_ascii_to_unicode(val: &str) -> String {
     result
 }
 
-#[test]
-fn test_ascii_unescape() {
-    // values in the middle of the string
-    assert_eq!(
-        "Repère pièce",
-        un_escape_ascii_to_unicode("Rep\\U+00E8re pi\\U+00E8ce")
-    );
-
-    // value is entire string
-    assert_eq!("你好", un_escape_ascii_to_unicode("\\U+4F60\\U+597D"));
-}
-
 /// Formats an `f64` value with up to 12 digits of precision, ensuring at least one trailing digit after the decimal.
 fn format_f64(val: f64) -> String {
     // format with 12 digits of precision
@@ -289,4 +252,105 @@ fn format_f64(val: f64) -> String {
     }
 
     val
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_escape_control_characters() {
+        assert_eq!("a^G^ ^^ b", escape_control_characters("a\u{7}^\u{1E} b"));
+    }
+
+    #[test]
+    fn test_unicode_escape_1() {
+        // values in the middle of a string
+        assert_eq!(
+            "Rep\\U+00E8re pi\\U+00E8ce",
+            escape_unicode_to_ascii("Repère pièce")
+        );
+
+        // value is the entire string
+        assert_eq!("\\U+4F60\\U+597D", escape_unicode_to_ascii("你好"));
+    }
+
+    #[test]
+    fn test_unicode_escape_2() {
+        assert_eq!(
+            "\\U+0410\\U+0430\\U+042F\\U+044F",
+            escape_unicode_to_ascii("АаЯя")
+        );
+    }
+
+    #[test]
+    fn test_ascii_unescape() {
+        // values in the middle of the string
+        assert_eq!(
+            "Repère pièce",
+            un_escape_ascii_to_unicode("Rep\\U+00E8re pi\\U+00E8ce")
+        );
+
+        // value is entire string
+        assert_eq!("你好", un_escape_ascii_to_unicode("\\U+4F60\\U+597D"));
+    }
+
+    #[test]
+    fn test_display_boolean() {
+        assert_eq!("0", format!("{}", CodePairValue::Boolean(0)));
+        assert_eq!("1", format!("{}", CodePairValue::Boolean(1)));
+        assert_eq!("2", format!("{}", CodePairValue::Boolean(2)));
+    }
+
+    #[test]
+    fn test_display_integer() {
+        assert_eq!("        0", format!("{}", CodePairValue::Integer(0)));
+        assert_eq!("      500", format!("{}", CodePairValue::Integer(500)));
+        assert_eq!("     -500", format!("{}", CodePairValue::Integer(-500)));
+    }
+
+    #[test]
+    fn test_display_long() {
+        assert_eq!("0", format!("{}", CodePairValue::Long(0)));
+        assert_eq!("500", format!("{}", CodePairValue::Long(500)));
+        assert_eq!("-500", format!("{}", CodePairValue::Long(-500)));
+    }
+
+    #[test]
+    fn test_display_short() {
+        assert_eq!("     0", format!("{}", CodePairValue::Short(0)));
+        assert_eq!("   500", format!("{}", CodePairValue::Short(500)));
+        assert_eq!("  -500", format!("{}", CodePairValue::Short(-500)));
+    }
+
+    #[test]
+    fn test_display_double() {
+        assert_eq!("0.0", format!("{}", CodePairValue::Double(0.0)));
+        assert_eq!("1.0", format!("{}", CodePairValue::Double(1.0)));
+        assert_eq!("3.5", format!("{}", CodePairValue::Double(3.5)));
+        assert_eq!("-3.5", format!("{}", CodePairValue::Double(-3.5)));
+        assert_eq!(
+            "1000000000000.0",
+            format!("{}", CodePairValue::Double(1e12))
+        );
+    }
+
+    #[test]
+    fn test_display_str() {
+        assert_eq!("", format!("{}", CodePairValue::Str("".to_string())));
+        assert_eq!(
+            "some text",
+            format!("{}", CodePairValue::Str("some text".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_display_binary() {
+        assert_eq!("", format!("{}", CodePairValue::Binary(vec![])));
+        assert_eq!("01", format!("{}", CodePairValue::Binary(vec![0x01])));
+        assert_eq!(
+            "01020304",
+            format!("{}", CodePairValue::Binary(vec![0x01, 0x02, 0x03, 0x04]))
+        );
+    }
 }

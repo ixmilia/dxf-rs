@@ -1,9 +1,6 @@
-use std::io::Write;
-
 use crate::{CodePair, DxfError, DxfResult, Handle, Point, Vector};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::enums::AcadVersion;
 use crate::helper_functions::*;
 
@@ -78,25 +75,17 @@ impl XData {
         }
         Ok(xdata)
     }
-    pub(crate) fn write<T>(
-        &self,
-        version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {
         // not supported on < R2000
         if version >= AcadVersion::R2000 {
-            writer.write_code_pair(&CodePair::new_string(
+            pairs.push(CodePair::new_string(
                 XDATA_APPLICATIONNAME,
                 &self.application_name,
-            ))?;
+            ));
             for item in &self.items {
-                item.write(writer)?;
+                item.add_code_pairs(pairs);
             }
         }
-        Ok(())
     }
 }
 
@@ -188,73 +177,67 @@ impl XDataItem {
             XDataItem::read_double(iter, expected_code + 20)?,
         ))
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>) {
         match self {
             XDataItem::Str(ref s) => {
-                writer.write_code_pair(&CodePair::new_string(XDATA_STRING, s))?;
+                pairs.push(CodePair::new_string(XDATA_STRING, s));
             }
             XDataItem::ControlGroup(ref items) => {
-                writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "{"))?;
+                pairs.push(CodePair::new_str(XDATA_CONTROLGROUP, "{"));
                 for item in &items[..] {
-                    item.write(writer)?;
+                    item.add_code_pairs(pairs);
                 }
-                writer.write_code_pair(&CodePair::new_str(XDATA_CONTROLGROUP, "}"))?;
+                pairs.push(CodePair::new_str(XDATA_CONTROLGROUP, "}"));
             }
             XDataItem::LayerName(ref l) => {
-                writer.write_code_pair(&CodePair::new_string(XDATA_LAYER, l))?;
+                pairs.push(CodePair::new_string(XDATA_LAYER, l));
             }
             XDataItem::BinaryData(ref data) => {
                 let mut line = String::new();
                 for b in data {
                     line.push_str(&format!("{:02X}", b));
                 }
-                writer.write_code_pair(&CodePair::new_string(XDATA_BINARYDATA, &line))?;
+                pairs.push(CodePair::new_string(XDATA_BINARYDATA, &line));
             }
             XDataItem::Handle(h) => {
-                writer.write_code_pair(&CodePair::new_string(XDATA_HANDLE, &h.as_string()))?;
+                pairs.push(CodePair::new_string(XDATA_HANDLE, &h.as_string()));
             }
             XDataItem::ThreeReals(x, y, z) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS, *x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS + 10, *y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_THREEREALS + 20, *z))?;
+                pairs.push(CodePair::new_f64(XDATA_THREEREALS, *x));
+                pairs.push(CodePair::new_f64(XDATA_THREEREALS + 10, *y));
+                pairs.push(CodePair::new_f64(XDATA_THREEREALS + 20, *z));
             }
             XDataItem::WorldSpacePosition(ref p) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 10, p.y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 20, p.z))?;
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEPOSITION, p.x));
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 10, p.y));
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEPOSITION + 20, p.z));
             }
             XDataItem::WorldSpaceDisplacement(ref p) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.x))?;
-                writer
-                    .write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 10, p.y))?;
-                writer
-                    .write_code_pair(&CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 20, p.z))?;
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT, p.x));
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 10, p.y));
+                pairs.push(CodePair::new_f64(XDATA_WORLDSPACEDISPLACEMENT + 20, p.z));
             }
             XDataItem::WorldDirection(ref v) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION, v.x))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION + 10, v.y))?;
-                writer.write_code_pair(&CodePair::new_f64(XDATA_WORLDDIRECTION + 20, v.z))?;
+                pairs.push(CodePair::new_f64(XDATA_WORLDDIRECTION, v.x));
+                pairs.push(CodePair::new_f64(XDATA_WORLDDIRECTION + 10, v.y));
+                pairs.push(CodePair::new_f64(XDATA_WORLDDIRECTION + 20, v.z));
             }
             XDataItem::Real(f) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_REAL, *f))?;
+                pairs.push(CodePair::new_f64(XDATA_REAL, *f));
             }
             XDataItem::Distance(f) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_DISTANCE, *f))?;
+                pairs.push(CodePair::new_f64(XDATA_DISTANCE, *f));
             }
             XDataItem::ScaleFactor(f) => {
-                writer.write_code_pair(&CodePair::new_f64(XDATA_SCALEFACTOR, *f))?;
+                pairs.push(CodePair::new_f64(XDATA_SCALEFACTOR, *f));
             }
             XDataItem::Integer(i) => {
-                writer.write_code_pair(&CodePair::new_i16(XDATA_INTEGER, *i))?;
+                pairs.push(CodePair::new_i16(XDATA_INTEGER, *i));
             }
             XDataItem::Long(i) => {
-                writer.write_code_pair(&CodePair::new_i32(XDATA_LONG, *i))?;
+                pairs.push(CodePair::new_i32(XDATA_LONG, *i));
             }
         }
-        Ok(())
     }
 }
 
@@ -290,7 +273,7 @@ mod tests {
         items[0].clone()
     }
 
-    fn write_x_data_item(item: XDataItem) -> String {
+    fn write_x_data_item(item: XDataItem) -> Vec<CodePair> {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
         drawing.add_object(Object {
@@ -303,7 +286,7 @@ mod tests {
             },
             specific: ObjectType::AcadProxyObject(AcadProxyObject::default()),
         });
-        to_test_string(&drawing)
+        drawing.get_code_pairs().unwrap()
     }
 
     #[test]
@@ -378,38 +361,26 @@ mod tests {
     fn write_3_reals() {
         let actual = write_x_data_item(XDataItem::ThreeReals(1.0, 2.0, 3.0));
         let expected = vec![
-            "1001",
-            "TEST_APPLICATION_NAME",
-            "1010",
-            "1.0",
-            "1020",
-            "2.0",
-            "1030",
-            "3.0",
-            "  0",
-            "ENDSEC",
-        ]
-        .join("\r\n");
-        assert!(actual.contains(&expected));
+            CodePair::new_str(1001, "TEST_APPLICATION_NAME"),
+            CodePair::new_f64(1010, 1.0),
+            CodePair::new_f64(1020, 2.0),
+            CodePair::new_f64(1030, 3.0),
+            CodePair::new_str(0, "ENDSEC"),
+        ];
+        assert_vec_contains(&actual, &expected);
     }
 
     #[test]
     fn write_world_space_position() {
         let actual = write_x_data_item(XDataItem::WorldSpacePosition(Point::new(1.0, 2.0, 3.0)));
         let expected = vec![
-            "1001",
-            "TEST_APPLICATION_NAME",
-            "1011",
-            "1.0",
-            "1021",
-            "2.0",
-            "1031",
-            "3.0",
-            "  0",
-            "ENDSEC",
-        ]
-        .join("\r\n");
-        assert!(actual.contains(&expected));
+            CodePair::new_str(1001, "TEST_APPLICATION_NAME"),
+            CodePair::new_f64(1011, 1.0),
+            CodePair::new_f64(1021, 2.0),
+            CodePair::new_f64(1031, 3.0),
+            CodePair::new_str(0, "ENDSEC"),
+        ];
+        assert_vec_contains(&actual, &expected);
     }
 
     #[test]
@@ -417,37 +388,25 @@ mod tests {
         let actual =
             write_x_data_item(XDataItem::WorldSpaceDisplacement(Point::new(1.0, 2.0, 3.0)));
         let expected = vec![
-            "1001",
-            "TEST_APPLICATION_NAME",
-            "1012",
-            "1.0",
-            "1022",
-            "2.0",
-            "1032",
-            "3.0",
-            "  0",
-            "ENDSEC",
-        ]
-        .join("\r\n");
-        assert!(actual.contains(&expected));
+            CodePair::new_str(1001, "TEST_APPLICATION_NAME"),
+            CodePair::new_f64(1012, 1.0),
+            CodePair::new_f64(1022, 2.0),
+            CodePair::new_f64(1032, 3.0),
+            CodePair::new_str(0, "ENDSEC"),
+        ];
+        assert_vec_contains(&actual, &expected);
     }
 
     #[test]
     fn write_world_direction() {
         let actual = write_x_data_item(XDataItem::WorldDirection(Vector::new(1.0, 2.0, 3.0)));
         let expected = vec![
-            "1001",
-            "TEST_APPLICATION_NAME",
-            "1013",
-            "1.0",
-            "1023",
-            "2.0",
-            "1033",
-            "3.0",
-            "  0",
-            "ENDSEC",
-        ]
-        .join("\r\n");
-        assert!(actual.contains(&expected));
+            CodePair::new_str(1001, "TEST_APPLICATION_NAME"),
+            CodePair::new_f64(1013, 1.0),
+            CodePair::new_f64(1023, 2.0),
+            CodePair::new_f64(1033, 3.0),
+            CodePair::new_str(0, "ENDSEC"),
+        ];
+        assert_vec_contains(&actual, &expected);
     }
 }

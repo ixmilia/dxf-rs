@@ -178,23 +178,32 @@ impl Drawing {
     {
         self.save_internal(writer, false)
     }
+    /// Gets all code pairs that will be written.
+    pub(crate) fn get_code_pairs(&self) -> DxfResult<Vec<CodePair>> {
+        let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
+        let mut pairs = Vec::new();
+        self.header.add_code_pairs(&mut pairs);
+        self.add_classes_pairs(&mut pairs);
+        self.add_tables_pairs(&mut pairs, write_handles);
+        self.add_blocks_pairs(&mut pairs, write_handles);
+        self.add_entities_pairs(&mut pairs, write_handles);
+        self.add_objects_pairs(&mut pairs);
+        self.add_thumbnail_pairs(&mut pairs)?;
+        pairs.push(CodePair::new_str(0, "EOF"));
+        Ok(pairs)
+    }
     fn save_internal<T>(&self, writer: &mut T, as_ascii: bool) -> DxfResult<()>
     where
         T: Write + ?Sized,
     {
+        let pairs = self.get_code_pairs()?;
         let text_as_ascii = self.header.version <= AcadVersion::R2004;
         let mut code_pair_writer =
             CodePairWriter::new(writer, as_ascii, text_as_ascii, self.header.version);
-        let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
         code_pair_writer.write_prelude()?;
-        self.header.write(&mut code_pair_writer)?;
-        self.write_classes(&mut code_pair_writer)?;
-        self.write_tables(write_handles, &mut code_pair_writer)?;
-        self.write_blocks(write_handles, &mut code_pair_writer)?;
-        self.write_entities(write_handles, &mut code_pair_writer)?;
-        self.write_objects(&mut code_pair_writer)?;
-        self.write_thumbnail(&mut code_pair_writer)?;
-        code_pair_writer.write_code_pair(&CodePair::new_str(0, "EOF"))?;
+        for pair in pairs {
+            code_pair_writer.write_code_pair(&pair)?;
+        }
         Ok(())
     }
     /// Writes a `Drawing` to disk, using a `BufWriter`.
@@ -882,97 +891,70 @@ impl Drawing {
             });
         }
     }
-    fn write_classes<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_classes_pairs(&self, pairs: &mut Vec<CodePair>) {
         if self.classes.is_empty() {
-            return Ok(());
+            return;
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "CLASSES"))?;
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "CLASSES"));
         for c in &self.classes {
-            c.write(self.header.version, writer)?;
+            c.add_code_pairs(pairs, self.header.version);
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
-    fn write_tables<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "TABLES"))?;
-        write_tables(&self, write_handles, writer)?;
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+    pub(crate) fn add_tables_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "TABLES"));
+        add_table_code_pairs(&self, pairs, write_handles);
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
-    fn write_blocks<T>(&self, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_blocks_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
         if self.__blocks.is_empty() {
-            return Ok(());
+            return;
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "BLOCKS"))?;
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "BLOCKS"));
         for b in &self.__blocks {
-            b.write(self.header.version, write_handles, writer)?;
+            b.add_code_pairs(pairs, self.header.version, write_handles);
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
-    fn write_entities<T>(
-        &self,
-        write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "ENTITIES"))?;
+    pub(crate) fn add_entities_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "ENTITIES"));
         for e in &self.__entities {
-            e.write(self.header.version, write_handles, writer)?;
+            e.add_code_pairs(pairs, self.header.version, write_handles);
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
-    fn write_objects<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "OBJECTS"))?;
+    pub(crate) fn add_objects_pairs(&self, pairs: &mut Vec<CodePair>) {
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "OBJECTS"));
         for o in &self.__objects {
-            o.write(self.header.version, writer)?;
+            o.add_code_pairs(pairs, self.header.version);
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
-    fn write_thumbnail<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_thumbnail_pairs(&self, pairs: &mut Vec<CodePair>) -> DxfResult<()> {
         if self.header.version >= AcadVersion::R2000 {
             if let Some(ref img) = self.thumbnail {
-                writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-                writer.write_code_pair(&CodePair::new_str(2, "THUMBNAILIMAGE"))?;
+                pairs.push(CodePair::new_str(0, "SECTION"));
+                pairs.push(CodePair::new_str(2, "THUMBNAILIMAGE"));
                 let mut data = vec![];
                 img.write_to(&mut data, image::ImageFormat::Bmp)?;
                 let length = data.len() - 14; // skip 14 byte bmp header
-                writer.write_code_pair(&CodePair::new_i32(90, length as i32))?;
+                pairs.push(CodePair::new_i32(90, length as i32));
                 for s in data[14..].chunks(128) {
                     let pair = CodePair::new_binary(310, s.to_vec());
-                    writer.write_code_pair(&pair)?;
+                    pairs.push(pair);
                 }
-                writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
+                pairs.push(CodePair::new_str(0, "ENDSEC"));
             }
         }
         Ok(())

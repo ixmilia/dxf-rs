@@ -195,4 +195,20 @@ mod tests {
         let expected = "  1\r\n\\U+0410\\U+0430\\U+042F\\U+044F\r\n";
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn write_aligned_code_pair_in_ascii_1() {
+        let pair = CodePair::new_str(1, "A");
+        let actual = write_in_ascii(&pair);
+        let expected = "  1\r\nA\r\n";
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn write_aligned_code_pair_in_ascii_2() {
+        let pair = CodePair::new_str(100, "A");
+        let actual = write_in_ascii(&pair);
+        let expected = "100\r\nA\r\n";
+        assert_eq!(expected, actual);
+    }
 }

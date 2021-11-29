@@ -594,8 +594,52 @@ pub mod tests {
         assert!(actual.contains(&contents));
     }
 
+    fn try_find_index<T>(superset: &Vec<T>, subset: &Vec<T>) -> Option<usize>
+    where
+        T: PartialEq,
+    {
+        let min_index = 0usize;
+        let max_index = superset.len() - subset.len();
+        for candidate_base_index in min_index..=max_index {
+            let mut test_index = 0;
+            while test_index < subset.len() {
+                if superset[candidate_base_index + test_index] != subset[test_index] {
+                    break;
+                }
+                test_index += 1;
+            }
+            if test_index == subset.len() {
+                return Some(candidate_base_index);
+            }
+        }
+
+        None
+    }
+
+    pub fn assert_vec_contains<T>(actual: &Vec<T>, expected: &Vec<T>)
+    where
+        T: PartialEq,
+    {
+        let actual_index = try_find_index(&actual, &expected);
+        assert!(actual_index.is_some());
+    }
+
+    pub fn assert_contains_pairs(drawing: &Drawing, expected: Vec<CodePair>) {
+        let actual = drawing.get_code_pairs().ok().unwrap();
+        println!("checking pairs: {:?}", actual);
+        let actual_index = try_find_index(&actual, &expected);
+        assert!(actual_index.is_some());
+    }
+
     pub fn assert_not_contains(drawing: &Drawing, contents: String) {
         let actual = to_test_string(&drawing);
         assert!(!actual.contains(&contents));
+    }
+
+    pub fn assert_not_contains_pairs(drawing: &Drawing, not_expected: Vec<CodePair>) {
+        let actual = drawing.get_code_pairs().ok().unwrap();
+        println!("checking pairs: {:?}", actual);
+        let actual_index = try_find_index(&actual, &not_expected);
+        assert!(actual_index.is_none());
     }
 }

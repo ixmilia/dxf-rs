@@ -29,13 +29,11 @@ use crate::{
     Point,
     Vector,
 };
-use crate::code_pair_writer::CodePairWriter;
 use crate::helper_functions::*;
 
 use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
 
-use std::io::Write;
 use std::time::Duration;
 
 extern crate chrono;
@@ -52,7 +50,7 @@ use self::uuid::Uuid;
     generate_flags(&mut fun, &element);
     generate_set_defaults(&mut fun, &element);
     generate_set_header_value(&mut fun, &element);
-    generate_add_code_pairs(&mut fun, &element);
+    generate_get_code_pairs_internal(&mut fun, &element);
     fun.push_str("}\n");
 
     let mut file = File::create(generated_dir.join("header.rs")).ok().unwrap();
@@ -258,11 +256,9 @@ fn get_read_command(element: &Element) -> String {
     }
 }
 
-fn generate_add_code_pairs(fun: &mut String, element: &Element) {
+fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
     fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
-    fun.push_str("    pub(crate) fn write_code_pairs<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write + ?Sized {\n");
-    fun.push_str("\n");
+    fun.push_str("    pub(crate) fn add_code_pairs_internal(&self, pairs: &mut Vec<CodePair>) {\n");
     for v in &element.children {
         if suppress_writing(&v) {
             continue;
@@ -290,7 +286,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
             fun.push_str(&format!("        if {} {{\n", parts.join(" && ")));
         }
         fun.push_str(&format!(
-            "        {indent}writer.write_code_pair(&CodePair::new_str(9, \"${name}\"))?;\n",
+            "        {indent}pairs.push(CodePair::new_str(9, \"${name}\"));\n",
             name = name(&v),
             indent = indent
         ));
@@ -306,7 +302,7 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
             let value = format!("self.{}", field_name);
             let value = write_converter.replace("{}", &*value);
             fun.push_str(&format!(
-                "        {indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
+                "        {indent}pairs.push(CodePair::new_{typ}({code}, {value}));\n",
                 code = code(&v),
                 value = value,
                 typ = expected_type,
@@ -322,10 +318,12 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
                     _ => panic!("unexpected number of values"),
                 };
                 let value = write_converter.replace("{}", &format!("self.{}.{}", field(&v), fld));
-                fun.push_str(&format!("        {indent}writer.write_code_pair(&CodePair::new_f64({code}, {value}))?;\n",
-                    code=code,
-                    value=value,
-                    indent=indent));
+                fun.push_str(&format!(
+                    "        {indent}pairs.push(CodePair::new_f64({code}, {value}));\n",
+                    code = code,
+                    value = value,
+                    indent = indent
+                ));
             }
         }
         if parts.len() > 0 {
@@ -336,7 +334,6 @@ fn generate_add_code_pairs(fun: &mut String, element: &Element) {
         fun.push_str("\n");
     }
 
-    fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
 }
 

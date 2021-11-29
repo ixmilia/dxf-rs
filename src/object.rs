@@ -2,7 +2,6 @@
 
 use enum_primitive::FromPrimitive;
 use itertools::Itertools;
-use std::io::Write;
 use std::ops::Add;
 
 extern crate chrono;
@@ -14,7 +13,6 @@ use crate::{
 };
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::enums::*;
 use crate::helper_functions::*;
 use crate::objects::*;
@@ -1474,43 +1472,27 @@ impl Object {
             }
         }
     }
-    pub(crate) fn write<T>(
-        &self,
-        version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {
         if self.specific.is_supported_on_version(version) {
-            writer.write_code_pair(&CodePair::new_str(0, self.specific.to_type_string()))?;
-            self.common.write(version, writer)?;
-            if !self.apply_custom_writer(version, writer)? {
-                self.specific.write(version, writer)?;
-                self.post_write(version, writer)?;
+            pairs.push(CodePair::new_str(0, self.specific.to_type_string()));
+            self.common.add_code_pairs(pairs, version);
+            if !self.add_custom_code_pairs(pairs, version) {
+                self.specific.add_code_pairs(pairs, version);
+                self.add_post_code_pairs(pairs, version);
             }
             for x in &self.common.x_data {
-                x.write(version, writer)?;
+                x.add_code_pairs(pairs, version);
             }
         }
-
-        Ok(())
     }
-    fn apply_custom_writer<T>(
-        &self,
-        version: AcadVersion,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<bool>
-    where
-        T: Write + ?Sized,
-    {
+    fn add_custom_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) -> bool {
         match self.specific {
             ObjectType::DataTable(ref data) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbDataTable"))?;
-                writer.write_code_pair(&CodePair::new_i16(70, data.field))?;
-                writer.write_code_pair(&CodePair::new_i32(90, data.column_count as i32))?;
-                writer.write_code_pair(&CodePair::new_i32(91, data.row_count as i32))?;
-                writer.write_code_pair(&CodePair::new_string(1, &data.name))?;
+                pairs.push(CodePair::new_str(100, "AcDbDataTable"));
+                pairs.push(CodePair::new_i16(70, data.field));
+                pairs.push(CodePair::new_i32(90, data.column_count as i32));
+                pairs.push(CodePair::new_i32(91, data.row_count as i32));
+                pairs.push(CodePair::new_string(1, &data.name));
                 for col in 0..data.column_count {
                     let column_code = match data.values[0][col] {
                         Some(DataTableValue::Boolean(_)) => Some(71),
@@ -1523,38 +1505,34 @@ impl Object {
                         None => None,
                     };
                     if let Some(column_code) = column_code {
-                        writer.write_code_pair(&CodePair::new_i32(92, column_code))?;
-                        writer
-                            .write_code_pair(&CodePair::new_string(2, &data.column_names[col]))?;
+                        pairs.push(CodePair::new_i32(92, column_code));
+                        pairs.push(CodePair::new_string(2, &data.column_names[col]));
                         for row in 0..data.row_count {
                             match data.values[row][col] {
                                 Some(DataTableValue::Boolean(val)) => {
-                                    writer.write_code_pair(&CodePair::new_i16(71, as_i16(val)))?;
+                                    pairs.push(CodePair::new_i16(71, as_i16(val)));
                                 }
                                 Some(DataTableValue::Integer(val)) => {
-                                    writer.write_code_pair(&CodePair::new_i32(93, val))?;
+                                    pairs.push(CodePair::new_i32(93, val));
                                 }
                                 Some(DataTableValue::Double(val)) => {
-                                    writer.write_code_pair(&CodePair::new_f64(40, val))?;
+                                    pairs.push(CodePair::new_f64(40, val));
                                 }
                                 Some(DataTableValue::Str(ref val)) => {
-                                    writer.write_code_pair(&CodePair::new_string(3, val))?;
+                                    pairs.push(CodePair::new_string(3, val));
                                 }
                                 Some(DataTableValue::Point2D(ref val)) => {
-                                    writer.write_code_pair(&CodePair::new_f64(10, val.x))?;
-                                    writer.write_code_pair(&CodePair::new_f64(20, val.y))?;
-                                    writer.write_code_pair(&CodePair::new_f64(30, val.z))?;
+                                    pairs.push(CodePair::new_f64(10, val.x));
+                                    pairs.push(CodePair::new_f64(20, val.y));
+                                    pairs.push(CodePair::new_f64(30, val.z));
                                 }
                                 Some(DataTableValue::Point3D(ref val)) => {
-                                    writer.write_code_pair(&CodePair::new_f64(11, val.x))?;
-                                    writer.write_code_pair(&CodePair::new_f64(21, val.y))?;
-                                    writer.write_code_pair(&CodePair::new_f64(31, val.z))?;
+                                    pairs.push(CodePair::new_f64(11, val.x));
+                                    pairs.push(CodePair::new_f64(21, val.y));
+                                    pairs.push(CodePair::new_f64(31, val.z));
                                 }
                                 Some(DataTableValue::Handle(val)) => {
-                                    writer.write_code_pair(&CodePair::new_string(
-                                        331,
-                                        &val.as_string(),
-                                    ))?;
+                                    pairs.push(CodePair::new_string(331, &val.as_string()));
                                 }
                                 None => (),
                             }
@@ -1563,141 +1541,124 @@ impl Object {
                 }
             }
             ObjectType::Dictionary(ref dict) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
+                pairs.push(CodePair::new_str(100, "AcDbDictionary"));
                 if version >= AcadVersion::R2000 && !dict.is_hard_owner {
-                    writer.write_code_pair(&CodePair::new_i16(280, as_i16(dict.is_hard_owner)))?;
+                    pairs.push(CodePair::new_i16(280, as_i16(dict.is_hard_owner)));
                 }
                 if version >= AcadVersion::R2000 {
-                    writer.write_code_pair(&CodePair::new_i16(
+                    pairs.push(CodePair::new_i16(
                         281,
                         dict.duplicate_record_handling as i16,
-                    ))?;
+                    ));
                 }
                 let code = if dict.is_hard_owner { 360 } else { 350 };
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
                     if let Some(value) = dict.value_handles.get(key) {
-                        writer.write_code_pair(&CodePair::new_string(3, key))?;
-                        writer.write_code_pair(&CodePair::new_string(code, &value.as_string()))?;
+                        pairs.push(CodePair::new_string(3, key));
+                        pairs.push(CodePair::new_string(code, &value.as_string()));
                     }
                 }
             }
             ObjectType::DictionaryWithDefault(ref dict) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbDictionary"))?;
+                pairs.push(CodePair::new_str(100, "AcDbDictionary"));
                 if version >= AcadVersion::R2000 {
-                    writer.write_code_pair(&CodePair::new_i16(
+                    pairs.push(CodePair::new_i16(
                         281,
                         dict.duplicate_record_handling as i16,
-                    ))?;
+                    ));
                 }
-                writer.write_code_pair(&CodePair::new_string(
-                    340,
-                    &dict.default_handle.as_string(),
-                ))?;
+                pairs.push(CodePair::new_string(340, &dict.default_handle.as_string()));
                 for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
                     if let Some(value) = dict.value_handles.get(key) {
-                        writer.write_code_pair(&CodePair::new_string(3, key))?;
-                        writer.write_code_pair(&CodePair::new_string(350, &value.as_string()))?;
+                        pairs.push(CodePair::new_string(3, key));
+                        pairs.push(CodePair::new_string(350, &value.as_string()));
                     }
                 }
             }
             ObjectType::LightList(ref ll) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbLightList"))?;
-                writer.write_code_pair(&CodePair::new_i32(90, ll.version))?;
-                writer.write_code_pair(&CodePair::new_i32(90, ll.__lights_handle.len() as i32))?;
+                pairs.push(CodePair::new_str(100, "AcDbLightList"));
+                pairs.push(CodePair::new_i32(90, ll.version));
+                pairs.push(CodePair::new_i32(90, ll.__lights_handle.len() as i32));
                 for light in &ll.__lights_handle {
-                    writer.write_code_pair(&CodePair::new_string(5, &light.as_string()))?;
+                    pairs.push(CodePair::new_string(5, &light.as_string()));
                     // TODO: write the light's real name
-                    writer.write_code_pair(&CodePair::new_string(1, &String::new()))?;
+                    pairs.push(CodePair::new_string(1, &String::new()));
                 }
             }
             ObjectType::SectionSettings(ref ss) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbSectionSettings"))?;
-                writer.write_code_pair(&CodePair::new_i32(90, ss.section_type))?;
-                writer
-                    .write_code_pair(&CodePair::new_i32(91, ss.geometry_settings.len() as i32))?;
+                pairs.push(CodePair::new_str(100, "AcDbSectionSettings"));
+                pairs.push(CodePair::new_i32(90, ss.section_type));
+                pairs.push(CodePair::new_i32(91, ss.geometry_settings.len() as i32));
                 for settings in &ss.geometry_settings {
-                    settings.write(writer)?;
+                    settings.add_code_pairs(pairs);
                 }
             }
             ObjectType::SunStudy(ref ss) => {
-                writer
-                    .write_code_pair(&CodePair::new_string(100, &String::from("AcDbSunStudy")))?;
-                writer.write_code_pair(&CodePair::new_i32(90, ss.version))?;
-                writer.write_code_pair(&CodePair::new_string(1, &ss.sun_setup_name))?;
-                writer.write_code_pair(&CodePair::new_string(2, &ss.description))?;
-                writer.write_code_pair(&CodePair::new_i16(70, ss.output_type))?;
-                writer.write_code_pair(&CodePair::new_string(3, &ss.sheet_set_name))?;
-                writer.write_code_pair(&CodePair::new_bool(290, ss.use_subset))?;
-                writer.write_code_pair(&CodePair::new_string(4, &ss.sheet_subset_name))?;
-                writer.write_code_pair(&CodePair::new_bool(291, ss.select_dates_from_calendar))?;
-                writer.write_code_pair(&CodePair::new_i32(91, ss.dates.len() as i32))?;
+                pairs.push(CodePair::new_string(100, &String::from("AcDbSunStudy")));
+                pairs.push(CodePair::new_i32(90, ss.version));
+                pairs.push(CodePair::new_string(1, &ss.sun_setup_name));
+                pairs.push(CodePair::new_string(2, &ss.description));
+                pairs.push(CodePair::new_i16(70, ss.output_type));
+                pairs.push(CodePair::new_string(3, &ss.sheet_set_name));
+                pairs.push(CodePair::new_bool(290, ss.use_subset));
+                pairs.push(CodePair::new_string(4, &ss.sheet_subset_name));
+                pairs.push(CodePair::new_bool(291, ss.select_dates_from_calendar));
+                pairs.push(CodePair::new_i32(91, ss.dates.len() as i32));
                 for item in &ss.dates {
-                    writer
-                        .write_code_pair(&CodePair::new_i32(90, as_double_local(*item) as i32))?;
+                    pairs.push(CodePair::new_i32(90, as_double_local(*item) as i32));
                 }
-                writer.write_code_pair(&CodePair::new_bool(292, ss.select_range_of_dates))?;
-                writer
-                    .write_code_pair(&CodePair::new_i32(93, ss.start_time_seconds_past_midnight))?;
-                writer
-                    .write_code_pair(&CodePair::new_i32(94, ss.end_time_seconds_past_midnight))?;
-                writer.write_code_pair(&CodePair::new_i32(95, ss.interval_in_seconds))?;
-                writer.write_code_pair(&CodePair::new_i16(73, ss.hours.len() as i16))?;
+                pairs.push(CodePair::new_bool(292, ss.select_range_of_dates));
+                pairs.push(CodePair::new_i32(93, ss.start_time_seconds_past_midnight));
+                pairs.push(CodePair::new_i32(94, ss.end_time_seconds_past_midnight));
+                pairs.push(CodePair::new_i32(95, ss.interval_in_seconds));
+                pairs.push(CodePair::new_i16(73, ss.hours.len() as i16));
                 for v in &ss.hours {
-                    writer.write_code_pair(&CodePair::new_i16(290, *v as i16))?;
+                    pairs.push(CodePair::new_i16(290, *v as i16));
                 }
-                writer.write_code_pair(&CodePair::new_string(
+                pairs.push(CodePair::new_string(
                     340,
                     &ss.__page_setup_wizard_handle.as_string(),
-                ))?;
-                writer
-                    .write_code_pair(&CodePair::new_string(341, &ss.__view_handle.as_string()))?;
-                writer.write_code_pair(&CodePair::new_string(
+                ));
+                pairs.push(CodePair::new_string(341, &ss.__view_handle.as_string()));
+                pairs.push(CodePair::new_string(
                     342,
                     &ss.__visual_style_handle.as_string(),
-                ))?;
-                writer.write_code_pair(&CodePair::new_i16(74, ss.shade_plot_type))?;
-                writer.write_code_pair(&CodePair::new_i16(75, ss.viewports_per_page as i16))?;
-                writer.write_code_pair(&CodePair::new_i16(
+                ));
+                pairs.push(CodePair::new_i16(74, ss.shade_plot_type));
+                pairs.push(CodePair::new_i16(75, ss.viewports_per_page as i16));
+                pairs.push(CodePair::new_i16(
                     76,
                     ss.viewport_distribution_row_count as i16,
-                ))?;
-                writer.write_code_pair(&CodePair::new_i16(
+                ));
+                pairs.push(CodePair::new_i16(
                     77,
                     ss.viewport_distribution_column_count as i16,
-                ))?;
-                writer.write_code_pair(&CodePair::new_f64(40, ss.spacing))?;
-                writer.write_code_pair(&CodePair::new_bool(293, ss.lock_viewports))?;
-                writer.write_code_pair(&CodePair::new_bool(294, ss.label_viewports))?;
-                writer.write_code_pair(&CodePair::new_string(
+                ));
+                pairs.push(CodePair::new_f64(40, ss.spacing));
+                pairs.push(CodePair::new_bool(293, ss.lock_viewports));
+                pairs.push(CodePair::new_bool(294, ss.label_viewports));
+                pairs.push(CodePair::new_string(
                     343,
                     &ss.__text_style_handle.as_string(),
-                ))?;
+                ));
             }
             ObjectType::XRecordObject(ref xr) => {
-                writer.write_code_pair(&CodePair::new_str(100, "AcDbXrecord"))?;
-                writer.write_code_pair(&CodePair::new_i16(
-                    280,
-                    xr.duplicate_record_handling as i16,
-                ))?;
+                pairs.push(CodePair::new_str(100, "AcDbXrecord"));
+                pairs.push(CodePair::new_i16(280, xr.duplicate_record_handling as i16));
                 for pair in &xr.data_pairs {
-                    writer.write_code_pair(&pair)?;
+                    pairs.push(pair.clone());
                 }
             }
-            _ => return Ok(false), // no custom writer
+            _ => return false, // no custom writer
         }
 
-        Ok(true)
+        true
     }
-    fn post_write<T>(&self, _version: AcadVersion, _writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    fn add_post_code_pairs(&self, _pairs: &mut Vec<CodePair>, _version: AcadVersion) {
         // use the following pattern if this method is needed
         // match self.specific {
         //     _ => (),
         // }
-
-        Ok(())
     }
 }
 
@@ -1801,7 +1762,10 @@ mod tests {
             specific: ObjectType::ImageDefinition(Default::default()),
         };
         drawing.add_object(obj);
-        assert_contains(&drawing, vec!["  0", "IMAGEDEF", "  5", "1"].join("\r\n"));
+        assert_contains_pairs(
+            &drawing,
+            vec![CodePair::new_str(0, "IMAGEDEF"), CodePair::new_str(5, "10")],
+        );
     }
 
     #[test]
@@ -1813,17 +1777,13 @@ mod tests {
             ..Default::default()
         };
         drawing.add_object(Object::new(ObjectType::ImageDefinition(img)));
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100",
-                "AcDbRasterImageDef",
-                " 90",
-                "        0",
-                "  1",
-                "path/to/file",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbRasterImageDef"),
+                CodePair::new_i32(90, 0),
+                CodePair::new_str(1, "path/to/file"),
+            ],
         );
     }
 
@@ -1892,9 +1852,13 @@ mod tests {
                 ],
             }),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  8", "one", "  8", "two", "  8", "three"].join("\r\n"),
+            vec![
+                CodePair::new_str(8, "one"),
+                CodePair::new_str(8, "two"),
+                CodePair::new_str(8, "three"),
+            ],
         );
     }
 
@@ -1933,21 +1897,15 @@ mod tests {
                 ],
             }),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "100",
-                "AcDbFilter",
-                "100",
-                "AcDbLayerFilter",
-                "  8",
-                "one",
-                "  8",
-                "two",
-                "  8",
-                "three",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(100, "AcDbFilter"),
+                CodePair::new_str(100, "AcDbLayerFilter"),
+                CodePair::new_str(8, "one"),
+                CodePair::new_str(8, "two"),
+                CodePair::new_str(8, "three"),
+            ],
         );
     }
 
@@ -1982,13 +1940,12 @@ mod tests {
             common: Default::default(),
             specific: ObjectType::Layout(layout),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                " 70", "     3", // flags
-                " 71", "   -54", // sentinel to make sure we're not reading a header value
-            ]
-            .join("\r\n"),
+                CodePair::new_i16(70, 3),   // flags
+                CodePair::new_i16(71, -54), // sentinel to make sure we're not reading a header value
+            ],
         );
     }
 
@@ -2020,9 +1977,13 @@ mod tests {
             },
             specific: ObjectType::LightList(Default::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  0", "LIGHTLIST", "  5", "10", "330", "A2"].join("\r\n"),
+            vec![
+                CodePair::new_str(0, "LIGHTLIST"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(330, "A2"),
+            ],
         );
     }
 
@@ -2059,9 +2020,14 @@ mod tests {
             common: Default::default(),
             specific: ObjectType::Dictionary(dict),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  3", "key1", "350", "AAAA", "  3", "key2", "350", "BBBB"].join("\r\n"),
+            vec![
+                CodePair::new_str(3, "key1"),
+                CodePair::new_str(350, "AAAA"),
+                CodePair::new_str(3, "key2"),
+                CodePair::new_str(350, "BBBB"),
+            ],
         );
     }
 
@@ -2096,24 +2062,24 @@ mod tests {
 
         // ACAD_PROXY_OBJECT not supported in R14 and below
         drawing.header.version = AcadVersion::R14;
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["  0", "SECTION", "  2", "OBJECTS", "  0", "ENDSEC"].join("\r\n"),
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "OBJECTS"),
+                CodePair::new_str(0, "ENDSEC"),
+            ],
         );
 
         // but it is in R2000 and above
         drawing.header.version = AcadVersion::R2000;
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "SECTION",
-                "  2",
-                "OBJECTS",
-                "  0",
-                "ACAD_PROXY_OBJECT",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "OBJECTS"),
+                CodePair::new_str(0, "ACAD_PROXY_OBJECT"),
+            ],
         );
     }
 
@@ -2155,9 +2121,13 @@ mod tests {
             },
             specific: ObjectType::IdBuffer(IdBuffer::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+            vec![
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
+            ],
         );
     }
 
@@ -2193,13 +2163,13 @@ mod tests {
             },
             specific: ObjectType::IdBuffer(IdBuffer::default()),
         });
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "1001", "IXMILIA", "1040", "1.1", "  0",
-                "ENDSEC", // xdata is written after all the object's other code pairs
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(0, "ENDSEC"), // xdata is written after all the object's other code pairs
+            ],
         );
     }
 
@@ -2274,19 +2244,26 @@ mod tests {
                 common,
                 specific: expected_type,
             });
-            assert_contains(&drawing, vec!["  0", type_string].join("\r\n"));
+            assert_contains_pairs(&drawing, vec![CodePair::new_str(0, type_string)]);
             if max_version >= AcadVersion::R14 {
                 // only written on R14+
-                assert_contains(
+                assert_contains_pairs(
                     &drawing,
-                    vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+                    vec![
+                        CodePair::new_str(102, "{IXMILIA"),
+                        CodePair::new_str(1, "some string"),
+                        CodePair::new_str(102, "}"),
+                    ],
                 );
             }
             if max_version >= AcadVersion::R2000 {
                 // only written on R2000+
-                assert_contains(
+                assert_contains_pairs(
                     &drawing,
-                    vec!["1001", "IXMILIA", "1040", "1.1"].join("\r\n"),
+                    vec![
+                        CodePair::new_str(1001, "IXMILIA"),
+                        CodePair::new_f64(1040, 1.1),
+                    ],
                 );
             }
         }

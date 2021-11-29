@@ -1,9 +1,6 @@
-use std::io::Write;
-
 use crate::{CodePair, DxfError, DxfResult};
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 
 pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 
@@ -66,26 +63,19 @@ impl ExtensionGroup {
             items,
         })
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>) {
         if !self.items.is_empty() {
             let mut full_group_name = String::new();
             full_group_name.push('{');
             full_group_name.push_str(&self.application_name);
-            writer.write_code_pair(&CodePair::new_string(
-                EXTENSION_DATA_GROUP,
-                &full_group_name,
-            ))?;
+            pairs.push(CodePair::new_string(EXTENSION_DATA_GROUP, &full_group_name));
             for item in &self.items {
                 match item {
-                    ExtensionGroupItem::CodePair(ref pair) => writer.write_code_pair(pair)?,
-                    ExtensionGroupItem::Group(ref group) => group.write(writer)?,
+                    ExtensionGroupItem::CodePair(pair) => pairs.push(pair.clone()),
+                    ExtensionGroupItem::Group(ref group) => group.add_code_pairs(pairs),
                 }
             }
-            writer.write_code_pair(&CodePair::new_str(EXTENSION_DATA_GROUP, "}"))?;
+            pairs.push(CodePair::new_str(EXTENSION_DATA_GROUP, "}"));
         }
-        Ok(())
     }
 }

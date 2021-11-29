@@ -1,9 +1,6 @@
 // other implementation is in `generated/header.rs`
 
-use std::io::Write;
-
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::enums::*;
 use crate::helper_functions::*;
 use crate::{CodePair, DxfError, DxfResult};
@@ -65,15 +62,11 @@ impl Header {
 
         Ok(header)
     }
-    pub(crate) fn write<T>(&self, writer: &mut CodePairWriter<T>) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(0, "SECTION"))?;
-        writer.write_code_pair(&CodePair::new_str(2, "HEADER"))?;
-        self.write_code_pairs(writer)?;
-        writer.write_code_pair(&CodePair::new_str(0, "ENDSEC"))?;
-        Ok(())
+    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>) {
+        pairs.push(CodePair::new_str(0, "SECTION"));
+        pairs.push(CodePair::new_str(2, "HEADER"));
+        self.add_code_pairs_internal(pairs);
+        pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
 }
 
@@ -97,7 +90,7 @@ mod tests {
 
     #[test]
     fn specific_header_values() {
-        let file = from_section_pairs(
+        let drawing = from_section_pairs(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$ACADMAINTVER"),
@@ -122,48 +115,48 @@ mod tests {
                 CodePair::new_i16(70, 7),
             ],
         );
-        assert_eq!(16, file.header.maintenance_version);
-        assert_eq!(AcadVersion::R13, file.header.version);
-        assert!(approx_eq!(f64, 55.0, file.header.angle_zero_direction));
-        assert_eq!(AngleDirection::Clockwise, file.header.angle_direction);
+        assert_eq!(16, drawing.header.maintenance_version);
+        assert_eq!(AcadVersion::R13, drawing.header.version);
+        assert!(approx_eq!(f64, 55.0, drawing.header.angle_zero_direction));
+        assert_eq!(AngleDirection::Clockwise, drawing.header.angle_direction);
         assert_eq!(
             AttributeVisibility::Normal,
-            file.header.attribute_visibility
+            drawing.header.attribute_visibility
         );
-        assert_eq!(AngleFormat::Radians, file.header.angle_unit_format);
-        assert_eq!(7, file.header.angle_unit_precision);
-        assert_eq!("<current layer>", file.header.current_layer);
-        assert_eq!(UnitFormat::Architectural, file.header.unit_format);
-        assert_eq!(7, file.header.unit_precision);
+        assert_eq!(AngleFormat::Radians, drawing.header.angle_unit_format);
+        assert_eq!(7, drawing.header.angle_unit_precision);
+        assert_eq!("<current layer>", drawing.header.current_layer);
+        assert_eq!(UnitFormat::Architectural, drawing.header.unit_format);
+        assert_eq!(7, drawing.header.unit_precision);
     }
 
     #[test]
     fn read_alternate_version() {
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$ACADVER"),
                 CodePair::new_str(1, "15.05"),
             ],
         );
-        assert_eq!(AcadVersion::R2000, file.header.version);
+        assert_eq!(AcadVersion::R2000, drawing.header.version);
     }
 
     #[test]
     fn read_invalid_version() {
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$ACADVER"),
                 CodePair::new_str(1, "AC3.14159"),
             ],
         );
-        assert_eq!(AcadVersion::R12, file.header.version);
+        assert_eq!(AcadVersion::R12, drawing.header.version);
     }
 
     #[test]
     fn read_multi_value_variable() {
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$EXTMIN"),
@@ -174,19 +167,23 @@ mod tests {
         );
         assert_eq!(
             Point::new(1.1, 2.2, 3.3),
-            file.header.minimum_drawing_extents
+            drawing.header.minimum_drawing_extents
         )
     }
 
     #[test]
     fn write_multiple_value_variable() {
-        let mut file = Drawing::new();
-        file.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
-        assert!(to_test_string(&file).contains(
-            vec!["9", "$EXTMIN", " 10", "1.1", " 20", "2.2", " 30", "3.3"]
-                .join("\r\n")
-                .as_str()
-        ));
+        let mut drawing = Drawing::new();
+        drawing.header.minimum_drawing_extents = Point::new(1.1, 2.2, 3.3);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$EXTMIN"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_f64(20, 2.2),
+                CodePair::new_f64(30, 3.3),
+            ],
+        );
     }
 
     #[test]
@@ -211,98 +208,107 @@ mod tests {
 
     #[test]
     fn read_header_flags() {
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![CodePair::new_str(9, "$OSMODE"), CodePair::new_i16(70, 12)],
         );
-        assert!(!file.header.get_end_point_snap());
-        assert!(!file.header.get_mid_point_snap());
-        assert!(file.header.get_center_snap());
-        assert!(file.header.get_node_snap());
-        assert!(!file.header.get_quadrant_snap());
-        assert!(!file.header.get_intersection_snap());
-        assert!(!file.header.get_insertion_snap());
-        assert!(!file.header.get_perpendicular_snap());
-        assert!(!file.header.get_tangent_snap());
-        assert!(!file.header.get_nearest_snap());
-        assert!(!file.header.get_apparent_intersection_snap());
-        assert!(!file.header.get_extension_snap());
-        assert!(!file.header.get_parallel_snap());
+        assert!(!drawing.header.get_end_point_snap());
+        assert!(!drawing.header.get_mid_point_snap());
+        assert!(drawing.header.get_center_snap());
+        assert!(drawing.header.get_node_snap());
+        assert!(!drawing.header.get_quadrant_snap());
+        assert!(!drawing.header.get_intersection_snap());
+        assert!(!drawing.header.get_insertion_snap());
+        assert!(!drawing.header.get_perpendicular_snap());
+        assert!(!drawing.header.get_tangent_snap());
+        assert!(!drawing.header.get_nearest_snap());
+        assert!(!drawing.header.get_apparent_intersection_snap());
+        assert!(!drawing.header.get_extension_snap());
+        assert!(!drawing.header.get_parallel_snap());
     }
 
     #[test]
     fn write_header_flags() {
-        let mut file = Drawing::new();
-        file.header.set_end_point_snap(false);
-        file.header.set_mid_point_snap(false);
-        file.header.set_center_snap(true);
-        file.header.set_node_snap(true);
-        file.header.set_quadrant_snap(false);
-        file.header.set_intersection_snap(false);
-        file.header.set_insertion_snap(false);
-        file.header.set_perpendicular_snap(false);
-        file.header.set_tangent_snap(false);
-        file.header.set_nearest_snap(false);
-        file.header.set_apparent_intersection_snap(false);
-        file.header.set_extension_snap(false);
-        file.header.set_parallel_snap(false);
-        assert_contains(&file, vec!["  9", "$OSMODE", " 70", "    12"].join("\r\n"));
+        let mut drawing = Drawing::new();
+        drawing.header.set_end_point_snap(false);
+        drawing.header.set_mid_point_snap(false);
+        drawing.header.set_center_snap(true);
+        drawing.header.set_node_snap(true);
+        drawing.header.set_quadrant_snap(false);
+        drawing.header.set_intersection_snap(false);
+        drawing.header.set_insertion_snap(false);
+        drawing.header.set_perpendicular_snap(false);
+        drawing.header.set_tangent_snap(false);
+        drawing.header.set_nearest_snap(false);
+        drawing.header.set_apparent_intersection_snap(false);
+        drawing.header.set_extension_snap(false);
+        drawing.header.set_parallel_snap(false);
+        assert_contains_pairs(
+            &drawing,
+            vec![CodePair::new_str(9, "$OSMODE"), CodePair::new_i16(70, 12)],
+        );
     }
 
     #[test]
     fn read_variable_with_different_codes() {
         // read $CMLSTYLE as code 7
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$CMLSTYLE"),
                 CodePair::new_str(7, "cml-style-7"),
             ],
         );
-        assert_eq!("cml-style-7", file.header.current_multiline_style);
+        assert_eq!("cml-style-7", drawing.header.current_multiline_style);
 
         // read $CMLSTYLE as code 2
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$CMLSTYLE"),
                 CodePair::new_str(2, "cml-style-2"),
             ],
         );
-        assert_eq!("cml-style-2", file.header.current_multiline_style);
+        assert_eq!("cml-style-2", drawing.header.current_multiline_style);
     }
 
     #[test]
     fn write_variable_with_different_codes() {
         // R13 writes $CMLSTYLE as a code 7
-        let mut file = Drawing::new();
-        file.header.version = AcadVersion::R13;
-        file.header.current_multiline_style = String::from("cml-style-7");
-        assert_contains(
-            &file,
-            vec!["  9", "$CMLSTYLE", "  7", "cml-style-7"].join("\r\n"),
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
+        drawing.header.current_multiline_style = String::from("cml-style-7");
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$CMLSTYLE"),
+                CodePair::new_str(7, "cml-style-7"),
+            ],
         );
 
         // R14+ writes $CMLSTYLE as a code 2
-        let mut file = Drawing::new();
-        file.header.version = AcadVersion::R14;
-        file.header.current_multiline_style = String::from("cml-style-2");
-        assert_contains(
-            &file,
-            vec!["  9", "$CMLSTYLE", "  2", "cml-style-2"].join("\r\n"),
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R14;
+        drawing.header.current_multiline_style = String::from("cml-style-2");
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$CMLSTYLE"),
+                CodePair::new_str(2, "cml-style-2"),
+            ],
         );
     }
 
     #[test]
     fn read_drawing_edit_duration() {
-        let file = from_section(
+        let drawing = from_section(
             "HEADER",
             vec![
                 CodePair::new_str(9, "$TDINDWG"),
                 CodePair::new_f64(40, 100.0),
             ],
         );
-        assert_eq!(Duration::from_secs(100), file.header.time_in_drawing);
+        assert_eq!(Duration::from_secs(100), drawing.header.time_in_drawing);
     }
 
     #[test]
@@ -312,7 +318,13 @@ mod tests {
             Point::origin(),
             Point::origin(),
         ))));
-        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "11"].join("\r\n"));
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$HANDSEED"),
+                CodePair::new_str(5, "11"),
+            ],
+        );
     }
 
     #[test]
@@ -328,14 +340,26 @@ mod tests {
             Point::origin(),
             Point::origin(),
         ))));
-        assert_contains(&drawing, vec!["  9", "$HANDSEED", "  5", "15"].join("\r\n"));
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$HANDSEED"),
+                CodePair::new_str(5, "15"),
+            ],
+        );
     }
 
     #[test]
     fn dont_write_suppressed_variables() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2004;
-        assert_contains(&drawing, vec!["9", "$HIDETEXT", "280"].join("\r\n"));
-        assert_not_contains(&drawing, vec!["9", "$HIDETEXT", "290"].join("\r\n"));
+        assert_contains_pairs(
+            &drawing,
+            vec![CodePair::new_str(9, "$HIDETEXT"), CodePair::new_i16(280, 0)],
+        );
+        assert_not_contains_pairs(
+            &drawing,
+            vec![CodePair::new_str(9, "$HIDETEXT"), CodePair::new_i16(290, 0)],
+        );
     }
 }

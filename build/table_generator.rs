@@ -36,14 +36,12 @@ use crate::{
     XData,
 };
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::helper_functions::*;
 use crate::extension_data;
 use crate::x_data;
 
 use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
-use std::io::Write;
 ".trim_start());
     fun.push_str("\n");
     generate_table_items(&mut fun, &element);
@@ -318,77 +316,72 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
 }
 
 fn generate_table_writer(fun: &mut String, element: &Element) {
-    fun.push_str("pub(crate) fn write_tables<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("    where T: Write + ?Sized {\n");
-    fun.push_str("\n");
+    fun.push_str(
+        "pub(crate) fn add_table_code_pairs(drawing: &Drawing, pairs: &mut Vec<CodePair>, write_handles: bool) {\n",
+    );
     for table in &element.children {
         fun.push_str(&format!(
-            "    write_{collection}(drawing, write_handles, writer)?;\n",
+            "    add_{collection}_code_pairs(pairs, drawing, write_handles);\n",
             collection = attr(&table, "Collection")
         ));
     }
 
-    fun.push_str("    Ok(())\n");
     fun.push_str("}\n");
     fun.push_str("\n");
 
     for table in &element.children {
         let table_item = &table.children[0];
         fun.push_str("#[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
-        fun.push_str(&format!("fn write_{collection}<T>(drawing: &Drawing, write_handles: bool, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n", collection=attr(&table, "Collection")));
-        fun.push_str("    where T: Write + ?Sized {\n");
-        fun.push_str("\n");
+        fun.push_str(&format!("fn add_{collection}_code_pairs(pairs: &mut Vec<CodePair>, drawing: &Drawing, write_handles: bool) {{\n", collection=attr(&table, "Collection")));
         fun.push_str(&format!(
             "    if !drawing.{collection}().any(|_| true) {{ // is empty\n",
             collection = attr(&table, "Collection")
         ));
-        fun.push_str("        return Ok(()) // nothing to write\n");
+        fun.push_str("        return; // nothing to add\n");
         fun.push_str("    }\n");
         fun.push_str("\n");
-        fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"TABLE\"))?;\n");
+        fun.push_str("    pairs.push(CodePair::new_str(0, \"TABLE\"));\n");
         fun.push_str(&format!(
-            "    writer.write_code_pair(&CodePair::new_str(2, \"{type_string}\"))?;\n",
+            "    pairs.push(CodePair::new_str(2, \"{type_string}\"));\n",
             type_string = attr(&table, "TypeString")
         ));
 
         // TODO: assign and write table handles
         // fun.push_str("    if write_handles {\n");
-        // fun.push_str("        writer.write_code_pair(&CodePair::new_str(5, \"0\"))?;\n");
+        // fun.push_str("        pairs.push(CodePair::new_str(5, \"0\"));\n");
         // fun.push_str("    }\n");
         // fun.push_str("\n");
 
         let item_type = name(&table_item);
 
-        fun.push_str(
-            "    writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTable\"))?;\n",
-        );
-        fun.push_str("    writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n");
+        fun.push_str("    pairs.push(CodePair::new_str(100, \"AcDbSymbolTable\"));\n");
+        fun.push_str("    pairs.push(CodePair::new_i16(70, 0));\n");
         fun.push_str(&format!(
             "    for item in drawing.{collection}() {{\n",
             collection = attr(&table, "Collection")
         ));
         fun.push_str(&format!(
-            "        writer.write_code_pair(&CodePair::new_str(0, \"{type_string}\"))?;\n",
+            "        pairs.push(CodePair::new_str(0, \"{type_string}\"));\n",
             type_string = attr(&table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            writer.write_code_pair(&CodePair::new_string(5, &DrawingItem::{item_type}(&item).get_handle().as_string()))?;\n",
+        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(&item).get_handle().as_string()));\n",
             item_type=item_type));
         fun.push_str("        }\n");
         fun.push_str("\n");
         fun.push_str("        if drawing.header.version >= AcadVersion::R14 {\n");
         fun.push_str("            for group in &item.extension_data_groups {\n");
-        fun.push_str("                group.write(writer)?;\n");
+        fun.push_str("                group.add_code_pairs(pairs);\n");
         fun.push_str("            }\n");
         fun.push_str("        }\n");
         fun.push_str("\n");
-        fun.push_str("        writer.write_code_pair(&CodePair::new_str(100, \"AcDbSymbolTableRecord\"))?;\n");
+        fun.push_str("        pairs.push(CodePair::new_str(100, \"AcDbSymbolTableRecord\"));\n");
         fun.push_str(&format!(
-            "        writer.write_code_pair(&CodePair::new_str(100, \"{class_name}\"))?;\n",
+            "        pairs.push(CodePair::new_str(100, \"{class_name}\"));\n",
             class_name = attr(&table_item, "ClassName")
         ));
-        fun.push_str("        writer.write_code_pair(&CodePair::new_string(2, &item.name))?;\n");
-        fun.push_str("        writer.write_code_pair(&CodePair::new_i16(70, 0))?;\n"); // TODO: flags
+        fun.push_str("        pairs.push(CodePair::new_string(2, &item.name));\n");
+        fun.push_str("        pairs.push(CodePair::new_i16(70, 0));\n"); // TODO: flags
         for field in &table_item.children {
             if generate_writer(&field) {
                 let mut predicates = vec![];
@@ -430,7 +423,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             indent = indent,
                             field = name(&field)
                         ));
-                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_string({code}, &x.as_string()))?;\n",
+                        fun.push_str(&format!("{indent}            pairs.push(CodePair::new_string({code}, &x.as_string()));\n",
                             indent=indent, code=code));
                     } else {
                         let expected_type = ExpectedType::get_expected_type(code).unwrap();
@@ -445,8 +438,13 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             indent = indent,
                             field = name(&field)
                         ));
-                        fun.push_str(&format!("{indent}            writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;\n",
-                            indent=indent, typ=typ, code=code, val=val));
+                        fun.push_str(&format!(
+                            "{indent}            pairs.push(CodePair::new_{typ}({code}, {val}));\n",
+                            indent = indent,
+                            typ = typ,
+                            code = code,
+                            val = val
+                        ));
                     }
                     fun.push_str(&format!("{indent}        }}\n", indent = indent));
                 } else {
@@ -454,7 +452,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                     if codes.len() == 1 {
                         let code = codes[0];
                         if field.name == "Pointer" {
-                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_string({code}, &item.__{field}_handle.as_string()))?;\n",
+                            fun.push_str(&format!("{indent}        pairs.push(CodePair::new_string({code}, &item.__{field}_handle.as_string()));\n",
                                 indent=indent, code=code, field=name(&field)));
                         } else {
                             let typ = ExpectedType::get_expected_type(code).unwrap();
@@ -466,7 +464,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 attr(&field, "WriteConverter")
                             };
                             let value = write_converter.replace("{}", &value);
-                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_{typ}({code}, {value}))?;\n",
+                            fun.push_str(&format!("{indent}        pairs.push(CodePair::new_{typ}({code}, {value}));\n",
                                 indent=indent, typ=typ, code=code, value=value));
                         }
                     } else {
@@ -477,7 +475,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 2 => "z",
                                 _ => panic!("impossible"),
                             };
-                            fun.push_str(&format!("{indent}        writer.write_code_pair(&CodePair::new_f64({code}, item.{field}.{suffix}))?;\n",
+                            fun.push_str(&format!("{indent}        pairs.push(CodePair::new_f64({code}, item.{field}.{suffix}));\n",
                                 indent=indent, code=code, field=name(&field), suffix=suffix));
                         }
                     }
@@ -490,13 +488,12 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
         }
 
         fun.push_str("        for x in &item.x_data {\n");
-        fun.push_str("            x.write(drawing.header.version, writer)?;\n");
+        fun.push_str("            x.add_code_pairs(pairs, drawing.header.version);\n");
         fun.push_str("        }\n");
 
         fun.push_str("    }\n");
         fun.push_str("\n");
-        fun.push_str("    writer.write_code_pair(&CodePair::new_str(0, \"ENDTAB\"))?;\n");
-        fun.push_str("    Ok(())\n");
+        fun.push_str("    pairs.push(CodePair::new_str(0, \"ENDTAB\"));\n");
         fun.push_str("}\n");
         fun.push_str("\n");
     }

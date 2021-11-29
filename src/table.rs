@@ -185,27 +185,18 @@ mod tests {
         layer.name = String::from("layer-name");
         layer.color = Color::from_index(3);
         drawing.add_layer(layer);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
             vec![
-                "  0",
-                "LAYER",
-                "  5",
-                "10",
-                "100",
-                "AcDbSymbolTableRecord",
-                "100",
-                "AcDbLayerTableRecord",
-                "  2",
-                "layer-name",
-                " 70",
-                "     0",
-                " 62",
-                "     3",
-                "  6",
-                "CONTINUOUS",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(100, "AcDbSymbolTableRecord"),
+                CodePair::new_str(100, "AcDbLayerTableRecord"),
+                CodePair::new_str(2, "layer-name"),
+                CodePair::new_i16(70, 0),
+                CodePair::new_i16(62, 3),
+                CodePair::new_str(6, "CONTINUOUS"),
+            ],
         );
     }
 
@@ -272,9 +263,13 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R14;
         drawing.add_layer(layer);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["102", "{IXMILIA", "  1", "some string", "102", "}"].join("\r\n"),
+            vec![
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "}"),
+            ],
         );
     }
 
@@ -312,9 +307,12 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
         drawing.add_layer(layer);
-        assert_contains(
+        assert_contains_pairs(
             &drawing,
-            vec!["1001", "IXMILIA", "1040", "1.1"].join("\r\n"),
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+            ],
         );
     }
 

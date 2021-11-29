@@ -39,7 +39,6 @@ use crate::{
     XData,
 };
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::extension_data;
 use crate::helper_functions::*;
 use crate::tables::*;
@@ -49,7 +48,6 @@ use crate::entities::*;
 use crate::enums::*;
 use crate::enum_primitive::FromPrimitive;
 use std::collections::HashMap;
-use std::io::Write;
 
 extern crate chrono;
 use self::chrono::{DateTime, Local};
@@ -204,15 +202,14 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     ////////////////////////////////////////////////////////////////////// write
-    fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write + ?Sized {\n");
-    fun.push_str("\n");
+    fun.push_str(
+        "    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {\n",
+    );
     fun.push_str("        let obj = self;\n");
     for line in generate_write_code_pairs(&object) {
         fun.push_str(&format!("        {}\n", line));
     }
 
-    fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
 
     fun.push_str("}\n");
@@ -554,9 +551,9 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 fn generate_write(fun: &mut String, element: &Element) {
     let mut unused_writers = vec![];
     fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
-    fun.push_str("    pub(crate) fn write<T>(&self, version: AcadVersion, writer: &mut CodePairWriter<T>) -> DxfResult<()>\n");
-    fun.push_str("        where T: Write + ?Sized {\n");
-    fun.push_str("\n");
+    fun.push_str(
+        "    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {\n",
+    );
     fun.push_str("        match *self {\n");
     for object in &element.children {
         if name(&object) != "Object" {
@@ -588,8 +585,6 @@ fn generate_write(fun: &mut String, element: &Element) {
         }
     }
     fun.push_str("        }\n");
-    fun.push_str("\n");
-    fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
 
     if unused_writers.len() > 0 {
@@ -625,7 +620,7 @@ fn generate_write_code_pairs(object: &Element) -> Vec<String> {
     let subclass = attr(&object, "SubclassMarker");
     if !subclass.is_empty() {
         commands.push(format!(
-            "writer.write_code_pair(&CodePair::new_str(100, \"{subclass}\"))?;",
+            "pairs.push(CodePair::new_str(100, \"{subclass}\"));",
             subclass = subclass
         ));
     }
@@ -699,7 +694,7 @@ fn generate_write_code_pairs_for_write_order(
             }
             let indent = if predicates.len() > 0 { "    " } else { "" };
             commands.push(format!(
-                "{indent}writer.write_code_pair(&CodePair::new_{typ}({code}, {val}))?;",
+                "{indent}pairs.push(CodePair::new_{typ}({code}, {val}));",
                 indent = indent,
                 typ = typ,
                 code = code,
@@ -723,7 +718,7 @@ fn generate_write_code_pairs_for_write_order(
             commands.push(String::from(
                 "    for group in &self.extension_data_groups {",
             ));
-            commands.push(String::from("        group.write(writer)?;"));
+            commands.push(String::from("        group.add_code_pairs(pairs);"));
             commands.push(String::from("    }"));
             commands.push(String::from("}"));
         }
@@ -781,7 +776,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
             field = normalized_field_name
         ));
         commands.push(format!(
-            "{indent}    writer.write_code_pair(&CodePair::new_{typ}({code}, {to_write}))?;",
+            "{indent}    pairs.push(CodePair::new_{typ}({code}, {to_write}));",
             indent = indent,
             typ = typ,
             code = codes(&field)[0],
@@ -791,7 +786,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     } else {
         for command in get_code_pairs_for_field(&field) {
             commands.push(format!(
-                "{indent}writer.write_code_pair(&{command})?;",
+                "{indent}pairs.push({command});",
                 indent = indent,
                 command = command
             ));

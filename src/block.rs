@@ -1,12 +1,9 @@
-use std::io::Write;
-
 use crate::{
     CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
     ExtensionGroup, Handle, Point, XData,
 };
 
 use crate::code_pair_put_back::CodePairPutBack;
-use crate::code_pair_writer::CodePairWriter;
 use crate::entities::Entity;
 use crate::entity_iter::EntityIter;
 use crate::enums::*;
@@ -202,97 +199,89 @@ impl Block {
 
         Ok(())
     }
-    pub(crate) fn write<T>(
+    pub(crate) fn add_code_pairs(
         &self,
+        pairs: &mut Vec<CodePair>,
         version: AcadVersion,
         write_handles: bool,
-        writer: &mut CodePairWriter<T>,
-    ) -> DxfResult<()>
-    where
-        T: Write + ?Sized,
-    {
-        writer.write_code_pair(&CodePair::new_str(0, "BLOCK"))?;
+    ) {
+        pairs.push(CodePair::new_str(0, "BLOCK"));
         if write_handles {
-            writer.write_code_pair(&CodePair::new_string(5, &self.handle.as_string()))?;
+            pairs.push(CodePair::new_string(5, &self.handle.as_string()));
         }
 
         if version >= AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                group.write(writer)?;
+                group.add_code_pairs(pairs);
             }
         }
 
         if version >= AcadVersion::R13 {
             if !self.__owner_handle.is_empty() {
-                writer.write_code_pair(&CodePair::new_string(
-                    330,
-                    &self.__owner_handle.as_string(),
-                ))?;
+                pairs.push(CodePair::new_string(330, &self.__owner_handle.as_string()));
             }
 
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
+            pairs.push(CodePair::new_str(100, "AcDbEntity"));
         }
 
         if self.is_in_paperspace {
-            writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace)))?;
+            pairs.push(CodePair::new_i16(67, as_i16(self.is_in_paperspace)));
         }
 
-        writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
+        pairs.push(CodePair::new_string(8, &self.layer));
         if version >= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockBegin"))?;
+            pairs.push(CodePair::new_str(100, "AcDbBlockBegin"));
         }
 
-        writer.write_code_pair(&CodePair::new_string(2, &self.name))?;
-        writer.write_code_pair(&CodePair::new_i16(70, self.flags as i16))?;
-        writer.write_code_pair(&CodePair::new_f64(10, self.base_point.x))?;
-        writer.write_code_pair(&CodePair::new_f64(20, self.base_point.y))?;
-        writer.write_code_pair(&CodePair::new_f64(30, self.base_point.z))?;
+        pairs.push(CodePair::new_string(2, &self.name));
+        pairs.push(CodePair::new_i16(70, self.flags as i16));
+        pairs.push(CodePair::new_f64(10, self.base_point.x));
+        pairs.push(CodePair::new_f64(20, self.base_point.y));
+        pairs.push(CodePair::new_f64(30, self.base_point.z));
         if version >= AcadVersion::R12 {
-            writer.write_code_pair(&CodePair::new_string(3, &self.name))?;
+            pairs.push(CodePair::new_string(3, &self.name));
         }
 
-        writer.write_code_pair(&CodePair::new_string(1, &self.xref_path_name))?;
+        pairs.push(CodePair::new_string(1, &self.xref_path_name));
         if !self.description.is_empty() {
-            writer.write_code_pair(&CodePair::new_string(4, &self.description))?;
+            pairs.push(CodePair::new_string(4, &self.description));
         }
 
         for e in &self.entities {
-            e.write(version, false, writer)?;
+            e.add_code_pairs(pairs, version, write_handles);
         }
 
-        writer.write_code_pair(&CodePair::new_str(0, "ENDBLK"))?;
+        pairs.push(CodePair::new_str(0, "ENDBLK"));
         if write_handles && !self.handle.is_empty() {
-            writer.write_code_pair(&CodePair::new_string(5, &self.handle.as_string()))?;
+            pairs.push(CodePair::new_string(5, &self.handle.as_string()));
         }
 
         if version >= AcadVersion::R14 {
             for group in &self.extension_data_groups {
-                group.write(writer)?;
+                group.add_code_pairs(pairs);
             }
         }
 
         if version >= AcadVersion::R2000 && !self.__owner_handle.is_empty() {
-            writer.write_code_pair(&CodePair::new_string(330, &self.__owner_handle.as_string()))?;
+            pairs.push(CodePair::new_string(330, &self.__owner_handle.as_string()));
         }
 
         if version >= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbEntity"))?;
+            pairs.push(CodePair::new_str(100, "AcDbEntity"));
         }
 
         if self.is_in_paperspace {
-            writer.write_code_pair(&CodePair::new_i16(67, as_i16(self.is_in_paperspace)))?;
+            pairs.push(CodePair::new_i16(67, as_i16(self.is_in_paperspace)));
         }
 
-        writer.write_code_pair(&CodePair::new_string(8, &self.layer))?;
+        pairs.push(CodePair::new_string(8, &self.layer));
         if version >= AcadVersion::R13 {
-            writer.write_code_pair(&CodePair::new_str(100, "AcDbBlockEnd"))?;
+            pairs.push(CodePair::new_str(100, "AcDbBlockEnd"));
         }
 
         for x in &self.x_data {
-            x.write(version, writer)?;
+            x.add_code_pairs(pairs, version);
         }
-
-        Ok(())
     }
 }
 
@@ -340,6 +329,14 @@ mod tests {
         let blocks = drawing.blocks().collect::<Vec<_>>();
         assert_eq!(1, blocks.len());
         blocks[0].clone()
+    }
+
+    fn assert_block_contains(block: Block, version: AcadVersion, expected: Vec<CodePair>) {
+        let mut drawing = Drawing::new();
+        let block = drawing.add_block(block);
+        let mut pairs = Vec::new();
+        block.add_code_pairs(&mut pairs, version, true);
+        assert_vec_contains(&pairs, &expected);
     }
 
     #[test]
@@ -559,8 +556,7 @@ mod tests {
     #[test]
     fn dont_write_blocks_section_if_no_blocks() {
         let drawing = Drawing::new();
-        let contents = to_test_string(&drawing);
-        assert!(!contents.contains("BLOCKS"));
+        assert_not_contains_pairs(&drawing, vec![CodePair::new_str(0, "BLOCKS")]);
     }
 
     #[test]
@@ -611,26 +607,17 @@ mod tests {
                 }),
             ],
         });
-        let mut drawing = Drawing::new();
-        drawing.header.version = AcadVersion::R14; // extension group data only written on >= R14
-        drawing.add_block(block);
-        assert_contains(
-            &drawing,
+        assert_block_contains(
+            block,
+            AcadVersion::R14, // block data is only supported in R14
             vec![
-                "102",
-                "{IXMILIA",
-                "  1",
-                "some string",
-                "102",
-                "{NESTED",
-                " 10",
-                "1.1",
-                "102",
-                "}",
-                "102",
-                "}",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(102, "{IXMILIA"),
+                CodePair::new_str(1, "some string"),
+                CodePair::new_str(102, "{NESTED"),
+                CodePair::new_f64(10, 1.1),
+                CodePair::new_str(102, "}"),
+                CodePair::new_str(102, "}"),
+            ],
         );
     }
 
@@ -673,24 +660,16 @@ mod tests {
                 XDataItem::ControlGroup(vec![XDataItem::Real(1.1)]),
             ],
         });
-        let mut drawing = Drawing::new();
-        drawing.header.version = AcadVersion::R2000; // xdata only written on >= R2000
-        drawing.add_block(block);
-        assert_contains(
-            &drawing,
+        assert_block_contains(
+            block,
+            AcadVersion::R2000, // xdata only written on >= R2000
             vec![
-                "1001",
-                "IXMILIA",
-                "1000",
-                "some string",
-                "1002",
-                "{",
-                "1040",
-                "1.1",
-                "1002",
-                "}",
-            ]
-            .join("\r\n"),
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_str(1000, "some string"),
+                CodePair::new_str(1002, "{"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(1002, "}"),
+            ],
         );
     }
 
@@ -709,8 +688,10 @@ mod tests {
             specific: EntityType::Circle(Default::default()),
         });
         drawing.add_block(b2);
-        let written = to_test_string(&drawing);
-        let reparsed = unwrap_drawing(Drawing::load(&mut written.as_bytes()));
+
+        let drawing_pairs = drawing.get_code_pairs().unwrap();
+        let reparsed = drawing_from_pairs(drawing_pairs);
+
         let blocks = reparsed.blocks().collect::<Vec<_>>();
         assert_eq!(2, blocks.len());
         assert_eq!(1, blocks[0].entities.len());
