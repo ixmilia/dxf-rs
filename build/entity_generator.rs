@@ -602,10 +602,12 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
     // no order given, use declaration order
     let subclass = attr(&entity, "SubclassMarker");
     if !subclass.is_empty() {
+        commands.push("if version >= AcadVersion::R13 {".to_string());
         commands.push(format!(
-            "pairs.push(CodePair::new_str(100, \"{subclass}\"));",
+            "    pairs.push(CodePair::new_str(100, \"{subclass}\"));",
             subclass = subclass
         ));
+        commands.push("}".to_string());
     }
     for field in &entity.children {
         if generate_writer(&field) {

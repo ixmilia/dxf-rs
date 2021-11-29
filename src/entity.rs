@@ -1725,8 +1725,30 @@ mod tests {
     }
 
     #[test]
-    fn write_common_entity_fields() {
+    fn write_common_entity_fields_r12() {
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R12;
+        let mut ent = Entity {
+            common: Default::default(),
+            specific: EntityType::Line(Default::default()),
+        };
+        ent.common.layer = "some-layer".to_owned();
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "LINE"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(8, "some-layer"),
+                CodePair::new_f64(10, 0.0),
+            ],
+        );
+    }
+
+    #[test]
+    fn write_common_entity_fields_r13() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
         let mut ent = Entity {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
@@ -1740,6 +1762,8 @@ mod tests {
                 CodePair::new_str(5, "10"),
                 CodePair::new_str(100, "AcDbEntity"),
                 CodePair::new_str(8, "some-layer"),
+                CodePair::new_str(100, "AcDbLine"),
+                CodePair::new_f64(10, 0.0),
             ],
         );
     }

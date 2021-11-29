@@ -29,7 +29,7 @@
       <WriteField Field="handle" WriteCondition="write_handles" />
       <WriteExtensionData />
       <WriteField Field="owner" WriteCondition="write_handles" DontWriteIfValueIs="Handle(0)" />
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbEntity")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbEntity")' MinVersion="R13" />
       <WriteField Field="is_in_paper_space" />
       <WriteField Field="layer" />
       <WriteField Field="line_type_name" />
@@ -485,7 +485,7 @@
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="__attributes_and_handles" Code="10" Type="(Attribute, Handle)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' MinVersion="R13" />
       <WriteSpecificValue Code="66" Value="as_i16(ent.attributes().count() > 0)" />
       <WriteField Field="name" />
       <WriteField Field="location" />
@@ -1071,7 +1071,7 @@
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="vertical_text_justification" Code="73" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <WriteOrder>
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
       <WriteField Field="thickness" />
       <WriteField Field="location" />
       <WriteField Field="text_height" />
@@ -1085,7 +1085,7 @@
       <WriteField Field="second_alignment_point" />
       <WriteField Field="normal" />
       <WriteField Field="vertical_text_justification" />
-      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' />
+      <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
     </WriteOrder>
   </Entity>
   <!--
