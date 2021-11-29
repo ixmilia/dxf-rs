@@ -206,7 +206,7 @@ impl Block {
         write_handles: bool,
     ) {
         pairs.push(CodePair::new_str(0, "BLOCK"));
-        if write_handles {
+        if write_handles && version >= AcadVersion::R13 {
             pairs.push(CodePair::new_string(5, &self.handle.as_string()));
         }
 
@@ -704,5 +704,50 @@ mod tests {
             EntityType::Circle(_) => (),
             _ => panic!("expected a circle"),
         }
+    }
+
+    /// Test case derived from https://ezdxf.readthedocs.io/en/stable/dxfinternals/block_management.html
+    #[test]
+    fn write_block_r12_compat() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R12;
+        let mut block = Block::default();
+        block.name = "block-name".to_string();
+        block.entities.push(Entity {
+            common: Default::default(),
+            specific: EntityType::Line(Line::new(
+                Point::new(0.0, 0.0, 0.0),
+                Point::new(1.0, 1.0, 0.0),
+            )),
+        });
+        drawing.add_block(block);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "BLOCKS"),
+                CodePair::new_str(0, "BLOCK"),
+                // no handle
+                CodePair::new_str(8, "0"),          // layer
+                CodePair::new_str(2, "block-name"), // name
+                CodePair::new_i16(70, 0),           // flags
+                CodePair::new_f64(10, 0.0),         // insertion point
+                CodePair::new_f64(20, 0.0),
+                CodePair::new_f64(30, 0.0),
+                CodePair::new_str(3, "block-name"), // name again
+                CodePair::new_str(1, ""),           // x-ref name; empty = external
+                CodePair::new_str(0, "LINE"),       // first entity
+                CodePair::new_str(5, "12"),         // entity handle
+            ],
+        );
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "ENDBLK"),
+                CodePair::new_str(5, "10"), // endblk got handle, original block didn't
+                CodePair::new_str(8, "0"),  // layer
+                CodePair::new_str(0, "ENDSEC"), // end of block
+            ],
+        );
     }
 }

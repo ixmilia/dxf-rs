@@ -626,7 +626,10 @@ pub mod tests {
 
     pub fn assert_contains_pairs(drawing: &Drawing, expected: Vec<CodePair>) {
         let actual = drawing.get_code_pairs().ok().unwrap();
-        println!("checking pairs: {:?}", actual);
+        println!("checking pairs:");
+        for pair in &actual {
+            println!("{:?}", pair);
+        }
         let actual_index = try_find_index(&actual, &expected);
         assert!(actual_index.is_some());
     }
@@ -638,7 +641,10 @@ pub mod tests {
 
     pub fn assert_not_contains_pairs(drawing: &Drawing, not_expected: Vec<CodePair>) {
         let actual = drawing.get_code_pairs().ok().unwrap();
-        println!("checking pairs: {:?}", actual);
+        println!("checking pairs:");
+        for pair in &actual {
+            println!("{:?}", pair);
+        }
         let actual_index = try_find_index(&actual, &not_expected);
         assert!(actual_index.is_none());
     }

@@ -486,7 +486,7 @@
     <Field Name="__attributes_and_handles" Code="10" Type="(Attribute, Handle)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' MinVersion="R13" />
-      <WriteSpecificValue Code="66" Value="as_i16(ent.attributes().count() > 0)" />
+      <WriteSpecificValue Code="66" Value="as_i16(ent.attributes().count() > 0)" WriteCondition="ent.attributes().count() > 0" />
       <WriteField Field="name" />
       <WriteField Field="location" />
       <WriteField Field="x_scale_factor" />

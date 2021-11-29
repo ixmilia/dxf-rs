@@ -674,6 +674,9 @@ fn generate_write_code_pairs_for_write_order(
                     attr(&write_command, "DontWriteIfValueIs")
                 ));
             }
+            if !attr(&write_command, "WriteCondition").is_empty() {
+                predicates.push(attr(&write_command, "WriteCondition"));
+            }
             let code = code(&write_command);
             let expected_type = ExpectedType::get_expected_type(code).unwrap();
             let typ = get_code_pair_type(&expected_type);

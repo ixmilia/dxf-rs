@@ -666,9 +666,11 @@ impl Drawing {
             None
         }
     }
-    pub(crate) fn add_block_no_handle_set(&mut self, block: Block) -> &Block {
+    pub(crate) fn add_block_no_handle_set(&mut self, mut block: Block) -> &Block {
         self.ensure_layer_is_present_for_block(&block);
         self.ensure_line_type_is_present_for_block(&block);
+        self.ensure_block_record_is_present_for_block(&mut block);
+        self.ensure_block_entity_handles_are_set(&mut block);
         self.__blocks.push(block);
         self.__blocks.last().unwrap()
     }
@@ -826,6 +828,17 @@ impl Drawing {
             self.ensure_line_type_is_present(&ent.common.line_type_name);
         }
     }
+    fn ensure_block_record_is_present_for_block(&mut self, block: &mut Block) {
+        self.add_block_record(BlockRecord {
+            name: String::from(&block.name),
+            ..Default::default()
+        });
+    }
+    fn ensure_block_entity_handles_are_set(&mut self, block: &mut Block) {
+        for ent in &mut block.entities {
+            ent.common.handle = self.next_handle();
+        }
+    }
     fn ensure_line_type_is_present_for_object(&mut self, obj: &Object) {
         if let ObjectType::MLineStyle(ref style) = &obj.specific {
             self.ensure_line_type_is_present(&style.style_name);
@@ -933,13 +946,15 @@ impl Drawing {
         pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
     pub(crate) fn add_objects_pairs(&self, pairs: &mut Vec<CodePair>) {
-        pairs.push(CodePair::new_str(0, "SECTION"));
-        pairs.push(CodePair::new_str(2, "OBJECTS"));
-        for o in &self.__objects {
-            o.add_code_pairs(pairs, self.header.version);
-        }
+        if self.header.version >= AcadVersion::R13 {
+            pairs.push(CodePair::new_str(0, "SECTION"));
+            pairs.push(CodePair::new_str(2, "OBJECTS"));
+            for o in &self.__objects {
+                o.add_code_pairs(pairs, self.header.version);
+            }
 
-        pairs.push(CodePair::new_str(0, "ENDSEC"));
+            pairs.push(CodePair::new_str(0, "ENDSEC"));
+        }
     }
     pub(crate) fn add_thumbnail_pairs(&self, pairs: &mut Vec<CodePair>) -> DxfResult<()> {
         if self.header.version >= AcadVersion::R2000 {
@@ -1227,6 +1242,7 @@ impl Drawing {
 #[cfg(test)]
 mod tests {
     use crate::entities::*;
+    use crate::enums::AcadVersion;
     use crate::helper_functions::tests::*;
     use crate::objects::*;
     use crate::tables::*;
@@ -1313,6 +1329,32 @@ mod tests {
 
         let layer = drawing.add_layer(layer);
         assert_ne!(Handle(0), layer.handle);
+    }
+
+    #[test]
+    fn objects_section_is_not_written_on_r12() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R12;
+        assert_not_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "OBJECTS"),
+            ],
+        );
+    }
+
+    #[test]
+    fn objects_section_is_written_on_r13() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "SECTION"),
+                CodePair::new_str(2, "OBJECTS"),
+            ],
+        );
     }
 
     #[test]

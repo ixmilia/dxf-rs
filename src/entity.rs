@@ -1436,7 +1436,9 @@ impl Entity {
         } else {
             "AcDb2dPolyline"
         };
-        pairs.push(CodePair::new_str(100, subclass_marker));
+        if version >= AcadVersion::R13 {
+            pairs.push(CodePair::new_str(100, subclass_marker));
+        }
         if version <= AcadVersion::R13 {
             pairs.push(CodePair::new_i16(66, as_i16(poly.contains_vertices)));
         }
@@ -1496,7 +1498,9 @@ impl Entity {
         } else {
             "AcDb2dVertex"
         };
-        pairs.push(CodePair::new_str(100, subclass_marker));
+        if version >= AcadVersion::R13 {
+            pairs.push(CodePair::new_str(100, subclass_marker));
+        }
         pairs.push(CodePair::new_f64(10, v.location.x));
         pairs.push(CodePair::new_f64(20, v.location.y));
         pairs.push(CodePair::new_f64(30, v.location.z));
@@ -1773,6 +1777,7 @@ mod tests {
     #[test]
     fn write_specific_entity_fields() {
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
         let line = Line {
             p1: Point::new(1.1, 2.2, 3.3),
             p2: Point::new(4.4, 5.5, 6.6),
@@ -2393,6 +2398,7 @@ mod tests {
     #[test]
     fn write_2d_polyline() {
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
         let mut poly = Polyline::default();
         poly.add_vertex(
             &mut drawing,
@@ -2419,6 +2425,7 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Polyline(poly),
         });
+        // TODO
         assert_contains_pairs(
             &drawing,
             vec![
@@ -2472,6 +2479,7 @@ mod tests {
     #[test]
     fn write_3d_polyline() {
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
         let mut poly = Polyline::default();
         poly.add_vertex(
             &mut drawing,
@@ -2775,15 +2783,24 @@ mod tests {
     #[test]
     fn write_insert_no_embedded_attributes() {
         let mut drawing = Drawing::new();
-        let ins = Insert::default();
+        let mut ins = Insert::default();
+        ins.name = "insert-name".to_string();
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
+        assert_not_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_i16(66, 0),            // contains no attributes
+                CodePair::new_str(2, "insert-name"), // sentinel to ensure we're reading at the correct location
+            ],
+        );
         assert_not_contains_pairs(&drawing, vec![CodePair::new_str(0, "SEQEND")]);
     }
 
     #[test]
     fn write_insert_with_embedded_attributes() {
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13;
         let mut ins = Insert::default();
         ins.add_attribute(&mut drawing, Attribute::default());
         let ent = Entity::new(EntityType::Insert(ins));

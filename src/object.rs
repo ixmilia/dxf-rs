@@ -2016,6 +2016,7 @@ mod tests {
         dict.value_handles
             .insert(String::from("key2"), Handle(0xBBBB));
         let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R13; // OBJECTS section only written on R13+
         drawing.add_object(Object {
             common: Default::default(),
             specific: ObjectType::Dictionary(dict),
