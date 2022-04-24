@@ -113,19 +113,11 @@
 //! (https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853)
 //!
 
-extern crate encoding_rs;
-
 #[macro_use]
 extern crate enum_primitive;
 
-extern crate image;
-extern crate itertools;
-
-#[cfg(feature = "serialize")]
 #[macro_use]
-extern crate serde_derive;
-#[cfg(feature = "serialize")]
-extern crate serde;
+mod helper_functions;
 
 mod code_pair;
 pub use crate::code_pair::CodePair;
@@ -138,9 +130,6 @@ pub use crate::data_table_value::DataTableValue;
 
 mod handle;
 pub use crate::handle::Handle;
-
-#[macro_use]
-mod helper_functions;
 
 mod dxb_item_type;
 mod dxb_reader;

@@ -1,25 +1,10 @@
-use std::io;
-use std::io::Read;
-use std::time::Duration as StdDuration;
-
-extern crate byteorder;
-use self::byteorder::{ByteOrder, LittleEndian};
-
-extern crate chrono;
-use self::chrono::prelude::*;
-use self::chrono::Duration as ChronoDuration;
-
-extern crate encoding_rs;
-use self::encoding_rs::Encoding;
-
-extern crate uuid;
-use self::uuid::Uuid;
-
+use crate::{enums::*, tables::Layer, CodePair, Color, DxfError, DxfResult};
+use byteorder::{ByteOrder, LittleEndian};
+use chrono::{prelude::*, Duration as ChronoDuration};
+use encoding_rs::Encoding;
 use enum_primitive::FromPrimitive;
-
-use crate::enums::*;
-use crate::tables::Layer;
-use crate::{CodePair, Color, DxfError, DxfResult};
+use std::{io, io::Read, time::Duration as StdDuration};
+use uuid::Uuid;
 
 pub(crate) fn verify_code(pair: &CodePair, expected: i32) -> DxfResult<()> {
     if expected == pair.code {
@@ -521,8 +506,7 @@ fn parse_hex_string_test() {
 #[cfg(test)]
 #[allow(dead_code)]
 pub mod tests {
-    use crate::code_pair_iter::DirectCodePairIter;
-    use crate::*;
+    use crate::{code_pair_iter::DirectCodePairIter, *};
     use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
     pub fn unwrap_drawing(result: DxfResult<Drawing>) -> Drawing {
@@ -590,11 +574,11 @@ pub mod tests {
     }
 
     pub fn assert_contains(drawing: &Drawing, contents: String) {
-        let actual = to_test_string(&drawing);
+        let actual = to_test_string(drawing);
         assert!(actual.contains(&contents));
     }
 
-    fn try_find_index<T>(superset: &Vec<T>, subset: &Vec<T>) -> Option<usize>
+    fn try_find_index<T>(superset: &[T], subset: &[T]) -> Option<usize>
     where
         T: PartialEq,
     {
@@ -616,11 +600,11 @@ pub mod tests {
         None
     }
 
-    pub fn assert_vec_contains<T>(actual: &Vec<T>, expected: &Vec<T>)
+    pub fn assert_vec_contains<T>(actual: &[T], expected: &[T])
     where
         T: PartialEq,
     {
-        let actual_index = try_find_index(&actual, &expected);
+        let actual_index = try_find_index(actual, expected);
         assert!(actual_index.is_some());
     }
 
@@ -635,7 +619,7 @@ pub mod tests {
     }
 
     pub fn assert_not_contains(drawing: &Drawing, contents: String) {
-        let actual = to_test_string(&drawing);
+        let actual = to_test_string(drawing);
         assert!(!actual.contains(&contents));
     }
 

@@ -6,12 +6,14 @@ mod table_generator;
 mod test_helper_generator;
 mod xml_helpers;
 
-use std::env;
-use std::error::Error;
-use std::fmt::Debug;
-use std::fs::{self, File};
-use std::io::Write;
-use std::path::Path;
+use std::{
+    env,
+    error::Error,
+    fmt::Debug,
+    fs::{self, File},
+    io::Write,
+    path::Path,
+};
 
 include!("../src/expected_type.rs");
 
@@ -37,7 +39,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut file = File::create(generated_dir.join("mod.rs")).ok().unwrap();
     file.write_all("// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-#[allow(clippy::all)]
 pub mod entities;
 pub mod header;
 pub mod objects;
@@ -57,6 +58,6 @@ pub mod tables;
 fn rerun_if_changed<S: Debug + ?Sized>(s: &S) {
     let s = format!("{:?}", s)
         .replace("\\\\", "/") // normalize directory separators
-        .replace("\"", ""); // ignore surrounding quotes
+        .replace('\"', ""); // ignore surrounding quotes
     println!("cargo:rerun-if-changed={}", s);
 }

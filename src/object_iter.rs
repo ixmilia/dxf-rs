@@ -1,5 +1,4 @@
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::objects::Object;
+use crate::{code_pair_put_back::CodePairPutBack, objects::Object};
 
 pub(crate) struct ObjectIter<'a> {
     pub iter: &'a mut CodePairPutBack,

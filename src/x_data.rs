@@ -1,8 +1,6 @@
 use crate::{CodePair, DxfError, DxfResult, Handle, Point, Vector};
 
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::enums::AcadVersion;
-use crate::helper_functions::*;
+use crate::{code_pair_put_back::CodePairPutBack, enums::AcadVersion, helper_functions::*};
 
 pub(crate) const XDATA_APPLICATIONNAME: i32 = 1001;
 const XDATA_STRING: i32 = 1000;
@@ -243,12 +241,14 @@ impl XDataItem {
 
 #[cfg(test)]
 mod tests {
-    use crate::code_pair::CodePair;
-    use crate::enums::AcadVersion;
-    use crate::helper_functions::tests::*;
-    use crate::objects::*;
-    use crate::x_data::{XData, XDataItem};
-    use crate::{Drawing, Point, Vector};
+    use crate::{
+        code_pair::CodePair,
+        enums::AcadVersion,
+        helper_functions::tests::*,
+        objects::*,
+        x_data::{XData, XDataItem},
+        Drawing, Point, Vector,
+    };
 
     fn read_x_data_items(values: Vec<CodePair>) -> Vec<XDataItem> {
         let mut pairs = vec![

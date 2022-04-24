@@ -1,14 +1,10 @@
 // other implementation is in `generated/entities.rs`
 
+use crate::{
+    code_pair_put_back::CodePairPutBack, entities::*, enums::*, helper_functions::*, CodePair,
+    Color, Drawing, DxfError, DxfResult, Handle, Point, Vector,
+};
 use enum_primitive::FromPrimitive;
-
-use crate::{CodePair, Color, DxfError, DxfResult, Handle, Point, Vector};
-
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::entities::*;
-use crate::enums::*;
-use crate::helper_functions::*;
-use crate::Drawing;
 
 //------------------------------------------------------------------------------
 //                                                                           Arc
@@ -669,8 +665,8 @@ impl Entity {
         }
     }
     fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
-        if !self.specific.try_apply_code_pair(&pair)? {
-            self.common.apply_individual_pair(&pair, iter)?;
+        if !self.specific.try_apply_code_pair(pair)? {
+            self.common.apply_individual_pair(pair, iter)?;
         }
         Ok(())
     }
@@ -1564,7 +1560,7 @@ impl Entity {
                     };
                     a.add_code_pairs(pairs, version, write_handles);
                 }
-                if ins.__attributes_and_handles.len() > 0 {
+                if !ins.__attributes_and_handles.is_empty() {
                     Entity::add_code_pairs_seqend(pairs, version, write_handles);
                 }
             }
@@ -1618,11 +1614,7 @@ impl Entity {
 
 #[cfg(test)]
 mod tests {
-    use crate::entities::*;
-    use crate::enums::*;
-    use crate::helper_functions::tests::*;
-    use crate::objects::*;
-    use crate::*;
+    use crate::{entities::*, enums::*, helper_functions::tests::*, objects::*, *};
 
     fn read_entity(entity_type: &str, body: Vec<CodePair>) -> Entity {
         let mut pairs = vec![CodePair::new_str(0, entity_type)];
@@ -2623,8 +2615,10 @@ mod tests {
     fn write_lw_polyline() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2013;
-        let mut poly = LwPolyline::default();
-        poly.constant_width = 43.0;
+        let mut poly = LwPolyline {
+            constant_width: 43.0,
+            ..Default::default()
+        };
         poly.vertices.push(LwPolylineVertex {
             x: 1.1,
             y: 2.1,
@@ -2783,8 +2777,10 @@ mod tests {
     #[test]
     fn write_insert_no_embedded_attributes() {
         let mut drawing = Drawing::new();
-        let mut ins = Insert::default();
-        ins.name = "insert-name".to_string();
+        let ins = Insert {
+            name: "insert-name".to_string(),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_not_contains_pairs(
@@ -2821,8 +2817,10 @@ mod tests {
     fn write_insert_no_extrusion_on_r12() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R12;
-        let mut ins = Insert::default();
-        ins.extrusion_direction = Vector::new(1.0, 2.0, 3.0);
+        let ins = Insert {
+            extrusion_direction: Vector::new(1.0, 2.0, 3.0),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_not_contains_pairs(
@@ -2839,8 +2837,10 @@ mod tests {
     fn write_insert_extrusion_on_r13() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R13;
-        let mut ins = Insert::default();
-        ins.extrusion_direction = Vector::new(1.0, 2.0, 3.0);
+        let ins = Insert {
+            extrusion_direction: Vector::new(1.0, 2.0, 3.0),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_contains_pairs(
@@ -3154,10 +3154,12 @@ mod tests {
     fn normalize_mline_styles() {
         let mut file = Drawing::new();
         file.clear();
-        let objects = file.objects().collect::<Vec<_>>();
-        assert_eq!(0, objects.len());
-        let mut mline = MLine::default();
-        mline.style_name = String::from("style name");
+        let objects = file.objects().count();
+        assert_eq!(0, objects);
+        let mline = MLine {
+            style_name: String::from("style name"),
+            ..Default::default()
+        };
         file.add_entity(Entity::new(EntityType::MLine(mline)));
         file.normalize();
         let objects = file.objects().collect::<Vec<_>>();

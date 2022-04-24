@@ -1,5 +1,3 @@
-extern crate dxf;
-
 mod block_examples;
 mod line_type_examples;
 

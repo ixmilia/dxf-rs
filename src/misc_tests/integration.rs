@@ -1,15 +1,12 @@
-use crate::entities::*;
-use crate::enums::*;
-use crate::*;
-
-use std::fs::{create_dir_all, read_to_string, remove_dir_all};
-use std::path::Path;
-use std::process::Command;
-use std::thread::panicking;
-use std::time::SystemTime;
-
-extern crate glob;
+use crate::{entities::*, enums::*, *};
 use glob::glob;
+use std::{
+    fs::{create_dir_all, read_to_string, remove_dir_all},
+    path::Path,
+    process::Command,
+    thread::panicking,
+    time::SystemTime,
+};
 
 struct Oda {
     temp_path: String,

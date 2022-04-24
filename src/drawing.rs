@@ -1,40 +1,32 @@
-extern crate encoding_rs;
-use self::encoding_rs::Encoding;
-
-extern crate image;
-use self::image::DynamicImage;
-
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::drawing_item::{DrawingItem, DrawingItemMut};
-use crate::entities::*;
-use crate::enums::*;
-use crate::header::*;
-use crate::objects::*;
-use crate::tables::*;
-
-use crate::{CodePair, CodePairValue, DxfError, DxfResult, Handle};
-
-use crate::dxb_reader::DxbReader;
-use crate::dxb_writer::DxbWriter;
-use crate::entity_iter::EntityIter;
-use crate::helper_functions::*;
-use crate::object_iter::ObjectIter;
-
-use crate::block::Block;
-use crate::class::Class;
-
-use crate::code_pair_iter::{new_code_pair_iter_from_reader, CodePairIter};
-use crate::code_pair_writer::CodePairWriter;
-
-use crate::thumbnail;
-
-use std::fs::File;
-use std::io::{BufReader, BufWriter, Read, Write};
-
+use crate::{
+    block::Block,
+    class::Class,
+    code_pair_iter::{new_code_pair_iter_from_reader, CodePairIter},
+    code_pair_put_back::CodePairPutBack,
+    code_pair_writer::CodePairWriter,
+    drawing_item::{DrawingItem, DrawingItemMut},
+    dxb_reader::DxbReader,
+    dxb_writer::DxbWriter,
+    entities::*,
+    entity_iter::EntityIter,
+    enums::*,
+    header::*,
+    helper_functions::*,
+    object_iter::ObjectIter,
+    objects::*,
+    tables::*,
+    thumbnail, CodePair, CodePairValue, DxfError, DxfResult, Handle,
+};
+use encoding_rs::Encoding;
+use image::DynamicImage;
 use itertools::put_back;
-use std::collections::HashSet;
-use std::iter::Iterator;
-use std::path::Path;
+use std::{
+    collections::HashSet,
+    fs::File,
+    io::{BufReader, BufWriter, Cursor, Read, Write},
+    iter::Iterator,
+    path::Path,
+};
 
 pub(crate) const AUTO_REPLACE_HANDLE: Handle = Handle(0xFFFF_FFFF_FFFF_FFFF);
 
@@ -783,7 +775,7 @@ impl Drawing {
             _ => None,
         };
         if let Some(dim_style_name) = dim_style_name {
-            self.ensure_dimension_style_is_present(&dim_style_name);
+            self.ensure_dimension_style_is_present(dim_style_name);
         }
     }
     fn ensure_dimension_style_is_present(&mut self, dim_style_name: &str) {
@@ -804,12 +796,12 @@ impl Drawing {
         match &obj.specific {
             ObjectType::LayerFilter(ref l) => {
                 for layer_name in &l.layer_names {
-                    self.ensure_layer_is_present(&layer_name);
+                    self.ensure_layer_is_present(layer_name);
                 }
             }
             ObjectType::LayerIndex(ref l) => {
                 for layer_name in &l.layer_names {
-                    self.ensure_layer_is_present(&layer_name);
+                    self.ensure_layer_is_present(layer_name);
                 }
             }
             _ => (),
@@ -862,7 +854,7 @@ impl Drawing {
             _ => None,
         };
         if let Some(text_style_name) = text_style_name {
-            self.ensure_text_style_is_present(&text_style_name);
+            self.ensure_text_style_is_present(text_style_name);
         }
     }
     fn ensure_text_style_is_present_for_object(&mut self, obj: &Object) {
@@ -920,7 +912,7 @@ impl Drawing {
     pub(crate) fn add_tables_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
         pairs.push(CodePair::new_str(0, "SECTION"));
         pairs.push(CodePair::new_str(2, "TABLES"));
-        add_table_code_pairs(&self, pairs, write_handles);
+        add_table_code_pairs(self, pairs, write_handles);
         pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
     pub(crate) fn add_blocks_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
@@ -962,7 +954,7 @@ impl Drawing {
                 pairs.push(CodePair::new_str(0, "SECTION"));
                 pairs.push(CodePair::new_str(2, "THUMBNAILIMAGE"));
                 let mut data = vec![];
-                img.write_to(&mut data, image::ImageFormat::Bmp)?;
+                img.write_to(&mut Cursor::new(&mut data), image::ImageFormat::Bmp)?;
                 let length = data.len() - 14; // skip 14 byte bmp header
                 pairs.push(CodePair::new_i32(90, length as i32));
                 for s in data[14..].chunks(128) {
@@ -1241,12 +1233,9 @@ impl Drawing {
 
 #[cfg(test)]
 mod tests {
-    use crate::entities::*;
-    use crate::enums::AcadVersion;
-    use crate::helper_functions::tests::*;
-    use crate::objects::*;
-    use crate::tables::*;
-    use crate::*;
+    use crate::{
+        entities::*, enums::AcadVersion, helper_functions::tests::*, objects::*, tables::*, *,
+    };
 
     #[test]
     fn default_layers_are_present() {
@@ -1500,8 +1489,9 @@ mod tests {
                 }
                 _ => false,
             })
-            .collect::<Vec<_>>();
-        assert_eq!(0, mline_styles.len());
+            .count();
+
+        assert_eq!(0, mline_styles);
 
         drawing.add_entity(Entity {
             common: EntityCommon::default(),
@@ -1518,8 +1508,8 @@ mod tests {
                 }
                 _ => false,
             })
-            .collect::<Vec<_>>();
-        assert_eq!(1, mline_styles.len());
+            .count();
+        assert_eq!(1, mline_styles);
     }
 
     #[test]
@@ -1540,8 +1530,8 @@ mod tests {
                 }
                 _ => false,
             })
-            .collect::<Vec<_>>();
-        assert_eq!(1, mline_styles.len());
+            .count();
+        assert_eq!(1, mline_styles);
 
         drawing.add_entity(Entity {
             common: EntityCommon::default(),
@@ -1558,8 +1548,8 @@ mod tests {
                 }
                 _ => false,
             })
-            .collect::<Vec<_>>();
-        assert_eq!(1, mline_styles.len());
+            .count();
+        assert_eq!(1, mline_styles);
     }
 
     #[test]
@@ -1585,8 +1575,8 @@ mod tests {
         let dim_styles = drawing
             .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
-            .collect::<Vec<_>>();
-        assert_eq!(0, dim_styles.len());
+            .count();
+        assert_eq!(0, dim_styles);
 
         drawing.add_entity(Entity {
             common: EntityCommon::default(),
@@ -1601,8 +1591,8 @@ mod tests {
         let dim_styles = drawing
             .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, dim_styles.len());
+            .count();
+        assert_eq!(1, dim_styles);
     }
 
     #[test]
@@ -1615,8 +1605,8 @@ mod tests {
         let dim_styles = drawing
             .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, dim_styles.len());
+            .count();
+        assert_eq!(1, dim_styles);
 
         drawing.add_entity(Entity {
             common: EntityCommon::default(),
@@ -1631,8 +1621,8 @@ mod tests {
         let dim_styles = drawing
             .dim_styles()
             .filter(|&d| d.name == "some-dim-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, dim_styles.len());
+            .count();
+        assert_eq!(1, dim_styles);
     }
 
     #[test]
@@ -1653,11 +1643,8 @@ mod tests {
     #[test]
     fn layer_is_added_with_entity_if_not_already_present() {
         let mut drawing = Drawing::new();
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(0, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(0, layers);
 
         drawing.add_entity(Entity {
             common: EntityCommon {
@@ -1666,21 +1653,15 @@ mod tests {
             },
             specific: EntityType::Line(Default::default()),
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
     }
 
     #[test]
     fn layer_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(0, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(0, layers);
 
         drawing.add_object(Object {
             common: ObjectCommon::default(),
@@ -1688,11 +1669,8 @@ mod tests {
                 layer_names: vec![String::from("some-layer")],
             }),
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
     }
 
     #[test]
@@ -1702,11 +1680,8 @@ mod tests {
             name: String::from("some-layer"),
             ..Default::default()
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
 
         drawing.add_entity(Entity {
             common: EntityCommon {
@@ -1715,11 +1690,8 @@ mod tests {
             },
             specific: EntityType::Line(Default::default()),
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
     }
 
     #[test]
@@ -1729,11 +1701,8 @@ mod tests {
             name: String::from("some-layer"),
             ..Default::default()
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
 
         drawing.add_object(Object {
             common: ObjectCommon::default(),
@@ -1741,11 +1710,8 @@ mod tests {
                 layer_names: vec![String::from("some-layer")],
             }),
         });
-        let layers = drawing
-            .layers()
-            .filter(|&l| l.name == "some-layer")
-            .collect::<Vec<_>>();
-        assert_eq!(1, layers.len());
+        let layers = drawing.layers().filter(|&l| l.name == "some-layer").count();
+        assert_eq!(1, layers);
     }
 
     #[test]
@@ -1782,8 +1748,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(0, line_types.len());
+            .count();
+        assert_eq!(0, line_types);
 
         drawing.add_entity(Entity {
             common: EntityCommon {
@@ -1795,8 +1761,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
     }
 
     #[test]
@@ -1805,8 +1771,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(0, line_types.len());
+            .count();
+        assert_eq!(0, line_types);
 
         drawing.add_object(Object {
             common: ObjectCommon::default(),
@@ -1818,8 +1784,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
     }
 
     #[test]
@@ -1832,8 +1798,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
 
         drawing.add_entity(Entity {
             common: EntityCommon {
@@ -1845,8 +1811,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
     }
 
     #[test]
@@ -1859,8 +1825,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
 
         drawing.add_object(Object {
             common: ObjectCommon::default(),
@@ -1872,8 +1838,8 @@ mod tests {
         let line_types = drawing
             .line_types()
             .filter(|&lt| lt.name == "some-line-type")
-            .collect::<Vec<_>>();
-        assert_eq!(1, line_types.len());
+            .count();
+        assert_eq!(1, line_types);
     }
 
     #[test]
@@ -1914,8 +1880,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(0, text_styles.len());
+            .count();
+        assert_eq!(0, text_styles);
 
         drawing.add_entity(Entity {
             common: Default::default(),
@@ -1927,8 +1893,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
     }
 
     #[test]
@@ -1937,8 +1903,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(0, text_styles.len());
+            .count();
+        assert_eq!(0, text_styles);
 
         drawing.add_object(Object {
             common: Default::default(),
@@ -1950,8 +1916,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
     }
 
     #[test]
@@ -1964,8 +1930,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
 
         drawing.add_entity(Entity {
             common: Default::default(),
@@ -1977,8 +1943,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
     }
 
     #[test]
@@ -1991,8 +1957,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
 
         drawing.add_object(Object {
             common: Default::default(),
@@ -2004,8 +1970,8 @@ mod tests {
         let text_styles = drawing
             .styles()
             .filter(|&s| s.name == "some-text-style")
-            .collect::<Vec<_>>();
-        assert_eq!(1, text_styles.len());
+            .count();
+        assert_eq!(1, text_styles);
     }
 
     #[test]
@@ -2039,11 +2005,8 @@ mod tests {
     #[test]
     fn view_is_added_with_object_if_not_already_present() {
         let mut drawing = Drawing::new();
-        let views = drawing
-            .views()
-            .filter(|&v| v.name == "some-view")
-            .collect::<Vec<_>>();
-        assert_eq!(0, views.len());
+        let views = drawing.views().filter(|&v| v.name == "some-view").count();
+        assert_eq!(0, views);
 
         drawing.add_object(Object {
             common: Default::default(),
@@ -2052,11 +2015,8 @@ mod tests {
                 ..Default::default()
             }),
         });
-        let views = drawing
-            .views()
-            .filter(|&v| v.name == "some-view")
-            .collect::<Vec<_>>();
-        assert_eq!(1, views.len());
+        let views = drawing.views().filter(|&v| v.name == "some-view").count();
+        assert_eq!(1, views);
     }
 
     #[test]
@@ -2066,11 +2026,8 @@ mod tests {
             name: String::from("some-view"),
             ..Default::default()
         });
-        let views = drawing
-            .views()
-            .filter(|&v| v.name == "some-view")
-            .collect::<Vec<_>>();
-        assert_eq!(1, views.len());
+        let views = drawing.views().filter(|&v| v.name == "some-view").count();
+        assert_eq!(1, views);
 
         drawing.add_object(Object {
             common: Default::default(),
@@ -2079,11 +2036,8 @@ mod tests {
                 ..Default::default()
             }),
         });
-        let views = drawing
-            .views()
-            .filter(|&v| v.name == "some-view")
-            .collect::<Vec<_>>();
-        assert_eq!(1, views.len());
+        let views = drawing.views().filter(|&v| v.name == "some-view").count();
+        assert_eq!(1, views);
     }
 
     #[test]

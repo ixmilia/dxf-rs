@@ -1,7 +1,7 @@
-use crate::{CodePair, CodePairValue, DxfError, DxfResult, ExpectedType};
-
-use crate::code_pair_value::un_escape_ascii_to_unicode;
-use crate::helper_functions::*;
+use crate::{
+    code_pair_value::un_escape_ascii_to_unicode, helper_functions::*, CodePair, CodePairValue,
+    DxfError, DxfResult, ExpectedType,
+};
 use encoding_rs::Encoding;
 use std::io::{Cursor, Read};
 
@@ -241,7 +241,7 @@ impl<T: Read> BinaryCodePairIter<T> {
             ),
             ExpectedType::Str => {
                 let mut value = try_from_dxf_result!(self.read_string_binary());
-                if !self.code_size_detection_complete && code == 0 && value == "" {
+                if !self.code_size_detection_complete && code == 0 && value.is_empty() {
                     // If this is the first pair being read and the code is 0, the only valid string value is "SECTION".
                     // If the read value is instead empty, that means the string reader found a single 0x00 byte which
                     // indicates that this is a post R13 binary file where codes are always read as 2 bytes.  The 0x00
@@ -326,8 +326,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::code_pair_iter::{BinaryCodePairIter, TextCodePairIter};
-    use crate::CodePair;
+    use crate::{
+        code_pair_iter::{BinaryCodePairIter, TextCodePairIter},
+        CodePair,
+    };
 
     use super::DirectCodePairIter;
 

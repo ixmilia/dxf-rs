@@ -1,6 +1,4 @@
-use crate::code_pair_iter::CodePairIter;
-use crate::dxf_result::DxfResult;
-use crate::CodePair;
+use crate::{code_pair_iter::CodePairIter, dxf_result::DxfResult, CodePair};
 
 pub(crate) struct CodePairPutBack {
     top: Vec<DxfResult<CodePair>>,

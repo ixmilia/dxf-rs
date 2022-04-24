@@ -1,7 +1,4 @@
-use crate::entities::*;
-use crate::objects::*;
-use crate::tables::*;
-use crate::{Block, Handle};
+use crate::{entities::*, objects::*, tables::*, Block, Handle};
 
 #[derive(Debug)]
 pub enum DrawingItem<'a> {
@@ -22,18 +19,18 @@ pub enum DrawingItem<'a> {
 impl<'a> DrawingItem<'a> {
     pub fn get_handle(&self) -> Handle {
         match self {
-            DrawingItem::AppId(ref app_id) => app_id.handle,
-            DrawingItem::Block(ref b) => b.handle,
-            DrawingItem::BlockRecord(ref br) => br.handle,
-            DrawingItem::DimStyle(ref ds) => ds.handle,
+            DrawingItem::AppId(app_id) => app_id.handle,
+            DrawingItem::Block(b) => b.handle,
+            DrawingItem::BlockRecord(br) => br.handle,
+            DrawingItem::DimStyle(ds) => ds.handle,
             DrawingItem::Entity(&Entity { ref common, .. }) => common.handle,
-            DrawingItem::Layer(ref l) => l.handle,
-            DrawingItem::LineType(ref l) => l.handle,
+            DrawingItem::Layer(l) => l.handle,
+            DrawingItem::LineType(l) => l.handle,
             DrawingItem::Object(&Object { ref common, .. }) => common.handle,
-            DrawingItem::Style(ref s) => s.handle,
-            DrawingItem::Ucs(ref u) => u.handle,
-            DrawingItem::View(ref v) => v.handle,
-            DrawingItem::ViewPort(ref v) => v.handle,
+            DrawingItem::Style(s) => s.handle,
+            DrawingItem::Ucs(u) => u.handle,
+            DrawingItem::View(v) => v.handle,
+            DrawingItem::ViewPort(v) => v.handle,
         }
     }
 }

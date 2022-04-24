@@ -1,15 +1,8 @@
 use crate::{
-    CodePair, CodePairValue, Drawing, DrawingItem, DrawingItemMut, DxfError, DxfResult,
-    ExtensionGroup, Handle, Point, XData,
+    code_pair_put_back::CodePairPutBack, entities::Entity, entity_iter::EntityIter, enums::*,
+    extension_data, helper_functions::*, x_data, CodePair, CodePairValue, Drawing, DrawingItem,
+    DrawingItemMut, DxfError, DxfResult, ExtensionGroup, Handle, Point, XData,
 };
-
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::entities::Entity;
-use crate::entity_iter::EntityIter;
-use crate::enums::*;
-use crate::extension_data;
-use crate::helper_functions::*;
-use crate::x_data;
 
 /// A block is a collection of entities.
 #[derive(Debug, Clone)]
@@ -301,10 +294,7 @@ impl Block {
 
 #[cfg(test)]
 mod tests {
-    use crate::entities::*;
-    use crate::enums::*;
-    use crate::helper_functions::tests::*;
-    use crate::*;
+    use crate::{entities::*, enums::*, helper_functions::tests::*, *};
 
     fn read_blocks_section(content: Vec<CodePair>) -> Drawing {
         let mut pairs = vec![
@@ -711,8 +701,10 @@ mod tests {
     fn write_block_r12_compat() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R12;
-        let mut block = Block::default();
-        block.name = "block-name".to_string();
+        let mut block = Block {
+            name: "block-name".to_string(),
+            ..Default::default()
+        };
         block.entities.push(Entity {
             common: Default::default(),
             specific: EntityType::Line(Line::new(
