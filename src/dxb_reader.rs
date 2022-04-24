@@ -1,13 +1,9 @@
-use std::io::Read;
-
-use crate::{Block, Color, Drawing, DxfError, DxfResult, Point};
-
-use crate::dxb_item_type::DxbItemType;
-use crate::entities::*;
-use crate::entity_iter::collect_entities;
-use crate::helper_functions::*;
-
+use crate::{
+    dxb_item_type::DxbItemType, entities::*, entity_iter::collect_entities, helper_functions::*,
+    Block, Color, Drawing, DxfError, DxfResult, Point,
+};
 use enum_primitive::FromPrimitive;
+use std::io::Read;
 
 pub(crate) struct DxbReader<T: Read> {
     reader: T,
@@ -161,9 +157,11 @@ impl<T: Read> DxbReader<T> {
         drawing.clear();
         match block_base {
             Some(location) => {
-                let mut block = Block::default();
-                block.base_point = location;
-                block.entities = gathered_entities;
+                let block = Block {
+                    base_point: location,
+                    entities: gathered_entities,
+                    ..Default::default()
+                };
                 drawing.add_block(block);
             }
             None => {

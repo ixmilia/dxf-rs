@@ -1,13 +1,9 @@
-extern crate byteorder;
-
-use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
-
-use self::byteorder::{BigEndian, ByteOrder};
-
-use crate::{CodePairValue, DxfError, DxfResult, Handle};
-
-use crate::helper_functions::parse_hex_string;
+use crate::{helper_functions::parse_hex_string, CodePairValue, DxfError, DxfResult, Handle};
+use byteorder::{BigEndian, ByteOrder};
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
 /// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
 /// data itself.
@@ -99,7 +95,7 @@ impl CodePair {
 impl CodePair {
     pub(crate) fn as_handle(&self) -> DxfResult<Handle> {
         let mut bytes = vec![];
-        parse_hex_string(&self.assert_string()?.trim(), &mut bytes, self.offset)?;
+        parse_hex_string(self.assert_string()?.trim(), &mut bytes, self.offset)?;
         while bytes.len() < 8 {
             bytes.insert(0, 0);
         }

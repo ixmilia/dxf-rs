@@ -1,6 +1,4 @@
-use crate::{CodePair, DxfError, DxfResult};
-
-use crate::code_pair_put_back::CodePairPutBack;
+use crate::{code_pair_put_back::CodePairPutBack, CodePair, DxfError, DxfResult};
 
 pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 

@@ -1,9 +1,5 @@
-use std::error;
-use std::fmt;
-use std::io;
-use std::num;
-
 use crate::CodePair;
+use std::{error, fmt, io, num};
 
 #[derive(Debug)]
 pub enum DxfError {

@@ -1,14 +1,7 @@
-use std::io::Write;
-
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt};
-
-use crate::{Drawing, DxfResult};
-
-use crate::dxb_item_type::DxbItemType;
-use crate::entities::*;
-
+use crate::{dxb_item_type::DxbItemType, entities::*, Drawing, DxfResult};
+use byteorder::{LittleEndian, WriteBytesExt};
 use itertools::Itertools;
+use std::io::Write;
 
 pub(crate) struct DxbWriter<T: Write> {
     writer: T,
@@ -58,7 +51,7 @@ impl<T: Write> DxbWriter<T> {
                             self.write_w(last_color)?;
                         }
                     }
-                    self.write_entity(&entity)?;
+                    self.write_entity(entity)?;
                 }
             }
         }
@@ -69,41 +62,41 @@ impl<T: Write> DxbWriter<T> {
     }
     fn write_entities(&mut self, entities: &[Entity]) -> DxfResult<()> {
         for entity in entities.iter() {
-            self.write_entity(&entity)?;
+            self.write_entity(entity)?;
         }
         Ok(())
     }
     fn write_entity(&mut self, entity: &Entity) -> DxfResult<()> {
         match &entity.specific {
             EntityType::Arc(ref arc) => {
-                self.write_arc(&arc)?;
+                self.write_arc(arc)?;
             }
             EntityType::Circle(ref circle) => {
-                self.write_circle(&circle)?;
+                self.write_circle(circle)?;
             }
             EntityType::Face3D(ref face) => {
-                self.write_face(&face)?;
+                self.write_face(face)?;
             }
             EntityType::Line(ref line) => {
-                self.write_line(&line)?;
+                self.write_line(line)?;
             }
             EntityType::ModelPoint(ref point) => {
-                self.write_point(&point)?;
+                self.write_point(point)?;
             }
             EntityType::Polyline(ref poly) => {
-                self.write_polyline(&poly)?;
+                self.write_polyline(poly)?;
             }
             EntityType::Seqend(_) => {
                 self.write_seqend()?;
             }
             EntityType::Solid(ref solid) => {
-                self.write_solid(&solid)?;
+                self.write_solid(solid)?;
             }
             EntityType::Trace(ref trace) => {
-                self.write_trace(&trace)?;
+                self.write_trace(trace)?;
             }
             EntityType::Vertex(ref vertex) => {
-                self.write_vertex(&vertex)?;
+                self.write_vertex(vertex)?;
             }
             _ => (),
         }
@@ -161,7 +154,7 @@ impl<T: Write> DxbWriter<T> {
         self.write_item_type(DxbItemType::Polyline)?;
         self.write_w(if poly.get_is_closed() { 1 } else { 0 })?;
         for vertex in poly.vertices() {
-            self.write_vertex(&vertex)?;
+            self.write_vertex(vertex)?;
         }
         self.write_seqend()?;
         Ok(())

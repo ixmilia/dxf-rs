@@ -1,7 +1,3 @@
-extern crate dxf;
-extern crate serde;
-extern crate serde_json;
-
 use dxf::Drawing;
 use std::env;
 use std::fs::File;

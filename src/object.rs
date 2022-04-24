@@ -1,21 +1,14 @@
 // other implementation is in `generated/objects.rs`
 
+use crate::{
+    code_pair_put_back::CodePairPutBack, enums::*, helper_functions::*, objects::*, CodePair,
+    Color, DataTableValue, DxfError, DxfResult, Point, SectionTypeSettings, TableCellStyle,
+    TransformationMatrix,
+};
+use chrono::Duration;
 use enum_primitive::FromPrimitive;
 use itertools::Itertools;
 use std::ops::Add;
-
-extern crate chrono;
-use self::chrono::Duration;
-
-use crate::{
-    CodePair, Color, DataTableValue, DxfError, DxfResult, Point, SectionTypeSettings,
-    TableCellStyle, TransformationMatrix,
-};
-
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::enums::*;
-use crate::helper_functions::*;
-use crate::objects::*;
 
 //------------------------------------------------------------------------------
 //                                                                  GeoMeshPoint
@@ -157,8 +150,8 @@ impl Object {
         }
     }
     fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
-        if !self.specific.try_apply_code_pair(&pair)? {
-            self.common.apply_individual_pair(&pair, iter)?;
+        if !self.specific.try_apply_code_pair(pair)? {
+            self.common.apply_individual_pair(pair, iter)?;
         }
         Ok(())
     }
@@ -1654,7 +1647,7 @@ impl Object {
 
         true
     }
-    fn add_post_code_pairs(&self, _pairs: &mut Vec<CodePair>, _version: AcadVersion) {
+    fn add_post_code_pairs(&self, _pairs: &mut [CodePair], _version: AcadVersion) {
         // use the following pattern if this method is needed
         // match self.specific {
         //     _ => (),
@@ -1664,10 +1657,7 @@ impl Object {
 
 #[cfg(test)]
 mod tests {
-    use crate::enums::*;
-    use crate::helper_functions::tests::*;
-    use crate::objects::*;
-    use crate::*;
+    use crate::{enums::*, helper_functions::tests::*, objects::*, *};
 
     fn read_object(object_type: &str, body: Vec<CodePair>) -> Object {
         let mut pairs = vec![CodePair::new_str(0, object_type)];

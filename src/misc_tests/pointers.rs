@@ -1,8 +1,4 @@
-use crate::entities::*;
-use crate::enums::*;
-use crate::helper_functions::tests::*;
-use crate::objects::*;
-use crate::*;
+use crate::{entities::*, enums::*, helper_functions::tests::*, objects::*, *};
 
 #[test]
 fn follow_entity_pointer_to_object() {

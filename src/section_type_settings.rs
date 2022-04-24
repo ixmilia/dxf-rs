@@ -1,7 +1,6 @@
 use crate::{CodePair, DxfResult, Handle, SectionGeometrySettings};
 
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::helper_functions::*;
+use crate::{code_pair_put_back::CodePairPutBack, helper_functions::*};
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]

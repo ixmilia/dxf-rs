@@ -1,9 +1,9 @@
 // other implementation is in `generated/header.rs`
 
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::enums::*;
-use crate::helper_functions::*;
-use crate::{CodePair, DxfError, DxfResult};
+use crate::{
+    code_pair_put_back::CodePairPutBack, enums::*, helper_functions::*, CodePair, DxfError,
+    DxfResult,
+};
 
 pub use crate::generated::header::*;
 
@@ -72,10 +72,7 @@ impl Header {
 
 #[cfg(test)]
 mod tests {
-    use crate::entities::*;
-    use crate::enums::*;
-    use crate::helper_functions::tests::*;
-    use crate::*;
+    use crate::{entities::*, enums::*, helper_functions::tests::*, *};
     use std::time::Duration;
 
     #[test]
@@ -188,14 +185,16 @@ mod tests {
 
     #[test]
     fn normalize_header() {
-        let mut header = Header::default();
-        header.default_text_height = -1.0; // $TEXTSIZE; normalized to 0.2
-        header.trace_width = 0.0; // $TRACEWID; normalized to 0.05
-        header.text_style = String::new(); // $TEXTSTYLE; normalized to "STANDARD"
-        header.current_layer = String::new(); // $CLAYER; normalized to "0"
-        header.current_entity_line_type = String::new(); // $CELTYPE; normalized to "BYLAYER"
-        header.dimension_style_name = String::new(); // $DIMSTYLE; normalized to "STANDARD"
-        header.file_name = String::new(); // $MENU; normalized to "."
+        let mut header = Header {
+            default_text_height: -1.0,               // $TEXTSIZE; normalized to 0.2
+            trace_width: 0.0,                        // $TRACEWID; normalized to 0.05
+            text_style: String::new(),               // $TEXTSTYLE; normalized to "STANDARD"
+            current_layer: String::new(),            // $CLAYER; normalized to "0"
+            current_entity_line_type: String::new(), // $CELTYPE; normalized to "BYLAYER"
+            dimension_style_name: String::new(),     // $DIMSTYLE; normalized to "STANDARD"
+            file_name: String::new(),                // $MENU; normalized to "."
+            ..Default::default()
+        };
         header.normalize();
         assert!(approx_eq!(f64, 0.2, header.default_text_height));
         assert!(approx_eq!(f64, 0.05, header.trace_width));

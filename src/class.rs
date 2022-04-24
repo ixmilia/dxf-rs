@@ -1,8 +1,7 @@
-use crate::{CodePair, Drawing, DxfError, DxfResult};
-
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::enums::*;
-use crate::helper_functions::*;
+use crate::{
+    code_pair_put_back::CodePairPutBack, enums::*, helper_functions::*, CodePair, Drawing,
+    DxfError, DxfResult,
+};
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
 #[derive(Clone)]
@@ -231,9 +230,7 @@ impl Class {
 
 #[cfg(test)]
 mod tests {
-    use crate::enums::*;
-    use crate::helper_functions::tests::*;
-    use crate::*;
+    use crate::{enums::*, helper_functions::tests::*, *};
 
     fn read_single_class(version_str: &str, body: Vec<CodePair>) -> Class {
         let mut pairs = vec![

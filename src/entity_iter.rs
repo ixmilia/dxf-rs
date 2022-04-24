@@ -1,8 +1,6 @@
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::drawing::AUTO_REPLACE_HANDLE;
-use crate::entities::*;
-use crate::DxfResult;
-
+use crate::{
+    code_pair_put_back::CodePairPutBack, drawing::AUTO_REPLACE_HANDLE, entities::*, DxfResult,
+};
 use itertools::{put_back, PutBack};
 
 pub(crate) struct EntityIter<'a> {

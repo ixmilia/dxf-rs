@@ -1,5 +1,4 @@
-use dxf::entities::*;
-use dxf::{Drawing, Point};
+use dxf::{entities::*, Drawing, Point};
 
 pub fn all() -> dxf::DxfResult<()> {
     apply_line_types_to_entities()?;
@@ -12,12 +11,14 @@ fn apply_line_types_to_entities() -> dxf::DxfResult<()> {
     //
     // create a new line type named "dashed-lines"...
     //
-    let mut line_type = dxf::tables::LineType::default();
-    line_type.name = String::from("dashed-lines");
-    line_type.total_pattern_length = 1.0;
-    // line pattern contains 2 elements; positive values draw a line, negative values draw a gap
-    // the following draws 3/4 of a line with a 1/4 gap
-    line_type.element_count = 2;
+    let mut line_type = dxf::tables::LineType {
+        name: String::from("dashed-lines"),
+        total_pattern_length: 1.0,
+        // line pattern contains 2 elements; positive values draw a line, negative values draw a gap
+        // the following draws 3/4 of a line with a 1/4 gap
+        element_count: 2,
+        ..Default::default()
+    };
     line_type.dash_dot_space_lengths.push(0.75);
     line_type.dash_dot_space_lengths.push(-0.25);
     drawing.add_line_type(line_type);

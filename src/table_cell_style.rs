@@ -1,7 +1,6 @@
 use crate::{CodePair, Color, DxfResult};
 
-use crate::code_pair_put_back::CodePairPutBack;
-use crate::helper_functions::*;
+use crate::{code_pair_put_back::CodePairPutBack, helper_functions::*};
 
 /// Defines a style for a table's cell.
 #[derive(Clone, Debug, Default, PartialEq)]

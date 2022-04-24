@@ -1,11 +1,10 @@
+use crate::{
+    code_pair_value::{escape_control_characters, escape_unicode_to_ascii},
+    enums::AcadVersion,
+    CodePair, CodePairValue, DxfResult,
+};
+use byteorder::{LittleEndian, WriteBytesExt};
 use std::io::Write;
-
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt};
-
-use crate::code_pair_value::{escape_control_characters, escape_unicode_to_ascii};
-use crate::enums::AcadVersion;
-use crate::{CodePair, CodePairValue, DxfResult};
 
 pub(crate) struct CodePairWriter<'a, T>
 where
@@ -53,7 +52,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
             .write_fmt(format_args!("{: >3}\r\n", pair.code))?;
         match pair.value {
             CodePairValue::Str(ref s) => {
-                let s = escape_control_characters(&s);
+                let s = escape_control_characters(s);
                 let s = if self.text_as_ascii {
                     escape_unicode_to_ascii(&s)
                 } else {
@@ -110,9 +109,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::code_pair_writer::CodePairWriter;
-    use crate::enums::AcadVersion;
-    use crate::CodePair;
+    use crate::{code_pair_writer::CodePairWriter, enums::AcadVersion, CodePair};
     use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
 
     fn write_in_binary(pair: &CodePair) -> Vec<u8> {
@@ -124,7 +121,7 @@ mod tests {
             version: AcadVersion::R2004,
         };
         writer
-            .write_binary_code_pair(&pair)
+            .write_binary_code_pair(pair)
             .expect("expected write to succeed");
         buf.seek(SeekFrom::Start(0))
             .expect("expected seek to succeed");
@@ -140,7 +137,7 @@ mod tests {
             version: AcadVersion::R2004,
         };
         writer
-            .write_ascii_code_pair(&pair)
+            .write_ascii_code_pair(pair)
             .expect("expected write to succeed");
         buf.seek(SeekFrom::Start(0))
             .expect("expected seek to succeed");
