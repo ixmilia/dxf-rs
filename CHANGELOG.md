@@ -1,6 +1,14 @@
 Changelog
 =========
 
+## Unreleased
+
+- Update to Rust 2021 edition
+- Updated dependencies:
+  - `image` from 0.23 to 0.24
+  - `num` from 0.3 to 0.4
+  - `uuid` from 0.8 to 1.0
+
 ## 0.5.0
 
 - Update to Rust 2018 edition.
