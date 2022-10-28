@@ -1565,7 +1565,7 @@ impl Entity {
                     a.add_code_pairs(pairs, version, write_handles);
                 }
                 if ins.__attributes_and_handles.len() > 0 {
-                    Entity::add_code_pairs_seqend(pairs, version, write_handles);
+                    Entity::add_code_pairs_seqend(pairs, &ins.__seqend_handle, write_handles);
                 }
             }
             EntityType::Polyline(ref poly) => {
@@ -1582,7 +1582,7 @@ impl Entity {
                     };
                     v.add_code_pairs(pairs, version, write_handles);
                 }
-                Entity::add_code_pairs_seqend(pairs, version, write_handles);
+                Entity::add_code_pairs_seqend(pairs, &poly.__seqend_handle, write_handles);
             }
             _ => (),
         }
@@ -1607,12 +1607,11 @@ impl Entity {
         };
         m_text.add_code_pairs(pairs, version, write_handles);
     }
-    fn add_code_pairs_seqend(pairs: &mut Vec<CodePair>, version: AcadVersion, write_handles: bool) {
-        let seqend = Entity {
-            common: Default::default(),
-            specific: EntityType::Seqend(Default::default()),
-        };
-        seqend.add_code_pairs(pairs, version, write_handles);
+    fn add_code_pairs_seqend(pairs: &mut Vec<CodePair>, handle: &Handle, write_handles: bool) {
+        pairs.push(CodePair::new_str(0, "SEQEND"));
+        if write_handles {
+            pairs.push(CodePair::new_string(5, &handle.as_string()));
+        }
     }
 }
 
@@ -2521,6 +2520,19 @@ mod tests {
     }
 
     #[test]
+    fn polyline_seqend_handle_is_assigned_when_added_to_drawing() {
+        let mut drawing = Drawing::new();
+        drawing.add_entity(Entity {
+            common: Default::default(),
+            specific: EntityType::Polyline(Polyline::default()),
+        });
+        assert_not_contains_pairs(
+            &drawing,
+            vec![CodePair::new_str(0, "SEQEND"), CodePair::new_str(5, "0")],
+        );
+    }
+
+    #[test]
     fn read_lw_polyline_with_no_vertices() {
         let drawing = from_section(
             "ENTITIES",
@@ -3062,7 +3074,7 @@ mod tests {
     fn read_all_types() {
         for (type_string, subclass, expected_type, _) in all_types::get_all_entity_types() {
             println!("parsing {}/{}", type_string, subclass);
-            let ent = read_entity(
+            let mut ent = read_entity(
                 type_string,
                 vec![
                     CodePair::new_str(100, subclass),
@@ -3073,6 +3085,17 @@ mod tests {
                     CodePair::new_f64(1040, 1.1),
                 ],
             );
+
+            // internal seqend handles might differ; patch them
+            match ent.specific {
+                EntityType::Insert(ref mut i) => {
+                    i.__seqend_handle = Handle::empty();
+                }
+                EntityType::Polyline(ref mut p) => {
+                    p.__seqend_handle = Handle::empty();
+                }
+                _ => {}
+            }
 
             // validate specific
             assert_eq!(expected_type, ent.specific);

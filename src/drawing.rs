@@ -418,6 +418,7 @@ impl Drawing {
         // set child handles
         match entity.specific {
             EntityType::Insert(ref mut ins) => {
+                ins.__seqend_handle = self.next_handle();
                 for a in ins.__attributes_and_handles.iter_mut() {
                     if a.1 == AUTO_REPLACE_HANDLE {
                         a.1 = self.next_handle();
@@ -425,6 +426,7 @@ impl Drawing {
                 }
             }
             EntityType::Polyline(ref mut poly) => {
+                poly.__seqend_handle = self.next_handle();
                 for v in poly.__vertices_and_handles.iter_mut() {
                     if v.1 == AUTO_REPLACE_HANDLE {
                         v.1 = self.next_handle();

@@ -471,6 +471,7 @@
 
   -->
   <Entity Name="Insert" SubclassMarker="AcDbBlockReference" TypeString="INSERT">
+    <Field Name="__seqend_handle" Code="5" Type="Handle" DefaultValue="Handle::empty()" ReaderOverride="pair.as_handle()?" GenerateReader="false" GenerateWriter="false" />
     <Field Name="__has_attributes" Code="66" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" />
     <Field Name="name" Code="2" Type="String" DefaultValue="String::new()" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
@@ -829,6 +830,7 @@
 
   -->
   <Entity Name="Polyline" SubclassMarker="AcDb2dPolyline" TypeString="POLYLINE" HasXData="true" GenerateWriterFunction="false">
+    <Field Name="__seqend_handle" Code="5" Type="Handle" DefaultValue="Handle::empty()" ReaderOverride="pair.as_handle()?" GenerateReader="false" GenerateWriter="false" />
     <Field Name="contains_vertices" Code="66" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MaxVersion="R13" />
     <Field Name="location" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" MinVersion="R12" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
