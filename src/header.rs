@@ -131,6 +131,39 @@ mod tests {
     }
 
     #[test]
+    fn read_alternate_maintenance_version() {
+        let drawing = from_section_pairs(
+            "HEADER",
+            vec![
+                CodePair::new_str(9, "$ACADMAINTVER"),
+                CodePair::new_i32(90, 4242),
+            ],
+        );
+        assert_eq!(4242, drawing.header.maintenance_version);
+    }
+
+    #[test]
+    fn maintenance_version_is_only_written_with_code_70() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R14; // $ACADMAINTVER is only written for R14 and later
+        drawing.header.maintenance_version = 4242;
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$ACADMAINTVER"),
+                CodePair::new_i16(70, 4242),
+            ],
+        );
+        assert_not_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(9, "$ACADMAINTVER"),
+                CodePair::new_i32(90, 4242),
+            ],
+        );
+    }
+
+    #[test]
     fn read_alternate_version() {
         let drawing = from_section(
             "HEADER",
