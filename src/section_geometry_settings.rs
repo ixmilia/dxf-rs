@@ -136,7 +136,7 @@ impl SectionGeometrySettings {
         pairs.push(CodePair::new_i32(90, self.section_type));
         pairs.push(CodePair::new_i32(91, self.geometry_count));
         pairs.push(CodePair::new_i32(92, self.bit_flags));
-        pairs.push(CodePair::new_i16(63, self.color.get_raw_value()));
+        pairs.push(CodePair::new_i16(63, self.color.raw_value()));
         pairs.push(CodePair::new_string(8, &self.layer_name));
         pairs.push(CodePair::new_string(6, &self.line_type_name));
         pairs.push(CodePair::new_f64(40, self.line_type_scale));

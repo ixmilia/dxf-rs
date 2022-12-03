@@ -75,11 +75,11 @@ fn read_thumbnail_bytes_from_code_pairs(iter: &mut CodePairPutBack) -> DxfResult
 
 fn update_thumbnail_data_offset_in_situ(data: &mut Vec<u8>) -> DxfResult<bool> {
     // calculate the image data offset
-    let dib_header_size = get_i32(&data, FILE_HEADER_LENGTH)? as usize;
+    let dib_header_size = read_i32(&data, FILE_HEADER_LENGTH)? as usize;
 
     // calculate the palette size
     let palette_size = if dib_header_size >= BITMAP_HEADER_PALETTE_COUNT_OFFSET + 4 {
-        let palette_color_count = get_u32(
+        let palette_color_count = read_u32(
             &data,
             FILE_HEADER_LENGTH + BITMAP_HEADER_PALETTE_COUNT_OFFSET,
         )? as usize;
@@ -117,7 +117,7 @@ fn set_thumbnail_offset_for_bitmapinfoheader_non_palette() {
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x36, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x36, read_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn set_thumbnail_offset_for_bitmapinfoheader_palette_256() {
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x0436, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x0436, read_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn set_thumbnail_offset_for_bitmapv4header_non_palette() {
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x7A, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x7A, read_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn set_thumbnail_offset_for_bitmapv4header_palette_256() {
               // rest of struct not needed
     ];
     assert!(update_thumbnail_data_offset_in_situ(&mut data).unwrap());
-    assert_eq!(0x047A, get_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
+    assert_eq!(0x047A, read_i32(&data, IMAGE_DATA_OFFSET_OFFSET).unwrap());
 }
 
 fn read_thumbnail_from_bytes(data: &[u8]) -> DxfResult<Option<image::DynamicImage>> {
@@ -200,7 +200,7 @@ fn read_thumbnail_from_bytes(data: &[u8]) -> DxfResult<Option<image::DynamicImag
     Ok(Some(image))
 }
 
-fn get_i32(data: &[u8], offset: usize) -> DxfResult<i32> {
+fn read_i32(data: &[u8], offset: usize) -> DxfResult<i32> {
     let expected_length = offset + 4;
     if data.len() < expected_length {
         return Err(DxfError::UnexpectedEndOfInput);
@@ -214,13 +214,13 @@ fn get_i32(data: &[u8], offset: usize) -> DxfResult<i32> {
 }
 
 #[test]
-fn test_get_i32() {
+fn test_read_i32() {
     let data: Vec<u8> = vec![0x00, 0x78, 0x56, 0x34, 0x12, 0x00];
-    let value = get_i32(&data, 1).unwrap();
+    let value = read_i32(&data, 1).unwrap();
     assert_eq!(0x12345678, value);
 }
 
-fn get_u32(data: &[u8], offset: usize) -> DxfResult<u32> {
+fn read_u32(data: &[u8], offset: usize) -> DxfResult<u32> {
     let expected_length = offset + 4;
     if data.len() < expected_length {
         return Err(DxfError::UnexpectedEndOfInput);
@@ -236,7 +236,7 @@ fn get_u32(data: &[u8], offset: usize) -> DxfResult<u32> {
 #[test]
 fn test_get_u32() {
     let data: Vec<u8> = vec![0x00, 0x78, 0x56, 0x34, 0x12, 0x00];
-    let value = get_u32(&data, 1).unwrap();
+    let value = read_u32(&data, 1).unwrap();
     assert_eq!(0x12345678, value);
 }
 

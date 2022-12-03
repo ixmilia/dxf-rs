@@ -50,7 +50,7 @@ impl<T: Write> DxbWriter<T> {
                 self.write_item_type(DxbItemType::NewLayer)?;
                 self.write_null_terminated_string(&*layer)?;
                 for entity in entities {
-                    match entity.common.color.get_raw_value() {
+                    match entity.common.color.raw_value() {
                         c if c == last_color => (), // same color, do nothing
                         c => {
                             last_color = c;
@@ -159,7 +159,7 @@ impl<T: Write> DxbWriter<T> {
     }
     fn write_polyline(&mut self, poly: &Polyline) -> DxfResult<()> {
         self.write_item_type(DxbItemType::Polyline)?;
-        self.write_w(if poly.get_is_closed() { 1 } else { 0 })?;
+        self.write_w(if poly.is_closed() { 1 } else { 0 })?;
         for vertex in poly.vertices() {
             self.write_vertex(&vertex)?;
         }

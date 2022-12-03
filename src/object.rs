@@ -1920,8 +1920,8 @@ mod tests {
         );
         match obj.specific {
             ObjectType::Layout(ref layout) => {
-                assert!(layout.get_is_ps_lt_scale());
-                assert!(layout.get_is_lim_check());
+                assert!(layout.is_ps_lt_scale());
+                assert!(layout.is_lim_check());
             }
             _ => panic!("expected a LAYOUT"),
         }
@@ -2176,7 +2176,7 @@ mod tests {
 
     #[test]
     fn read_all_types() {
-        for (type_string, expected_type, _) in all_types::get_all_object_types() {
+        for (type_string, expected_type, _) in all_types::all_object_types() {
             println!("parsing {}", type_string);
             let obj = read_object(
                 type_string,
@@ -2225,7 +2225,7 @@ mod tests {
 
     #[test]
     fn write_all_types() {
-        for (type_string, expected_type, max_version) in all_types::get_all_object_types() {
+        for (type_string, expected_type, max_version) in all_types::all_object_types() {
             println!("writing {}", type_string);
             let mut common = ObjectCommon::default();
             common.extension_data_groups.push(ExtensionGroup {

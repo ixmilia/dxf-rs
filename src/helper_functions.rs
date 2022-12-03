@@ -42,7 +42,7 @@ fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {
     ChronoDuration::seconds(seconds as i64 - secs_per_day + 1)
 }
 
-fn get_epoch<T>(timezone: &T) -> DateTime<T>
+fn epoch<T>(timezone: &T) -> DateTime<T>
 where
     T: TimeZone,
 {
@@ -54,7 +54,7 @@ where
     T: TimeZone,
 {
     // dates are represented as the fractional number of days elapsed since December 31, 1899.
-    let epoch = get_epoch(timezone);
+    let epoch = epoch(timezone);
     let duration = if date == 0.0 {
         ChronoDuration::seconds(0)
     } else {
@@ -84,7 +84,7 @@ fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
 where
     T: TimeZone,
 {
-    let epoch = get_epoch(timezone);
+    let epoch = epoch(timezone);
     let duration = date.signed_duration_since(epoch);
     (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2_415_021f64
 }
@@ -625,7 +625,7 @@ pub mod tests {
     }
 
     pub fn assert_contains_pairs(drawing: &Drawing, expected: Vec<CodePair>) {
-        let actual = drawing.get_code_pairs().ok().unwrap();
+        let actual = drawing.code_pairs().ok().unwrap();
         println!("checking pairs:");
         for pair in &actual {
             println!("{:?}", pair);
@@ -640,7 +640,7 @@ pub mod tests {
     }
 
     pub fn assert_not_contains_pairs(drawing: &Drawing, not_expected: Vec<CodePair>) {
-        let actual = drawing.get_code_pairs().ok().unwrap();
+        let actual = drawing.code_pairs().ok().unwrap();
         println!("checking pairs:");
         for pair in &actual {
             println!("{:?}", pair);

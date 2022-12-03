@@ -18,7 +18,7 @@ impl LineWeight {
         LineWeight::from_raw_value(-2)
     }
     /// Gets the raw value of the `LineWeight`.
-    pub fn get_raw_value(&self) -> i16 {
+    pub fn raw_value(&self) -> i16 {
         self.raw_value
     }
     /// Returns `true` if the `LineWeight` is BYBLOCK.

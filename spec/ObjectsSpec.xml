@@ -478,7 +478,7 @@
     <Field Name="gen_proc_real_value" Code="469" Type="f64" DefaultValue="0.0" MinVersion="R2007" />
     <Field Name="gen_proc_text_value" Code="301" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
     <Field Name="gen_proc_table_end" Code="292" Type="bool" DefaultValue="false" MinVersion="R2007" />
-    <Field Name="gen_proc_color_index_value" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.get_raw_value()" MinVersion="R2007" />
+    <Field Name="gen_proc_color_index_value" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.raw_value()" MinVersion="R2007" />
     <Field Name="gen_proc_color_rgb_value" Code="420" Type="i32" DefaultValue="0" MinVersion="R2007" />
     <Field Name="gen_proc_color_name" Code="430" Type="String" DefaultValue="String::new()" MinVersion="R2007" />
     <Field Name="map_u_tile" Code="270" Type="i16" DefaultValue="0" MinVersion="R2007" />
@@ -503,7 +503,7 @@
       <WriteField Field="diffuse_map_projection_method" />
       <WriteField Field="diffuse_map_tiling_method" />
       <WriteField Field="diffuse_map_auto_transform_method" />
-      <Foreach Field="obj.diffuse_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.diffuse_map_transformation_matrix.values()">
         <WriteSpecificValue Code="43" Value="*item" />
       </Foreach>
       <WriteField Field="specular_color_factor" />
@@ -516,7 +516,7 @@
       <WriteField Field="specular_map_projection_method" />
       <WriteField Field="specular_map_tiling_method" />
       <WriteField Field="specular_map_auto_transform_method" />
-      <Foreach Field="obj.specular_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.specular_map_transformation_matrix.values()">
         <WriteSpecificValue Code="47" Value="*item" />
       </Foreach>
       <WriteField Field="reflection_map_blend_factor" />
@@ -525,7 +525,7 @@
       <WriteField Field="reflection_map_projection_method" />
       <WriteField Field="reflection_map_tiling_method" />
       <WriteField Field="reflection_map_auto_transform_method" />
-      <Foreach Field="obj.reflection_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.reflection_map_transformation_matrix.values()">
         <WriteSpecificValue Code="49" Value="*item" />
       </Foreach>
       <WriteField Field="opacity_factor" />
@@ -535,7 +535,7 @@
       <WriteField Field="opacity_map_projection_method" />
       <WriteField Field="opacity_map_tiling_method" />
       <WriteField Field="opacity_map_auto_transform_method" />
-      <Foreach Field="obj.opacity_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.opacity_map_transformation_matrix.values()">
         <WriteSpecificValue Code="142" Value="*item" />
       </Foreach>
       <WriteField Field="bump_map_blend_factor" />
@@ -544,7 +544,7 @@
       <WriteField Field="bump_map_projection_method" />
       <WriteField Field="bump_map_tiling_method" />
       <WriteField Field="bump_map_auto_transform_method" />
-      <Foreach Field="obj.bump_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.bump_map_transformation_matrix.values()">
         <WriteSpecificValue Code="144" Value="*item" />
       </Foreach>
       <WriteField Field="refraction_index" />
@@ -554,7 +554,7 @@
       <WriteField Field="refraction_map_projection_method" />
       <WriteField Field="refraction_map_tiling_method" />
       <WriteField Field="refraction_map_auto_transform_method" />
-      <Foreach Field="obj.refraction_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.refraction_map_transformation_matrix.values()">
         <WriteSpecificValue Code="147" Value="*item" />
       </Foreach>
       <WriteField Field="color_bleed_scale" />
@@ -572,7 +572,7 @@
       <WriteField Field="normal_map_projection_method" />
       <WriteField Field="normal_map_tiling_method" />
       <WriteField Field="normal_map_auto_transform_method" />
-      <Foreach Field="obj.normal_map_transformation_matrix.get_values()">
+      <Foreach Field="obj.normal_map_transformation_matrix.values()">
         <WriteSpecificValue Code="43" Value="*item" />
       </Foreach>
       <WriteField Field="is_anonymous" />
@@ -664,13 +664,13 @@
       <Flag Name="end_round_cap" Mask="1024" />
     </Field>
     <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
-    <Field Name="fill_color" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.get_raw_value()" />
+    <Field Name="fill_color" Code="62" Type="Color" DefaultValue="Color::by_layer()" WriteConverter="{}.raw_value()" />
     <Field Name="start_angle" Code="51" Type="f64" DefaultValue="90.0" />
     <Field Name="end_angle" Code="52" Type="f64" DefaultValue="90.0" />
     <Field Name="elements" Code="49" Type="MLineStyleElement" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
     <Field Name="__element_count" Code="71" Type="i32" DefaultValue="0" WriteConverter="{} as i16" />
     <Field Name="__element_offsets" Code="49" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="__element_colors" Code="62" Type="Color" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{}.get_raw_value()" />
+    <Field Name="__element_colors" Code="62" Type="Color" DefaultValue="vec![]" AllowMultiples="true" WriteConverter="{}.raw_value()" />
     <Field Name="__element_line_types" Code="6" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbMlineStyle")' />
@@ -683,7 +683,7 @@
       <WriteSpecificValue Code="71" Value="obj.elements.len() as i16" />
       <Foreach Field="obj.elements">
         <WriteSpecificValue Code="49" Value="item.offset" />
-        <WriteSpecificValue Code="62" Value="item.color.get_raw_value()" />
+        <WriteSpecificValue Code="62" Value="item.color.raw_value()" />
         <WriteSpecificValue Code="6" Value="&amp;item.line_type" />
       </Foreach>
     </WriteOrder>
@@ -1032,10 +1032,10 @@
       <WriteField Field="front_clipping_plane_distance" />
       <WriteField Field="is_back_clipping_plane" />
       <WriteField Field="back_clipping_plane_distance" />
-      <Foreach Field="obj.inverse_transformation_matrix.get_4x3_values_row_major()">
+      <Foreach Field="obj.inverse_transformation_matrix.values_row_major_4x3()">
         <WriteSpecificValue Code="40" Value="*item" />
       </Foreach>
-      <Foreach Field="obj.transformation_matrix.get_4x3_values_row_major()">
+      <Foreach Field="obj.transformation_matrix.values_row_major_4x3()">
         <WriteSpecificValue Code="40" Value="*item" />
       </Foreach>
     </WriteOrder>
@@ -1146,8 +1146,8 @@
         <WriteSpecificValue Code="7" Value="&amp;item.name" />
         <WriteSpecificValue Code="140" Value="item.text_height" />
         <WriteSpecificValue Code="170" Value="item.cell_alignment" />
-        <WriteSpecificValue Code="62" Value="item.text_color.get_raw_value()" />
-        <WriteSpecificValue Code="63" Value="item.cell_fill_color.get_raw_value()" />
+        <WriteSpecificValue Code="62" Value="item.text_color.raw_value()" />
+        <WriteSpecificValue Code="63" Value="item.cell_fill_color.raw_value()" />
         <WriteSpecificValue Code="283" Value="as_i16(item.is_background_color_enabled)" />
         <WriteSpecificValue Code="90" Value="item.cell_data_type" />
         <WriteSpecificValue Code="91" Value="item.cell_unit_type" />
@@ -1163,12 +1163,12 @@
         <WriteSpecificValue Code="287" Value="as_i16(item.is_border_4_visible)" />
         <WriteSpecificValue Code="288" Value="as_i16(item.is_border_5_visible)" />
         <WriteSpecificValue Code="289" Value="as_i16(item.is_border_6_visible)" />
-        <WriteSpecificValue Code="64" Value="item.border_1_color.get_raw_value()" />
-        <WriteSpecificValue Code="65" Value="item.border_2_color.get_raw_value()" />
-        <WriteSpecificValue Code="66" Value="item.border_3_color.get_raw_value()" />
-        <WriteSpecificValue Code="67" Value="item.border_4_color.get_raw_value()" />
-        <WriteSpecificValue Code="68" Value="item.border_5_color.get_raw_value()" />
-        <WriteSpecificValue Code="69" Value="item.border_6_color.get_raw_value()" />
+        <WriteSpecificValue Code="64" Value="item.border_1_color.raw_value()" />
+        <WriteSpecificValue Code="65" Value="item.border_2_color.raw_value()" />
+        <WriteSpecificValue Code="66" Value="item.border_3_color.raw_value()" />
+        <WriteSpecificValue Code="67" Value="item.border_4_color.raw_value()" />
+        <WriteSpecificValue Code="68" Value="item.border_5_color.raw_value()" />
+        <WriteSpecificValue Code="69" Value="item.border_6_color.raw_value()" />
       </Foreach>
     </WriteOrder>
   </Object>
@@ -1211,23 +1211,23 @@
     <Field Name="face_modifier" Code="90" Type="FaceModifier" DefaultValue="FaceModifier::None" ReadConverter="enum_from_number!(FaceModifier, None, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="face_opacity_level" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="face_specular_level" Code="41" Type="f64" DefaultValue="0.0" />
-    <Field Name="color1" Code="62" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
-    <Field Name="color2" Code="63" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="color1" Code="62" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
+    <Field Name="color2" Code="63" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="face_style_mono_color" Code="421" Type="i32" DefaultValue="0" />
     <Field Name="edge_style_model" Code="74" Type="EdgeStyleModel" DefaultValue="EdgeStyleModel::NoEdges" ReadConverter="enum_from_number!(EdgeStyleModel, NoEdges, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="edge_style" Code="91" Type="i32" DefaultValue="0" />
-    <Field Name="edge_intersection_color" Code="64" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
-    <Field Name="edge_obscured_color" Code="65" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_intersection_color" Code="64" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
+    <Field Name="edge_obscured_color" Code="65" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="edge_obscured_line_type" Code="75" Type="i16" DefaultValue="0" />
     <Field Name="edge_intersection_line_type" Code="175" Type="i16" DefaultValue="0" />
     <Field Name="edge_crease_angle" Code="42" Type="f64" DefaultValue="0.0" />
     <Field Name="edge_modifiers" Code="92" Type="i32" DefaultValue="0" />
-    <Field Name="edge_color" Code="66" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_color" Code="66" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="edge_opacity_level" Code="43" Type="f64" DefaultValue="0.0" />
     <Field Name="edge_width" Code="76" Type="i16" DefaultValue="0" />
     <Field Name="edge_overhang" Code="77" Type="i16" DefaultValue="0" />
     <Field Name="edge_jitter" Code="78" Type="i16" DefaultValue="0" />
-    <Field Name="edge_silhouette_color" Code="67" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="edge_silhouette_color" Code="67" Type="Color" DefaultValue="Color::by_block()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="edge_silhouette_width" Code="79" Type="i16" DefaultValue="0" />
     <Field Name="edge_halo_gap" Code="170" Type="i16" DefaultValue="0" />
     <Field Name="edge_iso_line_count" Code="171" Type="i32" DefaultValue="0" ReadConverter="i32::from({})" WriteConverter="{} as i16" />

@@ -20,7 +20,7 @@ pub enum DrawingItem<'a> {
 }
 
 impl<'a> DrawingItem<'a> {
-    pub fn get_handle(&self) -> Handle {
+    pub fn handle(&self) -> Handle {
         match self {
             DrawingItem::AppId(ref app_id) => app_id.handle,
             DrawingItem::Block(ref b) => b.handle,
@@ -54,7 +54,7 @@ pub enum DrawingItemMut<'a> {
 }
 
 impl<'a> DrawingItemMut<'a> {
-    pub fn get_handle(&self) -> Handle {
+    pub fn handle(&self) -> Handle {
         match self {
             DrawingItemMut::AppId(ref app_id) => app_id.handle,
             DrawingItemMut::Block(ref b) => b.handle,

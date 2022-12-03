@@ -28,69 +28,69 @@ pub struct Class {
 
 // public implementation
 impl Class {
-    pub fn get_is_erase_allowed(&self) -> bool {
-        self.get_flag(1)
+    pub fn is_erase_allowed(&self) -> bool {
+        self.flag(1)
     }
     pub fn set_is_erase_allowed(&mut self, val: bool) {
         self.set_flag(1, val)
     }
-    pub fn get_is_transform_allowed(&self) -> bool {
-        self.get_flag(2)
+    pub fn is_transform_allowed(&self) -> bool {
+        self.flag(2)
     }
     pub fn set_is_transform_allowed(&mut self, val: bool) {
         self.set_flag(2, val)
     }
-    pub fn get_is_color_change_allowed(&self) -> bool {
-        self.get_flag(4)
+    pub fn is_color_change_allowed(&self) -> bool {
+        self.flag(4)
     }
     pub fn set_is_color_change_allowed(&mut self, val: bool) {
         self.set_flag(4, val)
     }
-    pub fn get_is_layer_change_allowed(&self) -> bool {
-        self.get_flag(8)
+    pub fn is_layer_change_allowed(&self) -> bool {
+        self.flag(8)
     }
     pub fn set_is_layer_change_allowed(&mut self, val: bool) {
         self.set_flag(8, val)
     }
-    pub fn get_is_line_type_change_allowed(&self) -> bool {
-        self.get_flag(16)
+    pub fn is_line_type_change_allowed(&self) -> bool {
+        self.flag(16)
     }
     pub fn set_is_line_type_change_allowed(&mut self, val: bool) {
         self.set_flag(16, val)
     }
-    pub fn get_is_line_type_scale_change_allowed(&self) -> bool {
-        self.get_flag(32)
+    pub fn is_line_type_scale_change_allowed(&self) -> bool {
+        self.flag(32)
     }
     pub fn set_is_line_type_scale_change_allowed(&mut self, val: bool) {
         self.set_flag(32, val)
     }
-    pub fn get_is_visibility_change_allowed(&self) -> bool {
-        self.get_flag(64)
+    pub fn is_visibility_change_allowed(&self) -> bool {
+        self.flag(64)
     }
     pub fn set_is_visibility_change_allowed(&mut self, val: bool) {
         self.set_flag(64, val)
     }
-    pub fn get_is_clone_allowed(&self) -> bool {
-        self.get_flag(128)
+    pub fn is_clone_allowed(&self) -> bool {
+        self.flag(128)
     }
     pub fn set_is_clone_allowed(&mut self, val: bool) {
         self.set_flag(128, val)
     }
-    pub fn get_is_lineweight_change_allowed(&self) -> bool {
-        self.get_flag(256)
+    pub fn is_lineweight_change_allowed(&self) -> bool {
+        self.flag(256)
     }
     pub fn set_is_lineweight_change_allowed(&mut self, val: bool) {
         self.set_flag(256, val)
     }
-    pub fn get_is_plot_style_name_change_allowed(&self) -> bool {
-        self.get_flag(512)
+    pub fn is_plot_style_name_change_allowed(&self) -> bool {
+        self.flag(512)
     }
     pub fn set_is_plot_style_name_change_allowed(&mut self, val: bool) {
         self.set_flag(512, val)
     }
     #[allow(non_snake_case)]
-    pub fn get_is_R13_format_proxy(&self) -> bool {
-        self.get_flag(32768)
+    pub fn is_R13_format_proxy(&self) -> bool {
+        self.flag(32768)
     }
     #[allow(non_snake_case)]
     pub fn set_is_R13_format_proxy(&mut self, val: bool) {
@@ -217,7 +217,7 @@ impl Class {
         drawing.classes.push(class);
         Ok(())
     }
-    fn get_flag(&self, mask: i32) -> bool {
+    fn flag(&self, mask: i32) -> bool {
         self.proxy_capability_flags & mask != 0
     }
     fn set_flag(&mut self, mask: i32, val: bool) {

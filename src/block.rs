@@ -43,50 +43,50 @@ pub struct Block {
 
 // public implementation
 impl Block {
-    pub fn get_owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {
-        drawing.get_item_by_handle(self.__owner_handle)
+    pub fn owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {
+        drawing.item_by_handle(self.__owner_handle)
     }
     pub fn set_owner<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {
         self.__owner_handle = drawing.assign_and_get_handle(item);
     }
-    pub fn get_is_anonymous(&self) -> bool {
-        self.get_flag(1)
+    pub fn is_anonymous(&self) -> bool {
+        self.flag(1)
     }
     pub fn set_is_anonymous(&mut self, val: bool) {
         self.set_flag(1, val)
     }
     pub fn has_non_consistent_attribute_definitions(&self) -> bool {
-        self.get_flag(2)
+        self.flag(2)
     }
     pub fn set_has_non_consistent_attribute_definitions(&mut self, val: bool) {
         self.set_flag(2, val)
     }
-    pub fn get_is_xref(&self) -> bool {
-        self.get_flag(4)
+    pub fn is_xref(&self) -> bool {
+        self.flag(4)
     }
     pub fn set_is_xref(&mut self, val: bool) {
         self.set_flag(4, val)
     }
-    pub fn get_is_xref_overlay(&self) -> bool {
-        self.get_flag(8)
+    pub fn is_xref_overlay(&self) -> bool {
+        self.flag(8)
     }
     pub fn set_is_xref_overlay(&mut self, val: bool) {
         self.set_flag(8, val)
     }
-    pub fn get_is_externally_dependent(&self) -> bool {
-        self.get_flag(16)
+    pub fn is_externally_dependent(&self) -> bool {
+        self.flag(16)
     }
     pub fn set_is_externally_dependent(&mut self, val: bool) {
         self.set_flag(16, val)
     }
-    pub fn get_is_referenced_external_reference(&self) -> bool {
-        self.get_flag(32)
+    pub fn is_referenced_external_reference(&self) -> bool {
+        self.flag(32)
     }
     pub fn set_is_referenced_external_reference(&mut self, val: bool) {
         self.set_flag(32, val)
     }
-    pub fn get_is_resolved_external_reference(&self) -> bool {
-        self.get_flag(64)
+    pub fn is_resolved_external_reference(&self) -> bool {
+        self.flag(64)
     }
     pub fn set_is_resolved_external_reference(&mut self, val: bool) {
         self.set_flag(64, val)
@@ -287,7 +287,7 @@ impl Block {
 
 // private implementation
 impl Block {
-    fn get_flag(&self, mask: i32) -> bool {
+    fn flag(&self, mask: i32) -> bool {
         self.flags & mask != 0
     }
     fn set_flag(&mut self, mask: i32, val: bool) {
@@ -689,7 +689,7 @@ mod tests {
         });
         drawing.add_block(b2);
 
-        let drawing_pairs = drawing.get_code_pairs().unwrap();
+        let drawing_pairs = drawing.code_pairs().unwrap();
         let reparsed = drawing_from_pairs(drawing_pairs);
 
         let blocks = reparsed.blocks().collect::<Vec<_>>();

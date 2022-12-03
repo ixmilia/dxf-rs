@@ -1316,10 +1316,10 @@ impl ViewMode {
             flags: i32::from(val),
         }
     }
-    pub fn get_raw(self) -> i32 {
+    pub fn raw(self) -> i32 {
         self.flags
     }
-    fn get_flag(self, mask: i32) -> bool {
+    fn flag(self, mask: i32) -> bool {
         self.flags & mask != 0
     }
     fn set_flag(&mut self, mask: i32, val: bool) {
@@ -1329,32 +1329,32 @@ impl ViewMode {
             self.flags &= !mask
         }
     }
-    pub fn get_is_perspective_view_active(self) -> bool {
-        self.get_flag(1)
+    pub fn is_perspective_view_active(self) -> bool {
+        self.flag(1)
     }
     pub fn set_is_perspective_view_active(&mut self, val: bool) {
         self.set_flag(1, val)
     }
-    pub fn get_is_front_clipping_on(self) -> bool {
-        self.get_flag(2)
+    pub fn is_front_clipping_on(self) -> bool {
+        self.flag(2)
     }
     pub fn set_is_front_clipping_on(&mut self, val: bool) {
         self.set_flag(2, val)
     }
-    pub fn get_is_back_clipping_on(self) -> bool {
-        self.get_flag(4)
+    pub fn is_back_clipping_on(self) -> bool {
+        self.flag(4)
     }
     pub fn set_is_back_clipping_on(&mut self, val: bool) {
         self.set_flag(4, val)
     }
-    pub fn get_is_ucs_follow_mode_on(self) -> bool {
-        self.get_flag(8)
+    pub fn is_ucs_follow_mode_on(self) -> bool {
+        self.flag(8)
     }
     pub fn set_is_ucs_follow_mode_on(&mut self, val: bool) {
         self.set_flag(8, val)
     }
-    pub fn get_is_front_clipping_at_eye(self) -> bool {
-        self.get_flag(16)
+    pub fn is_front_clipping_at_eye(self) -> bool {
+        self.flag(16)
     }
     pub fn set_is_front_clipping_at_eye(&mut self, val: bool) {
         self.set_flag(16, val)

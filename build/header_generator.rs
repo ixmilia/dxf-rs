@@ -127,7 +127,7 @@ fn generate_flags(fun: &mut String, element: &Element) {
                 }
                 fun.push_str(&format!("    /// {}\n", comment));
                 fun.push_str(&format!(
-                    "    pub fn get_{flag}(&self) -> bool {{\n",
+                    "    pub fn {flag}(&self) -> bool {{\n",
                     flag = name(&f)
                 ));
                 fun.push_str(&format!(
@@ -200,7 +200,7 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                 if code(&v) < 0 {
                     fun.push_str(&format!("self.{field}.set(&pair)?;", field = field(&v)));
                 } else {
-                    let read_cmd = get_read_command(&v);
+                    let read_cmd = read_command(&v);
                     fun.push_str(&format!(
                         "verify_code(&pair, {code})?; self.{field} = {cmd};",
                         code = code(&v),
@@ -217,7 +217,7 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                 let expected_codes: Vec<i32> =
                     variables_with_name.iter().map(|&vv| code(&vv)).collect();
                 for v in &variables_with_name {
-                    let read_cmd = get_read_command(&v);
+                    let read_cmd = read_command(&v);
                     fun.push_str(&format!(
                         "                    {code} => self.{field} = {cmd},\n",
                         code = code(&v),
@@ -240,13 +240,13 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 }
 
-fn get_read_command(element: &Element) -> String {
+fn read_command(element: &Element) -> String {
     let reader_override = reader_override(&element);
     if !reader_override.is_empty() {
         reader_override
     } else {
-        let expected_type = ExpectedType::get_expected_type(code(element)).unwrap();
-        let reader_fun = get_reader_function(&expected_type);
+        let expected_type = ExpectedType::expected_type(code(element)).unwrap();
+        let reader_fun = reader_function(&expected_type);
         let converter = if read_converter(&element).is_empty() {
             String::from("{}")
         } else {
@@ -296,8 +296,7 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
             write_converter(&v).clone()
         };
         if code(&v) > 0 {
-            let expected_type =
-                get_code_pair_type(&ExpectedType::get_expected_type(code(&v)).unwrap());
+            let expected_type = code_pair_type(&ExpectedType::expected_type(code(&v)).unwrap());
             let field_name = field(&v);
             let value = format!("self.{}", field_name);
             let value = write_converter.replace("{}", &*value);

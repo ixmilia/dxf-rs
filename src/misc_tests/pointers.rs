@@ -28,7 +28,7 @@ fn follow_entity_pointer_to_object() {
         } => common,
         _ => panic!("expected a line"),
     };
-    let bound_material = match line_common.get_material(&drawing).unwrap().specific {
+    let bound_material = match line_common.material(&drawing).unwrap().specific {
         ObjectType::Material(ref mat) => mat,
         _ => panic!("expected a material"),
     };
@@ -56,7 +56,7 @@ fn follow_object_pointer_to_entity_collection() {
         ObjectType::Group(ref g) => g,
         _ => panic!("expected a group"),
     };
-    let entity_collection = group.get_entities(&drawing);
+    let entity_collection = group.entities(&drawing);
     assert_eq!(1, entity_collection.len());
     let bound_text = match entity_collection[0].specific {
         EntityType::Text(ref t) => t,
@@ -69,7 +69,7 @@ fn follow_object_pointer_to_entity_collection() {
 fn no_pointer_bound() {
     let drawing = from_section("ENTITIES", vec![CodePair::new_str(0, "LINE")]);
     let entities = drawing.entities().collect::<Vec<_>>();
-    match entities[0].common.get_material(&drawing) {
+    match entities[0].common.material(&drawing) {
         None => (),
         _ => panic!("expected None"),
     }

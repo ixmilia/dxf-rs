@@ -179,7 +179,7 @@ impl Drawing {
         self.save_internal(writer, false)
     }
     /// Gets all code pairs that will be written.
-    pub(crate) fn get_code_pairs(&self) -> DxfResult<Vec<CodePair>> {
+    pub(crate) fn code_pairs(&self) -> DxfResult<Vec<CodePair>> {
         let write_handles = self.header.version >= AcadVersion::R13 || self.header.handles_enabled;
         let mut pairs = Vec::new();
         self.header.add_code_pairs(&mut pairs);
@@ -196,7 +196,7 @@ impl Drawing {
     where
         T: Write + ?Sized,
     {
-        let pairs = self.get_code_pairs()?;
+        let pairs = self.code_pairs()?;
         let text_as_ascii = self.header.version <= AcadVersion::R2004;
         let mut code_pair_writer =
             CodePairWriter::new(writer, as_ascii, text_as_ascii, self.header.version);
@@ -514,7 +514,7 @@ impl Drawing {
         self.__view_ports.sort_by(|a, b| a.name.cmp(&b.name));
     }
     /// Gets a `DrawingItem` with the appropriate handle or `None`.
-    pub fn get_item_by_handle(&'_ self, handle: Handle) -> Option<DrawingItem<'_>> {
+    pub fn item_by_handle(&'_ self, handle: Handle) -> Option<DrawingItem<'_>> {
         for item in &self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItem::AppId(item));
@@ -579,7 +579,7 @@ impl Drawing {
         None
     }
     /// Gets a `DrawingItemMut` with the appropriate handle or `None`.
-    pub fn get_item_by_handle_mut(&'_ mut self, handle: Handle) -> Option<DrawingItemMut<'_>> {
+    pub fn item_by_handle_mut(&'_ mut self, handle: Handle) -> Option<DrawingItemMut<'_>> {
         for item in &mut self.__app_ids {
             if item.handle == handle {
                 return Some(DrawingItemMut::AppId(item));
@@ -644,13 +644,13 @@ impl Drawing {
         None
     }
     pub(crate) fn assign_and_get_handle(&mut self, item: &mut DrawingItemMut) -> Handle {
-        if item.get_handle().is_empty() {
+        if item.handle().is_empty() {
             item.set_handle(self.header.next_available_handle);
             self.header.next_available_handle =
                 self.header.next_available_handle.next_handle_value();
         }
 
-        item.get_handle()
+        item.handle()
     }
 }
 

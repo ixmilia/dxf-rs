@@ -52,7 +52,7 @@ impl Color {
             None
         }
     }
-    pub(crate) fn get_raw_value(&self) -> i16 {
+    pub(crate) fn raw_value(&self) -> i16 {
         self.raw_value
     }
     pub(crate) fn from_raw_value(val: i16) -> Color {
@@ -76,8 +76,8 @@ impl Color {
             raw_value: i16::from(i),
         }
     }
-    pub(crate) fn get_writable_color_value(&self, layer: &Layer) -> i16 {
-        let value = self.get_raw_value().abs();
+    pub(crate) fn writable_color_value(&self, layer: &Layer) -> i16 {
+        let value = self.raw_value().abs();
         if layer.is_layer_on {
             value
         } else {

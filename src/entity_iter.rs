@@ -46,7 +46,7 @@ where
         Ok(())
     }
 
-    fn get_mtext<I>(iter: &mut PutBack<I>) -> DxfResult<Option<MText>>
+    fn mtext<I>(iter: &mut PutBack<I>) -> DxfResult<Option<MText>>
     where
         I: Iterator<Item = Entity>,
     {
@@ -73,7 +73,7 @@ where
                 specific: EntityType::Attribute(ref att),
             }) => {
                 let mut att = att.clone(); // 27 fields
-                match get_mtext(&mut iter) {
+                match mtext(&mut iter) {
                     Ok(Some(m_text)) => att.m_text = m_text,
                     Ok(None) => (),
                     Err(e) => return Err(e),
@@ -89,7 +89,7 @@ where
                 specific: EntityType::AttributeDefinition(ref att),
             }) => {
                 let mut att = att.clone(); // 27 fields
-                match get_mtext(&mut iter) {
+                match mtext(&mut iter) {
                     Ok(Some(m_text)) => att.m_text = m_text,
                     Ok(None) => (),
                     Err(e) => return Err(e),

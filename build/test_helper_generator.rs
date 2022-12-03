@@ -44,7 +44,7 @@ fn generate_entity_helpers(fun: &mut String) {
 
     fun.push_str("#[cfg(test)]\n");
     fun.push_str("#[allow(dead_code)]\n");
-    fun.push_str("pub fn get_all_entity_types() -> Vec<(&'static str, &'static str, EntityType, AcadVersion)> {\n");
+    fun.push_str("pub fn all_entity_types() -> Vec<(&'static str, &'static str, EntityType, AcadVersion)> {\n");
     fun.push_str("    vec![\n");
     for c in &element.children {
         if name(c) != "Entity" && name(c) != "DimensionBase" {
@@ -78,9 +78,7 @@ fn generate_object_helpers(fun: &mut String) {
 
     fun.push_str("#[cfg(test)]\n");
     fun.push_str("#[allow(dead_code)]\n");
-    fun.push_str(
-        "pub fn get_all_object_types() -> Vec<(&'static str, ObjectType, AcadVersion)> {\n",
-    );
+    fun.push_str("pub fn all_object_types() -> Vec<(&'static str, ObjectType, AcadVersion)> {\n");
     fun.push_str("    vec![\n");
     for c in &element.children {
         if name(c) != "Object" {

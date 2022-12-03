@@ -154,7 +154,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     /////////////////////////////////////////////////////////////////// pointers
     for p in &object.children {
         if p.name == "Pointer" {
-            fun.push_str(&*get_methods_for_pointer_access(p));
+            fun.push_str(&*methods_for_pointer_access(p));
         }
     }
 
@@ -172,9 +172,9 @@ fn generate_base_object(fun: &mut String, element: &Element) {
                 // handled below: x_data::XDATA_APPLICATIONNAME
             } else {
                 let read_fun = if allow_multiples(&c) {
-                    format!(".push({})", get_field_reader(&c))
+                    format!(".push({})", field_reader(&c))
                 } else {
-                    format!(" = {}", get_field_reader(&c))
+                    format!(" = {}", field_reader(&c))
                 };
                 fun.push_str(&format!(
                     "            {code} => {{ self.{field}{read_fun} }},\n",
@@ -335,7 +335,7 @@ fn generate_implementation(fun: &mut String, element: &Element) {
                     let flag_name = name(&flag);
                     let mask = attr(&flag, "Mask");
                     implementation.push_str(&format!(
-                        "    pub fn get_{name}(&self) -> bool {{\n",
+                        "    pub fn {name}(&self) -> bool {{\n",
                         name = flag_name
                     ));
                     implementation.push_str(&format!(
@@ -371,7 +371,7 @@ fn generate_implementation(fun: &mut String, element: &Element) {
     // generate pointer methods
     for field in &element.children {
         if field.name == "Pointer" {
-            implementation.push_str(&*get_methods_for_pointer_access(field));
+            implementation.push_str(&*methods_for_pointer_access(field));
         }
     }
 
@@ -478,7 +478,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                         for (i, &cd) in codes(&f).iter().enumerate() {
                             if !seen_codes.contains(&cd) {
                                 seen_codes.insert(cd); // TODO: allow for duplicates
-                                let reader = get_field_reader(&f);
+                                let reader = field_reader(&f);
                                 let codes = codes(&f);
                                 let write_cmd = match codes.len() {
                                     1 => {
@@ -592,7 +592,7 @@ fn generate_write(fun: &mut String, element: &Element) {
     }
 }
 
-fn get_field_with_name<'a>(object: &'a Element, field_name: &String) -> &'a Element {
+fn field_with_name<'a>(object: &'a Element, field_name: &String) -> &'a Element {
     for field in &object.children {
         if name(&field) == *field_name {
             return field;
@@ -628,7 +628,7 @@ fn generate_write_code_pairs(object: &Element) -> Vec<String> {
         if generate_writer(&field) {
             match &*field.name {
                 "Field" | "Pointer" => {
-                    for line in get_write_lines_for_field(&field, vec![]) {
+                    for line in write_lines_for_field(&field, vec![]) {
                         commands.push(line);
                     }
                 }
@@ -647,7 +647,7 @@ fn generate_write_code_pairs_for_write_order(
     match &*write_command.name {
         "WriteField" => {
             let field_name = write_command.attributes.get("Field").unwrap();
-            let field = get_field_with_name(&object, &field_name);
+            let field = field_with_name(&object, &field_name);
             let normalized_field_name = if field.name == "Pointer" {
                 format!("__{}_handle", field_name)
             } else {
@@ -661,7 +661,7 @@ fn generate_write_code_pairs_for_write_order(
                     attr(&write_command, "DontWriteIfValueIs")
                 ));
             }
-            for line in get_write_lines_for_field(&field, write_conditions) {
+            for line in write_lines_for_field(&field, write_conditions) {
                 commands.push(line);
             }
         }
@@ -687,8 +687,8 @@ fn generate_write_code_pairs_for_write_order(
                 ));
             }
             let code = code(&write_command);
-            let expected_type = ExpectedType::get_expected_type(code).unwrap();
-            let typ = get_code_pair_type(&expected_type);
+            let expected_type = ExpectedType::expected_type(code).unwrap();
+            let typ = code_pair_type(&expected_type);
             if predicates.len() > 0 {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
             }
@@ -728,7 +728,7 @@ fn generate_write_code_pairs_for_write_order(
     commands
 }
 
-fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<String> {
+fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<String> {
     let mut commands = vec![];
     let mut predicates = vec![];
     if !min_version(&field).is_empty() {
@@ -755,16 +755,16 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     }
 
     if allow_multiples(&field) {
-        let expected_type = ExpectedType::get_expected_type(codes(&field)[0]).unwrap();
+        let expected_type = ExpectedType::expected_type(codes(&field)[0]).unwrap();
         let val = match (&*field.name, &expected_type) {
             ("Pointer", _) => "*v",
             (_, &ExpectedType::Str) => "&v",
             (_, &ExpectedType::Binary) => "v.clone()",
             _ => "*v",
         };
-        let write_converter = get_write_converter(&field);
+        let write_converter = write_converter(&field);
         let to_write = write_converter.replace("{}", val);
-        let typ = get_code_pair_type(&expected_type);
+        let typ = code_pair_type(&expected_type);
         let normalized_field_name = if field.name == "Pointer" {
             format!("__{}_handle", name(&field))
         } else {
@@ -784,7 +784,7 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
         ));
         commands.push(format!("{indent}}}", indent = indent));
     } else {
-        for command in get_code_pairs_for_field(&field) {
+        for command in code_pairs_for_field(&field) {
             commands.push(format!(
                 "{indent}pairs.push({command});",
                 indent = indent,
@@ -800,10 +800,10 @@ fn get_write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> 
     commands
 }
 
-fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
+fn code_pairs_for_field(field: &Element) -> Vec<String> {
     let codes = codes(&field);
     match codes.len() {
-        1 => vec![get_code_pair_for_field_and_code(codes[0], &field, None)],
+        1 => vec![code_pair_for_field_and_code(codes[0], &field, None)],
         _ => {
             let mut pairs = vec![];
             for (i, &cd) in codes.iter().enumerate() {
@@ -813,21 +813,21 @@ fn get_code_pairs_for_field(field: &Element) -> Vec<String> {
                     2 => "z",
                     _ => panic!("unexpected multiple codes"),
                 };
-                pairs.push(get_code_pair_for_field_and_code(cd, &field, Some(suffix)));
+                pairs.push(code_pair_for_field_and_code(cd, &field, Some(suffix)));
             }
             pairs
         }
     }
 }
 
-fn get_write_converter(field: &Element) -> String {
+fn write_converter(field: &Element) -> String {
     let code = codes(&field)[0];
-    get_write_converter_with_code(code, &field)
+    write_converter_with_code(code, &field)
 }
 
-fn get_write_converter_with_code(code: i32, field: &Element) -> String {
-    let expected_type = ExpectedType::get_expected_type(code).unwrap();
-    let typ = get_code_pair_type(&expected_type);
+fn write_converter_with_code(code: i32, field: &Element) -> String {
+    let expected_type = ExpectedType::expected_type(code).unwrap();
+    let typ = code_pair_type(&expected_type);
     let mut write_converter = attr(&field, "WriteConverter");
     if field.name == "Pointer" {
         write_converter = String::from("&{}.as_string()");
@@ -843,10 +843,10 @@ fn get_write_converter_with_code(code: i32, field: &Element) -> String {
     write_converter
 }
 
-fn get_code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
-    let expected_type = ExpectedType::get_expected_type(code).unwrap();
-    let typ = get_code_pair_type(&expected_type);
-    let write_converter = get_write_converter_with_code(code, &field);
+fn code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
+    let expected_type = ExpectedType::expected_type(code).unwrap();
+    let typ = code_pair_type(&expected_type);
+    let write_converter = write_converter_with_code(code, &field);
     let normalized_field_name = if field.name == "Pointer" {
         format!("__{}_handle", name(&field))
     } else {

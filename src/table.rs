@@ -9,7 +9,7 @@ impl Layer {
     /// Ensure all values are valid.
     pub fn normalize(&mut self) {
         default_if_empty(&mut self.line_type_name, "CONTINUOUS");
-        match self.color.get_raw_value() {
+        match self.color.raw_value() {
             0 | 256 => self.color = Color::from_raw_value(7), // BYLAYER and BYBLOCK aren't valid layer colors
             _ => (),
         }

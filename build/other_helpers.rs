@@ -1,6 +1,6 @@
 use crate::ExpectedType;
 
-pub fn get_reader_function(typ: &ExpectedType) -> &str {
+pub fn reader_function(typ: &ExpectedType) -> &str {
     match typ {
         &ExpectedType::Boolean => "assert_bool",
         &ExpectedType::Integer => "assert_i32",
@@ -12,7 +12,7 @@ pub fn get_reader_function(typ: &ExpectedType) -> &str {
     }
 }
 
-pub fn get_code_pair_type(typ: &ExpectedType) -> String {
+pub fn code_pair_type(typ: &ExpectedType) -> String {
     match typ {
         &ExpectedType::Boolean => String::from("bool"),
         &ExpectedType::Integer => String::from("i32"),

@@ -245,19 +245,19 @@ mod tests {
             "HEADER",
             vec![CodePair::new_str(9, "$OSMODE"), CodePair::new_i16(70, 12)],
         );
-        assert!(!drawing.header.get_end_point_snap());
-        assert!(!drawing.header.get_mid_point_snap());
-        assert!(drawing.header.get_center_snap());
-        assert!(drawing.header.get_node_snap());
-        assert!(!drawing.header.get_quadrant_snap());
-        assert!(!drawing.header.get_intersection_snap());
-        assert!(!drawing.header.get_insertion_snap());
-        assert!(!drawing.header.get_perpendicular_snap());
-        assert!(!drawing.header.get_tangent_snap());
-        assert!(!drawing.header.get_nearest_snap());
-        assert!(!drawing.header.get_apparent_intersection_snap());
-        assert!(!drawing.header.get_extension_snap());
-        assert!(!drawing.header.get_parallel_snap());
+        assert!(!drawing.header.end_point_snap());
+        assert!(!drawing.header.mid_point_snap());
+        assert!(drawing.header.center_snap());
+        assert!(drawing.header.node_snap());
+        assert!(!drawing.header.quadrant_snap());
+        assert!(!drawing.header.intersection_snap());
+        assert!(!drawing.header.insertion_snap());
+        assert!(!drawing.header.perpendicular_snap());
+        assert!(!drawing.header.tangent_snap());
+        assert!(!drawing.header.nearest_snap());
+        assert!(!drawing.header.apparent_intersection_snap());
+        assert!(!drawing.header.extension_snap());
+        assert!(!drawing.header.parallel_snap());
     }
 
     #[test]

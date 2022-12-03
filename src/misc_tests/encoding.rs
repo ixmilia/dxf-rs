@@ -131,7 +131,7 @@ fn round_trip() {
     assert_eq!(1, drawing.layers().count());
 
     // ensure they're still there
-    let drawing = drawing_from_pairs(drawing.get_code_pairs().unwrap());
+    let drawing = drawing_from_pairs(drawing.code_pairs().unwrap());
     assert_eq!(1, drawing.entities().count());
     assert_eq!(1, drawing.layers().count());
 }
@@ -511,7 +511,7 @@ fn round_trip_thumbnail(thumbnail: image::DynamicImage) -> image::DynamicImage {
     drawing.header.version = AcadVersion::R2000; // thumbnails are only written >= R2000
     drawing.thumbnail = Some(thumbnail);
 
-    let drawing_pairs = drawing.get_code_pairs().unwrap();
+    let drawing_pairs = drawing.code_pairs().unwrap();
     assert_vec_contains(
         &drawing_pairs,
         &vec![

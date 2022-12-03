@@ -286,7 +286,7 @@ mod tests {
             },
             specific: ObjectType::AcadProxyObject(AcadProxyObject::default()),
         });
-        drawing.get_code_pairs().unwrap()
+        drawing.code_pairs().unwrap()
     }
 
     #[test]

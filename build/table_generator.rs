@@ -131,9 +131,9 @@ fn generate_table_items(fun: &mut String, element: &Element) {
 
         fun.push_str(&format!("impl {name} {{\n", name = name(&table_item)));
         fun.push_str(
-            "    pub fn get_owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {\n",
+            "    pub fn owner<'a>(&self, drawing: &'a Drawing) -> Option<DrawingItem<'a>> {\n",
         );
-        fun.push_str("        drawing.get_item_by_handle(self.__owner_handle)\n");
+        fun.push_str("        drawing.item_by_handle(self.__owner_handle)\n");
         fun.push_str("    }\n");
         fun.push_str("    pub fn set_owner<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {\n");
         fun.push_str("        self.__owner_handle = drawing.assign_and_get_handle(item);\n");
@@ -233,7 +233,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         for field in &table_item.children {
             if generate_reader(&field) {
                 for (i, &cd) in codes(&field).iter().enumerate() {
-                    let reader = get_field_reader(&field);
+                    let reader = field_reader(&field);
                     let codes = codes(&field);
                     let write_cmd = match codes.len() {
                         1 => {
@@ -384,7 +384,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             type_string = attr(&table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(&item).get_handle().as_string()));\n",
+        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(&item).handle().as_string()));\n",
             item_type=item_type));
         fun.push_str("        }\n");
         fun.push_str("\n");
@@ -445,8 +445,8 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("{indent}            pairs.push(CodePair::new_string({code}, &x.as_string()));\n",
                             indent=indent, code=code));
                     } else {
-                        let expected_type = ExpectedType::get_expected_type(code).unwrap();
-                        let typ = get_code_pair_type(&expected_type);
+                        let expected_type = ExpectedType::expected_type(code).unwrap();
+                        let typ = code_pair_type(&expected_type);
                         let val = match expected_type {
                             ExpectedType::Str => "x",
                             ExpectedType::Binary => "x.clone()",
@@ -474,8 +474,8 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             fun.push_str(&format!("{indent}        pairs.push(CodePair::new_string({code}, &item.__{field}_handle.as_string()));\n",
                                 indent=indent, code=code, field=name(&field)));
                         } else {
-                            let typ = ExpectedType::get_expected_type(code).unwrap();
-                            let typ = get_code_pair_type(&typ);
+                            let typ = ExpectedType::expected_type(code).unwrap();
+                            let typ = code_pair_type(&typ);
                             let value = format!("item.{}", name(&field));
                             let write_converter = if attr(&field, "WriteConverter").is_empty() {
                                 String::from("{}")

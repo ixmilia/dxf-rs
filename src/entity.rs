@@ -49,7 +49,7 @@ impl DimensionBase {
         self.dimension_type = enum_from_number!(DimensionType, Aligned, from_i16, val & 0x0F); // only take the lower 4 bits
         Ok(())
     }
-    pub(crate) fn get_dimension_type(&self) -> i16 {
+    pub(crate) fn dimension_type(&self) -> i16 {
         let mut val = self.dimension_type as i16;
         if self.is_block_reference_referenced_by_this_block_only {
             val |= 32;
@@ -161,14 +161,14 @@ impl Polyline {
 //------------------------------------------------------------------------------
 impl ProxyEntity {
     // lower word
-    pub fn get_object_drawing_format_version(&self) -> i32 {
+    pub fn object_drawing_format_version(&self) -> i32 {
         (self.__object_drawing_format & 0xFFFF) as i32
     }
     pub fn set_object_drawing_format_version(&mut self, version: i32) {
         self.__object_drawing_format |= version as u32 & 0xFFFF;
     }
     // upper word
-    pub fn get_object_maintenance_release_version(&self) -> i32 {
+    pub fn object_maintenance_release_version(&self) -> i32 {
         self.__object_drawing_format as i32 >> 4
     }
     pub fn set_object_mainenance_release_version(&mut self, version: i32) {
@@ -1431,7 +1431,7 @@ impl Entity {
         poly: &Polyline,
         version: AcadVersion,
     ) -> bool {
-        let subclass_marker = if poly.get_is_3d_polyline() || poly.get_is_3d_polygon_mesh() {
+        let subclass_marker = if poly.is_3d_polyline() || poly.is_3d_polygon_mesh() {
             "AcDb3dPolyline"
         } else {
             "AcDb2dPolyline"
@@ -1493,7 +1493,7 @@ impl Entity {
         version: AcadVersion,
     ) -> bool {
         pairs.push(CodePair::new_str(100, "AcDbVertex"));
-        let subclass_marker = if v.get_is_3d_polyline_vertex() || v.get_is_3d_polygon_mesh() {
+        let subclass_marker = if v.is_3d_polyline_vertex() || v.is_3d_polygon_mesh() {
             "AcDb3dPolylineVertex"
         } else {
             "AcDb2dVertex"
@@ -1571,8 +1571,8 @@ impl Entity {
             EntityType::Polyline(ref poly) => {
                 for (v, vertex_handle) in &poly.__vertices_and_handles {
                     let mut v = v.clone();
-                    v.set_is_3d_polyline_vertex(poly.get_is_3d_polyline());
-                    v.set_is_3d_polygon_mesh(poly.get_is_3d_polygon_mesh());
+                    v.set_is_3d_polyline_vertex(poly.is_3d_polyline());
+                    v.set_is_3d_polygon_mesh(poly.is_3d_polygon_mesh());
                     let v = Entity {
                         common: EntityCommon {
                             handle: *vertex_handle,
@@ -2022,8 +2022,8 @@ mod tests {
         let ent = read_entity("IMAGE", vec![CodePair::new_i16(70, 5)]);
         match ent.specific {
             EntityType::Image(ref image) => {
-                assert!(image.get_show_image());
-                assert!(image.get_use_clipping_boundary());
+                assert!(image.show_image());
+                assert!(image.use_clipping_boundary());
             }
             _ => panic!("expected an IMAGE"),
         }
@@ -2873,7 +2873,7 @@ mod tests {
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
 
-        let drawing = drawing_from_pairs(drawing.get_code_pairs().unwrap());
+        let drawing = drawing_from_pairs(drawing.code_pairs().unwrap());
 
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -2923,7 +2923,7 @@ mod tests {
         drawing.header.version = AcadVersion::R13; // MTEXT is only written on R13+
         drawing.add_entity(Entity::new(EntityType::Attribute(att)));
 
-        let drawing = drawing_from_pairs(drawing.get_code_pairs().unwrap());
+        let drawing = drawing_from_pairs(drawing.code_pairs().unwrap());
 
         let entities = drawing.entities().collect::<Vec<_>>();
         assert_eq!(1, entities.len());
@@ -3072,7 +3072,7 @@ mod tests {
 
     #[test]
     fn read_all_types() {
-        for (type_string, subclass, expected_type, _) in all_types::get_all_entity_types() {
+        for (type_string, subclass, expected_type, _) in all_types::all_entity_types() {
             println!("parsing {}/{}", type_string, subclass);
             let mut ent = read_entity(
                 type_string,
@@ -3122,7 +3122,7 @@ mod tests {
 
     #[test]
     fn write_all_types() {
-        for (type_string, _, expected_type, max_version) in all_types::get_all_entity_types() {
+        for (type_string, _, expected_type, max_version) in all_types::all_entity_types() {
             println!("writing {}", type_string);
             let mut common = EntityCommon::default();
             common.extension_data_groups.push(ExtensionGroup {

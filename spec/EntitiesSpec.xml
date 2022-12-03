@@ -14,7 +14,7 @@
     <Field Name="line_type_name" Code="6" Type="String" DefaultValue='String::from("BYLAYER")' DisableWritingDefault="true" />
     <Field Name="elevation" Code="38" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" MaxVersion="R12" />
     <Pointer Name="material" Code="347" Type="Object" SubType="Material" MinVersion="R2007" />
-    <Field Name="color" Code="62" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" DisableWritingDefault="true" />
+    <Field Name="color" Code="62" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" DisableWritingDefault="true" />
     <Field Name="lineweight_enum_value" Code="370" Type="i16" DefaultValue="0" MinVersion="R2000" />
     <Field Name="line_type_scale" Code="48" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R13" />
     <Field Name="is_visible" Code="60" Type="bool" DefaultValue="true" ReadConverter="!as_bool({})" WriteConverter="as_i16(!{})" DisableWritingDefault="true" MinVersion="R13" />
@@ -332,7 +332,7 @@
     <Field Name="block_name" Code="2" Type="String" DefaultValue='String::from("*MODEL_SPACE")' />
     <Field Name="definition_point_1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_mid_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="self.get_dimension_type()" />
+    <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="self.dimension_type()" />
     <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" WriteConverter="{} as i16" MinVersion="R2000" />
     <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
@@ -520,7 +520,7 @@
     <Field Name="__vertices_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__vertices_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="vertices" Code="10" Type="Point" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" />
-    <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="override_color" Code="77" Type="Color" DefaultValue="Color::by_block()" DisableWritingDefault="true" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="associated_annotation_reference" Code="340" Type="String" DefaultValue="String::new()" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" />
     <Field Name="right" Code="211" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="211,221,231" />
@@ -723,7 +723,7 @@
     <Field Name="background_color_rgb" Code="420" Type="i32" DefaultValue="0" />
     <Field Name="background_color_name" Code="430" Type="String" DefaultValue="String::new()" />
     <Field Name="fill_box_scale" Code="45" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
-    <Field Name="background_fill_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="background_fill_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="background_fill_color_transparency" Code="441" Type="i32" DefaultValue="0" />
     <Field Name="column_type" Code="75" Type="i16" DefaultValue="0" />
     <Field Name="column_count" Code="76" Type="i32" DefaultValue="0" ReadConverter="{} as i32" WriteConverter="{} as i16" />
@@ -903,7 +903,7 @@
     <Field Name="top_height" Code="40" Type="f64" DefaultValue="0.0" />
     <Field Name="bottom_height" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="indicator_transparency" Code="70" Type="i16" DefaultValue="0" />
-    <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.get_raw_value()" />
+    <Field Name="indicator_color" Code="63" Type="Color" DefaultValue="Color::by_layer()" ReadConverter="Color::from_raw_value({})" WriteConverter="{}.raw_value()" />
     <Field Name="indicator_color_name" Code="411" Type="String" DefaultValue="String::new()" />
     <Field Name="__vertex_count" Code="92" Type="i32" DefaultValue="0" />
     <Field Name="__vertices_x" Code="11" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />

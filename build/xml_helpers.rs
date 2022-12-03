@@ -50,13 +50,13 @@ pub fn generate_writer(element: &Element) -> bool {
     attr(&element, "GenerateWriter") != "false"
 }
 
-pub fn get_field_reader(element: &Element) -> String {
+pub fn field_reader(element: &Element) -> String {
     let reader_override = attr(&element, "ReaderOverride");
     if !reader_override.is_empty() {
         reader_override
     } else {
-        let expected_type = ExpectedType::get_expected_type(code(&element)).unwrap();
-        let reader_fun = get_reader_function(&expected_type);
+        let expected_type = ExpectedType::expected_type(code(&element)).unwrap();
+        let reader_fun = reader_function(&expected_type);
         let mut read_converter = attr(&element, "ReadConverter");
         if read_converter.is_empty() {
             read_converter = String::from("{}");
@@ -71,7 +71,7 @@ pub fn get_field_reader(element: &Element) -> String {
     }
 }
 
-pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
+pub fn methods_for_pointer_access(pointer: &Element) -> String {
     let mut fun = String::new();
     let typ = attr(&pointer, "Type");
     let sub_type = attr(&pointer, "SubType");
@@ -85,7 +85,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
 
     // get method
     fun.push_str(&format!(
-        "    pub fn get_{name}<'a>(&self, drawing: &'a Drawing) -> {return_type} {{\n",
+        "    pub fn {name}<'a>(&self, drawing: &'a Drawing) -> {return_type} {{\n",
         name = name(&pointer),
         return_type = return_type
     ));
@@ -96,9 +96,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     "        self.{field}.iter().filter_map(|&h| {{\n",
                     field = normalized_field_name
                 ));
-                fun.push_str(&format!(
-                    "            match drawing.get_item_by_handle(h) {{\n"
-                ));
+                fun.push_str(&format!("            match drawing.item_by_handle(h) {{\n"));
                 fun.push_str(&format!(
                     "                Some(DrawingItem::{typ}(val)) => {{\n",
                     typ = typ
@@ -120,9 +118,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     "        self.{field}.iter().filter_map(|&h| {{\n",
                     field = normalized_field_name
                 ));
-                fun.push_str(&format!(
-                    "            match drawing.get_item_by_handle(h) {{\n"
-                ));
+                fun.push_str(&format!("            match drawing.item_by_handle(h) {{\n"));
                 fun.push_str(&format!(
                     "                Some(DrawingItem::{typ}(val)) => Some(val),\n",
                     typ = typ
@@ -133,7 +129,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
             }
         } else {
             fun.push_str(&format!(
-                "        match drawing.get_item_by_handle(self.{field}) {{\n",
+                "        match drawing.item_by_handle(self.{field}) {{\n",
                 field = normalized_field_name
             ));
             if !sub_type.is_empty() {
@@ -161,10 +157,10 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
         }
     } else {
         if allow_multiples(&pointer) {
-            fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| drawing.get_item_by_handle(h)).collect()\n", field=normalized_field_name));
+            fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| drawing.item_by_handle(h)).collect()\n", field=normalized_field_name));
         } else {
             fun.push_str(&format!(
-                "        drawing.get_item_by_handle(self.{field})\n",
+                "        drawing.item_by_handle(self.{field})\n",
                 field = normalized_field_name
             ));
         }
@@ -198,7 +194,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str(&format!(
-                    "        self.{field}.push(DrawingItem::{typ}(item).get_handle());\n",
+                    "        self.{field}.push(DrawingItem::{typ}(item).handle());\n",
                     field = normalized_field_name,
                     typ = typ
                 ));
@@ -210,7 +206,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     name = name(&pointer)
                 ));
                 fun.push_str(&format!(
-                    "        self.{field}.push(item.get_handle());\n",
+                    "        self.{field}.push(item.handle());\n",
                     field = normalized_field_name
                 ));
             }
@@ -241,7 +237,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str(&format!(
-                    "        self.{field} = DrawingItem::{typ}(item).get_handle();\n",
+                    "        self.{field} = DrawingItem::{typ}(item).handle();\n",
                     field = normalized_field_name,
                     typ = typ
                 ));
@@ -253,7 +249,7 @@ pub fn get_methods_for_pointer_access(pointer: &Element) -> String {
                     name = name(&pointer)
                 ));
                 fun.push_str(&format!(
-                    "        self.{field} = item.get_handle();\n",
+                    "        self.{field} = item.handle();\n",
                     field = normalized_field_name
                 ));
             }
