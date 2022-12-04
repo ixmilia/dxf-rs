@@ -154,7 +154,7 @@ impl AutoCAD {
             .save_file(&format!("{}/input.dxf", self.temp_path))
             .unwrap();
         // e.g.,
-        //   acad.exe /b script.scr
+        //   accoreconsole.exe /i /path/to/input.dxf /b script.scr
         let mut input_file = PathBuf::new();
         input_file.push(&self.temp_path);
         input_file.push("input.dxf");
@@ -166,14 +166,11 @@ impl AutoCAD {
         let output_file = output_file.to_str().unwrap();
 
         let mut script_contents = String::new();
-        script_contents.push_str("FILEDIA 0\n");
-        script_contents.push_str(&format!("DXFIN \"{}\"\n", input_file));
         script_contents.push_str(&format!(
             "DXFOUT \"{}\" V {} 16\n",
             output_file,
             &AutoCAD::version_string(version),
         ));
-        script_contents.push_str("FILEDIA 1\n");
         script_contents.push_str("QUIT Y\n");
         let mut script_path = PathBuf::new();
         script_path.push(&self.temp_path);
@@ -182,7 +179,9 @@ impl AutoCAD {
         write(&script_path, &script_contents).expect("failed to write script file");
 
         let mut acad_convert = Command::new(&self.acad_path)
-            .arg("/b")
+            .arg("/i")
+            .arg(input_file)
+            .arg("/s")
             .arg(&script_path)
             .spawn()
             .expect("Failed to spawn acad");
@@ -229,7 +228,7 @@ macro_rules! require_acad {
         // Find AutoCAD.  Final path looks something like:
         //   C:\Program Files\Autodesk\AutoCAD 2016\acad.exe
         let mut full_acad_path = None;
-        for entry in glob("C:/Program Files/Autodesk/AutoCAD */acad.exe")
+        for entry in glob("C:/Program Files/Autodesk/AutoCAD */accoreconsole.exe")
             .expect("failed to glob for acad.exe")
         {
             match entry {
