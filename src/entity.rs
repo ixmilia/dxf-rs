@@ -2719,6 +2719,27 @@ mod tests {
     }
 
     #[test]
+    fn write_arc() {
+        let arc = Arc::new(Point::new(1.0, 2.0, 3.0), 4.0, 90.0, 180.0);
+        let ent = Entity::new(EntityType::Arc(arc));
+        let mut drawing = Drawing::new();
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(100, "AcDbCircle"),
+                CodePair::new_f64(10, 1.0),
+                CodePair::new_f64(20, 2.0),
+                CodePair::new_f64(30, 3.0),
+                CodePair::new_f64(40, 4.0),
+                CodePair::new_str(100, "AcDbArc"),
+                CodePair::new_f64(50, 90.0),
+                CodePair::new_f64(51, 180.0),
+            ],
+        );
+    }
+
+    #[test]
     fn write_dimension() {
         let dim = RadialDimension {
             dimension_base: DimensionBase {
