@@ -1461,6 +1461,7 @@ impl Object {
 
                 match pair.code {
                     100 => {
+                        reading_data = true;
                         continue;
                     } // value should be "AcDbXrecord", but it doesn't really matter
                     5 | 105 => (), // these codes aren't allowed here
