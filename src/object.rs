@@ -1463,7 +1463,7 @@ impl Object {
                     100 => {
                         reading_data = true;
                         continue;
-                    } // value should be "AcDbXrecord", but it doesn't really matter
+                    } // value should be "AcDbXrecord", some dxf files still need to keep the object read
                     5 | 105 => (), // these codes aren't allowed here
                     _ => {
                         xr.data_pairs.push(pair);
