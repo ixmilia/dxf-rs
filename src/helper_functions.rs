@@ -46,7 +46,8 @@ fn epoch<T>(timezone: &T) -> DateTime<T>
 where
     T: TimeZone,
 {
-    timezone.ymd(1900, 1, 1).and_hms(0, 0, 0)
+    // this will never fail; unwrap is ok
+    timezone.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap()
 }
 
 fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
@@ -75,7 +76,7 @@ pub(crate) fn as_datetime_utc(date: f64) -> DateTime<Utc> {
 fn as_datetime_conversion_test() {
     // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
     assert_eq!(
-        Local.ymd(1999, 12, 31).and_hms(21, 58, 35),
+        Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap(),
         as_datetime_local(2_451_544.915_682_87)
     );
 }
@@ -103,7 +104,7 @@ fn as_double_conversion_test() {
     // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
     assert_eq!(
         2_451_544.915_682_870_4,
-        as_double_local(Local.ymd(1999, 12, 31).and_hms(21, 58, 35))
+        as_double_local(Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap())
     );
 }
 
