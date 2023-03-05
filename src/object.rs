@@ -2176,6 +2176,38 @@ mod tests {
     }
 
     #[test]
+    fn read_xrecord_with_extension_data() {
+        let obj = read_object(
+            "XRECORD",
+            vec![
+                CodePair::new_str(102, "{ACAD_REACTORS"),
+                CodePair::new_str(330, "111"),
+                CodePair::new_str(102, "}"),
+                CodePair::new_str(330, "123"),
+                CodePair::new_str(100, "AcDbXrecord"),
+                CodePair::new_str(102, "VTR_0.000_0.000_1.000_1.000_VISUALSTYLE"),
+                CodePair::new_str(340, "2F"),
+            ],
+        );
+        assert_eq!(1, obj.common.extension_data_groups.len());
+        assert_eq!(
+            "ACAD_REACTORS",
+            obj.common.extension_data_groups[0].application_name
+        );
+        match obj.specific {
+            ObjectType::XRecordObject(ref xr) => {
+                assert_eq!(2, xr.data_pairs.len());
+                assert_eq!(102, xr.data_pairs[0].code);
+                assert_eq!(
+                    "VTR_0.000_0.000_1.000_1.000_VISUALSTYLE",
+                    xr.data_pairs[0].value.to_string()
+                );
+            }
+            _ => panic!("expected a xrecord object"),
+        }
+    }
+
+    #[test]
     fn read_all_types() {
         for (type_string, expected_type, _) in all_types::all_object_types() {
             println!("parsing {}", type_string);
