@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::io;
 use std::io::Read;
 use std::time::Duration as StdDuration;
@@ -59,7 +60,11 @@ where
     let duration = if date == 0.0 {
         ChronoDuration::seconds(0)
     } else {
-        f64_to_adjusted_duration(date)
+        let duration = f64_to_adjusted_duration(date);
+        match ChronoDuration::seconds(0).cmp(&duration) {
+            Ordering::Less => duration,
+            _ => ChronoDuration::seconds(0)
+        }
     };
     epoch + duration
 }
