@@ -63,7 +63,7 @@ where
         let duration = f64_to_adjusted_duration(date);
         match ChronoDuration::seconds(0).cmp(&duration) {
             Ordering::Less => duration,
-            _ => ChronoDuration::seconds(0)
+            _ => ChronoDuration::seconds(0),
         }
     };
     epoch + duration
