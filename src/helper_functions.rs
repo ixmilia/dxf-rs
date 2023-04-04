@@ -86,6 +86,18 @@ fn as_datetime_conversion_test() {
     );
 }
 
+#[test]
+fn datetime_out_of_bounds_test() {
+    // these values are out of bounds for acceptable dates
+    let values = vec![2305814.964456019, 1799402.631122685];
+    for value in values {
+        assert_eq!(
+            Local.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
+            as_datetime_local(value)
+        )
+    }
+}
+
 fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
 where
     T: TimeZone,
