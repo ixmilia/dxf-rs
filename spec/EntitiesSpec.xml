@@ -608,6 +608,7 @@
     </Field>
     <Field Name="constant_width" Code="43" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="thickness" Code="39" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="elevation" Code="38" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="vertices" Code="10" Type="LwPolylineVertex" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <WriteOrder>
@@ -615,7 +616,7 @@
       <WriteSpecificValue Code="90" Value="ent.vertices.len() as i32" />
       <WriteField Field="flags" />
       <WriteField Field="constant_width" />
-      <WriteSpecificValue Code="38" Value="common.elevation" DontWriteIfValueIs="0.0" />
+      <WriteField Field="elevation" />
       <WriteField Field="thickness" />
       <Foreach Field="ent.vertices">
         <WriteSpecificValue Code="10" Value="item.x" />
