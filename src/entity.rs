@@ -1118,6 +1118,9 @@ impl Entity {
                 20 => {
                     vec_last!(poly.vertices).y = pair.assert_f64()?;
                 }
+                38 => {
+                    poly.elevation = pair.assert_f64()?;
+                }
                 40 => {
                     vec_last!(poly.vertices).starting_width = pair.assert_f64()?;
                 }
