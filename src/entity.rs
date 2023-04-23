@@ -1101,6 +1101,7 @@ impl Entity {
             }
         }
     }
+    //test
     fn apply_custom_reader_lwpolyline(
         common: &mut EntityCommon,
         poly: &mut LwPolyline,
