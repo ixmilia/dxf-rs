@@ -279,6 +279,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
             fun.push('\n');
 
             // implementation
+            fun.push_str("#[allow(clippy::derivable_impls)]\n");
             fun.push_str(&format!("impl Default for {typ} {{\n", typ = name(c)));
             fun.push_str(&format!("    fn default() -> {typ} {{\n", typ = name(c)));
             fun.push_str(&format!("        {typ} {{\n", typ = name(c)));
@@ -396,23 +397,20 @@ fn generate_is_supported_on_version(fun: &mut String, element: &Element) {
     fun.push_str(
         "    pub(crate) fn is_supported_on_version(&self, version: AcadVersion) -> bool {\n",
     );
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for entity in &element.children {
         if name(entity) != "Entity" && name(entity) != "DimensionBase" {
-            let mut predicates = vec![];
-            if !min_version(entity).is_empty() {
-                predicates.push(format!("version >= AcadVersion::{}", min_version(entity)));
-            }
-            if !max_version(entity).is_empty() {
-                predicates.push(format!("version <= AcadVersion::{}", max_version(entity)));
-            }
-            let predicate = if predicates.is_empty() {
-                String::from("true")
-            } else {
-                predicates.join(" && ")
+            let predicate = match (min_version(entity).as_str(), max_version(entity).as_str()) {
+                ("", "") => "true".into(),
+                ("", max) => format!("version <= AcadVersion::{max}"),
+                (min, "") => format!("version >= AcadVersion::{min}"),
+                (min, max) if min == max => format!("version == AcadVersion::{min}"),
+                (min, max) => {
+                    format!("version >= AcadVersion::{min} && version <= AcadVersion::{max}")
+                }
             };
             fun.push_str(&format!(
-                "            &EntityType::{typ}(_) => {{ {predicate} }},\n",
+                "            EntityType::{typ}(_) => {{ {predicate} }},\n",
                 typ = name(entity),
                 predicate = predicate
             ));
@@ -444,14 +442,14 @@ fn generate_type_string(fun: &mut String, element: &Element) {
     fun.push_str("    }\n");
 
     fun.push_str("    pub(crate) fn to_type_string(&self) -> &str {\n");
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for c in &element.children {
         // only write the first type string given
         let type_string = attr(c, "TypeString");
         let type_strings = type_string.split(',').collect::<Vec<_>>();
         if name(c) != "Entity" && name(c) != "DimensionBase" && !type_string.is_empty() {
             fun.push_str(&format!(
-                "            &EntityType::{typ}(_) => {{ \"{type_string}\" }},\n",
+                "            EntityType::{typ}(_) => {{ \"{type_string}\" }},\n",
                 typ = name(c),
                 type_string = type_strings[0]
             ));
@@ -465,7 +463,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
     fun.push_str(
         "    pub(crate) fn try_apply_code_pair(&mut self, pair: &CodePair) -> DxfResult<bool> {\n",
     );
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for c in &element.children {
         if c.name != "Entity" {
             panic!("expected top level entity");
@@ -474,68 +472,71 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
             if generate_reader_function(c) {
                 let ent = if name(c) == "Seqend" { "_ent" } else { "ent" }; // SEQEND doesn't use this variable
                 fun.push_str(&format!(
-                    "            &mut EntityType::{typ}(ref mut {ent}) => {{\n",
+                    "            EntityType::{typ}(ref mut {ent}) => {{\n",
                     typ = name(c),
                     ent = ent
                 ));
-                fun.push_str("                match pair.code {\n");
-                let mut seen_codes = HashSet::new();
-                for f in &c.children {
-                    if f.name == "Field" && generate_reader(f) {
-                        for (i, &cd) in codes(f).iter().enumerate() {
-                            if !seen_codes.contains(&cd) {
-                                seen_codes.insert(cd); // TODO: allow for duplicates
-                                let reader = field_reader(f);
-                                let codes = codes(f);
-                                let write_cmd = match codes.len() {
-                                    1 => {
-                                        let read_fun = if allow_multiples(f) {
-                                            format!(".push({})", reader)
-                                        } else {
-                                            format!(" = {}", reader)
-                                        };
-                                        format!(
-                                            "ent.{field}{read_fun}",
-                                            field = name(f),
-                                            read_fun = read_fun
-                                        )
-                                    }
-                                    _ => {
-                                        let suffix = match i {
-                                            0 => "x",
-                                            1 => "y",
-                                            2 => "z",
-                                            _ => panic!("impossible"),
-                                        };
-                                        format!(
-                                            "ent.{field}.{suffix} = {reader}",
-                                            field = name(f),
-                                            suffix = suffix,
-                                            reader = reader
-                                        )
-                                    }
-                                };
-                                fun.push_str(&format!(
-                                    "                    {code} => {{ {cmd}; }},\n",
-                                    code = cd,
-                                    cmd = write_cmd
-                                ));
+                if ent == "ent" {
+                    fun.push_str("                match pair.code {\n");
+                    let mut seen_codes = HashSet::new();
+                    for f in &c.children {
+                        if f.name == "Field" && generate_reader(f) {
+                            for (i, &cd) in codes(f).iter().enumerate() {
+                                if !seen_codes.contains(&cd) {
+                                    seen_codes.insert(cd); // TODO: allow for duplicates
+                                    let reader = field_reader(f);
+                                    let codes = codes(f);
+                                    let write_cmd = match codes.len() {
+                                        1 => {
+                                            let read_fun = if allow_multiples(f) {
+                                                format!(".push({})", reader)
+                                            } else {
+                                                format!(" = {}", reader)
+                                            };
+                                            format!(
+                                                "ent.{field}{read_fun}",
+                                                field = name(f),
+                                                read_fun = read_fun
+                                            )
+                                        }
+                                        _ => {
+                                            let suffix = match i {
+                                                0 => "x",
+                                                1 => "y",
+                                                2 => "z",
+                                                _ => panic!("impossible"),
+                                            };
+                                            format!(
+                                                "ent.{field}.{suffix} = {reader}",
+                                                field = name(f),
+                                                suffix = suffix,
+                                                reader = reader
+                                            )
+                                        }
+                                    };
+                                    fun.push_str(&format!(
+                                        "                    {code} => {{ {cmd}; }},\n",
+                                        code = cd,
+                                        cmd = write_cmd
+                                    ));
+                                }
+                            }
+                        } else if f.name == "Pointer" {
+                            if allow_multiples(f) {
+                                fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(f), field=name(f)));
+                            } else {
+                                fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle = pair.as_handle()?; }},\n", code=code(f), field=name(f)));
                             }
                         }
-                    } else if f.name == "Pointer" {
-                        if allow_multiples(f) {
-                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(f), field=name(f)));
-                        } else {
-                            fun.push_str(&format!("                    {code} => {{ ent.__{field}_handle = pair.as_handle()?; }},\n", code=code(f), field=name(f)));
-                        }
                     }
+                    fun.push_str("                    _ => return Ok(false),\n");
+                    fun.push_str("                }\n");
+                } else {
+                    fun.push_str("                return Ok(false);\n")
                 }
-
-                fun.push_str("                    _ => return Ok(false),\n");
-                fun.push_str("                }\n");
                 fun.push_str("            },\n");
             } else {
-                fun.push_str(&format!("            &mut EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(c)));
+                fun.push_str(&format!("            EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom reader\"); }},\n", typ=name(c)));
             }
         }
     }
@@ -547,7 +548,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 
 fn generate_get_code_pairs(fun: &mut String, element: &Element) {
     fun.push_str("    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, common: &EntityCommon, version: AcadVersion) {\n");
-    fun.push_str("        match self {\n");
+    fun.push_str("        match *self {\n");
     for entity in &element.children {
         if name(entity) != "Entity" && name(entity) != "DimensionBase" {
             if generate_writer_function(entity) {
@@ -557,7 +558,7 @@ fn generate_get_code_pairs(fun: &mut String, element: &Element) {
                     "ent"
                 }; // SEQEND doesn't use this variable
                 fun.push_str(&format!(
-                    "            &EntityType::{typ}(ref {ent}) => {{\n",
+                    "            EntityType::{typ}(ref {ent}) => {{\n",
                     typ = name(entity),
                     ent = ent
                 ));
@@ -567,7 +568,7 @@ fn generate_get_code_pairs(fun: &mut String, element: &Element) {
 
                 fun.push_str("            },\n");
             } else {
-                fun.push_str(&format!("            &EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(entity)));
+                fun.push_str(&format!("            EntityType::{typ}(_) => {{ panic!(\"this case should have been covered in a custom writer\"); }},\n", typ=name(entity)));
             }
         }
     }
@@ -729,11 +730,18 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
         predicates.push(format!("version <= AcadVersion::{}", max_version(field)));
     }
     if disable_writing_default(field) {
-        predicates.push(format!(
-            "ent.{field} != {default}",
-            field = name(field),
-            default = default_value(field)
-        ));
+        predicates.push(match default_value(field).as_str() {
+            "true" => format!("!ent.{field}", field = name(field)),
+            "false" => format!("ent.{field}", field = name(field)),
+            default => format!(
+                "ent.{} != {}",
+                name(field),
+                match typ(field).as_str() {
+                    "String" => default.replace("String::from(", "").replace(')', ""),
+                    _ => default.into(),
+                }
+            ),
+        });
     }
     for wc in write_conditions {
         if !wc.is_empty() {
@@ -751,7 +759,7 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
             "&v.as_string()"
         } else {
             match expected_type {
-                ExpectedType::Str => "&v",
+                ExpectedType::Str => "v",
                 ExpectedType::Binary => "v.clone()",
                 _ => "*v",
             }
