@@ -384,7 +384,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             type_string = attr(table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(&item).handle().as_string()));\n",
+        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(item).handle().as_string()));\n",
             item_type=item_type));
         fun.push_str("        }\n");
         fun.push('\n');
