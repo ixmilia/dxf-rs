@@ -16,6 +16,7 @@ targets = []
 
 [features]
 serialize = ["serde", "serde_derive"]
+# images = ["image"]
 
 [dependencies]
 byteorder = "1.3.4"

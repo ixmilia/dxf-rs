@@ -4,9 +4,9 @@ use crate::other_helpers::*;
 use crate::ExpectedType;
 
 pub fn attr(element: &Element, name: &str) -> String {
-    match &element.attributes.get(name) {
-        &Some(v) => v.clone(),
-        &None => String::new(),
+    match element.attributes.get(name) {
+        Some(v) => v.clone(),
+        None => String::new(),
     }
 }
 
@@ -55,7 +55,7 @@ pub fn field_reader(element: &Element) -> String {
     if !reader_override.is_empty() {
         reader_override
     } else {
-        let expected_type = ExpectedType::expected_type(code(element)).unwrap();
+        let expected_type = ExpectedType::new(code(element)).unwrap();
         let reader_fun = reader_function(&expected_type);
         let mut read_converter = attr(element, "ReadConverter");
         if read_converter.is_empty() {
@@ -156,7 +156,10 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
             fun.push_str("        }\n");
         }
     } else if allow_multiples(pointer) {
-        fun.push_str(&format!("        self.{field}.iter().filter_map(|&h| drawing.item_by_handle(h)).collect()\n", field=normalized_field_name));
+        fun.push_str(&format!(
+            "        self.{field}.iter().filter_map(|&h| drawing.item_by_handle(h)).collect()\n",
+            field = normalized_field_name
+        ));
     } else {
         fun.push_str(&format!(
             "        drawing.item_by_handle(self.{field})\n",

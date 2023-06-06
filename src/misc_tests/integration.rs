@@ -314,8 +314,10 @@ fn simple_line_can_be_read_by_acad_r12() {
 fn block_insert_can_be_read_by_acad_r12() {
     let acad = require_acad!();
     let mut drawing = Drawing::new();
-    let mut block = Block::default();
-    block.name = "my-block-name".to_string();
+    let mut block = Block {
+        name: "my-block-name".to_string(),
+        ..Default::default()
+    };
     block.entities.push(Entity {
         common: Default::default(),
         specific: EntityType::Line(Line::new(
@@ -324,8 +326,10 @@ fn block_insert_can_be_read_by_acad_r12() {
         )),
     });
     drawing.add_block(block);
-    let mut insert = Insert::default();
-    insert.name = "my-block-name".to_string();
+    let mut insert = Insert {
+        name: "my-block-name".to_string(),
+        ..Default::default()
+    };
     insert.location = Point::new(3.0, 3.0, 0.0);
     drawing.add_entity(Entity {
         common: Default::default(),

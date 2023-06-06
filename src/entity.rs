@@ -2635,8 +2635,10 @@ mod tests {
     fn write_lw_polyline() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2013;
-        let mut poly = LwPolyline::default();
-        poly.constant_width = 43.0;
+        let mut poly = LwPolyline {
+            constant_width: 43.0,
+            ..Default::default()
+        };
         poly.vertices.push(LwPolylineVertex {
             x: 1.1,
             y: 2.1,
@@ -2800,7 +2802,7 @@ mod tests {
             vec![
                 CodePair::new_str(0, "INSERT"),
                 CodePair::new_i16(66, 1),       // includes attributes
-                CodePair::new_str(0, "ATTRIB"), // these are embedded attributes tied to the `INSERT` enttiy
+                CodePair::new_str(0, "ATTRIB"), // these are embedded attributes tied to the `INSERT` entity
                 CodePair::new_str(0, "ATTRIB"),
                 CodePair::new_str(0, "SEQEND"), // this is an embedded `SEQEND` entity tied to the `INSERT` entity
             ],
@@ -2809,15 +2811,17 @@ mod tests {
         assert_eq!(1, entities.len());
         match entities[0].specific {
             EntityType::Insert(ref ins) => assert_eq!(2, ins.attributes().count()),
-            _ => panic!("exepcted an INSERT"),
+            _ => panic!("expected an INSERT"),
         }
     }
 
     #[test]
     fn write_insert_no_embedded_attributes() {
         let mut drawing = Drawing::new();
-        let mut ins = Insert::default();
-        ins.name = "insert-name".to_string();
+        let ins = Insert {
+            name: "insert-name".to_string(),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_not_contains_pairs(
@@ -2854,8 +2858,10 @@ mod tests {
     fn write_insert_no_extrusion_on_r12() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R12;
-        let mut ins = Insert::default();
-        ins.extrusion_direction = Vector::new(1.0, 2.0, 3.0);
+        let ins = Insert {
+            extrusion_direction: Vector::new(1.0, 2.0, 3.0),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_not_contains_pairs(
@@ -2872,8 +2878,10 @@ mod tests {
     fn write_insert_extrusion_on_r13() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R13;
-        let mut ins = Insert::default();
-        ins.extrusion_direction = Vector::new(1.0, 2.0, 3.0);
+        let ins = Insert {
+            extrusion_direction: Vector::new(1.0, 2.0, 3.0),
+            ..Default::default()
+        };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
         assert_contains_pairs(
@@ -2918,7 +2926,7 @@ mod tests {
         assert_eq!(1, entities.len());
         match entities[0].specific {
             EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
-            _ => panic!("exepcted an attribute"),
+            _ => panic!("expected an attribute"),
         }
     }
 
@@ -3200,8 +3208,10 @@ mod tests {
         file.clear();
         let objects = file.objects().collect::<Vec<_>>();
         assert_eq!(0, objects.len());
-        let mut mline = MLine::default();
-        mline.style_name = String::from("style name");
+        let mline = MLine {
+            style_name: "style name".to_string(),
+            ..Default::default()
+        };
         file.add_entity(Entity::new(EntityType::MLine(mline)));
         file.normalize();
         let objects = file.objects().collect::<Vec<_>>();

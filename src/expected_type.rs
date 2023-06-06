@@ -12,7 +12,7 @@ pub enum ExpectedType {
 
 impl ExpectedType {
     /// Returns an option of the `ExpectedType` for the given code, or `None`.
-    pub fn expected_type(code: i32) -> ::std::option::Option<Self> {
+    pub fn new(code: i32) -> ::std::option::Option<Self> {
         match code {
             0..=9 => Some(ExpectedType::Str),
             10..=39 => Some(ExpectedType::Double),

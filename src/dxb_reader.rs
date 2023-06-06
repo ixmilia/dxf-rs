@@ -161,8 +161,10 @@ impl<T: Read> DxbReader<T> {
         drawing.clear();
         match block_base {
             Some(location) => {
-                let mut block = Block::default();
-                block.base_point = location;
+                let mut block = Block {
+                    base_point: location,
+                    ..Default::default()
+                };
                 block.entities = gathered_entities;
                 drawing.add_block(block);
             }

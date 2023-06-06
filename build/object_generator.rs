@@ -687,7 +687,7 @@ fn generate_write_code_pairs_for_write_order(
                 ));
             }
             let code = code(write_command);
-            let expected_type = ExpectedType::expected_type(code).unwrap();
+            let expected_type = ExpectedType::new(code).unwrap();
             let typ = code_pair_type(&expected_type);
             if !predicates.is_empty() {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
@@ -755,7 +755,7 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
     }
 
     if allow_multiples(field) {
-        let expected_type = ExpectedType::expected_type(codes(field)[0]).unwrap();
+        let expected_type = ExpectedType::new(codes(field)[0]).unwrap();
         let val = match (&*field.name, &expected_type) {
             ("Pointer", _) => "*v",
             (_, &ExpectedType::Str) => "&v",
@@ -826,7 +826,7 @@ fn write_converter(field: &Element) -> String {
 }
 
 fn write_converter_with_code(code: i32, field: &Element) -> String {
-    let expected_type = ExpectedType::expected_type(code).unwrap();
+    let expected_type = ExpectedType::new(code).unwrap();
     let typ = code_pair_type(&expected_type);
     let mut write_converter = attr(field, "WriteConverter");
     if field.name == "Pointer" {
@@ -844,7 +844,7 @@ fn write_converter_with_code(code: i32, field: &Element) -> String {
 }
 
 fn code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
-    let expected_type = ExpectedType::expected_type(code).unwrap();
+    let expected_type = ExpectedType::new(code).unwrap();
     let typ = code_pair_type(&expected_type);
     let write_converter = write_converter_with_code(code, field);
     let normalized_field_name = if field.name == "Pointer" {

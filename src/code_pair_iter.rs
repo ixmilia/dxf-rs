@@ -112,7 +112,7 @@ impl<T: Read> TextCodePairIter<T> {
         };
 
         // construct the value pair
-        let expected_type = match ExpectedType::expected_type(code) {
+        let expected_type = match ExpectedType::new(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
@@ -206,7 +206,7 @@ impl<T: Read> BinaryCodePairIter<T> {
         }
 
         // Read value.  If no data is available die horribly.
-        let expected_type = match ExpectedType::expected_type(code) {
+        let expected_type = match ExpectedType::new(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };

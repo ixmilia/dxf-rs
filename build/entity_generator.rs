@@ -678,7 +678,7 @@ fn generate_write_code_pairs_for_write_order(
                 predicates.push(attr(write_command, "WriteCondition"));
             }
             let code = code(write_command);
-            let expected_type = ExpectedType::expected_type(code).unwrap();
+            let expected_type = ExpectedType::new(code).unwrap();
             let typ = code_pair_type(&expected_type);
             if !predicates.is_empty() {
                 commands.push(format!("if {} {{", predicates.join(" && ")));
@@ -746,7 +746,7 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
     }
 
     if allow_multiples(field) {
-        let expected_type = ExpectedType::expected_type(codes(field)[0]).unwrap();
+        let expected_type = ExpectedType::new(codes(field)[0]).unwrap();
         let val = if field.name == "Pointer" {
             "&v.as_string()"
         } else {
@@ -813,7 +813,7 @@ fn code_pairs_for_field(field: &Element) -> Vec<String> {
 }
 
 fn code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>) -> String {
-    let expected_type = ExpectedType::expected_type(code).unwrap();
+    let expected_type = ExpectedType::new(code).unwrap();
     let typ = code_pair_type(&expected_type);
     let mut write_converter = attr(field, "WriteConverter");
     if field.name == "Pointer" {

@@ -245,7 +245,7 @@ fn read_command(element: &Element) -> String {
     if !reader_override.is_empty() {
         reader_override
     } else {
-        let expected_type = ExpectedType::expected_type(code(element)).unwrap();
+        let expected_type = ExpectedType::new(code(element)).unwrap();
         let reader_fun = reader_function(&expected_type);
         let converter = if read_converter(element).is_empty() {
             String::from("{}")
@@ -296,7 +296,7 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
             write_converter(v).clone()
         };
         if code(v) > 0 {
-            let expected_type = code_pair_type(&ExpectedType::expected_type(code(v)).unwrap());
+            let expected_type = code_pair_type(&ExpectedType::new(code(v)).unwrap());
             let field_name = field(v);
             let value = format!("self.{}", field_name);
             let value = write_converter.replace("{}", &value);

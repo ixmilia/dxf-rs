@@ -445,7 +445,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                         fun.push_str(&format!("{indent}            pairs.push(CodePair::new_string({code}, &x.as_string()));\n",
                             indent=indent, code=code));
                     } else {
-                        let expected_type = ExpectedType::expected_type(code).unwrap();
+                        let expected_type = ExpectedType::new(code).unwrap();
                         let typ = code_pair_type(&expected_type);
                         let val = match expected_type {
                             ExpectedType::Str => "x",
@@ -474,7 +474,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             fun.push_str(&format!("{indent}        pairs.push(CodePair::new_string({code}, &item.__{field}_handle.as_string()));\n",
                                 indent=indent, code=code, field=name(field)));
                         } else {
-                            let typ = ExpectedType::expected_type(code).unwrap();
+                            let typ = ExpectedType::new(code).unwrap();
                             let typ = code_pair_type(&typ);
                             let value = format!("item.{}", name(field));
                             let write_converter = if attr(field, "WriteConverter").is_empty() {

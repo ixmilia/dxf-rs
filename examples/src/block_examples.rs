@@ -14,8 +14,10 @@ fn basic_block_and_insert() -> dxf::DxfResult<()> {
     //
     // create a block with a unique name...
     //
-    let mut block = Block::default();
-    block.name = "my-block-name".to_string();
+    let mut block = Block {
+        name: "my-block-name".to_string(),
+        ..Default::default()
+    };
 
     //
     // ...and populate it with entities
@@ -37,8 +39,10 @@ fn basic_block_and_insert() -> dxf::DxfResult<()> {
     //
     // add a reference to the block with an `INSERT` entity
     //
-    let mut insert = Insert::default();
-    insert.name = "my-block-name".to_string(); // use the same name as the block defined above
+    let mut insert = Insert {
+        name: "my-block-name".to_string(), // use the same name as the block defined above
+        ..Default::default()
+    };
     insert.location = Point::new(3.0, 3.0, 0.0); // select the base-point of the insertion
     drawing.add_entity(Entity {
         common: Default::default(),

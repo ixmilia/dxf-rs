@@ -1130,7 +1130,7 @@ impl Object {
             let pair = next_pair!(iter);
             match pair.code {
                 1 => {
-                    // value should be "SectionTypeSettings", but it doesn't realy matter
+                    // value should be "SectionTypeSettings", but it doesn't really matter
                     while let Some(ts) = SectionTypeSettings::read(iter)? {
                         ss.geometry_settings.push(ts);
                     }
@@ -1655,7 +1655,7 @@ impl Object {
 
         true
     }
-    fn add_post_code_pairs(&self, _pairs: &mut Vec<CodePair>, _version: AcadVersion) {
+    fn add_post_code_pairs(&self, _pairs: &mut [CodePair], _version: AcadVersion) {
         // use the following pattern if this method is needed
         // match self.specific {
         //     _ => (),
