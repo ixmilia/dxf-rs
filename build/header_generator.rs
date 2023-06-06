@@ -198,11 +198,11 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                 // only one variable with that name
                 fun.push(' ');
                 if code(v) < 0 {
-                    fun.push_str(&format!("self.{field}.set(&pair)?;", field = field(v)));
+                    fun.push_str(&format!("self.{field}.set(pair)?;", field = field(v)));
                 } else {
                     let read_cmd = read_command(v);
                     fun.push_str(&format!(
-                        "verify_code(&pair, {code})?; self.{field} = {cmd};",
+                        "verify_code(pair, {code})?; self.{field} = {cmd};",
                         code = code(v),
                         field = field(v),
                         cmd = read_cmd
@@ -266,13 +266,17 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
 
         // prepare writing predicate
         let mut parts = vec![];
-        if !min_version(v).is_empty() {
-            parts.push(format!("self.version >= AcadVersion::{}", min_version(v)));
+        match (min_version(v).as_str(), max_version(v).as_str()) {
+            ("", "") => (),
+            (min, "") => parts.push(format!("self.version >= AcadVersion::{min}")),
+            ("", max) => parts.push(format!("self.version <= AcadVersion::{max}")),
+            (min, max) if min == max => parts.push(format!("self.version == AcadVersion::{min}")),
+            (min, max) => {
+                parts.push(format!("self.version >= AcadVersion::{min}"));
+                parts.push(format!("self.version <= AcadVersion::{max}"));
+            }
         }
-        if !max_version(v).is_empty() {
-            parts.push(format!("self.version <= AcadVersion::{}", max_version(v)));
-        }
-        if dont_write_default(v) {
+        if do_not_write_default(v) {
             parts.push(format!("self.{} != {}", field(v), default_value(v)));
         }
         let indent = match parts.len() {
@@ -342,7 +346,7 @@ fn load_xml() -> Element {
     Element::parse(file).unwrap()
 }
 
-fn dont_write_default(element: &Element) -> bool {
+fn do_not_write_default(element: &Element) -> bool {
     attr(element, "DontWriteDefault") == "true"
 }
 
