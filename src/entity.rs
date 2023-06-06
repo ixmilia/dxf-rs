@@ -669,8 +669,8 @@ impl Entity {
         }
     }
     fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
-        if !self.specific.try_apply_code_pair(&pair)? {
-            self.common.apply_individual_pair(&pair, iter)?;
+        if !self.specific.try_apply_code_pair(pair)? {
+            self.common.apply_individual_pair(pair, iter)?;
         }
         Ok(())
     }
@@ -1564,7 +1564,7 @@ impl Entity {
                     };
                     a.add_code_pairs(pairs, version, write_handles);
                 }
-                if ins.__attributes_and_handles.len() > 0 {
+                if !ins.__attributes_and_handles.is_empty() {
                     Entity::add_code_pairs_seqend(pairs, &ins.__seqend_handle, write_handles);
                 }
             }

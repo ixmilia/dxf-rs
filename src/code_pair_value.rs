@@ -217,10 +217,7 @@ pub(crate) fn un_escape_ascii_to_unicode(val: &str) -> String {
                 if seq.starts_with("\\U+") {
                     let code_str = &seq[3..];
                     let decoded = match u32::from_str_radix(code_str, 16) {
-                        Ok(code) => match std::char::from_u32(code) {
-                            Some(c) => c,
-                            None => '?',
-                        },
+                        Ok(code) => std::char::from_u32(code).unwrap_or('?'),
                         Err(_) => '?',
                     };
                     result.push(decoded);

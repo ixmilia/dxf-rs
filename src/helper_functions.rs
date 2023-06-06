@@ -591,7 +591,7 @@ pub mod tests {
     }
 
     pub fn assert_contains(drawing: &Drawing, contents: String) {
-        let actual = to_test_string(&drawing);
+        let actual = to_test_string(drawing);
         assert!(actual.contains(&contents));
     }
 
@@ -621,7 +621,7 @@ pub mod tests {
     where
         T: PartialEq,
     {
-        let actual_index = try_find_index(&actual, &expected);
+        let actual_index = try_find_index(actual, expected);
         assert!(actual_index.is_some());
     }
 
@@ -636,7 +636,7 @@ pub mod tests {
     }
 
     pub fn assert_not_contains(drawing: &Drawing, contents: String) {
-        let actual = to_test_string(&drawing);
+        let actual = to_test_string(drawing);
         assert!(!actual.contains(&contents));
     }
 

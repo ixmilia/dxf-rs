@@ -157,8 +157,8 @@ impl Object {
         }
     }
     fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
-        if !self.specific.try_apply_code_pair(&pair)? {
-            self.common.apply_individual_pair(&pair, iter)?;
+        if !self.specific.try_apply_code_pair(pair)? {
+            self.common.apply_individual_pair(pair, iter)?;
         }
         Ok(())
     }
@@ -1583,7 +1583,7 @@ impl Object {
                 for light in &ll.__lights_handle {
                     pairs.push(CodePair::new_string(5, &light.as_string()));
                     // TODO: write the light's real name
-                    pairs.push(CodePair::new_string(1, &String::new()));
+                    pairs.push(CodePair::new_string(1, ""));
                 }
             }
             ObjectType::SectionSettings(ref ss) => {
@@ -2224,7 +2224,7 @@ mod tests {
 
             // validate specific
             match (&expected_type, &obj.specific) {
-                (&ObjectType::LayerIndex(ref a), &ObjectType::LayerIndex(ref b)) => {
+                (ObjectType::LayerIndex(a), ObjectType::LayerIndex(b)) => {
                     // LayerIndex has a timestamp that will obviously differ; the remaining fields must be checked manually
                     assert_eq!(a.layer_names, b.layer_names);
                     assert_eq!(a.__id_buffers_handle, b.__id_buffers_handle);

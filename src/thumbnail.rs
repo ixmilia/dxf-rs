@@ -75,12 +75,12 @@ fn read_thumbnail_bytes_from_code_pairs(iter: &mut CodePairPutBack) -> DxfResult
 
 fn update_thumbnail_data_offset_in_situ(data: &mut Vec<u8>) -> DxfResult<bool> {
     // calculate the image data offset
-    let dib_header_size = read_i32(&data, FILE_HEADER_LENGTH)? as usize;
+    let dib_header_size = read_i32(data, FILE_HEADER_LENGTH)? as usize;
 
     // calculate the palette size
     let palette_size = if dib_header_size >= BITMAP_HEADER_PALETTE_COUNT_OFFSET + 4 {
         let palette_color_count = read_u32(
-            &data,
+            data,
             FILE_HEADER_LENGTH + BITMAP_HEADER_PALETTE_COUNT_OFFSET,
         )? as usize;
         palette_color_count * 4 // always 4 bytes: BGRA
@@ -196,7 +196,7 @@ fn set_thumbnail_offset_for_bitmapv4header_palette_256() {
 }
 
 fn read_thumbnail_from_bytes(data: &[u8]) -> DxfResult<Option<image::DynamicImage>> {
-    let image = image::load_from_memory(&data)?;
+    let image = image::load_from_memory(data)?;
     Ok(Some(image))
 }
 

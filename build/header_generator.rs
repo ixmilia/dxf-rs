@@ -66,24 +66,24 @@ fn generate_struct(fun: &mut String, element: &Element) {
         let field_name = field(v);
         if !seen_fields.contains(&field_name) {
             seen_fields.insert(field_name.clone());
-            let mut comment = format!("The ${} header variable.  {}", name(&v), comment(&v));
-            if !min_version(&v).is_empty() {
-                comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(&v)));
+            let mut comment = format!("The ${} header variable.  {}", name(v), comment(v));
+            if !min_version(v).is_empty() {
+                comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(v)));
             }
-            if !max_version(&v).is_empty() {
-                comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
+            if !max_version(v).is_empty() {
+                comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(v)));
             }
             fun.push_str(&format!("    /// {}\n", comment));
             fun.push_str(&format!(
                 "    pub {field}: {typ},\n",
-                field = field(&v),
-                typ = typ(&v)
+                field = field(v),
+                typ = typ(v)
             ));
         }
     }
 
     fun.push_str("}\n");
-    fun.push_str("\n");
+    fun.push('\n');
 }
 
 fn generate_default(fun: &mut String, element: &Element) {
@@ -92,13 +92,13 @@ fn generate_default(fun: &mut String, element: &Element) {
     fun.push_str("    fn default() -> Self {\n");
     fun.push_str("        Header {\n");
     for v in &element.children {
-        if !seen_fields.contains(&field(&v)) {
-            seen_fields.insert(field(&v));
+        if !seen_fields.contains(&field(v)) {
+            seen_fields.insert(field(v));
             fun.push_str(&format!(
                 "            {field}: {default_value}, // ${name}\n",
-                field = field(&v),
-                default_value = default_value(&v),
-                name = name(&v)
+                field = field(v),
+                default_value = default_value(v),
+                name = name(v)
             ));
         }
     }
@@ -106,53 +106,53 @@ fn generate_default(fun: &mut String, element: &Element) {
     fun.push_str("        }\n");
     fun.push_str("    }\n");
     fun.push_str("}\n");
-    fun.push_str("\n");
+    fun.push('\n');
 }
 
 fn generate_flags(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     for v in &element.children {
-        if !seen_fields.contains(&field(&v)) {
-            seen_fields.insert(field(&v));
-            if v.children.len() > 0 {
-                fun.push_str(&format!("    // {} flags\n", field(&v)));
+        if !seen_fields.contains(&field(v)) {
+            seen_fields.insert(field(v));
+            if !v.children.is_empty() {
+                fun.push_str(&format!("    // {} flags\n", field(v)));
             }
             for f in &v.children {
-                let mut comment = format!("{}", comment(&f));
-                if !min_version(&v).is_empty() {
-                    comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(&v)));
+                let mut comment = comment(f).to_string();
+                if !min_version(v).is_empty() {
+                    comment.push_str(&format!("  Minimum AutoCAD version: {}.", min_version(v)));
                 }
-                if !max_version(&v).is_empty() {
-                    comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(&v)));
+                if !max_version(v).is_empty() {
+                    comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(v)));
                 }
                 fun.push_str(&format!("    /// {}\n", comment));
                 fun.push_str(&format!(
                     "    pub fn {flag}(&self) -> bool {{\n",
-                    flag = name(&f)
+                    flag = name(f)
                 ));
                 fun.push_str(&format!(
                     "        self.{field} & {mask} != 0\n",
-                    field = field(&v),
-                    mask = mask(&f)
+                    field = field(v),
+                    mask = mask(f)
                 ));
                 fun.push_str("    }\n");
                 fun.push_str(&format!("    /// {}\n", comment));
                 fun.push_str(&format!(
                     "    pub fn set_{flag}(&mut self, val: bool) {{\n",
-                    flag = name(&f)
+                    flag = name(f)
                 ));
-                fun.push_str(&format!("        if val {{\n"));
+                fun.push_str("        if val {\n");
                 fun.push_str(&format!(
                     "            self.{field} |= {mask};\n",
-                    field = field(&v),
-                    mask = mask(&f)
+                    field = field(v),
+                    mask = mask(f)
                 ));
                 fun.push_str("        }\n");
                 fun.push_str("        else {\n");
                 fun.push_str(&format!(
                     "            self.{field} &= !{mask};\n",
-                    field = field(&v),
-                    mask = mask(&f)
+                    field = field(v),
+                    mask = mask(f)
                 ));
                 fun.push_str("        }\n");
                 fun.push_str("    }\n");
@@ -166,13 +166,13 @@ fn generate_set_defaults(fun: &mut String, element: &Element) {
     fun.push_str("    /// Sets the default values on the header.\n");
     fun.push_str("    pub fn set_defaults(&mut self) {\n");
     for v in &element.children {
-        if !seen_fields.contains(&field(&v)) {
-            seen_fields.insert(field(&v));
+        if !seen_fields.contains(&field(v)) {
+            seen_fields.insert(field(v));
             fun.push_str(&format!(
                 "        self.{field} = {default_value}; // ${name}\n",
-                field = field(&v),
-                default_value = default_value(&v),
-                name = name(&v)
+                field = field(v),
+                default_value = default_value(v),
+                name = name(v)
             ));
         }
     }
@@ -186,42 +186,42 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
     fun.push_str("    pub(crate) fn set_header_value(&mut self, variable: &str, pair: &CodePair) -> DxfResult<()> {\n");
     fun.push_str("        match variable {\n");
     for v in &element.children {
-        if !seen_fields.contains(&field(&v)) {
-            seen_fields.insert(field(&v));
-            fun.push_str(&format!("            \"${name}\" => {{", name = name(&v)));
+        if !seen_fields.contains(&field(v)) {
+            seen_fields.insert(field(v));
+            fun.push_str(&format!("            \"${name}\" => {{", name = name(v)));
             let variables_with_name: Vec<&Element> = element
                 .children
                 .iter()
-                .filter(|&vv| name(&vv) == name(&v))
+                .filter(|&vv| name(vv) == name(v))
                 .collect();
             if variables_with_name.len() == 1 {
                 // only one variable with that name
-                fun.push_str(" ");
-                if code(&v) < 0 {
-                    fun.push_str(&format!("self.{field}.set(&pair)?;", field = field(&v)));
+                fun.push(' ');
+                if code(v) < 0 {
+                    fun.push_str(&format!("self.{field}.set(&pair)?;", field = field(v)));
                 } else {
-                    let read_cmd = read_command(&v);
+                    let read_cmd = read_command(v);
                     fun.push_str(&format!(
                         "verify_code(&pair, {code})?; self.{field} = {cmd};",
-                        code = code(&v),
-                        field = field(&v),
+                        code = code(v),
+                        field = field(v),
                         cmd = read_cmd
                     ));
                 }
 
-                fun.push_str(" ");
+                fun.push(' ');
             } else {
                 // multiple variables with that name
-                fun.push_str("\n");
+                fun.push('\n');
                 fun.push_str("                match pair.code {\n");
                 let expected_codes: Vec<i32> =
-                    variables_with_name.iter().map(|&vv| code(&vv)).collect();
+                    variables_with_name.iter().map(|&vv| code(vv)).collect();
                 for v in &variables_with_name {
-                    let read_cmd = read_command(&v);
+                    let read_cmd = read_command(v);
                     fun.push_str(&format!(
                         "                    {code} => self.{field} = {cmd},\n",
-                        code = code(&v),
-                        field = field(&v),
+                        code = code(v),
+                        field = field(v),
                         cmd = read_cmd
                     ));
                 }
@@ -235,22 +235,22 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
     }
     fun.push_str("            _ => (),\n");
     fun.push_str("        }\n");
-    fun.push_str("\n");
+    fun.push('\n');
     fun.push_str("        Ok(())\n");
     fun.push_str("    }\n");
 }
 
 fn read_command(element: &Element) -> String {
-    let reader_override = reader_override(&element);
+    let reader_override = reader_override(element);
     if !reader_override.is_empty() {
         reader_override
     } else {
         let expected_type = ExpectedType::expected_type(code(element)).unwrap();
         let reader_fun = reader_function(&expected_type);
-        let converter = if read_converter(&element).is_empty() {
+        let converter = if read_converter(element).is_empty() {
             String::from("{}")
         } else {
-            read_converter(&element).clone()
+            read_converter(element)
         };
         converter.replace("{}", &format!("pair.{}()?", reader_fun))
     }
@@ -260,20 +260,20 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
     fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str("    pub(crate) fn add_code_pairs_internal(&self, pairs: &mut Vec<CodePair>) {\n");
     for v in &element.children {
-        if suppress_writing(&v) {
+        if suppress_writing(v) {
             continue;
         }
 
         // prepare writing predicate
         let mut parts = vec![];
-        if !min_version(&v).is_empty() {
-            parts.push(format!("self.version >= AcadVersion::{}", min_version(&v)));
+        if !min_version(v).is_empty() {
+            parts.push(format!("self.version >= AcadVersion::{}", min_version(v)));
         }
-        if !max_version(&v).is_empty() {
-            parts.push(format!("self.version <= AcadVersion::{}", max_version(&v)));
+        if !max_version(v).is_empty() {
+            parts.push(format!("self.version <= AcadVersion::{}", max_version(v)));
         }
-        if dont_write_default(&v) {
-            parts.push(format!("self.{} != {}", field(&v), default_value(&v)));
+        if dont_write_default(v) {
+            parts.push(format!("self.{} != {}", field(v), default_value(v)));
         }
         let indent = match parts.len() {
             0 => "",
@@ -281,42 +281,42 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
         };
 
         // write the value
-        fun.push_str(&format!("        // ${}\n", name(&v)));
-        if parts.len() > 0 {
+        fun.push_str(&format!("        // ${}\n", name(v)));
+        if !parts.is_empty() {
             fun.push_str(&format!("        if {} {{\n", parts.join(" && ")));
         }
         fun.push_str(&format!(
             "        {indent}pairs.push(CodePair::new_str(9, \"${name}\"));\n",
-            name = name(&v),
+            name = name(v),
             indent = indent
         ));
-        let write_converter = if write_converter(&v).is_empty() {
+        let write_converter = if write_converter(v).is_empty() {
             String::from("{}")
         } else {
-            write_converter(&v).clone()
+            write_converter(v).clone()
         };
-        if code(&v) > 0 {
-            let expected_type = code_pair_type(&ExpectedType::expected_type(code(&v)).unwrap());
-            let field_name = field(&v);
+        if code(v) > 0 {
+            let expected_type = code_pair_type(&ExpectedType::expected_type(code(v)).unwrap());
+            let field_name = field(v);
             let value = format!("self.{}", field_name);
-            let value = write_converter.replace("{}", &*value);
+            let value = write_converter.replace("{}", &value);
             fun.push_str(&format!(
                 "        {indent}pairs.push(CodePair::new_{typ}({code}, {value}));\n",
-                code = code(&v),
+                code = code(v),
                 value = value,
                 typ = expected_type,
                 indent = indent
             ));
         } else {
             // write a point or vector as it's components
-            for i in 0..code(&v).abs() {
+            for i in 0..code(v).abs() {
                 let (code, fld) = match i {
                     0 => (10, "x"),
                     1 => (20, "y"),
                     2 => (30, "z"),
                     _ => panic!("unexpected number of values"),
                 };
-                let value = write_converter.replace("{}", &format!("self.{}.{}", field(&v), fld));
+                let value = write_converter.replace("{}", &format!("self.{}.{}", field(v), fld));
                 fun.push_str(&format!(
                     "        {indent}pairs.push(CodePair::new_f64({code}, {value}));\n",
                     code = code,
@@ -325,12 +325,12 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
                 ));
             }
         }
-        if parts.len() > 0 {
+        if !parts.is_empty() {
             fun.push_str("        }\n");
         }
 
         // newline between values
-        fun.push_str("\n");
+        fun.push('\n');
     }
 
     fun.push_str("    }\n");

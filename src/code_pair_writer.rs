@@ -53,7 +53,7 @@ impl<'a, T: Write + ?Sized> CodePairWriter<'a, T> {
             .write_fmt(format_args!("{: >3}\r\n", pair.code))?;
         match pair.value {
             CodePairValue::Str(ref s) => {
-                let s = escape_control_characters(&s);
+                let s = escape_control_characters(s);
                 let s = if self.text_as_ascii {
                     escape_unicode_to_ascii(&s)
                 } else {
@@ -124,7 +124,7 @@ mod tests {
             version: AcadVersion::R2004,
         };
         writer
-            .write_binary_code_pair(&pair)
+            .write_binary_code_pair(pair)
             .expect("expected write to succeed");
         buf.seek(SeekFrom::Start(0))
             .expect("expected seek to succeed");
@@ -140,7 +140,7 @@ mod tests {
             version: AcadVersion::R2004,
         };
         writer
-            .write_ascii_code_pair(&pair)
+            .write_ascii_code_pair(pair)
             .expect("expected write to succeed");
         buf.seek(SeekFrom::Start(0))
             .expect("expected seek to succeed");

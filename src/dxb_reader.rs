@@ -114,7 +114,7 @@ impl<T: Read> DxbReader<T> {
                 // other
                 DxbItemType::BlockBase => {
                     let loc = Point::new(self.read_n()?, self.read_n()?, 0.0);
-                    if block_base == None && entities.is_empty() {
+                    if block_base.is_none() && entities.is_empty() {
                         // only if this is the first item encountered
                         block_base = Some(loc);
                     } else {

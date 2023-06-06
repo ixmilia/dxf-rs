@@ -99,7 +99,7 @@ impl CodePair {
 impl CodePair {
     pub(crate) fn as_handle(&self) -> DxfResult<Handle> {
         let mut bytes = vec![];
-        parse_hex_string(&self.assert_string()?.trim(), &mut bytes, self.offset)?;
+        parse_hex_string(self.assert_string()?.trim(), &mut bytes, self.offset)?;
         while bytes.len() < 8 {
             bytes.insert(0, 0);
         }
