@@ -217,6 +217,7 @@ fn generate_base_object(fun: &mut String, element: &Element) {
 }
 
 fn generate_object_types(fun: &mut String, element: &Element) {
+    fun.push_str("#[allow(clippy::large_enum_variant)]\n");
     fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
     fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
     fun.push_str("pub enum ObjectType {\n");
@@ -285,6 +286,7 @@ fn generate_object_types(fun: &mut String, element: &Element) {
             fun.push('\n');
 
             // implementation
+            fun.push_str("#[allow(clippy::derivable_impls)]\n");
             fun.push_str(&format!("impl Default for {typ} {{\n", typ = name(c)));
             fun.push_str(&format!("    fn default() -> {typ} {{\n", typ = name(c)));
             fun.push_str(&format!("        {typ} {{\n", typ = name(c)));
@@ -471,61 +473,65 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                     typ = name(c),
                     obj = obj
                 ));
-                fun.push_str("                match pair.code {\n");
-                let mut seen_codes = HashSet::new();
-                for f in &c.children {
-                    if f.name == "Field" && generate_reader(f) {
-                        for (i, &cd) in codes(f).iter().enumerate() {
-                            if !seen_codes.contains(&cd) {
-                                seen_codes.insert(cd); // TODO: allow for duplicates
-                                let reader = field_reader(f);
-                                let codes = codes(f);
-                                let write_cmd = match codes.len() {
-                                    1 => {
-                                        let read_fun = if allow_multiples(f) {
-                                            format!(".push({})", reader)
-                                        } else {
-                                            format!(" = {}", reader)
-                                        };
-                                        format!(
-                                            "obj.{field}{read_fun}",
-                                            field = name(f),
-                                            read_fun = read_fun
-                                        )
-                                    }
-                                    _ => {
-                                        let suffix = match i {
-                                            0 => "x",
-                                            1 => "y",
-                                            2 => "z",
-                                            _ => panic!("impossible"),
-                                        };
-                                        format!(
-                                            "obj.{field}.{suffix} = {reader}",
-                                            field = name(f),
-                                            suffix = suffix,
-                                            reader = reader
-                                        )
-                                    }
-                                };
-                                fun.push_str(&format!(
-                                    "                    {code} => {{ {cmd}; }},\n",
-                                    code = cd,
-                                    cmd = write_cmd
-                                ));
+                if obj == "obj" {
+                    fun.push_str("                match pair.code {\n");
+                    let mut seen_codes = HashSet::new();
+                    for f in &c.children {
+                        if f.name == "Field" && generate_reader(f) {
+                            for (i, &cd) in codes(f).iter().enumerate() {
+                                if !seen_codes.contains(&cd) {
+                                    seen_codes.insert(cd); // TODO: allow for duplicates
+                                    let reader = field_reader(f);
+                                    let codes = codes(f);
+                                    let write_cmd = match codes.len() {
+                                        1 => {
+                                            let read_fun = if allow_multiples(f) {
+                                                format!(".push({})", reader)
+                                            } else {
+                                                format!(" = {}", reader)
+                                            };
+                                            format!(
+                                                "obj.{field}{read_fun}",
+                                                field = name(f),
+                                                read_fun = read_fun
+                                            )
+                                        }
+                                        _ => {
+                                            let suffix = match i {
+                                                0 => "x",
+                                                1 => "y",
+                                                2 => "z",
+                                                _ => panic!("impossible"),
+                                            };
+                                            format!(
+                                                "obj.{field}.{suffix} = {reader}",
+                                                field = name(f),
+                                                suffix = suffix,
+                                                reader = reader
+                                            )
+                                        }
+                                    };
+                                    fun.push_str(&format!(
+                                        "                    {code} => {{ {cmd}; }},\n",
+                                        code = cd,
+                                        cmd = write_cmd
+                                    ));
+                                }
+                            }
+                        } else if f.name == "Pointer" {
+                            if allow_multiples(f) {
+                                fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(f), field=name(f)));
+                            } else {
+                                fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle = pair.as_handle()?; }},\n", code=code(f), field=name(f)));
                             }
                         }
-                    } else if f.name == "Pointer" {
-                        if allow_multiples(f) {
-                            fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle.push(pair.as_handle()?); }},\n", code=code(f), field=name(f)));
-                        } else {
-                            fun.push_str(&format!("                    {code} => {{ obj.__{field}_handle = pair.as_handle()?; }},\n", code=code(f), field=name(f)));
-                        }
                     }
-                }
 
-                fun.push_str("                    _ => return Ok(false),\n");
-                fun.push_str("                }\n");
+                    fun.push_str("                    _ => return Ok(false),\n");
+                    fun.push_str("                }\n");
+                } else {
+                    fun.push_str("                return Ok(false);\n");
+                }
                 fun.push_str("            },\n");
             } else {
                 // ensure no read converters were specified (because they won't be used)
@@ -550,7 +556,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
 
 fn generate_write(fun: &mut String, element: &Element) {
     let mut unused_writers = vec![];
-    fun.push_str("    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
+    fun.push_str("\n    #[allow(clippy::cognitive_complexity)] // long function, no good way to simplify this\n");
     fun.push_str(
         "    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {\n",
     );
@@ -757,13 +763,13 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
     if allow_multiples(field) {
         let expected_type = ExpectedType::new(codes(field)[0]).unwrap();
         let val = match (&*field.name, &expected_type) {
-            ("Pointer", _) => "*v",
+            ("Pointer", _) => "v",
             (_, &ExpectedType::Str) => "&v",
             (_, &ExpectedType::Binary) => "v.clone()",
             _ => "*v",
         };
         let write_converter = write_converter(field);
-        let to_write = write_converter.replace("{}", val);
+        let to_write = write_converter.replace("{}", val).replace("&&", "");
         let typ = code_pair_type(&expected_type);
         let normalized_field_name = if field.name == "Pointer" {
             format!("__{}_handle", name(field))
