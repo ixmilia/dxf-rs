@@ -306,7 +306,7 @@ impl Object {
                 Object::apply_custom_reader_sunstudy(&mut self.common, ss, iter)
             }
             ObjectType::TableStyle(ref mut ts) => {
-                Object::apply_custom_reader_tabletyle(&mut self.common, ts, iter)
+                Object::apply_custom_reader_tablestyle(&mut self.common, ts, iter)
             }
             ObjectType::XRecordObject(ref mut xr) => {
                 Object::apply_custom_reader_xrecordobject(&mut self.common, xr, iter)
@@ -1384,7 +1384,7 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_tabletyle(
+    fn apply_custom_reader_tablestyle(
         common: &mut ObjectCommon,
         ts: &mut TableStyle,
         iter: &mut CodePairPutBack,
