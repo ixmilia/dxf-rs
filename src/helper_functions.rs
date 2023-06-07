@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::io;
 use std::io::Read;
 use std::time::Duration as StdDuration;
@@ -59,7 +60,11 @@ where
     let duration = if date == 0.0 {
         ChronoDuration::seconds(0)
     } else {
-        f64_to_adjusted_duration(date)
+        let duration = f64_to_adjusted_duration(date);
+        match ChronoDuration::seconds(0).cmp(&duration) {
+            Ordering::Less => duration,
+            _ => ChronoDuration::seconds(0),
+        }
     };
     epoch + duration
 }
@@ -79,6 +84,18 @@ fn as_datetime_conversion_test() {
         Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap(),
         as_datetime_local(2_451_544.915_682_87)
     );
+}
+
+#[test]
+fn datetime_out_of_bounds_test() {
+    // these values are out of bounds for acceptable dates
+    let values = vec![2305814.964456019, 1799402.631122685];
+    for value in values {
+        assert_eq!(
+            Local.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
+            as_datetime_local(value)
+        )
+    }
 }
 
 fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64

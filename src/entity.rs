@@ -2533,6 +2533,20 @@ mod tests {
     }
 
     #[test]
+    fn read_lw_polyline_with_elevation() {
+        let drawing = from_section(
+            "ENTITIES",
+            vec![
+                CodePair::new_str(0, "LWPOLYLINE"),
+                CodePair::new_f64(38, 42.0), // elevation
+            ],
+        );
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        assert_eq!(42.0, entities[0].common.elevation);
+    }
+
+    #[test]
     fn read_lw_polyline_with_no_vertices() {
         let drawing = from_section(
             "ENTITIES",
@@ -2652,7 +2666,9 @@ mod tests {
             bulge: 42.2,
             id: 92,
         });
-        drawing.add_entity(Entity::new(EntityType::LwPolyline(poly)));
+        let mut entity = Entity::new(EntityType::LwPolyline(poly));
+        entity.common.elevation = 42.0;
+        drawing.add_entity(entity);
         assert_contains_pairs(
             &drawing,
             vec![
@@ -2660,6 +2676,7 @@ mod tests {
                 CodePair::new_i32(90, 2), // number of vertices
                 CodePair::new_i16(70, 0),
                 CodePair::new_f64(43, 43.0), // constant width
+                CodePair::new_f64(38, 42.0), // elevation
                 CodePair::new_f64(10, 1.1),  // vertex 1
                 CodePair::new_f64(20, 2.1),
                 CodePair::new_i32(91, 0),
