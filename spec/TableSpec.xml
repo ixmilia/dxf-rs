@@ -88,19 +88,6 @@
             <Field Name="dimension_extension_line_weight" Code="372" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::raw_value(&amp;{})" MinVersion="R2000" />
         </TableItem>
     </Table>
-    <Table Collection="layers" TypeString="LAYER">
-        <TableItem Name="Layer" ClassName="AcDbLayerTableRecord">
-            <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.writable_color_value(&amp;item)" />
-            <Field Name="line_type_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;{}" />
-            <Field Name="is_layer_plotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
-            <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::raw_value(&amp;{})" MinVersion="R2000" />
-            <Pointer Name="plot_style" Code="390" MinVersion="R2000" />
-            <Pointer Name="material" Code="347" MinVersion="R2007" />
-
-            <!-- this field doesn't get read from or written to the file; it's a by-product of the color -->
-            <Field Name="is_layer_on" Code="-1" Type="bool" DefaultValue="true" GenerateReader="false" GenerateWriter="false" />
-        </TableItem>
-    </Table>
     <Table Collection="line_types" TypeString="LTYPE">
         <TableItem Name="LineType" ClassName="AcDbLinetypeTableRecord">
             <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" WriteConverter="&amp;{}" />
@@ -116,6 +103,19 @@
             <Field Name="x_offsets" Code="44" Type="f64" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R13" />
             <Field Name="y_offsets" Code="45" Type="f64" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R13" />
             <Field Name="text_strings" Code="9" Type="String" DefaultValue="vec![]" AllowMultiples="true" MinVersion="R13" />
+        </TableItem>
+    </Table>
+        <Table Collection="layers" TypeString="LAYER">
+        <TableItem Name="Layer" ClassName="AcDbLayerTableRecord">
+            <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.writable_color_value(&amp;item)" />
+            <Field Name="line_type_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;{}" />
+            <Field Name="is_layer_plotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
+            <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::raw_value(&amp;{})" MinVersion="R2000" />
+            <Pointer Name="plot_style" Code="390" MinVersion="R2000" />
+            <Pointer Name="material" Code="347" MinVersion="R2007" />
+
+            <!-- this field doesn't get read from or written to the file; it's a by-product of the color -->
+            <Field Name="is_layer_on" Code="-1" Type="bool" DefaultValue="true" GenerateReader="false" GenerateWriter="false" />
         </TableItem>
     </Table>
     <Table Collection="styles" TypeString="STYLE">
