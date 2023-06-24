@@ -36,4 +36,24 @@ impl Point {
 
         Ok(())
     }
+
+    pub fn tuple(&self) -> (f64, f64, f64) {
+        (self.x, self.y, self.z)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Tests whether tuple conversion works as intended and Point doesn't get consumed.
+    #[test]
+    fn tuple_conversion_case() {
+        let p = Point::new(1.0, 1.0, 1.0);
+        let t: (f64, f64, f64) = p.tuple();
+
+        dbg!(&p);
+        dbg!(&t);
+        assert_eq!(t, p.tuple())
+    }
 }
