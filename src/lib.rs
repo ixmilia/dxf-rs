@@ -109,8 +109,8 @@
 //!
 //! [2014](http://images.autodesk.com/adsk/files/autocad_2014_pdf_dxf_reference_enu.pdf)
 //!
-//! These links were compiled from the archive.org May 9, 2013 snapshot of http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853
-//! (https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853)
+//! These links were compiled from the archive.org May 9, 2013 snapshot of <http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853>
+//! (<https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853>)
 //!
 
 extern crate encoding_rs;
