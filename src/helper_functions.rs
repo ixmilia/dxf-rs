@@ -299,7 +299,7 @@ pub(crate) fn read_line<T>(
     reader: &mut T,
     allow_bom: bool,
     encoding: &'static Encoding,
-) -> Option<DxfResult<String>>
+) -> DxfResult<String>
 where
     T: Read + ?Sized,
 {
@@ -309,7 +309,7 @@ where
     for (i, b) in reader_bytes.enumerate() {
         let b = match b {
             Ok(b) => b,
-            Err(e) => return Some(Err(DxfError::IoError(e))),
+            Err(e) => return Err(DxfError::IoError(e)),
         };
         match (i, b) {
             (0, 0xEF) if allow_bom => {
@@ -327,14 +327,14 @@ where
 
     let mut result = match encoding.decode(&bytes) {
         (result, _, false) => String::from(&*result),
-        (_, _, true) => return Some(Err(DxfError::MalformedString)),
+        (_, _, true) => return Err(DxfError::MalformedString),
     };
 
     if result.ends_with('\r') {
         result.pop();
     }
 
-    Some(Ok(result))
+    Ok(result)
 }
 
 pub(crate) fn read_u8<T: Read + ?Sized>(reader: &mut T) -> Option<io::Result<u8>> {

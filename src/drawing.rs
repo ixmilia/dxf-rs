@@ -115,11 +115,7 @@ impl Drawing {
     where
         T: Read + ?Sized,
     {
-        let first_line = match read_line(reader, true, encoding) {
-            Some(Ok(line)) => line,
-            Some(Err(e)) => return Err(e),
-            None => return Err(DxfError::UnexpectedEndOfInput),
-        };
+        let first_line = read_line(reader, true, encoding)?;
         match &*first_line {
             "AutoCAD DXB 1.0" => {
                 let mut reader = DxbReader::new(reader);
