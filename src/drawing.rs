@@ -29,7 +29,7 @@ use crate::code_pair_writer::CodePairWriter;
 use crate::thumbnail;
 
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read, Write};
+use std::io::{BufReader, BufWriter, Cursor, Read, Write};
 
 use itertools::put_back;
 use std::collections::HashSet;
@@ -964,7 +964,7 @@ impl Drawing {
                 pairs.push(CodePair::new_str(0, "SECTION"));
                 pairs.push(CodePair::new_str(2, "THUMBNAILIMAGE"));
                 let mut data = vec![];
-                img.write_to(&mut data, image::ImageFormat::Bmp)?;
+                img.write_to(&mut Cursor::new(&mut data), image::ImageFormat::Bmp)?;
                 let length = data.len() - 14; // skip 14 byte bmp header
                 pairs.push(CodePair::new_i32(90, length as i32));
                 for s in data[14..].chunks(128) {
