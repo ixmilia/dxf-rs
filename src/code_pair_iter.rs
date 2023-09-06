@@ -83,9 +83,8 @@ impl<T: Read> TextCodePairIter<T> {
         let code_line = if self.read_first_line {
             self.offset += 1;
             match read_line(&mut self.reader, true, encoding_rs::WINDOWS_1252) {
-                Some(Ok(v)) => v,
-                Some(Err(e)) => return Some(Err(e)),
-                None => return None,
+                Ok(v) => v,
+                Err(e) => return Some(Err(e)),
             }
         } else {
             self.read_first_line = true;
@@ -106,9 +105,8 @@ impl<T: Read> TextCodePairIter<T> {
         // Read value.  If no line is available die horribly.
         self.offset += 1;
         let value_line = match read_line(&mut self.reader, false, self.string_encoding) {
-            Some(Ok(v)) => v,
-            Some(Err(e)) => return Some(Err(e)),
-            None => return Some(Err(DxfError::UnexpectedEndOfInput)),
+            Ok(v) => v,
+            Err(e) => return Some(Err(e)),
         };
 
         // construct the value pair
