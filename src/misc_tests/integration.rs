@@ -68,7 +68,7 @@ impl Oda {
         }
 
         assert!(exit_code.success());
-        Drawing::load_file(&format!("{}/drawing.dxf", self.output_path)).unwrap()
+        Drawing::load_file(format!("{}/drawing.dxf", self.output_path)).unwrap()
     }
     fn version_string(version: AcadVersion) -> String {
         let s = match version {
@@ -176,13 +176,13 @@ impl AutoCAD {
         script_path.push(&self.temp_path);
         script_path.push("script.scr");
         let script_path = script_path.to_str().unwrap();
-        write(&script_path, &script_contents).expect("failed to write script file");
+        write(script_path, &script_contents).expect("failed to write script file");
 
         let mut acad_convert = Command::new(&self.acad_path)
             .arg("/i")
             .arg(input_file)
             .arg("/s")
-            .arg(&script_path)
+            .arg(script_path)
             .spawn()
             .expect("Failed to spawn acad");
         let exit_code = acad_convert.wait().expect("Failed to wait for acad");
@@ -206,7 +206,7 @@ impl AutoCAD {
         }
 
         assert!(exit_code.success());
-        Drawing::load_file(&format!("{}/output.dxf", self.temp_path)).unwrap()
+        Drawing::load_file(format!("{}/output.dxf", self.temp_path)).unwrap()
     }
     fn version_string(version: AcadVersion) -> String {
         let s = match version {
@@ -314,8 +314,10 @@ fn simple_line_can_be_read_by_acad_r12() {
 fn block_insert_can_be_read_by_acad_r12() {
     let acad = require_acad!();
     let mut drawing = Drawing::new();
-    let mut block = Block::default();
-    block.name = "my-block-name".to_string();
+    let mut block = Block {
+        name: "my-block-name".to_string(),
+        ..Default::default()
+    };
     block.entities.push(Entity {
         common: Default::default(),
         specific: EntityType::Line(Line::new(
@@ -324,8 +326,10 @@ fn block_insert_can_be_read_by_acad_r12() {
         )),
     });
     drawing.add_block(block);
-    let mut insert = Insert::default();
-    insert.name = "my-block-name".to_string();
+    let mut insert = Insert {
+        name: "my-block-name".to_string(),
+        ..Default::default()
+    };
     insert.location = Point::new(3.0, 3.0, 0.0);
     drawing.add_entity(Entity {
         common: Default::default(),

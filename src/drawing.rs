@@ -781,7 +781,7 @@ impl Drawing {
             _ => None,
         };
         if let Some(dim_style_name) = dim_style_name {
-            self.ensure_dimension_style_is_present(&dim_style_name);
+            self.ensure_dimension_style_is_present(dim_style_name);
         }
     }
     fn ensure_dimension_style_is_present(&mut self, dim_style_name: &str) {
@@ -802,12 +802,12 @@ impl Drawing {
         match &obj.specific {
             ObjectType::LayerFilter(ref l) => {
                 for layer_name in &l.layer_names {
-                    self.ensure_layer_is_present(&layer_name);
+                    self.ensure_layer_is_present(layer_name);
                 }
             }
             ObjectType::LayerIndex(ref l) => {
                 for layer_name in &l.layer_names {
-                    self.ensure_layer_is_present(&layer_name);
+                    self.ensure_layer_is_present(layer_name);
                 }
             }
             _ => (),
@@ -860,7 +860,7 @@ impl Drawing {
             _ => None,
         };
         if let Some(text_style_name) = text_style_name {
-            self.ensure_text_style_is_present(&text_style_name);
+            self.ensure_text_style_is_present(text_style_name);
         }
     }
     fn ensure_text_style_is_present_for_object(&mut self, obj: &Object) {
@@ -918,7 +918,7 @@ impl Drawing {
     pub(crate) fn add_tables_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {
         pairs.push(CodePair::new_str(0, "SECTION"));
         pairs.push(CodePair::new_str(2, "TABLES"));
-        add_table_code_pairs(&self, pairs, write_handles);
+        add_table_code_pairs(self, pairs, write_handles);
         pairs.push(CodePair::new_str(0, "ENDSEC"));
     }
     pub(crate) fn add_blocks_pairs(&self, pairs: &mut Vec<CodePair>, write_handles: bool) {

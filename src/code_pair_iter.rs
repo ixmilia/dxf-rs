@@ -110,7 +110,7 @@ impl<T: Read> TextCodePairIter<T> {
         };
 
         // construct the value pair
-        let expected_type = match ExpectedType::expected_type(code) {
+        let expected_type = match ExpectedType::new(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
@@ -204,7 +204,7 @@ impl<T: Read> BinaryCodePairIter<T> {
         }
 
         // Read value.  If no data is available die horribly.
-        let expected_type = match ExpectedType::expected_type(code) {
+        let expected_type = match ExpectedType::new(code) {
             Some(t) => t,
             None => return Some(Err(DxfError::UnexpectedEnumValue(self.offset))),
         };
@@ -239,7 +239,7 @@ impl<T: Read> BinaryCodePairIter<T> {
             ),
             ExpectedType::Str => {
                 let mut value = try_from_dxf_result!(self.read_string_binary());
-                if !self.code_size_detection_complete && code == 0 && value == "" {
+                if !self.code_size_detection_complete && code == 0 && value.is_empty() {
                     // If this is the first pair being read and the code is 0, the only valid string value is "SECTION".
                     // If the read value is instead empty, that means the string reader found a single 0x00 byte which
                     // indicates that this is a post R13 binary file where codes are always read as 2 bytes.  The 0x00

@@ -711,8 +711,10 @@ mod tests {
     fn write_block_r12_compat() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R12;
-        let mut block = Block::default();
-        block.name = "block-name".to_string();
+        let mut block = Block {
+            name: "block-name".to_string(),
+            ..Default::default()
+        };
         block.entities.push(Entity {
             common: Default::default(),
             specific: EntityType::Line(Line::new(

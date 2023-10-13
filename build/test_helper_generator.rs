@@ -28,7 +28,7 @@ use crate::enums::*;
 use crate::entities::*;
 use crate::objects::*;
 ".trim_start());
-    fun.push_str("\n");
+    fun.push('\n');
     let mut file = File::create(generated_dir.join("tests/all_types.rs"))
         .ok()
         .unwrap();
@@ -48,9 +48,9 @@ fn generate_entity_helpers(fun: &mut String) {
     fun.push_str("    vec![\n");
     for c in &element.children {
         if name(c) != "Entity" && name(c) != "DimensionBase" {
-            let type_string = attr(&c, "TypeString");
+            let type_string = attr(c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
-            let subclass = attr(&c, "SubclassMarker");
+            let subclass = attr(c, "SubclassMarker");
             let maxver = max_version(c);
             let maxver = if maxver.is_empty() {
                 String::from("R2018")
@@ -68,7 +68,7 @@ fn generate_entity_helpers(fun: &mut String) {
     }
     fun.push_str("    ]\n");
     fun.push_str("}\n");
-    fun.push_str("\n");
+    fun.push('\n');
 }
 
 fn generate_object_helpers(fun: &mut String) {
@@ -82,7 +82,7 @@ fn generate_object_helpers(fun: &mut String) {
     fun.push_str("    vec![\n");
     for c in &element.children {
         if name(c) != "Object" {
-            let type_string = attr(&c, "TypeString");
+            let type_string = attr(c, "TypeString");
             let type_strings = type_string.split(',').collect::<Vec<_>>();
             let maxver = max_version(c);
             let maxver = if maxver.is_empty() {

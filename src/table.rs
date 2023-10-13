@@ -181,9 +181,12 @@ mod tests {
     #[test]
     fn write_layer() {
         let mut drawing = Drawing::new();
-        let mut layer = Layer::default();
-        layer.name = String::from("layer-name");
-        layer.color = Color::from_index(3);
+        let layer = Layer {
+            name: String::from("layer-name"),
+            color: Color::from_index(3),
+            ..Default::default()
+        };
+
         drawing.add_layer(layer);
         assert_contains_pairs(
             &drawing,
@@ -202,10 +205,12 @@ mod tests {
 
     #[test]
     fn normalize_layer() {
-        let mut layer = Layer::default();
-        layer.name = String::from("layer-name");
-        layer.color = Color::by_layer(); // value 256 not valid; normalized to 7
-        layer.line_type_name = String::from(""); // empty string not valid; normalized to CONTINUOUS
+        let mut layer = Layer {
+            name: String::from("layer-name"),
+            color: Color::by_layer(), // value 256 not valid; normalized to 7
+            line_type_name: String::from(""), // empty string not valid; normalized to CONTINUOUS
+            ..Default::default()
+        };
         layer.normalize();
         assert_eq!(Some(7), layer.color.index());
         assert_eq!("CONTINUOUS", layer.line_type_name);
@@ -213,10 +218,12 @@ mod tests {
 
     #[test]
     fn normalize_view() {
-        let mut view = View::default();
-        view.view_height = 0.0; // invalid; normalized to 1.0
-        view.view_width = -1.0; // invalid; normalized to 1.0
-        view.lens_length = 42.0; // valid
+        let mut view = View {
+            view_height: 0.0,  // invalid; normalized to 1.0
+            view_width: -1.0,  // invalid; normalized to 1.0
+            lens_length: 42.0, // valid
+            ..Default::default()
+        };
         view.normalize();
         assert!(approx_eq!(f64, 1.0, view.view_height));
         assert!(approx_eq!(f64, 1.0, view.view_width));

@@ -157,8 +157,8 @@ impl Object {
         }
     }
     fn apply_code_pair(&mut self, pair: &CodePair, iter: &mut CodePairPutBack) -> DxfResult<()> {
-        if !self.specific.try_apply_code_pair(&pair)? {
-            self.common.apply_individual_pair(&pair, iter)?;
+        if !self.specific.try_apply_code_pair(pair)? {
+            self.common.apply_individual_pair(pair, iter)?;
         }
         Ok(())
     }
@@ -306,7 +306,7 @@ impl Object {
                 Object::apply_custom_reader_sunstudy(&mut self.common, ss, iter)
             }
             ObjectType::TableStyle(ref mut ts) => {
-                Object::apply_custom_reader_tabletyle(&mut self.common, ts, iter)
+                Object::apply_custom_reader_tablestyle(&mut self.common, ts, iter)
             }
             ObjectType::XRecordObject(ref mut xr) => {
                 Object::apply_custom_reader_xrecordobject(&mut self.common, xr, iter)
@@ -1130,7 +1130,7 @@ impl Object {
             let pair = next_pair!(iter);
             match pair.code {
                 1 => {
-                    // value should be "SectionTypeSettings", but it doesn't realy matter
+                    // value should be "SectionTypeSettings", but it doesn't really matter
                     while let Some(ts) = SectionTypeSettings::read(iter)? {
                         ss.geometry_settings.push(ts);
                     }
@@ -1384,7 +1384,7 @@ impl Object {
             }
         }
     }
-    fn apply_custom_reader_tabletyle(
+    fn apply_custom_reader_tablestyle(
         common: &mut ObjectCommon,
         ts: &mut TableStyle,
         iter: &mut CodePairPutBack,
@@ -1583,7 +1583,7 @@ impl Object {
                 for light in &ll.__lights_handle {
                     pairs.push(CodePair::new_string(5, &light.as_string()));
                     // TODO: write the light's real name
-                    pairs.push(CodePair::new_string(1, &String::new()));
+                    pairs.push(CodePair::new_string(1, ""));
                 }
             }
             ObjectType::SectionSettings(ref ss) => {
@@ -1655,7 +1655,7 @@ impl Object {
 
         true
     }
-    fn add_post_code_pairs(&self, _pairs: &mut Vec<CodePair>, _version: AcadVersion) {
+    fn add_post_code_pairs(&self, _pairs: &mut [CodePair], _version: AcadVersion) {
         // use the following pattern if this method is needed
         // match self.specific {
         //     _ => (),
@@ -2224,7 +2224,7 @@ mod tests {
 
             // validate specific
             match (&expected_type, &obj.specific) {
-                (&ObjectType::LayerIndex(ref a), &ObjectType::LayerIndex(ref b)) => {
+                (ObjectType::LayerIndex(a), ObjectType::LayerIndex(b)) => {
                     // LayerIndex has a timestamp that will obviously differ; the remaining fields must be checked manually
                     assert_eq!(a.layer_names, b.layer_names);
                     assert_eq!(a.__id_buffers_handle, b.__id_buffers_handle);

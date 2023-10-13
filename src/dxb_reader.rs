@@ -114,7 +114,7 @@ impl<T: Read> DxbReader<T> {
                 // other
                 DxbItemType::BlockBase => {
                     let loc = Point::new(self.read_n()?, self.read_n()?, 0.0);
-                    if block_base == None && entities.is_empty() {
+                    if block_base.is_none() && entities.is_empty() {
                         // only if this is the first item encountered
                         block_base = Some(loc);
                     } else {
@@ -161,8 +161,10 @@ impl<T: Read> DxbReader<T> {
         drawing.clear();
         match block_base {
             Some(location) => {
-                let mut block = Block::default();
-                block.base_point = location;
+                let mut block = Block {
+                    base_point: location,
+                    ..Default::default()
+                };
                 block.entities = gathered_entities;
                 drawing.add_block(block);
             }
