@@ -27,7 +27,7 @@ impl Iterator for CodePairPutBack {
             loop {
                 let pair = self.iter.next();
                 match pair {
-                    Some(Ok(CodePair { code, .. })) if code == 999 => (), // a 999 comment code, try again
+                    Some(Ok(CodePair { code: 999, .. })) => (), // a 999 comment code, try again
                     _ => return pair,
                 }
             }
