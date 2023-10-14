@@ -12,7 +12,7 @@ use self::image::{DynamicImage, GenericImageView};
 #[test]
 fn read_string_with_control_characters() {
     let drawing = parse_drawing(
-        vec![
+        [
             "0",
             "SECTION",
             "2",
@@ -68,7 +68,7 @@ fn unsupported_section() {
 
 #[test]
 fn read_lf_and_crlf() {
-    let code_pairs = vec![
+    let code_pairs = [
         "0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1027", "0", "ENDSEC", "0", "EOF",
     ];
 
@@ -440,7 +440,7 @@ fn write_unicode_as_ascii() {
     drawing.header.project_name = String::from("è");
     assert_contains(
         &drawing,
-        vec!["  9", "$PROJECTNAME", "  1", "\\U+00E8"].join("\r\n"),
+        ["  9", "$PROJECTNAME", "  1", "\\U+00E8"].join("\r\n"),
     );
 }
 
@@ -449,10 +449,7 @@ fn write_unicode_as_utf8() {
     let mut drawing = Drawing::new();
     drawing.header.version = AcadVersion::R2007;
     drawing.header.project_name = String::from("è");
-    assert_contains(
-        &drawing,
-        vec!["  9", "$PROJECTNAME", "  1", "è"].join("\r\n"),
-    );
+    assert_contains(&drawing, ["  9", "$PROJECTNAME", "  1", "è"].join("\r\n"));
 }
 
 #[test]
