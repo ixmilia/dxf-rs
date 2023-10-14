@@ -706,7 +706,7 @@ mod tests {
         }
     }
 
-    /// Test case derived from https://ezdxf.readthedocs.io/en/stable/dxfinternals/block_management.html
+    /// Test case derived from <https://ezdxf.readthedocs.io/en/stable/dxfinternals/block_management.html>
     #[test]
     fn write_block_r12_compat() {
         let mut drawing = Drawing::new();
