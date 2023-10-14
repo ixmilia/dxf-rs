@@ -19,7 +19,7 @@ jobs:
       run: |
         rustc -Vv
         cargo -V
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: cargo build --verbose
     - run: cargo test --verbose
     - run: cargo build --verbose --manifest-path ./dxf2json/Cargo.toml
@@ -32,7 +32,7 @@ jobs:
     - uses: hecrj/setup-rust-action@v1
       with:
         components: rustfmt
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: cargo fmt --all -- --check
 
   publish:
@@ -41,5 +41,5 @@ jobs:
     needs: [build, formatting]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: cargo publish --token ${{ secrets.CRATES_IO_API_KEY }} --verbose
