@@ -107,7 +107,7 @@
     </Table>
         <Table Collection="layers" TypeString="LAYER">
         <TableItem Name="Layer" ClassName="AcDbLayerTableRecord">
-            <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.writable_color_value(&amp;item)" />
+            <Field Name="color" Code="62" Type="Color" DefaultValue="Color::from_index(7)" ReadConverter="read_color_value(&amp;mut item, {})" WriteConverter="{}.writable_color_value(item)" />
             <Field Name="line_type_name" Code="6" Type="String" DefaultValue='String::from("CONTINUOUS")' WriteConverter="&amp;{}" />
             <Field Name="is_layer_plotted" Code="290" Type="bool" DefaultValue="true" MinVersion="R2000" />
             <Field Name="line_weight" Code="370" Type="LineWeight" DefaultValue="LineWeight::default()" ReadConverter="LineWeight::from_raw_value({})" WriteConverter="LineWeight::raw_value(&amp;{})" MinVersion="R2000" />
