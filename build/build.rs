@@ -37,7 +37,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut file = File::create(generated_dir.join("mod.rs")).ok().unwrap();
     file.write_all("// The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
-#[allow(clippy::all)]
 pub mod entities;
 pub mod header;
 pub mod objects;
