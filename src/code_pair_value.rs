@@ -4,7 +4,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 /// Contains the data portion of a `CodePair`.
 #[derive(PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub enum CodePairValue {
     Boolean(i16),
     Integer(i32),

@@ -39,7 +39,7 @@ use std::path::Path;
 pub(crate) const AUTO_REPLACE_HANDLE: Handle = Handle(0xFFFF_FFFF_FFFF_FFFF);
 
 /// Represents a DXF drawing.
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Drawing {
     /// The drawing's header.  Contains various drawing-specific values and settings.
     pub header: Header,

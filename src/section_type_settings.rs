@@ -4,7 +4,7 @@ use crate::code_pair_put_back::CodePairPutBack;
 use crate::helper_functions::*;
 
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct SectionTypeSettings {
     pub section_type: i32,
     pub is_generation_option: bool,

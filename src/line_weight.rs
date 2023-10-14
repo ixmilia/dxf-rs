@@ -1,6 +1,6 @@
 /// Represents a line weight.
 #[derive(Clone, Debug, Default, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct LineWeight {
     raw_value: i16,
 }

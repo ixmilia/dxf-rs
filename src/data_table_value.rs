@@ -1,7 +1,7 @@
 use crate::{Handle, Point};
 
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub enum DataTableValue {
     Boolean(bool),
     Integer(i32),

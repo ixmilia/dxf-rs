@@ -22,7 +22,7 @@ const XDATA_LONG: i32 = 1071;
 
 /// Represents an application name and a collection of extended data.
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct XData {
     pub application_name: String,
     pub items: Vec<XDataItem>,
@@ -30,7 +30,7 @@ pub struct XData {
 
 /// Represents a piece of extended data.
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub enum XDataItem {
     Str(String),
     ControlGroup(Vec<XDataItem>),

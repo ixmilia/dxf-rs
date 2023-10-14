@@ -73,7 +73,9 @@ fn generate_base_object(fun: &mut String, element: &Element) {
         panic!("Expected first object to be 'Object'.");
     }
     fun.push_str("#[derive(Clone, Debug)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub struct ObjectCommon {\n");
     for c in &object.children {
         let t = if allow_multiples(c) {
@@ -114,7 +116,9 @@ fn generate_base_object(fun: &mut String, element: &Element) {
     fun.push('\n');
 
     fun.push_str("#[derive(Clone, Debug)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub struct Object {\n");
     fun.push_str("    pub common: ObjectCommon,\n");
     fun.push_str("    pub specific: ObjectType,\n");
@@ -219,7 +223,9 @@ fn generate_base_object(fun: &mut String, element: &Element) {
 fn generate_object_types(fun: &mut String, element: &Element) {
     fun.push_str("#[allow(clippy::large_enum_variant)]\n");
     fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub enum ObjectType {\n");
     for c in &element.children {
         if c.name != "Object" {
@@ -241,7 +247,7 @@ fn generate_object_types(fun: &mut String, element: &Element) {
         if name(c) != "Object" {
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
-            fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+            fun.push_str("#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n");
             fun.push_str(&format!("pub struct {typ} {{\n", typ = name(c)));
             for f in &c.children {
                 let t = if allow_multiples(f) {
