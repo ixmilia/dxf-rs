@@ -1515,7 +1515,7 @@ impl Entity {
         }
         pairs.push(CodePair::new_i16(70, v.flags as i16));
         pairs.push(CodePair::new_f64(50, v.curve_fit_tangent_direction));
-        if version >= AcadVersion::R13 {
+        if version >= AcadVersion::R12 {
             if v.polyface_mesh_vertex_index1 != 0 {
                 pairs.push(CodePair::new_i16(71, v.polyface_mesh_vertex_index1 as i16));
             }
@@ -1572,7 +1572,13 @@ impl Entity {
                 for (v, vertex_handle) in &poly.__vertices_and_handles {
                     let mut v = v.clone();
                     v.set_is_3d_polyline_vertex(poly.is_3d_polyline());
-                    v.set_is_3d_polygon_mesh(poly.is_3d_polygon_mesh());
+                    if v.polyface_mesh_vertex_index1 == 0
+                        && v.polyface_mesh_vertex_index2 == 0
+                        && v.polyface_mesh_vertex_index3 == 0
+                        && v.polyface_mesh_vertex_index4 == 0
+                    {
+                        v.set_is_3d_polygon_mesh(poly.is_3d_polygon_mesh());
+                    }
                     let v = Entity {
                         common: EntityCommon {
                             handle: *vertex_handle,
