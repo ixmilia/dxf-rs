@@ -493,7 +493,7 @@
     <Field Name="row_count" Code="71" Type="i16" DefaultValue="1" DisableWritingDefault="true" />
     <Field Name="column_spacing" Code="44" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
-    <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" MinVersion="R13" />
+    <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" MinVersion="R12" />
     <Field Name="__attributes_and_handles" Code="10" Type="(Attribute, Handle)" DefaultValue="vec![]" AllowMultiples="true" GenerateReader="false" GenerateWriter="false" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbBlockReference")' MinVersion="R13" />
