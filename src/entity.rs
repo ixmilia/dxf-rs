@@ -2878,7 +2878,27 @@ mod tests {
     }
 
     #[test]
-    fn write_insert_no_extrusion_on_r12() {
+    fn write_insert_no_extrusion_on_r11() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R11;
+        let ins = Insert {
+            extrusion_direction: Vector::new(1.0, 2.0, 3.0),
+            ..Default::default()
+        };
+        let ent = Entity::new(EntityType::Insert(ins));
+        drawing.add_entity(ent);
+        assert_not_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_f64(210, 1.0),
+                CodePair::new_f64(220, 2.0),
+                CodePair::new_f64(230, 3.0),
+            ],
+        );
+    }
+
+    #[test]
+    fn write_insert_extrusion_on_r12() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R12;
         let ins = Insert {
@@ -2887,7 +2907,7 @@ mod tests {
         };
         let ent = Entity::new(EntityType::Insert(ins));
         drawing.add_entity(ent);
-        assert_not_contains_pairs(
+        assert_contains_pairs(
             &drawing,
             vec![
                 CodePair::new_f64(210, 1.0),
