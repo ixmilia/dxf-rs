@@ -26,24 +26,24 @@ pub struct Point {
 ///```
 macro_rules! point {
     ($x:expr, $y:expr, $z:expr) => {
-        Point{
+        Point {
             x: $x as f64,
             y: $y as f64,
-            z: $z as f64
+            z: $z as f64,
         }
     };
     ($x:expr, $y:expr) => {
-        Point{
+        Point {
             x: $x as f64,
             y: $y as f64,
-            z: 0.0
+            z: 0.0,
         }
     };
     ($x:expr) => {
-        Point{
+        Point {
             x: $x as f64,
             y: 0.0,
-            z: 0.0
+            z: 0.0,
         }
     };
 }
@@ -93,7 +93,7 @@ mod tests {
         assert_eq!(t, p.tuple())
     }
     #[test]
-    fn test_point_macro(){
+    fn test_point_macro() {
         let p = point!(1, 2, 3.5);
         assert_eq!(p.x, 1.0);
         assert_eq!(p.y, 2.0);
