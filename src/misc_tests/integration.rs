@@ -32,7 +32,7 @@ impl Oda {
     pub fn convert_drawing(&self, drawing: &mut Drawing, version: AcadVersion) -> Drawing {
         drawing.header.version = version;
         drawing
-            .save_file(&format!("{}/drawing.dxf", self.input_path))
+            .save_file(format!("{}/drawing.dxf", self.input_path))
             .unwrap();
         // e.g.,
         //   ODAFileConverter.exe input_dir output_dir ACAD2000 DXF 0 1
@@ -151,7 +151,7 @@ impl AutoCAD {
     pub fn convert_drawing(&self, drawing: &mut Drawing, version: AcadVersion) -> Drawing {
         drawing.header.version = version;
         drawing
-            .save_file(&format!("{}/input.dxf", self.temp_path))
+            .save_file(format!("{}/input.dxf", self.temp_path))
             .unwrap();
         // e.g.,
         //   accoreconsole.exe /i /path/to/input.dxf /b script.scr

@@ -113,6 +113,8 @@
 //! (<https://web.archive.org/web/20130509144333/http://usa.autodesk.com/adsk/servlet/item?siteID=123112&id=12272454&linkID=10809853>)
 //!
 
+#![warn(clippy::doc_markdown)]
+
 extern crate encoding_rs;
 
 #[macro_use]

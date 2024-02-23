@@ -1553,7 +1553,7 @@ impl Object {
                     ));
                 }
                 let code = if dict.is_hard_owner { 360 } else { 350 };
-                for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
+                for key in dict.value_handles.keys().sorted_by(Ord::cmp) {
                     if let Some(value) = dict.value_handles.get(key) {
                         pairs.push(CodePair::new_string(3, key));
                         pairs.push(CodePair::new_string(code, &value.as_string()));
@@ -1569,7 +1569,7 @@ impl Object {
                     ));
                 }
                 pairs.push(CodePair::new_string(340, &dict.default_handle.as_string()));
-                for key in dict.value_handles.keys().sorted_by(|a, b| Ord::cmp(a, b)) {
+                for key in dict.value_handles.keys().sorted_by(Ord::cmp) {
                     if let Some(value) = dict.value_handles.get(key) {
                         pairs.push(CodePair::new_string(3, key));
                         pairs.push(CodePair::new_string(350, &value.as_string()));
