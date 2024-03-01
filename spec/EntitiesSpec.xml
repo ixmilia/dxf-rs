@@ -1012,7 +1012,7 @@
     <Field Name="start_tangent" Code="12" Type="Point" DefaultValue="Point::origin()" CodeOverrides="12,22,32" />
     <Field Name="end_tangent" Code="13" Type="Point" DefaultValue="Point::origin()" CodeOverrides="13,23,33" />
     <Field Name="knot_values" Code="40" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
-    <Field Name="weight" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="weight_values" Code="41" Type="f64" DefaultValue="vec![]" AllowMultiples="true"/>
     <Field Name="__control_point_x" Code="10" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__control_point_y" Code="20" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__control_point_z" Code="30" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -1035,7 +1035,7 @@
       <WriteField Field="start_tangent" />
       <WriteField Field="end_tangent" />
       <WriteField Field="knot_values" />
-      <WriteField Field="weight" />
+      <WriteField Field="weight_values" />
       <Foreach Field="ent.control_points">
         <WriteSpecificValue Code="10" Value="item.x" />
         <WriteSpecificValue Code="20" Value="item.y" />
