@@ -13,7 +13,7 @@ use crate::x_data;
 
 /// A block is a collection of entities.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
     /// The block's handle.
     pub handle: Handle,

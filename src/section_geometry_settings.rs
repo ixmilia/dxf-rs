@@ -3,7 +3,7 @@ use crate::{CodePair, Color, DxfResult};
 use crate::code_pair_put_back::CodePairPutBack;
 
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct SectionGeometrySettings {
     pub section_type: i32,
     pub geometry_count: i32,

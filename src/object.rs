@@ -21,7 +21,7 @@ use crate::objects::*;
 //                                                                  GeoMeshPoint
 //------------------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct GeoMeshPoint {
     pub source: Point,
     pub destination: Point,
@@ -40,7 +40,7 @@ impl GeoMeshPoint {
 //                                                             MLineStyleElement
 //------------------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct MLineStyleElement {
     pub offset: f64,
     pub color: Color,

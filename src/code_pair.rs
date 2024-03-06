@@ -12,7 +12,7 @@ use crate::helper_functions::parse_hex_string;
 /// The basic primitive of a DXF file; a code indicating the type of the data contained, and the
 /// data itself.
 #[derive(Clone)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct CodePair {
     pub code: i32,
     pub value: CodePairValue,

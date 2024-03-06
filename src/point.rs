@@ -2,7 +2,7 @@ use crate::{CodePair, DxfError, DxfResult};
 
 /// Represents a simple point in Cartesian space.
 #[derive(Clone, Debug, Default, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Point {
     /// The X value of the point.
     pub x: f64,

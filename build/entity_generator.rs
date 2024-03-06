@@ -66,7 +66,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
         panic!("Expected first entity to be 'Entity'.");
     }
     fun.push_str("#[derive(Debug, Clone)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub struct EntityCommon {\n");
     for c in &entity.children {
         let t = if allow_multiples(c) {
@@ -107,7 +109,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push('\n');
 
     fun.push_str("#[derive(Debug, Clone)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub struct Entity {\n");
     fun.push_str("    pub common: EntityCommon,\n");
     fun.push_str("    pub specific: EntityType,\n");
@@ -209,7 +213,9 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
 
 fn generate_entity_types(fun: &mut String, element: &Element) {
     fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
-    fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+    fun.push_str(
+        "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     fun.push_str("pub enum EntityType {\n");
     for c in &element.children {
         if c.name != "Entity" {
@@ -231,7 +237,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
         if name(c) != "Entity" {
             // definition
             fun.push_str("#[derive(Clone, Debug, PartialEq)]\n");
-            fun.push_str("#[cfg_attr(feature = \"serialize\", derive(Serialize, Deserialize))]\n");
+            fun.push_str("#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n");
             fun.push_str(&format!("pub struct {typ} {{\n", typ = name(c)));
             if base_class(c) == "DimensionBase" {
                 fun.push_str("    pub dimension_base: DimensionBase,\n");

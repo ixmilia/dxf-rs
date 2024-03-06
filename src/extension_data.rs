@@ -6,7 +6,7 @@ pub(crate) const EXTENSION_DATA_GROUP: i32 = 102;
 
 /// Represents an application name and a collection of extension group data in the form of `CodePair`s.
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExtensionGroup {
     pub application_name: String,
     pub items: Vec<ExtensionGroupItem>,
@@ -14,7 +14,7 @@ pub struct ExtensionGroup {
 
 /// Represents a single piece of extension data or a named group.
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExtensionGroupItem {
     CodePair(CodePair),
     Group(ExtensionGroup),

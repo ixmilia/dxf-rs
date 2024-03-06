@@ -2,7 +2,7 @@ use crate::tables::Layer;
 
 /// Represents an indexed color.
 #[derive(Clone, Debug, Default, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Color {
     raw_value: i16,
 }

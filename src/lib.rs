@@ -123,12 +123,6 @@ extern crate enum_primitive;
 extern crate image;
 extern crate itertools;
 
-#[cfg(feature = "serialize")]
-#[macro_use]
-extern crate serde_derive;
-#[cfg(feature = "serialize")]
-extern crate serde;
-
 mod code_pair;
 pub use crate::code_pair::CodePair;
 

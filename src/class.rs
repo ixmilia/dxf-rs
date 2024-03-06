@@ -6,7 +6,7 @@ use crate::helper_functions::*;
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
 #[derive(Clone)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Class {
     /// Class DXF record name.
     pub record_name: String,
