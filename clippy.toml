@@ -1,1 +1,1 @@
-doc-valid-idents = ["AutoCAD", "PostScript", ".."]
+doc-valid-idents = ["AutoCAD", "PostScript", "..", "DesignCenter", "PlotStyle", "DWFx"]

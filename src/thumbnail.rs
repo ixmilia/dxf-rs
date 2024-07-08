@@ -73,7 +73,7 @@ fn read_thumbnail_bytes_from_code_pairs(iter: &mut CodePairPutBack) -> DxfResult
     Ok(Some(data))
 }
 
-fn update_thumbnail_data_offset_in_situ(data: &mut Vec<u8>) -> DxfResult<bool> {
+fn update_thumbnail_data_offset_in_situ(data: &mut [u8]) -> DxfResult<bool> {
     // calculate the image data offset
     let dib_header_size = read_i32(data, FILE_HEADER_LENGTH)? as usize;
 
@@ -240,7 +240,7 @@ fn test_get_u32() {
     assert_eq!(0x12345678, value);
 }
 
-fn set_i32(data: &mut Vec<u8>, offset: usize, value: i32) -> DxfResult<()> {
+fn set_i32(data: &mut [u8], offset: usize, value: i32) -> DxfResult<()> {
     let expected_length = offset + 4;
     if data.len() < expected_length {
         return Err(DxfError::UnexpectedEndOfInput);

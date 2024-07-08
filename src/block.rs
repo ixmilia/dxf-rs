@@ -37,7 +37,7 @@ pub struct Block {
     pub entities: Vec<Entity>,
     /// Extension data groups.
     pub extension_data_groups: Vec<ExtensionGroup>,
-    /// XData.
+    /// `XData`.
     pub x_data: Vec<XData>,
 }
 
