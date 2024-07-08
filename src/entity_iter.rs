@@ -39,7 +39,9 @@ where
                 specific: EntityType::Seqend(_),
                 ..
             }) => (),
-            Some(ent) => iter.put_back(ent),
+            Some(ent) => {
+                iter.put_back(ent);
+            }
             None => (),
         }
 
