@@ -397,8 +397,8 @@
     <Field Name="major_axis" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="minor_axis_ratio" Code="40" Type="f64" DefaultValue="1.0" />
-    <Field Name="start_parameter" Code="41" Type="f64" DefaultValue="0.0" Comment="Ellipse start angle in radians." />
-    <Field Name="end_parameter" Code="42" Type="f64" DefaultValue="::std::f64::consts::PI * 2.0" Comment="Ellipse end angle in radians." />
+    <Field Name="start_angle" Code="41" Type="f64" DefaultValue="0.0" Comment="Ellipse start angle in radians." />
+    <Field Name="end_angle" Code="42" Type="f64" DefaultValue="::std::f64::consts::PI * 2.0" Comment="Ellipse end angle in radians." />
   </Entity>
   <!--
 
