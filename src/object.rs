@@ -62,7 +62,7 @@ impl MLineStyleElement {
 //------------------------------------------------------------------------------
 impl DataTable {
     pub(crate) fn set_value(&mut self, row: usize, col: usize, val: DataTableValue) {
-        if row <= self.row_count && col <= self.column_count {
+        if row < self.row_count && col < self.column_count {
             self.values[row][col] = Some(val);
         }
     }
