@@ -3072,6 +3072,37 @@ mod tests {
     }
 
     #[test]
+    fn read_multiple_x_data() {
+        let ent = read_entity(
+            "POLYLINE",
+            vec![
+                CodePair::new_str(1001, "Alpha"),
+                CodePair::new_str(1000, "a"),
+                CodePair::new_str(1001, "Beta"),
+                CodePair::new_str(1000, "b"),
+                CodePair::new_str(1001, "Gamma"),
+                CodePair::new_str(1000, "c"),
+            ],
+        );
+        // dbg!(&ent);
+        assert_eq!(ent.common.x_data.len(), 3);
+        for (i, x) in ent.common.x_data.iter().enumerate() {
+            let (name, val) = match i {
+                0 => ("Alpha", "a"),
+                1 => ("Beta", "b"),
+                2 => ("Gamma", "c"),
+                _ => panic!("should only have 3 items"),
+            };
+
+            assert_eq!(x.application_name, name);
+            match x.items[0] {
+                XDataItem::Str(ref a) => assert_eq!(a, val),
+                _ => panic!("Expected a string"),
+            }
+        }
+    }
+
+    #[test]
     fn write_x_data() {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
