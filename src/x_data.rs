@@ -69,6 +69,7 @@ impl XData {
             };
             if pair.code == XDATA_APPLICATIONNAME || pair.code < XDATA_STRING {
                 // new xdata or non xdata
+                iter.put_back(Ok(pair));
                 break;
             }
             xdata.items.push(XDataItem::read_item(&pair, iter)?);
