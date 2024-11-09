@@ -612,7 +612,7 @@ pub mod tests {
         assert!(actual.contains(&contents));
     }
 
-    fn try_find_index<T>(superset: &Vec<T>, subset: &Vec<T>) -> Option<usize>
+    fn try_find_index<T>(superset: &[T], subset: &[T]) -> Option<usize>
     where
         T: PartialEq,
     {
@@ -634,7 +634,7 @@ pub mod tests {
         None
     }
 
-    pub fn assert_vec_contains<T>(actual: &Vec<T>, expected: &Vec<T>)
+    pub fn assert_vec_contains<T>(actual: &[T], expected: &[T])
     where
         T: PartialEq,
     {

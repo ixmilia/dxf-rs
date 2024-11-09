@@ -1743,7 +1743,7 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
         };
-        ent.common.layer = "some-layer".to_owned();
+        "some-layer".clone_into(&mut ent.common.layer);
         drawing.add_entity(ent);
         assert_contains_pairs(
             &drawing,
@@ -1764,7 +1764,7 @@ mod tests {
             common: Default::default(),
             specific: EntityType::Line(Default::default()),
         };
-        ent.common.layer = "some-layer".to_owned();
+        "some-layer".clone_into(&mut ent.common.layer);
         drawing.add_entity(ent);
         assert_contains_pairs(
             &drawing,

@@ -271,7 +271,7 @@ impl<T: Read> DxbReader<T> {
     fn wrap_common_values(&self, specific: EntityType) -> Entity {
         let mut entity = Entity::new(specific);
         entity.common.color = self.current_color.clone();
-        entity.common.layer = self.layer_name.clone();
+        entity.common.layer.clone_from(&self.layer_name);
         entity
     }
     fn read_null_terminated_string(&mut self) -> DxfResult<String> {
