@@ -1,6 +1,13 @@
 Changelog
 =========
 
+## 0.6.0
+
+- Improvements writing files for `R13`+.
+- Handle alternate header values for `$ACADMAINTVER`.
+- Improved handling of unexpected code pairs.
+- Update various dependencies.
+
 ## 0.5.0
 
 - Update to Rust 2018 edition.
