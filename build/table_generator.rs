@@ -56,7 +56,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
     for table in &element.children {
         let mut seen_fields = HashSet::new();
         let table_item = &table.children[0];
-        fun.push_str("#[derive(Debug)]\n");
+        fun.push_str("#[derive(Debug, Clone)]\n");
         fun.push_str(
             "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
         );

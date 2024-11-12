@@ -60,6 +60,7 @@ use self::uuid::Uuid;
 fn generate_struct(fun: &mut String, element: &Element) {
     let mut seen_fields = HashSet::new();
     fun.push_str("/// Contains common properties for the DXF file.\n");
+    fun.push_str("#[derive(Debug, Clone)]\n");
     fun.push_str(
         "#[cfg_attr(feature = \"serialize\", derive(serde::Serialize, serde::Deserialize))]\n",
     );
