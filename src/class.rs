@@ -5,7 +5,7 @@ use crate::enums::*;
 use crate::helper_functions::*;
 
 /// Represents an application-defined class whose instances are `Block`s, `Entity`s, and `Object`s.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]
 pub struct Class {
     /// Class DXF record name.
