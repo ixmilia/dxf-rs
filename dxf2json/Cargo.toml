@@ -2,7 +2,7 @@
 name = "dxf2json"
 version = "0.1.0"
 authors = ["Brett V. Forsgren <brett.forsgren@outlook.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 dxf = { path = "../", features = ["serialize"] }
