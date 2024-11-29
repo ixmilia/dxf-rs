@@ -22,12 +22,6 @@ dxf = { version = "0.5.0", features = ["serialize"] }
 > Note that `serde` support is intended to aid in debugging and since the serialized format is heavily
 dependent on the layout of the structures, it may change at any time.
 
-And finally add:
-
-``` rust
-extern crate dxf;
-```
-
 # Documentation
 
 See the documentation [here](https://docs.rs/dxf/) on docs.rs.

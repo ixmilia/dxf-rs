@@ -1,8 +1,6 @@
-extern crate encoding_rs;
-use self::encoding_rs::Encoding;
+use encoding_rs::Encoding;
 
-extern crate image;
-use self::image::DynamicImage;
+use image::DynamicImage;
 
 use crate::code_pair_put_back::CodePairPutBack;
 use crate::drawing_item::{DrawingItem, DrawingItemMut};

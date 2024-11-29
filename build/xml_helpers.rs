@@ -1,7 +1,6 @@
-extern crate xmltree;
-use self::xmltree::Element;
 use crate::other_helpers::*;
 use crate::ExpectedType;
+use xmltree::Element;
 
 pub fn attr(element: &Element, name: &str) -> String {
     match element.attributes.get(name) {

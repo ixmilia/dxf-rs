@@ -8,7 +8,6 @@ use std::process::Command;
 use std::thread::panicking;
 use std::time::SystemTime;
 
-extern crate glob;
 use glob::glob;
 
 struct Oda {

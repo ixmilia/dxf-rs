@@ -19,12 +19,6 @@
 //! > Note that `serde` support is intended to aid in debugging and since the serialized format is heavily
 //! dependent on the layout of the structures, it may change at any time.
 //!
-//! And finally add:
-//!
-//! ``` rust
-//! extern crate dxf;
-//! ```
-//!
 //! # Examples
 //!
 //! Open a DXF file from disk:
@@ -115,13 +109,8 @@
 
 #![warn(clippy::doc_markdown)]
 
-extern crate encoding_rs;
-
 #[macro_use]
 extern crate enum_primitive;
-
-extern crate image;
-extern crate itertools;
 
 mod code_pair;
 pub use crate::code_pair::CodePair;
@@ -228,9 +217,5 @@ mod object_iter;
 
 #[cfg(test)]
 include!(concat!(env!("OUT_DIR"), "/generated/tests/mod.rs"));
-
-#[cfg(test)]
-#[macro_use]
-extern crate float_cmp;
 
 mod misc_tests;

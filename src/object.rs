@@ -4,8 +4,7 @@ use enum_primitive::FromPrimitive;
 use itertools::Itertools;
 use std::ops::Add;
 
-extern crate chrono;
-use self::chrono::Duration;
+use chrono::Duration;
 
 use crate::{
     CodePair, Color, DataTableValue, DxfError, DxfResult, Point, SectionTypeSettings,

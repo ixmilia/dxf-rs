@@ -3,18 +3,14 @@ use std::io;
 use std::io::Read;
 use std::time::Duration as StdDuration;
 
-extern crate byteorder;
-use self::byteorder::{ByteOrder, LittleEndian};
+use byteorder::{ByteOrder, LittleEndian};
 
-extern crate chrono;
-use self::chrono::prelude::*;
-use self::chrono::Duration as ChronoDuration;
+use chrono::prelude::*;
+use chrono::Duration as ChronoDuration;
 
-extern crate encoding_rs;
-use self::encoding_rs::Encoding;
+use encoding_rs::Encoding;
 
-extern crate uuid;
-use self::uuid::Uuid;
+use uuid::Uuid;
 
 use enum_primitive::FromPrimitive;
 

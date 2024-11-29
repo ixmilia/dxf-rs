@@ -1,9 +1,7 @@
-extern crate byteorder;
-
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 
-use self::byteorder::{BigEndian, ByteOrder};
+use byteorder::{BigEndian, ByteOrder};
 
 use crate::{CodePairValue, DxfError, DxfResult, Handle};
 
