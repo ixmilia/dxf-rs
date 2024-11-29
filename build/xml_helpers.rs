@@ -27,10 +27,10 @@ pub fn codes(element: &Element) -> Vec<i32> {
     if code_overrides.is_empty() {
         vec![code(element)]
     } else {
-        return code_overrides
+        code_overrides
             .split(',')
             .map(|c| c.parse::<i32>().unwrap())
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
     }
 }
 
