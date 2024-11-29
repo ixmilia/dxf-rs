@@ -1628,6 +1628,7 @@ mod tests {
     use crate::helper_functions::tests::*;
     use crate::objects::*;
     use crate::*;
+    use float_cmp::approx_eq;
 
     fn read_entity(entity_type: &str, body: Vec<CodePair>) -> Entity {
         let mut pairs = vec![CodePair::new_str(0, entity_type)];

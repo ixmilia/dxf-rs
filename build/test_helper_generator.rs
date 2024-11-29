@@ -1,5 +1,4 @@
-extern crate xmltree;
-use self::xmltree::Element;
+use xmltree::Element;
 
 use crate::xml_helpers::*;
 

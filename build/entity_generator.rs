@@ -1,5 +1,4 @@
-extern crate xmltree;
-use self::xmltree::Element;
+use xmltree::Element;
 
 use crate::ExpectedType;
 
@@ -39,8 +38,9 @@ use crate::helper_functions::*;
 use crate::tables::*;
 use crate::x_data;
 
+use enum_primitive::FromPrimitive;
+
 use crate::enums::*;
-use crate::enum_primitive::FromPrimitive;
 use crate::objects::*;
 ".trim_start());
     fun.push('\n');

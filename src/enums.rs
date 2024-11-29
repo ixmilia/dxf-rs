@@ -1,5 +1,3 @@
-extern crate num;
-
 use crate::{DxfError, DxfResult};
 use std::fmt;
 

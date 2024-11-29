@@ -1,5 +1,4 @@
-extern crate xmltree;
-use self::xmltree::Element;
+use xmltree::Element;
 
 use crate::ExpectedType;
 
@@ -46,11 +45,10 @@ use crate::x_data;
 
 use crate::entities::*;
 use crate::enums::*;
-use crate::enum_primitive::FromPrimitive;
+use enum_primitive::FromPrimitive;
 use std::collections::HashMap;
 
-extern crate chrono;
-use self::chrono::{DateTime, Local};
+use chrono::{DateTime, Local};
 ".trim_start());
     fun.push('\n');
     generate_base_object(&mut fun, &element);

@@ -67,6 +67,7 @@ mod tests {
     use crate::objects::*;
     use crate::tables::*;
     use crate::*;
+    use float_cmp::approx_eq;
 
     fn read_table(table_name: &str, value_pairs: Vec<CodePair>) -> Drawing {
         let mut pairs = vec![

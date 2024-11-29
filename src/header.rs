@@ -76,6 +76,7 @@ mod tests {
     use crate::enums::*;
     use crate::helper_functions::tests::*;
     use crate::*;
+    use float_cmp::approx_eq;
     use std::time::Duration;
 
     #[test]

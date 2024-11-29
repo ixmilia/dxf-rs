@@ -6,8 +6,7 @@ use crate::*;
 use std::io::{BufReader, Cursor, Seek, SeekFrom};
 use std::str::from_utf8;
 
-extern crate image;
-use self::image::{DynamicImage, GenericImageView};
+use image::{DynamicImage, GenericImageView};
 
 #[test]
 fn read_string_with_control_characters() {
