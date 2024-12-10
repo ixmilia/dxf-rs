@@ -1,7 +1,6 @@
 use std::io::Write;
 
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt};
 
 use crate::{Drawing, DxfResult};
 

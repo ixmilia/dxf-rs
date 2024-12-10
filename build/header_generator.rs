@@ -1,5 +1,4 @@
-extern crate xmltree;
-use self::xmltree::Element;
+use xmltree::Element;
 
 use crate::ExpectedType;
 
@@ -32,15 +31,13 @@ use crate::{
 use crate::helper_functions::*;
 
 use crate::enums::*;
-use crate::enum_primitive::FromPrimitive;
+use enum_primitive::FromPrimitive;
 
 use std::time::Duration;
 
-extern crate chrono;
-use self::chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, Utc};
 
-extern crate uuid;
-use self::uuid::Uuid;
+use uuid::Uuid;
 ".trim_start());
     generate_struct(&mut fun, &element);
 

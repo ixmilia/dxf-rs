@@ -305,6 +305,7 @@ mod tests {
     use crate::enums::*;
     use crate::helper_functions::tests::*;
     use crate::*;
+    use float_cmp::approx_eq;
 
     fn read_blocks_section(content: Vec<CodePair>) -> Drawing {
         let mut pairs = vec![

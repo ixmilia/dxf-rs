@@ -1,5 +1,4 @@
-extern crate xmltree;
-use self::xmltree::Element;
+use xmltree::Element;
 
 use crate::ExpectedType;
 
@@ -16,8 +15,6 @@ pub fn generate_tables(generated_dir: &Path) {
     let mut fun = String::new();
     fun.push_str("
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
-
-extern crate itertools;
 
 use crate::{
     CodePair,
@@ -41,7 +38,7 @@ use crate::extension_data;
 use crate::x_data;
 
 use crate::enums::*;
-use crate::enum_primitive::FromPrimitive;
+use enum_primitive::FromPrimitive;
 ".trim_start());
     fun.push('\n');
     generate_table_items(&mut fun, &element);

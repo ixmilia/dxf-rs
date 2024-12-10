@@ -1,7 +1,6 @@
 use std::io::Write;
 
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt};
 
 use crate::code_pair_value::{escape_control_characters, escape_unicode_to_ascii};
 use crate::enums::AcadVersion;
