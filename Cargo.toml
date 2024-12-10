@@ -9,7 +9,7 @@ repository = "https://github.com/ixmilia/dxf-rs"
 readme = "README.md"
 keywords = ["AutoCAD", "CAD", "DXB", "DXF"]
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [package.metadata.docs.rs]
 targets = []
