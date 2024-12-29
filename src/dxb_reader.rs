@@ -296,9 +296,9 @@ impl<T: Read> DxbReader<T> {
         Ok(value)
     }
     fn read_f(&mut self) -> DxfResult<f64> {
-        let value = read_f64(&mut self.reader)?;
+        let value = read_f64(&mut self.reader);
         self.advance_offset(8);
-        Ok(value)
+        Ok(value.or::<f64>(Ok(0.0)).unwrap())
     }
     fn read_n(&mut self) -> DxfResult<f64> {
         if self.is_integer_mode {
