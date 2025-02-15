@@ -5,7 +5,7 @@ pub(crate) struct ObjectIter<'a> {
     pub iter: &'a mut CodePairPutBack,
 }
 
-impl<'a> Iterator for ObjectIter<'a> {
+impl Iterator for ObjectIter<'_> {
     type Item = Object;
 
     fn next(&mut self) -> Option<Object> {

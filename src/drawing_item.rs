@@ -19,7 +19,7 @@ pub enum DrawingItem<'a> {
     ViewPort(&'a ViewPort),
 }
 
-impl<'a> DrawingItem<'a> {
+impl DrawingItem<'_> {
     pub fn handle(&self) -> Handle {
         match self {
             DrawingItem::AppId(app_id) => app_id.handle,
@@ -53,7 +53,7 @@ pub enum DrawingItemMut<'a> {
     ViewPort(&'a mut ViewPort),
 }
 
-impl<'a> DrawingItemMut<'a> {
+impl DrawingItemMut<'_> {
     pub fn handle(&self) -> Handle {
         match self {
             DrawingItemMut::AppId(ref app_id) => app_id.handle,

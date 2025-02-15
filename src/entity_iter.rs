@@ -9,7 +9,7 @@ pub(crate) struct EntityIter<'a> {
     pub iter: &'a mut CodePairPutBack,
 }
 
-impl<'a> Iterator for EntityIter<'a> {
+impl Iterator for EntityIter<'_> {
     type Item = Entity;
 
     fn next(&mut self) -> Option<Entity> {
@@ -20,7 +20,7 @@ impl<'a> Iterator for EntityIter<'a> {
     }
 }
 
-impl<'a> EntityIter<'a> {
+impl EntityIter<'_> {
     pub(crate) fn read_entities_into_vec(&mut self, entities: &mut Vec<Entity>) -> DxfResult<()> {
         collect_entities(self, entities)
     }
