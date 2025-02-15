@@ -17,7 +17,7 @@
 //! ```
 //!
 //! > Note that `serde` support is intended to aid in debugging and since the serialized format is heavily
-//! dependent on the layout of the structures, it may change at any time.
+//! > dependent on the layout of the structures, it may change at any time.
 //!
 //! # Examples
 //!
