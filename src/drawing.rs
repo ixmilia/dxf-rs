@@ -150,6 +150,15 @@ impl Drawing {
     pub fn load_file(path: impl AsRef<Path>) -> DxfResult<Drawing> {
         Drawing::load_file_with_encoding(path, encoding_rs::WINDOWS_1252)
     }
+
+    /// Loads a `Drawing` from a bytes array
+    pub fn load_from_bytes(bytes:  &[u8]) -> DxfResult<Drawing> {
+        // Using bufreader like this provides no advantages, its just a convinient way to conform with
+        // the existing apis
+        let mut buf_reader = BufReader::new(bytes);
+        Drawing::load(&mut buf_reader)
+    }
+
     /// Loads a `Drawing` from disk, using a `BufReader` with the specified text encoding.
     pub fn load_file_with_encoding(
         path: impl AsRef<Path>,

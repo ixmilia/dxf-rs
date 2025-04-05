@@ -291,6 +291,21 @@ fn read_binary_file() {
 }
 
 #[test]
+fn read_bytes(){
+    let bytes = std::fs::read("./src/misc_tests/diamond-bin.dxf").unwrap();
+    let drawing =unwrap_drawing(Drawing::load_from_bytes(bytes.as_ref()));
+    let entities = drawing.entities().collect::<Vec<_>>();
+    assert_eq!(12, entities.len());
+    match entities[0].specific {
+        EntityType::Line(ref line) => {
+            assert_eq!(Point::new(45.0, 45.0, 0.0), line.p1);
+            assert_eq!(Point::new(45.0, -45.0, 0.0), line.p2);
+        }
+        _ => panic!("expected a line"),
+    }
+}
+
+#[test]
 fn read_binary_file_post_r13() {
     // post R13 binary files have 2 byte codes and single byte booleans
     let data = vec![
