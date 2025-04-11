@@ -1577,7 +1577,9 @@ impl Entity {
                         && v.polyface_mesh_vertex_index3 == 0
                         && v.polyface_mesh_vertex_index4 == 0
                     {
-                        v.set_is_3d_polygon_mesh(poly.is_3d_polygon_mesh());
+                        v.set_is_3d_polygon_mesh(
+                            v.is_3d_polygon_mesh() | poly.is_3d_polygon_mesh(),
+                        );
                     }
                     let v = Entity {
                         common: EntityCommon {
