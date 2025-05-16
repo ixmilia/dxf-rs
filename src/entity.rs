@@ -3177,7 +3177,7 @@ mod tests {
     #[test]
     fn read_all_types() {
         for (type_string, subclass, expected_type, _) in all_types::all_entity_types() {
-            println!("parsing {}/{}", type_string, subclass);
+            println!("parsing {type_string}/{subclass}");
             let mut ent = read_entity(
                 type_string,
                 vec![
@@ -3227,7 +3227,7 @@ mod tests {
     #[test]
     fn write_all_types() {
         for (type_string, _, expected_type, max_version) in all_types::all_entity_types() {
-            println!("writing {}", type_string);
+            println!("writing {type_string}");
             let mut common = EntityCommon::default();
             common.extension_data_groups.push(ExtensionGroup {
                 application_name: String::from("IXMILIA"),

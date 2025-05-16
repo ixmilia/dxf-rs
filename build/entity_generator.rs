@@ -202,7 +202,7 @@ fn generate_base_entity(fun: &mut String, element: &Element) {
     fun.push_str("    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion, write_handles: bool) {\n");
     fun.push_str("        let ent = self;\n");
     for line in generate_write_code_pairs(entity) {
-        fun.push_str(&format!("        {}\n", line));
+        fun.push_str(&format!("        {line}\n"));
     }
 
     fun.push_str("    }\n");
@@ -330,7 +330,7 @@ fn generate_entity_types(fun: &mut String, element: &Element) {
                 fun.push_str("    pub(crate) fn add_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) {\n");
                 fun.push_str("        let ent = self;\n");
                 for line in generate_write_code_pairs(c) {
-                    fun.push_str(&format!("        {}\n", line));
+                    fun.push_str(&format!("        {line}\n"));
                 }
                 fun.push_str("    }\n");
                 fun.push_str("}\n");
@@ -350,10 +350,7 @@ fn generate_implementation(fun: &mut String, element: &Element) {
                 if flag.name == "Flag" {
                     let flag_name = name(flag);
                     let mask = attr(flag, "Mask");
-                    implementation.push_str(&format!(
-                        "    pub fn {name}(&self) -> bool {{\n",
-                        name = flag_name
-                    ));
+                    implementation.push_str(&format!("    pub fn {flag_name}(&self) -> bool {{\n"));
                     implementation.push_str(&format!(
                         "        self.{name} & {mask} != 0\n",
                         name = name(field),
@@ -361,8 +358,7 @@ fn generate_implementation(fun: &mut String, element: &Element) {
                     ));
                     implementation.push_str("    }\n");
                     implementation.push_str(&format!(
-                        "    pub fn set_{name}(&mut self, val: bool) {{\n",
-                        name = flag_name
+                        "    pub fn set_{flag_name}(&mut self, val: bool) {{\n"
                     ));
                     implementation.push_str("        if val {\n");
                     implementation.push_str(&format!(
@@ -495,9 +491,9 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                     let write_cmd = match codes.len() {
                                         1 => {
                                             let read_fun = if allow_multiples(f) {
-                                                format!(".push({})", reader)
+                                                format!(".push({reader})")
                                             } else {
-                                                format!(" = {}", reader)
+                                                format!(" = {reader}")
                                             };
                                             format!(
                                                 "ent.{field}{read_fun}",
@@ -521,9 +517,7 @@ fn generate_try_apply_code_pair(fun: &mut String, element: &Element) {
                                         }
                                     };
                                     fun.push_str(&format!(
-                                        "                    {code} => {{ {cmd}; }},\n",
-                                        code = cd,
-                                        cmd = write_cmd
+                                        "                    {cd} => {{ {write_cmd}; }},\n"
                                     ));
                                 }
                             }
@@ -569,7 +563,7 @@ fn generate_get_code_pairs(fun: &mut String, element: &Element) {
                     ent = ent
                 ));
                 for line in generate_write_code_pairs(entity) {
-                    fun.push_str(&format!("                {}\n", line));
+                    fun.push_str(&format!("                {line}\n"));
                 }
 
                 fun.push_str("            },\n");
@@ -589,7 +583,7 @@ fn field_with_name<'a>(entity: &'a Element, field_name: &String) -> &'a Element 
         }
     }
 
-    panic!("unable to find field {}", field_name);
+    panic!("unable to find field {field_name}");
 }
 
 fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
@@ -611,8 +605,7 @@ fn generate_write_code_pairs(entity: &Element) -> Vec<String> {
     if !subclass.is_empty() {
         commands.push("if version >= AcadVersion::R13 {".to_string());
         commands.push(format!(
-            "    pairs.push(CodePair::new_str(100, \"{subclass}\"));",
-            subclass = subclass
+            "    pairs.push(CodePair::new_str(100, \"{subclass}\"));"
         ));
         commands.push("}".to_string());
     }
@@ -644,7 +637,7 @@ fn generate_write_code_pairs_for_write_order(
             let field_name = write_command.attributes.get("Field").unwrap();
             let field = field_with_name(entity, field_name);
             let normalized_field_name = if field.name == "Pointer" {
-                format!("__{}_handle", field_name)
+                format!("__{field_name}_handle")
             } else {
                 field_name.clone()
             };
@@ -706,7 +699,7 @@ fn generate_write_code_pairs_for_write_order(
             commands.push(format!("for item in &{} {{", attr(write_command, "Field")));
             for write_command in &write_command.children {
                 for line in generate_write_code_pairs_for_write_order(entity, write_command) {
-                    commands.push(format!("    {}", line));
+                    commands.push(format!("    {line}"));
                 }
             }
             commands.push(String::from("}"));
@@ -776,11 +769,7 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
             name(field)
         };
         let typ = code_pair_type(&expected_type);
-        commands.push(format!(
-            "{indent}for v in &ent.{field} {{",
-            indent = indent,
-            field = normalized_field_name
-        ));
+        commands.push(format!("{indent}for v in &ent.{normalized_field_name} {{"));
         commands.push(format!(
             "{indent}    pairs.push(CodePair::new_{typ}({code}, {val}));",
             indent = indent,
@@ -788,14 +777,10 @@ fn write_lines_for_field(field: &Element, write_conditions: Vec<String>) -> Vec<
             code = codes(field)[0],
             val = val
         ));
-        commands.push(format!("{indent}}}", indent = indent));
+        commands.push(format!("{indent}}}"));
     } else {
         for command in code_pairs_for_field(field) {
-            commands.push(format!(
-                "{indent}pairs.push({command});",
-                indent = indent,
-                command = command
-            ));
+            commands.push(format!("{indent}pairs.push({command});"));
         }
     }
 
@@ -845,20 +830,15 @@ fn code_pair_for_field_and_code(code: i32, field: &Element, suffix: Option<&str>
     } else {
         name(field)
     };
-    let mut field_access = format!("ent.{field}", field = normalized_field_name);
+    let mut field_access = format!("ent.{normalized_field_name}");
     if let Some(suffix) = suffix {
-        field_access = format!("{}.{}", field_access, suffix);
+        field_access = format!("{field_access}.{suffix}");
     }
     let writer = write_converter.replace("{}", &field_access);
     if name(field) == "handle" && code == 5 {
         String::from("CodePair::new_string(5, &self.handle.as_string())")
     } else {
-        format!(
-            "CodePair::new_{typ}({code}, {writer})",
-            typ = typ,
-            code = code,
-            writer = writer
-        )
+        format!("CodePair::new_{typ}({code}, {writer})")
     }
 }
 

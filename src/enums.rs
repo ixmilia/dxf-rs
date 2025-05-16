@@ -121,7 +121,7 @@ impl fmt::Display for AcadVersion {
             AcadVersion::R2013 => "AC1027",
             AcadVersion::R2018 => "AC1032",
         };
-        write!(f, "{}", display_value)
+        write!(f, "{display_value}")
     }
 }
 

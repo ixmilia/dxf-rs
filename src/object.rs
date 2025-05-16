@@ -2209,7 +2209,7 @@ mod tests {
     #[test]
     fn read_all_types() {
         for (type_string, expected_type, _) in all_types::all_object_types() {
-            println!("parsing {}", type_string);
+            println!("parsing {type_string}");
             let obj = read_object(
                 type_string,
                 vec![
@@ -2258,7 +2258,7 @@ mod tests {
     #[test]
     fn write_all_types() {
         for (type_string, expected_type, max_version) in all_types::all_object_types() {
-            println!("writing {}", type_string);
+            println!("writing {type_string}");
             let mut common = ObjectCommon::default();
             common.extension_data_groups.push(ExtensionGroup {
                 application_name: String::from("IXMILIA"),

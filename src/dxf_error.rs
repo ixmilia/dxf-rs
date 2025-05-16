@@ -40,19 +40,17 @@ impl From<::image::ImageError> for DxfError {
 impl fmt::Display for DxfError {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            DxfError::IoError(ref e) => write!(formatter, "{}", e),
-            DxfError::ImageError(ref e) => write!(formatter, "{}", e),
-            DxfError::ParseFloatError(ref e, o) => write!(formatter, "{} at line/offset {}", e, o),
-            DxfError::ParseIntError(ref e, o) => write!(formatter, "{} at line/offset {}", e, o),
+            DxfError::IoError(ref e) => write!(formatter, "{e}"),
+            DxfError::ImageError(ref e) => write!(formatter, "{e}"),
+            DxfError::ParseFloatError(ref e, o) => write!(formatter, "{e} at line/offset {o}"),
+            DxfError::ParseIntError(ref e, o) => write!(formatter, "{e} at line/offset {o}"),
             DxfError::ParseError(o) => write!(
                 formatter,
-                "there was a general parsing error at line/offset {}",
-                o
+                "there was a general parsing error at line/offset {o}"
             ),
             DxfError::UnexpectedCode(c, o) => write!(
                 formatter,
-                "an unexpected code '{}' was encountered at line/offset {}",
-                c, o
+                "an unexpected code '{c}' was encountered at line/offset {o}"
             ),
             DxfError::UnexpectedCodePair(ref cp, ref s) => write!(
                 formatter,
@@ -61,8 +59,7 @@ impl fmt::Display for DxfError {
             ),
             DxfError::UnexpectedByte(ref b, o) => write!(
                 formatter,
-                "the byte '0x{:02x}' was not expected at this time at line/offset {}",
-                b, o
+                "the byte '0x{b:02x}' was not expected at this time at line/offset {o}"
             ),
             DxfError::UnexpectedEndOfInput => write!(
                 formatter,
@@ -70,21 +67,18 @@ impl fmt::Display for DxfError {
             ),
             DxfError::UnexpectedEnumValue(o) => write!(
                 formatter,
-                "the specified enum value does not fall into the expected range at line/offset {}",
-                o
+                "the specified enum value does not fall into the expected range at line/offset {o}"
             ),
             DxfError::UnexpectedEmptySet => {
                 write!(formatter, "the set was not expected to be empty")
             }
             DxfError::ExpectedTableType(o) => write!(
                 formatter,
-                "a 2/<table-type> code pair was expected at line/offset {}",
-                o
+                "a 2/<table-type> code pair was expected at line/offset {o}"
             ),
             DxfError::WrongValueType(o) => write!(
                 formatter,
-                "the CodePairValue does not contain the requested type at line/offset {}",
-                o
+                "the CodePairValue does not contain the requested type at line/offset {o}"
             ),
             DxfError::InvalidBinaryFile => write!(formatter, "the binary file is invalid"),
             DxfError::MalformedString => write!(formatter, "the string is malformed"),

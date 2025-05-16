@@ -60,7 +60,7 @@ pub fn field_reader(element: &Element) -> String {
         if read_converter.is_empty() {
             read_converter = String::from("{}");
         }
-        let read_cmd = format!("pair.{}()?", reader_fun);
+        let read_cmd = format!("pair.{reader_fun}()?");
         let normalized_read_cmd = if element.name == "Pointer" {
             String::from("pair.as_handle()?")
         } else {
@@ -77,9 +77,9 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
     let normalized_field_name = format!("__{}_handle", name(pointer));
     let return_type = match (allow_multiples(pointer), typ.is_empty()) {
         (true, true) => String::from("Vec<DrawingItem<'a>>"),
-        (true, false) => format!("Vec<&'a {}>", typ),
+        (true, false) => format!("Vec<&'a {typ}>"),
         (false, true) => String::from("Option<DrawingItem<'a>>"),
-        (false, false) => format!("Option<&'a {}>", typ),
+        (false, false) => format!("Option<&'a {typ}>"),
     };
 
     // get method
@@ -92,19 +92,15 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
         if allow_multiples(pointer) {
             if !sub_type.is_empty() {
                 fun.push_str(&format!(
-                    "        self.{field}.iter().filter_map(|&h| {{\n",
-                    field = normalized_field_name
+                    "        self.{normalized_field_name}.iter().filter_map(|&h| {{\n"
                 ));
                 fun.push_str("            match drawing.item_by_handle(h) {\n");
                 fun.push_str(&format!(
-                    "                Some(DrawingItem::{typ}(val)) => {{\n",
-                    typ = typ
+                    "                Some(DrawingItem::{typ}(val)) => {{\n"
                 ));
                 fun.push_str("                    match val.specific {\n");
                 fun.push_str(&format!(
-                    "                        {typ}Type::{sub_type}(_) => Some(val),\n",
-                    typ = typ,
-                    sub_type = sub_type
+                    "                        {typ}Type::{sub_type}(_) => Some(val),\n"
                 ));
                 fun.push_str("                        _ => None,\n");
                 fun.push_str("                    }\n");
@@ -114,13 +110,11 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                 fun.push_str("        }).collect()\n");
             } else {
                 fun.push_str(&format!(
-                    "        self.{field}.iter().filter_map(|&h| {{\n",
-                    field = normalized_field_name
+                    "        self.{normalized_field_name}.iter().filter_map(|&h| {{\n"
                 ));
                 fun.push_str("            match drawing.item_by_handle(h) {\n");
                 fun.push_str(&format!(
-                    "                Some(DrawingItem::{typ}(val)) => Some(val),\n",
-                    typ = typ
+                    "                Some(DrawingItem::{typ}(val)) => Some(val),\n"
                 ));
                 fun.push_str("                _ => None,\n");
                 fun.push_str("            }\n");
@@ -128,27 +122,22 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
             }
         } else {
             fun.push_str(&format!(
-                "        match drawing.item_by_handle(self.{field}) {{\n",
-                field = normalized_field_name
+                "        match drawing.item_by_handle(self.{normalized_field_name}) {{\n"
             ));
             if !sub_type.is_empty() {
                 fun.push_str(&format!(
-                    "            Some(DrawingItem::{typ}(val)) => {{\n",
-                    typ = typ
+                    "            Some(DrawingItem::{typ}(val)) => {{\n"
                 ));
                 fun.push_str("                match val.specific {\n");
                 fun.push_str(&format!(
-                    "                    {typ}Type::{sub_type}(_) => Some(val),\n",
-                    typ = typ,
-                    sub_type = sub_type
+                    "                    {typ}Type::{sub_type}(_) => Some(val),\n"
                 ));
                 fun.push_str("                    _ => None,\n");
                 fun.push_str("                }\n");
                 fun.push_str("            },\n");
             } else {
                 fun.push_str(&format!(
-                    "            Some(DrawingItem::{typ}(val)) => Some(val),\n",
-                    typ = typ
+                    "            Some(DrawingItem::{typ}(val)) => Some(val),\n"
                 ));
             }
             fun.push_str("            _ => None,\n");
@@ -156,13 +145,11 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
         }
     } else if allow_multiples(pointer) {
         fun.push_str(&format!(
-            "        self.{field}.iter().filter_map(|&h| drawing.item_by_handle(h)).collect()\n",
-            field = normalized_field_name
+            "        self.{normalized_field_name}.iter().filter_map(|&h| drawing.item_by_handle(h)).collect()\n"
         ));
     } else {
         fun.push_str(&format!(
-            "        drawing.item_by_handle(self.{field})\n",
-            field = normalized_field_name
+            "        drawing.item_by_handle(self.{normalized_field_name})\n"
         ));
     }
 
@@ -179,8 +166,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str("        match item.specific {\n");
-                fun.push_str(&format!("            {typ}Type::{sub_type} {{ .. }} => self.{field}.push(item.common.handle),\n",
-                    typ=typ, sub_type=sub_type, field=normalized_field_name));
+                fun.push_str(&format!("            {typ}Type::{sub_type} {{ .. }} => self.{normalized_field_name}.push(item.common.handle),\n"));
                 fun.push_str("            _ => return Err(DxfError::WrongItemType),\n");
                 fun.push_str("        }\n");
                 fun.push('\n');
@@ -194,9 +180,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str(&format!(
-                    "        self.{field}.push(DrawingItem::{typ}(item).handle());\n",
-                    field = normalized_field_name,
-                    typ = typ
+                    "        self.{normalized_field_name}.push(DrawingItem::{typ}(item).handle());\n"
                 ));
             }
             (true, true) => {
@@ -206,8 +190,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     name = name(pointer)
                 ));
                 fun.push_str(&format!(
-                    "        self.{field}.push(item.handle());\n",
-                    field = normalized_field_name
+                    "        self.{normalized_field_name}.push(item.handle());\n"
                 ));
             }
             (true, false) => panic!("a specific type was specified without a high level type"),
@@ -222,8 +205,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str("        match item.specific {\n");
-                fun.push_str(&format!("            {typ}Type::{sub_type} {{ .. }} => self.{field} = item.common.handle,\n",
-                    typ=typ, sub_type=sub_type, field=normalized_field_name));
+                fun.push_str(&format!("            {typ}Type::{sub_type} {{ .. }} => self.{normalized_field_name} = item.common.handle,\n"));
                 fun.push_str("            _ => return Err(DxfError::WrongItemType),\n");
                 fun.push_str("        }\n");
                 fun.push('\n');
@@ -237,9 +219,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     typ = typ
                 ));
                 fun.push_str(&format!(
-                    "        self.{field} = DrawingItem::{typ}(item).handle();\n",
-                    field = normalized_field_name,
-                    typ = typ
+                    "        self.{normalized_field_name} = DrawingItem::{typ}(item).handle();\n"
                 ));
             }
             (true, true) => {
@@ -249,8 +229,7 @@ pub fn methods_for_pointer_access(pointer: &Element) -> String {
                     name = name(pointer)
                 ));
                 fun.push_str(&format!(
-                    "        self.{field} = item.handle();\n",
-                    field = normalized_field_name
+                    "        self.{normalized_field_name} = item.handle();\n"
                 ));
             }
             (true, false) => panic!("a specific type was specified without a high level type"),

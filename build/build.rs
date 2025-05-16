@@ -54,8 +54,8 @@ pub mod tables;
 }
 
 fn rerun_if_changed<S: Debug + ?Sized>(s: &S) {
-    let s = format!("{:?}", s)
+    let s = format!("{s:?}")
         .replace("\\\\", "/") // normalize directory separators
         .replace('\"', ""); // ignore surrounding quotes
-    println!("cargo:rerun-if-changed={}", s);
+    println!("cargo:rerun-if-changed={s}");
 }
