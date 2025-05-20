@@ -167,7 +167,7 @@ pub(crate) fn as_i16(b: bool) -> i16 {
 }
 
 pub(crate) fn uuid_string(u: &Uuid) -> String {
-    format!("{}", u)
+    format!("{u}")
 }
 
 pub(crate) fn combine_points_2<F, T>(
@@ -542,12 +542,12 @@ pub mod tests {
     pub fn unwrap_drawing(result: DxfResult<Drawing>) -> Drawing {
         match result {
             Ok(drawing) => drawing,
-            Err(e) => panic!("unable to load drawing: {:?}: {}", e, e),
+            Err(e) => panic!("unable to load drawing: {e:?}: {e}"),
         }
     }
 
     pub fn drawing_from_pairs(pairs: Vec<CodePair>) -> Drawing {
-        println!("reading from pairs: {:?}", pairs);
+        println!("reading from pairs: {pairs:?}");
         let iter = DirectCodePairIter::new(pairs);
         let iter = Box::new(iter);
         unwrap_drawing(Drawing::load_from_iter(iter))
@@ -592,7 +592,7 @@ pub mod tests {
             .lines()
             .map(|l| l.unwrap())
             .fold(String::new(), |a, l| a + l.as_str() + "\r\n");
-        println!("{}", contents); // will only be displayed on the console if the test fails
+        println!("{contents}"); // will only be displayed on the console if the test fails
         contents
     }
 
@@ -642,7 +642,7 @@ pub mod tests {
         let actual = drawing.code_pairs().ok().unwrap();
         println!("checking pairs:");
         for pair in &actual {
-            println!("{:?}", pair);
+            println!("{pair:?}");
         }
         let actual_index = try_find_index(&actual, &expected);
         assert!(actual_index.is_some());
@@ -657,7 +657,7 @@ pub mod tests {
         let actual = drawing.code_pairs().ok().unwrap();
         println!("checking pairs:");
         for pair in &actual {
-            println!("{:?}", pair);
+            println!("{pair:?}");
         }
         let actual_index = try_find_index(&actual, &not_expected);
         assert!(actual_index.is_none());

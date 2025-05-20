@@ -63,7 +63,7 @@ impl Oda {
             }
         }
         if !error_messages.is_empty() {
-            panic!("Error converting files:\n{}", error_messages);
+            panic!("Error converting files:\n{error_messages}");
         }
 
         assert!(exit_code.success());
@@ -82,7 +82,7 @@ impl Oda {
             AcadVersion::R2010 => "ACAD2010",
             AcadVersion::R2013 => "ACAD2013",
             AcadVersion::R2018 => "ACAD2018",
-            _ => panic!("Unsupported ODA version {}", version),
+            _ => panic!("Unsupported ODA version {version}"),
         };
         String::from(s)
     }
@@ -201,7 +201,7 @@ impl AutoCAD {
             }
         }
         if !error_messages.is_empty() {
-            panic!("Error converting files:\n{}", error_messages);
+            panic!("Error converting files:\n{error_messages}");
         }
 
         assert!(exit_code.success());
@@ -216,7 +216,7 @@ impl AutoCAD {
             AcadVersion::R2010 => "2010",
             AcadVersion::R2013 => "2013",
             AcadVersion::R2018 => "2018",
-            _ => panic!("Unsupported acad version {}", version),
+            _ => panic!("Unsupported acad version {version}"),
         };
         String::from(s)
     }

@@ -78,13 +78,13 @@ fn generate_table_items(fun: &mut String, element: &Element) {
                     attr(field, "Type")
                 };
                 if allow_multiples(field) {
-                    typ = format!("Vec<{}>", typ);
+                    typ = format!("Vec<{typ}>");
                 }
                 let is_private = name.starts_with('_');
                 if is_private {
                     fun.push_str("    #[doc(hidden)]\n");
                 }
-                fun.push_str(&format!("    pub {name}: {typ},\n", name = name, typ = typ));
+                fun.push_str(&format!("    pub {name}: {typ},\n"));
             }
         }
         fun.push_str("}\n");
@@ -115,11 +115,7 @@ fn generate_table_items(fun: &mut String, element: &Element) {
                     ("Pointer", false) => String::from("Handle::empty()"),
                     (_, _) => attr(field, "DefaultValue"),
                 };
-                fun.push_str(&format!(
-                    "            {field}: {default_value},\n",
-                    field = name,
-                    default_value = default_value
-                ));
+                fun.push_str(&format!("            {name}: {default_value},\n"));
             }
         }
 
@@ -237,20 +233,16 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
                     let write_cmd = match codes.len() {
                         1 => {
                             let read_fun = if allow_multiples(field) {
-                                format!(".push({})", reader)
+                                format!(".push({reader})")
                             } else {
-                                format!(" = {}", reader)
+                                format!(" = {reader}")
                             };
                             let normalized_field_name = if field.name == "Pointer" {
                                 format!("__{}_handle", name(field))
                             } else {
                                 name(field)
                             };
-                            format!(
-                                "item.{field}{read_fun}",
-                                field = normalized_field_name,
-                                read_fun = read_fun
-                            )
+                            format!("item.{normalized_field_name}{read_fun}")
                         }
                         _ => {
                             let suffix = match i {
@@ -268,9 +260,7 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
                         }
                     };
                     fun.push_str(&format!(
-                        "                                    {code} => {{ {cmd}; }},\n",
-                        code = cd,
-                        cmd = write_cmd
+                        "                                    {cd} => {{ {write_cmd}; }},\n"
                     ));
                 }
             }
@@ -288,14 +278,12 @@ fn generate_table_reader(fun: &mut String, element: &Element) {
         fun.push('\n');
         fun.push_str("                    if item.handle.is_empty() {\n");
         fun.push_str(&format!(
-            "                        drawing.add_{item_type}(item);\n",
-            item_type = item_type
+            "                        drawing.add_{item_type}(item);\n"
         ));
         fun.push_str("                    }\n");
         fun.push_str("                    else {\n");
         fun.push_str(&format!(
-            "                        drawing.add_{item_type}_no_handle_set(item);\n",
-            item_type = item_type
+            "                        drawing.add_{item_type}_no_handle_set(item);\n"
         ));
         fun.push_str("                    }\n");
         fun.push_str("                }\n");
@@ -383,8 +371,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             type_string = attr(table, "TypeString")
         ));
         fun.push_str("        if write_handles {\n");
-        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(item).handle().as_string()));\n",
-            item_type=item_type));
+        fun.push_str(&format!("            pairs.push(CodePair::new_string(5, &DrawingItem::{item_type}(item).handle().as_string()));\n"));
         fun.push_str("        }\n");
         fun.push('\n');
         fun.push_str("        if drawing.header.version >= AcadVersion::R14 {\n");
@@ -441,8 +428,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             indent = indent,
                             field = name(field)
                         ));
-                        fun.push_str(&format!("{indent}            pairs.push(CodePair::new_string({code}, &x.as_string()));\n",
-                            indent=indent, code=code));
+                        fun.push_str(&format!("{indent}            pairs.push(CodePair::new_string({code}, &x.as_string()));\n"));
                     } else {
                         let expected_type = ExpectedType::new(code).unwrap();
                         let typ = code_pair_type(&expected_type);
@@ -457,14 +443,10 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                             field = name(field)
                         ));
                         fun.push_str(&format!(
-                            "{indent}            pairs.push(CodePair::new_{typ}({code}, {val}));\n",
-                            indent = indent,
-                            typ = typ,
-                            code = code,
-                            val = val
+                            "{indent}            pairs.push(CodePair::new_{typ}({code}, {val}));\n"
                         ));
                     }
-                    fun.push_str(&format!("{indent}        }}\n", indent = indent));
+                    fun.push_str(&format!("{indent}        }}\n"));
                 } else {
                     let codes = codes(field);
                     if codes.len() == 1 {
@@ -482,8 +464,7 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
                                 attr(field, "WriteConverter")
                             };
                             let value = write_converter.replace("{}", &value);
-                            fun.push_str(&format!("{indent}        pairs.push(CodePair::new_{typ}({code}, {value}));\n",
-                                indent=indent, typ=typ, code=code, value=value));
+                            fun.push_str(&format!("{indent}        pairs.push(CodePair::new_{typ}({code}, {value}));\n"));
                         }
                     } else {
                         for (i, code) in codes.iter().enumerate() {

@@ -454,7 +454,7 @@ fn write_unicode_as_utf8() {
 #[test]
 fn write_binary_file() {
     for version in &[AcadVersion::R12, AcadVersion::R13] {
-        println!("checking version {:?}", version);
+        println!("checking version {version:?}");
         let mut drawing = Drawing::new();
         drawing.header.version = *version;
         let buf = to_binary(&drawing);

@@ -102,18 +102,18 @@ impl Clone for CodePairValue {
 impl Debug for CodePairValue {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            CodePairValue::Boolean(s) => write!(f, "{}", s),
-            CodePairValue::Integer(i) => write!(f, "{: >9}", i),
-            CodePairValue::Long(l) => write!(f, "{}", l),
-            CodePairValue::Short(s) => write!(f, "{: >6}", s),
+            CodePairValue::Boolean(s) => write!(f, "{s}"),
+            CodePairValue::Integer(i) => write!(f, "{i: >9}"),
+            CodePairValue::Long(l) => write!(f, "{l}"),
+            CodePairValue::Short(s) => write!(f, "{s: >6}"),
             CodePairValue::Double(d) => write!(f, "{}", format_f64(*d)),
-            CodePairValue::Str(ref s) => write!(f, "{}", s),
+            CodePairValue::Str(ref s) => write!(f, "{s}"),
             CodePairValue::Binary(ref b) => {
                 let mut line = String::new();
                 for s in b {
-                    line.push_str(&format!("{:02X}", s));
+                    line.push_str(&format!("{s:02X}"));
                 }
-                write!(f, "{}", line)
+                write!(f, "{line}")
             }
         }
     }
@@ -121,7 +121,7 @@ impl Debug for CodePairValue {
 
 impl Display for CodePairValue {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self) // fall back to debug
+        write!(f, "{self:?}") // fall back to debug
     }
 }
 
@@ -185,7 +185,7 @@ pub(crate) fn escape_unicode_to_ascii(val: &str) -> String {
     for c in val.chars() {
         let b = c as u32;
         if b >= 128 {
-            result.push_str(&format!("\\U+{:04X}", b));
+            result.push_str(&format!("\\U+{b:04X}"));
         } else {
             result.push(c);
         }
@@ -235,7 +235,7 @@ pub(crate) fn un_escape_ascii_to_unicode(val: &str) -> String {
 /// Formats an `f64` value with up to 12 digits of precision, ensuring at least one trailing digit after the decimal.
 fn format_f64(val: f64) -> String {
     // format with 12 digits of precision
-    let mut val = format!("{:.12}", val);
+    let mut val = format!("{val:.12}");
 
     // trim trailing zeros
     while val.ends_with('0') {

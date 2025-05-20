@@ -73,7 +73,7 @@ fn generate_struct(fun: &mut String, element: &Element) {
             if !max_version(v).is_empty() {
                 comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(v)));
             }
-            fun.push_str(&format!("    /// {}\n", comment));
+            fun.push_str(&format!("    /// {comment}\n"));
             fun.push_str(&format!(
                 "    pub {field}: {typ},\n",
                 field = field(v),
@@ -125,7 +125,7 @@ fn generate_flags(fun: &mut String, element: &Element) {
                 if !max_version(v).is_empty() {
                     comment.push_str(&format!("  Maximum AutoCAD version: {}.", max_version(v)));
                 }
-                fun.push_str(&format!("    /// {}\n", comment));
+                fun.push_str(&format!("    /// {comment}\n"));
                 fun.push_str(&format!(
                     "    pub fn {flag}(&self) -> bool {{\n",
                     flag = name(f)
@@ -136,7 +136,7 @@ fn generate_flags(fun: &mut String, element: &Element) {
                     mask = mask(f)
                 ));
                 fun.push_str("    }\n");
-                fun.push_str(&format!("    /// {}\n", comment));
+                fun.push_str(&format!("    /// {comment}\n"));
                 fun.push_str(&format!(
                     "    pub fn set_{flag}(&mut self, val: bool) {{\n",
                     flag = name(f)
@@ -225,7 +225,7 @@ fn generate_set_header_value(fun: &mut String, element: &Element) {
                         cmd = read_cmd
                     ));
                 }
-                fun.push_str(&format!("                    _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from(\"expected code {:?}\"))),\n", expected_codes));
+                fun.push_str(&format!("                    _ => return Err(DxfError::UnexpectedCodePair(pair.clone(), String::from(\"expected code {expected_codes:?}\"))),\n"));
                 fun.push_str("                }\n");
                 fun.push_str("            ");
             }
@@ -252,7 +252,7 @@ fn read_command(element: &Element) -> String {
         } else {
             read_converter(element)
         };
-        converter.replace("{}", &format!("pair.{}()?", reader_fun))
+        converter.replace("{}", &format!("pair.{reader_fun}()?"))
     }
 }
 
@@ -302,7 +302,7 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
         if code(v) > 0 {
             let expected_type = code_pair_type(&ExpectedType::new(code(v)).unwrap());
             let field_name = field(v);
-            let value = format!("self.{}", field_name);
+            let value = format!("self.{field_name}");
             let value = write_converter.replace("{}", &value);
             fun.push_str(&format!(
                 "        {indent}pairs.push(CodePair::new_{typ}({code}, {value}));\n",
@@ -322,10 +322,7 @@ fn generate_get_code_pairs_internal(fun: &mut String, element: &Element) {
                 };
                 let value = write_converter.replace("{}", &format!("self.{}.{}", field(v), fld));
                 fun.push_str(&format!(
-                    "        {indent}pairs.push(CodePair::new_f64({code}, {value}));\n",
-                    code = code,
-                    value = value,
-                    indent = indent
+                    "        {indent}pairs.push(CodePair::new_f64({code}, {value}));\n"
                 ));
             }
         }

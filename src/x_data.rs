@@ -196,7 +196,7 @@ impl XDataItem {
             XDataItem::BinaryData(ref data) => {
                 let mut line = String::new();
                 for b in data {
-                    line.push_str(&format!("{:02X}", b));
+                    line.push_str(&format!("{b:02X}"));
                 }
                 pairs.push(CodePair::new_string(XDATA_BINARYDATA, &line));
             }
