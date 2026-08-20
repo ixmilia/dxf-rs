@@ -1348,9 +1348,15 @@ impl Entity {
         if version >= AcadVersion::R13 {
             pairs.push(CodePair::new_str(100, "AcDbAlignedDimension"));
         }
-        pairs.push(CodePair::new_f64(12, dim.insertion_point.x));
-        pairs.push(CodePair::new_f64(22, dim.insertion_point.y));
-        pairs.push(CodePair::new_f64(32, dim.insertion_point.z));
+        // AutoCAD only writes the insertion point (12/22/32) and the extension
+        // line angle (52) when they are actually set; its reader rejects a
+        // default-valued group in this position with "Unexpected DXF group
+        // code" and discards the whole drawing.
+        if dim.insertion_point != Point::origin() {
+            pairs.push(CodePair::new_f64(12, dim.insertion_point.x));
+            pairs.push(CodePair::new_f64(22, dim.insertion_point.y));
+            pairs.push(CodePair::new_f64(32, dim.insertion_point.z));
+        }
         pairs.push(CodePair::new_f64(13, dim.definition_point_2.x));
         pairs.push(CodePair::new_f64(23, dim.definition_point_2.y));
         pairs.push(CodePair::new_f64(33, dim.definition_point_2.z));
@@ -1358,7 +1364,9 @@ impl Entity {
         pairs.push(CodePair::new_f64(24, dim.definition_point_3.y));
         pairs.push(CodePair::new_f64(34, dim.definition_point_3.z));
         pairs.push(CodePair::new_f64(50, dim.rotation_angle));
-        pairs.push(CodePair::new_f64(52, dim.extension_line_angle));
+        if dim.extension_line_angle != 0.0 {
+            pairs.push(CodePair::new_f64(52, dim.extension_line_angle));
+        }
         if version >= AcadVersion::R13 {
             pairs.push(CodePair::new_str(100, "AcDbRotatedDimension"));
         }
@@ -2790,6 +2798,60 @@ mod tests {
                 CodePair::new_f64(40, 0.0), // leader_length
             ],
         );
+    }
+
+    #[test]
+    fn write_rotated_dimension_with_default_optional_fields() {
+        // AutoCAD only writes the insertion point (12) and the extension line
+        // angle (52) when set; its reader rejects a default-valued group here
+        // and discards the whole drawing.
+        let dim = RotatedDimension {
+            definition_point_2: Point::new(1.1, 2.2, 3.3),
+            ..Default::default()
+        };
+        let ent = Entity::new(EntityType::RotatedDimension(dim));
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2004;
+        drawing.add_entity(ent);
+        // no default-valued 12 between the marker and definition_point_2
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(100, "AcDbAlignedDimension"),
+                CodePair::new_f64(13, 1.1),
+            ],
+        );
+        // no default-valued 52 between the rotation angle and the closing marker
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_f64(50, 0.0),
+                CodePair::new_str(100, "AcDbRotatedDimension"),
+            ],
+        );
+    }
+
+    #[test]
+    fn write_rotated_dimension_with_set_optional_fields() {
+        let dim = RotatedDimension {
+            insertion_point: Point::new(1.1, 2.2, 3.3),
+            extension_line_angle: 4.4,
+            ..Default::default()
+        };
+        let ent = Entity::new(EntityType::RotatedDimension(dim));
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2004;
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(100, "AcDbAlignedDimension"),
+                CodePair::new_f64(12, 1.1), // insertion_point
+                CodePair::new_f64(22, 2.2),
+                CodePair::new_f64(32, 3.3),
+            ],
+        );
+        assert_contains_pairs(&drawing, vec![CodePair::new_f64(52, 4.4)]);
     }
 
     #[test]
