@@ -154,6 +154,29 @@ impl Block {
                             }
                             break;
                         }
+                        CodePair {
+                            code: 0,
+                            value: CodePairValue::Str(ref s),
+                            ..
+                        } if s == "ENDSEC" || s == "EOF" => {
+                            // The block never reached its `ENDBLK`.  Put the pair
+                            // back so the enclosing section reader sees it, and
+                            // finalize the block with what was read so far; saving
+                            // the drawing again writes the missing `ENDBLK`.
+                            //
+                            // Without this the read does not terminate:
+                            // `Entity::read()` returns `Ok(None)` for `0/ENDSEC`
+                            // *without consuming the pair*, so the loop below took
+                            // the same pair again on every trip, allocating each
+                            // time.
+                            iter.put_back(Ok(pair));
+                            if current.handle.is_empty() {
+                                drawing.add_block(current);
+                            } else {
+                                drawing.add_block_no_handle_set(current);
+                            }
+                            break;
+                        }
                         CodePair { code: 0, .. } => {
                             // should be an entity
                             iter.put_back(Ok(pair));
@@ -301,6 +324,7 @@ impl Block {
 
 #[cfg(test)]
 mod tests {
+    use crate::code_pair_iter::DirectCodePairIter;
     use crate::entities::*;
     use crate::enums::*;
     use crate::helper_functions::tests::*;
@@ -338,6 +362,74 @@ mod tests {
         let mut pairs = Vec::new();
         block.add_code_pairs(&mut pairs, version, true);
         assert_vec_contains(&pairs, &expected);
+    }
+
+    /// A `BLOCK` that never reaches its `ENDBLK` is recovered, not rejected.
+    ///
+    /// Three things are asserted, and the first is the one that matters most:
+    /// that the call **returns**. The rest come after. If the defect came back
+    /// this test would not fail - it would hang, and CI would time out rather
+    /// than go red. That is a property of the defect, not of the test.
+    #[test]
+    fn read_block_without_endblk_recovers() {
+        let drawing = read_blocks_section(vec![
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(2, "block-without-endblk"),
+            CodePair::new_str(5, "ABC"),
+            CodePair::new_str(8, "some-layer"),
+        ]);
+
+        // The block is kept, and what it declared survives.
+        let blocks = drawing.blocks().collect::<Vec<_>>();
+        assert_eq!(1, blocks.len());
+        assert_eq!("block-without-endblk", blocks[0].name);
+        assert_eq!("some-layer", blocks[0].layer);
+    }
+
+    /// A file that ends without even an `ENDSEC` terminates too - with an
+    /// error, which is the right answer.
+    ///
+    /// Recovering the block does not make the *section* well formed: the pair
+    /// is put back and the section reader rejects it, one level up, which is
+    /// where that judgement belongs. What matters here is the same thing as
+    /// above: the call returns instead of spinning.
+    #[test]
+    fn read_block_without_endblk_or_endsec_terminates() {
+        let pairs = vec![
+            CodePair::new_str(0, "SECTION"),
+            CodePair::new_str(2, "BLOCKS"),
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(2, "block-without-endblk"),
+            CodePair::new_str(0, "EOF"),
+        ];
+        let iter = Box::new(DirectCodePairIter::new(pairs));
+        assert!(Drawing::load_from_iter(iter).is_err());
+    }
+
+    /// Saving a recovered drawing writes the `ENDBLK` that was missing, and
+    /// reading it back gives the same block.
+    ///
+    /// This is what makes the recovery worth more than an error: the file is
+    /// repaired by a round trip rather than merely tolerated.
+    #[test]
+    fn recovered_block_round_trips_with_its_endblk() {
+        let drawing = read_blocks_section(vec![
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(2, "block-without-endblk"),
+            CodePair::new_str(8, "some-layer"),
+        ]);
+
+        let written = to_test_string(&drawing);
+        assert!(
+            written.contains("ENDBLK"),
+            "saving the drawing writes the missing ENDBLK"
+        );
+
+        let again = parse_drawing(&written);
+        let blocks = again.blocks().collect::<Vec<_>>();
+        assert_eq!(1, blocks.len());
+        assert_eq!("block-without-endblk", blocks[0].name);
+        assert_eq!("some-layer", blocks[0].layer);
     }
 
     #[test]
