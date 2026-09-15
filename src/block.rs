@@ -17,6 +17,13 @@ use crate::x_data;
 pub struct Block {
     /// The block's handle.
     pub handle: Handle,
+    /// The handle of the block's `ENDBLK`.
+    ///
+    /// `ENDBLK` is a separate object and needs a handle of its own; reusing the
+    /// block's puts the same handle on two objects. Assigned when the block is
+    /// added to a `Drawing`, or taken from the file when one is read.
+    #[doc(hidden)]
+    pub __endblk_handle: Handle,
     #[doc(hidden)]
     pub __owner_handle: Handle,
     /// The name of the layer containing the block.
@@ -101,6 +108,7 @@ impl Default for Block {
     fn default() -> Self {
         Block {
             handle: Handle::empty(),
+            __endblk_handle: Handle::empty(),
             __owner_handle: Handle::empty(),
             layer: String::from("0"),
             name: String::new(),
@@ -133,13 +141,18 @@ impl Block {
                             value: CodePairValue::Str(ref s),
                             ..
                         } if s == "ENDBLK" => {
-                            // swallow all non-0 code pairs
+                            // swallow all non-0 code pairs, but keep the
+                            // `ENDBLK` handle: it belongs to that object, and
+                            // writing the file again has to give it back.
                             loop {
                                 match iter.next() {
                                     Some(Ok(pair @ CodePair { code: 0, .. })) => {
                                         // done reading ENDBLK
                                         iter.put_back(Ok(pair));
                                         break;
+                                    }
+                                    Some(Ok(pair @ CodePair { code: 5, .. })) => {
+                                        current.__endblk_handle = pair.as_handle()?;
                                     }
                                     Some(Ok(_)) => (), // swallow this
                                     Some(Err(e)) => return Err(e),
@@ -275,8 +288,16 @@ impl Block {
         }
 
         pairs.push(CodePair::new_str(0, "ENDBLK"));
-        if write_handles && !self.handle.is_empty() {
-            pairs.push(CodePair::new_string(5, &self.handle.as_string()));
+        if write_handles {
+            // `ENDBLK` is its own object: it must not repeat the block's handle.
+            let endblk = if self.__endblk_handle.is_empty() {
+                self.handle
+            } else {
+                self.__endblk_handle
+            };
+            if !endblk.is_empty() {
+                pairs.push(CodePair::new_string(5, &endblk.as_string()));
+            }
         }
 
         if version >= AcadVersion::R14 {
@@ -362,6 +383,99 @@ mod tests {
         let mut pairs = Vec::new();
         block.add_code_pairs(&mut pairs, version, true);
         assert_vec_contains(&pairs, &expected);
+    }
+
+    /// Every handle written in the file, in order.
+    fn written_handles(drawing: &Drawing) -> Vec<String> {
+        let written = to_test_string(drawing);
+        let lines: Vec<&str> = written.lines().collect();
+        lines
+            .windows(2)
+            .filter(|w| w[0].trim() == "5")
+            .map(|w| w[1].trim().to_string())
+            .collect()
+    }
+
+    fn assert_handles_are_unique(drawing: &Drawing) {
+        let handles = written_handles(drawing);
+        let mut unique = handles.clone();
+        unique.sort();
+        unique.dedup();
+        assert_eq!(
+            handles.len(),
+            unique.len(),
+            "every handle in the file is unique: {handles:?}"
+        );
+    }
+
+    /// `ENDBLK` carries its own handle, not the block's.
+    ///
+    /// A handle identifies exactly one object in a DXF file. Writing the
+    /// block's handle on its `ENDBLK` puts the same value on two objects, and
+    /// a reader that indexes by handle has to repair the file before using it:
+    /// ezdxf reports a non-unique entity handle on load.
+    #[test]
+    fn endblk_handle_differs_from_block_handle() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        let block = Block {
+            name: String::from("some-block"),
+            ..Default::default()
+        };
+        drawing.add_block(block);
+
+        assert_handles_are_unique(&drawing);
+    }
+
+    /// A block recovered without its `ENDBLK` gets a unique handle for it too.
+    ///
+    /// The recovery added in #105 finalizes a block that never reached its
+    /// `ENDBLK`, and saving writes the missing one. That `ENDBLK` is a new
+    /// object and cannot borrow the block's handle either.
+    #[test]
+    fn recovered_block_endblk_handle_is_unique() {
+        let mut drawing = read_blocks_section(vec![
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(5, "A1"),
+            CodePair::new_str(2, "block-without-endblk"),
+        ]);
+        // R13+ writes the block's handle, which is where a duplicate shows.
+        drawing.header.version = AcadVersion::R2000;
+        let block = drawing.blocks().next().expect("the block is recovered");
+        assert_eq!(Handle(0xA1), block.handle);
+        assert_ne!(
+            block.handle, block.__endblk_handle,
+            "the recovered ENDBLK has a handle of its own"
+        );
+        assert_handles_are_unique(&drawing);
+    }
+
+    /// An `ENDBLK` handle that came from a file is given back when written.
+    ///
+    /// The handle belongs to that object, and a reader that kept a reference to
+    /// it - an owner pointer, say - still finds it after a round trip.
+    #[test]
+    fn endblk_handle_round_trips() {
+        let drawing = read_blocks_section(vec![
+            CodePair::new_str(0, "BLOCK"),
+            CodePair::new_str(5, "A1"),
+            CodePair::new_str(2, "some-block"),
+            CodePair::new_str(0, "ENDBLK"),
+            CodePair::new_str(5, "A2"),
+        ]);
+        let blocks = drawing.blocks().collect::<Vec<_>>();
+        assert_eq!(1, blocks.len());
+        assert_eq!(Handle(0xA1), blocks[0].handle);
+        assert_eq!(Handle(0xA2), blocks[0].__endblk_handle);
+
+        // Writing it again gives the same handle back.
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "ENDBLK"),
+                CodePair::new_str(5, "A2"),
+            ],
+        );
     }
 
     /// A `BLOCK` that never reaches its `ENDBLK` is recovered, not rejected.
@@ -832,14 +946,16 @@ mod tests {
                 CodePair::new_str(3, "block-name"), // name again
                 CodePair::new_str(1, ""),           // x-ref name; empty = external
                 CodePair::new_str(0, "LINE"),       // first entity
-                CodePair::new_str(5, "12"),         // entity handle
+                CodePair::new_str(5, "13"),         // entity handle
             ],
         );
         assert_contains_pairs(
             &drawing,
             vec![
                 CodePair::new_str(0, "ENDBLK"),
-                CodePair::new_str(5, "10"), // endblk got handle, original block didn't
+                // `ENDBLK` has a handle of its own; the block's is not written
+                // in R12.
+                CodePair::new_str(5, "11"),
                 CodePair::new_str(8, "0"),  // layer
                 CodePair::new_str(0, "ENDSEC"), // end of block
             ],
