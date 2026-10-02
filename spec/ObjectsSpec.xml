@@ -1045,8 +1045,8 @@
   SPATIAL_INDEX
 
   -->
-  <Object Name="SpatialIndex" SubclassMarker="AcDbIndex" TypeString="SPATIAL_INDEX" MinVersion="R2000">
-    <Field Name="timestamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
+  <Object Name="SpatialIndex" SubclassMarker="AcDbIndex" TypeString="SPATIAL_INDEX" GenerateReaderFunction="false" MinVersion="R2000">
+    <Field Name="timestamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" WriteConverter="as_double_local({})" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbIndex")' />
       <WriteField Field="timestamp" />

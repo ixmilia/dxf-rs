@@ -301,6 +301,9 @@ impl Object {
             ObjectType::SpatialFilter(ref mut sf) => {
                 Object::apply_custom_reader_spatialfilter(&mut self.common, sf, iter)
             }
+            ObjectType::SpatialIndex(ref mut si) => {
+                Object::apply_custom_reader_spatialindex(&mut self.common, si, iter)
+            }
             ObjectType::SunStudy(ref mut ss) => {
                 Object::apply_custom_reader_sunstudy(&mut self.common, ss, iter)
             }
@@ -1272,6 +1275,33 @@ impl Object {
             }
         }
     }
+    fn apply_custom_reader_spatialindex(
+        common: &mut ObjectCommon,
+        si: &mut SpatialIndex,
+        iter: &mut CodePairPutBack,
+    ) -> DxfResult<bool> {
+        let mut seen_acdbspatialindex = false;
+        loop {
+            let pair = next_pair!(iter);
+            match pair.code {
+                40 => {
+                    let raw_float = pair.assert_f64()?;
+                    if !seen_acdbspatialindex {
+                        si.timestamp = as_datetime_local(raw_float);
+                    }
+                }
+                100 => {
+                    let acdb = pair.assert_string()?;
+                    if acdb == "AcDbSpatialIndex" {
+                        seen_acdbspatialindex = true;
+                    }
+                }
+                _ => {
+                    common.apply_individual_pair(&pair, iter)?;
+                }
+            }
+        }
+    }
     fn apply_custom_reader_sunstudy(
         common: &mut ObjectCommon,
         ss: &mut SunStudy,
@@ -2030,6 +2060,28 @@ mod tests {
                 CodePair::new_str(350, "BBBB"),
             ],
         );
+    }
+
+    #[test]
+    fn read_spatial_index() {
+        // validates that code 40 extents after a 100/AcDbSpatialIndex are appropriately ignored
+        use crate::object::as_datetime_local;
+        let si = read_object(
+            "SPATIAL_INDEX",
+            vec![
+                CodePair::new_str(100, "AcDbIndex"),
+                CodePair::new_f64(40, 2460602.607106482), // timestamp
+                CodePair::new_str(100, "AcDbSpatialIndex"),
+                CodePair::new_f64(40, 10000000000.0), // not a timestamp
+            ],
+        );
+        match si.specific {
+            ObjectType::SpatialIndex(ref si) => {
+                // assert that the timestamp is correct
+                assert_eq!(as_datetime_local(2460602.607106482), si.timestamp);
+            }
+            _ => panic!("expected a spatial index"),
+        }
     }
 
     #[test]
