@@ -664,6 +664,12 @@ impl Drawing {
         }
     }
     pub(crate) fn add_block_no_handle_set(&mut self, mut block: Block) -> &Block {
+        // `ENDBLK` is a separate object and gets a handle of its own. This is
+        // done here rather than in `add_block` so that a block read from a file
+        // is covered too, including one recovered without its `ENDBLK`.
+        if block.__endblk_handle.is_empty() {
+            block.__endblk_handle = self.next_handle();
+        }
         self.ensure_layer_is_present_for_block(&block);
         self.ensure_line_type_is_present_for_block(&block);
         self.ensure_block_record_is_present_for_block(&mut block);
