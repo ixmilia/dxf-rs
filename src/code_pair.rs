@@ -43,8 +43,8 @@ impl CodePair {
     pub fn new_i64(code: i32, val: i64) -> Self {
         CodePair::new(code, CodePairValue::Long(val), 0)
     }
-    pub fn new_i32(code: i32, val: i32) -> Self {
-        CodePair::new(code, CodePairValue::Integer(val), 0)
+    pub fn new_i32(code: i32, val: impl Into<i32>) -> Self {
+        CodePair::new(code, CodePairValue::Integer(val.into()), 0)
     }
     pub fn new_bool(code: i32, val: bool) -> Self {
         CodePair::new(code, CodePairValue::Boolean(if val { 1 } else { 0 }), 0)
