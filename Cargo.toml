@@ -10,6 +10,7 @@ readme = "README.md"
 keywords = ["AutoCAD", "CAD", "DXB", "DXF"]
 license = "MIT"
 edition = "2021"
+include = ["Cargo.lock", "Cargo.toml", "src/**/*.rs", "README.md", "CHANGELOG.md", "LICENSE.txt", "build/**/*.rs", "spec/**/*.xml"]
 
 [package.metadata.docs.rs]
 targets = []
