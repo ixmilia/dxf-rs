@@ -180,6 +180,46 @@ mod tests {
     }
 
     #[test]
+    fn read_layer_flags() {
+        let drawing = read_table(
+            "LAYER",
+            vec![
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_i16(70, 0b0111), // frozen, frozen by default in new viewports, locked
+            ],
+        );
+        let layers = drawing.layers().collect::<Vec<_>>();
+        let layer = layers[0];
+        assert!(layer.is_frozen());
+        assert!(layer.is_frozen_by_default_in_new_viewports());
+        assert!(layer.is_locked());
+    }
+
+    #[test]
+    fn write_layer_flags() {
+        let mut drawing = Drawing::new();
+        let mut layer = Layer {
+            name: String::from("layer-name"),
+            ..Default::default()
+        };
+        layer.set_is_frozen(true);
+        layer.set_is_frozen_by_default_in_new_viewports(true);
+        layer.set_is_locked(true);
+        drawing.add_layer(layer);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(0, "LAYER"),
+                CodePair::new_str(5, "10"),
+                CodePair::new_str(100, "AcDbSymbolTableRecord"),
+                CodePair::new_str(100, "AcDbLayerTableRecord"),
+                CodePair::new_str(2, "layer-name"),
+                CodePair::new_i16(70, 0b0111), // frozen, frozen by default in new viewports, locked
+            ],
+        )
+    }
+
+    #[test]
     fn write_layer() {
         let mut drawing = Drawing::new();
         let layer = Layer {

@@ -133,6 +133,44 @@ fn generate_table_items(fun: &mut String, element: &Element) {
         fun.push_str("    pub fn set_owner<'a>(&mut self, item: &'a mut DrawingItemMut, drawing: &'a mut Drawing) {\n");
         fun.push_str("        self.__owner_handle = drawing.assign_and_get_handle(item);\n");
         fun.push_str("    }\n");
+
+        // generate flags methods
+        for field in &table_item.children {
+            if field.name == "Field" {
+                for flag in &field.children {
+                    if flag.name == "Flag" {
+                        let flag_name = name(flag);
+                        let mask = attr(flag, "Mask");
+                        fun.push_str(&format!("    pub fn {flag_name}(&self) -> bool {{\n"));
+                        fun.push_str(&format!(
+                            "        self.{name} & {mask} != 0\n",
+                            name = name(field),
+                            mask = mask
+                        ));
+                        fun.push_str("    }\n");
+                        fun.push_str(&format!(
+                            "    pub fn set_{flag_name}(&mut self, val: bool) {{\n"
+                        ));
+                        fun.push_str("        if val {\n");
+                        fun.push_str(&format!(
+                            "            self.{name} |= {mask};\n",
+                            name = name(field),
+                            mask = mask
+                        ));
+                        fun.push_str("        }\n");
+                        fun.push_str("        else {\n");
+                        fun.push_str(&format!(
+                            "            self.{name} &= !{mask};\n",
+                            name = name(field),
+                            mask = mask
+                        ));
+                        fun.push_str("        }\n");
+                        fun.push_str("    }\n");
+                    }
+                }
+            }
+        }
+
         fun.push_str("}\n");
         fun.push('\n');
     }
@@ -386,7 +424,6 @@ fn generate_table_writer(fun: &mut String, element: &Element) {
             class_name = attr(table_item, "ClassName")
         ));
         fun.push_str("        pairs.push(CodePair::new_string(2, &item.name));\n");
-        fun.push_str("        pairs.push(CodePair::new_i16(70, 0));\n"); // TODO: flags
         for field in &table_item.children {
             if generate_writer(field) {
                 let mut predicates = vec![];
