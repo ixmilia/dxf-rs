@@ -1305,10 +1305,11 @@ impl Entity {
                 self.specific.add_code_pairs(pairs, &self.common, version);
             }
 
-            self.add_post_code_pairs(pairs, version, write_handles);
+            // xdata ends the entity's own record, so it goes before any trailing ATTRIB/VERTEX/SEQEND or MTEXT records
             for x in &self.common.x_data {
                 x.add_code_pairs(pairs, version);
             }
+            self.add_post_code_pairs(pairs, version, write_handles);
         }
     }
     fn add_custom_code_pairs(&self, pairs: &mut Vec<CodePair>, version: AcadVersion) -> bool {
@@ -3015,6 +3016,97 @@ mod tests {
         match entities[0].specific {
             EntityType::Insert(ref ins) => assert_eq!(1, ins.attributes().count()),
             _ => panic!("expected an INSERT"),
+        }
+    }
+
+    fn ixmilia_x_data() -> Vec<XData> {
+        vec![XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        }]
+    }
+
+    #[test]
+    fn write_insert_x_data_before_its_attributes() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        let mut ins = Insert::default();
+        ins.add_attribute(&mut drawing, Attribute::default());
+        let mut ent = Entity::new(EntityType::Insert(ins));
+        ent.common.x_data = ixmilia_x_data();
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(0, "ATTRIB"), // the insert's xdata ends the insert's own record
+            ],
+        );
+    }
+
+    #[test]
+    fn write_polyline_x_data_before_its_vertices() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        let mut poly = Polyline::default();
+        poly.add_vertex(&mut drawing, Vertex::default());
+        let mut ent = Entity::new(EntityType::Polyline(poly));
+        ent.common.x_data = ixmilia_x_data();
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(0, "VERTEX"),
+            ],
+        );
+    }
+
+    #[test]
+    fn write_attribute_x_data_before_its_attached_mtext() {
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        let mut ent = Entity::new(EntityType::Attribute(Default::default()));
+        ent.common.x_data = ixmilia_x_data();
+        drawing.add_entity(ent);
+        assert_contains_pairs(
+            &drawing,
+            vec![
+                CodePair::new_str(1001, "IXMILIA"),
+                CodePair::new_f64(1040, 1.1),
+                CodePair::new_str(0, "MTEXT"),
+            ],
+        );
+    }
+
+    #[test]
+    fn round_trip_attribute_with_x_data_and_attached_mtext() {
+        let att = Attribute {
+            m_text: MText {
+                text: String::from("m_text"),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let mut drawing = Drawing::new();
+        drawing.header.version = AcadVersion::R2000;
+        let mut ent = Entity::new(EntityType::Attribute(att));
+        ent.common.x_data = ixmilia_x_data();
+        drawing.add_entity(ent);
+
+        let drawing = drawing_from_pairs(drawing.code_pairs().unwrap());
+
+        let entities = drawing.entities().collect::<Vec<_>>();
+        assert_eq!(1, entities.len());
+        let x_data = &entities[0].common.x_data;
+        assert_eq!(1, x_data.len());
+        assert_eq!("IXMILIA", x_data[0].application_name);
+        assert_eq!(vec![XDataItem::Real(1.1)], x_data[0].items);
+        match entities[0].specific {
+            EntityType::Attribute(ref att) => assert_eq!("m_text", att.m_text.text),
+            _ => panic!("expected an attribute"),
         }
     }
 
