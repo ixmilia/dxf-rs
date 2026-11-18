@@ -7,6 +7,7 @@ use byteorder::{ByteOrder, LittleEndian};
 
 use chrono::prelude::*;
 use chrono::Duration as ChronoDuration;
+use chrono::LocalResult;
 
 use encoding_rs::Encoding;
 
@@ -43,8 +44,21 @@ fn epoch<T>(timezone: &T) -> DateTime<T>
 where
     T: TimeZone,
 {
-    // this will never fail; unwrap is ok
-    timezone.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap()
+    // this is a valid date and time; unwrap is ok
+    let midnight = NaiveDate::from_ymd_opt(1900, 1, 1)
+        .and_then(|date| date.and_hms_opt(0, 0, 0))
+        .unwrap();
+    match timezone.from_local_datetime(&midnight) {
+        LocalResult::Single(epoch) => epoch,
+        // the time zone changed its UTC offset at that midnight, so local midnight happened
+        // twice or never (e.g., `Europe/Stockholm` in the tz database's backzone data moves
+        // from +01:00:14 to +01:00 then); dates only count forward from the epoch, so measure
+        // them in the offset the zone changed to, read a day later, as if it had changed earlier
+        LocalResult::Ambiguous(..) | LocalResult::None => {
+            let offset = timezone.offset_from_utc_datetime(&(midnight + ChronoDuration::days(1)));
+            timezone.from_utc_datetime(&(midnight - offset.fix()))
+        }
+    }
 }
 
 fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
