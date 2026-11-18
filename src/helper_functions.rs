@@ -26,8 +26,8 @@ pub(crate) fn verify_code(pair: &CodePair, expected: i32) -> DxfResult<()> {
     }
 }
 
-pub(crate) fn as_bool(v: i16) -> bool {
-    v == 1
+pub(crate) fn as_bool(v: impl Into<i32>) -> bool {
+    v.into() == 1
 }
 
 fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {

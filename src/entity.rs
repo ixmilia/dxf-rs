@@ -499,16 +499,16 @@ impl Entity {
                                                         dimension_base.attachment_point = enum_from_number!(
                                                             AttachmentPoint,
                                                             TopLeft,
-                                                            from_i16,
-                                                            pair.assert_i16()?
+                                                            from_i32,
+                                                            pair.assert_i32()?
                                                         );
                                                     }
                                                     72 => {
                                                         dimension_base.text_line_spacing_style = enum_from_number!(
                                                             TextLineSpacingStyle,
                                                             AtLeast,
-                                                            from_i16,
-                                                            pair.assert_i16()?
+                                                            from_i32,
+                                                            pair.assert_i32()?
                                                         );
                                                     }
                                                     210 => {
@@ -900,25 +900,25 @@ impl Entity {
                     }
                 }
                 71 => {
-                    att.text_generation_flags = i32::from(pair.assert_i16()?);
+                    att.text_generation_flags = i32::from(pair.assert_i32()?);
                 }
                 72 => {
                     att.horizontal_text_justification = enum_from_number!(
                         HorizontalTextJustification,
                         Left,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 73 => {
-                    att.field_length = pair.assert_i16()?;
+                    att.field_length = pair.assert_i32()? as i16;
                 }
                 74 => {
                     att.vertical_text_justification = enum_from_number!(
                         VerticalTextJustification,
                         Baseline,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 210 => {
@@ -1051,25 +1051,25 @@ impl Entity {
                     }
                 }
                 71 => {
-                    att.text_generation_flags = i32::from(pair.assert_i16()?);
+                    att.text_generation_flags = pair.assert_i32()?;
                 }
                 72 => {
                     att.horizontal_text_justification = enum_from_number!(
                         HorizontalTextJustification,
                         Left,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 73 => {
-                    att.field_length = pair.assert_i16()?;
+                    att.field_length = pair.assert_i32()? as i16;
                 }
                 74 => {
                     att.vertical_text_justification = enum_from_number!(
                         VerticalTextJustification,
                         Baseline,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 210 => {
@@ -1182,14 +1182,14 @@ impl Entity {
                 }
                 71 => {
                     mtext.attachment_point =
-                        enum_from_number!(AttachmentPoint, TopLeft, from_i16, pair.assert_i16()?);
+                        enum_from_number!(AttachmentPoint, TopLeft, from_i32, pair.assert_i32()?);
                 }
                 72 => {
                     mtext.drawing_direction = enum_from_number!(
                         DrawingDirection,
                         LeftToRight,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 3 => {
@@ -1241,8 +1241,8 @@ impl Entity {
                     mtext.line_spacing_style = enum_from_number!(
                         MTextLineSpacingStyle,
                         AtLeast,
-                        from_i16,
-                        pair.assert_i16()?
+                        from_i32,
+                        pair.assert_i32()?
                     );
                 }
                 44 => {
