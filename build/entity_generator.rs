@@ -18,6 +18,8 @@ pub fn generate_entities(generated_dir: &Path) {
 // The contents of this file are automatically generated and should not be modified directly.  See the `build` directory.
 
 use crate::{
+    BoundaryPath,
+    BoundaryPathEdge,
     CodePair,
     Color,
     Drawing,
@@ -28,6 +30,7 @@ use crate::{
     ExtensionGroup,
     Handle,
     LwPolylineVertex,
+    PatternDefinitionLine,
     Point,
     Vector,
     XData,
