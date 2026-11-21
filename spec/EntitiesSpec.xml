@@ -405,7 +405,23 @@
   HATCH
 
   -->
-  <!-- TODO MinVersion="R14" -->
+  <Entity Name="Hatch" SubclassMarker="AcDbHatch" TypeString="HATCH" MinVersion="R14" GenerateWriterFunction="false">
+    <Field Name="elevation" Code="30" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
+    <Field Name="hatch_pattern_name" Code="2" Type="String" DefaultValue='String::from("SOLID")' />
+    <Field Name="solid_fill" Code="70" Type="bool" DefaultValue="true" ReadConverter="{} != 0" WriteConverter="if {} { 1i16 } else { 0i16 }" />
+    <Field Name="associative" Code="71" Type="bool" DefaultValue="false" ReadConverter="{} != 0" WriteConverter="if {} { 1i16 } else { 0i16 }" />
+    <Field Name="boundary_paths" Code="91" Type="Vec&lt;BoundaryPath&gt;" DefaultValue="vec![]" GenerateReader="false" GenerateWriter="false" />
+    <Field Name="hatch_style" Code="75" Type="HatchStyle" DefaultValue="HatchStyle::OddParity" ReadConverter="enum_from_number!(HatchStyle, OddParity, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="hatch_pattern_type" Code="76" Type="HatchPatternType" DefaultValue="HatchPatternType::Predefined" ReadConverter="enum_from_number!(HatchPatternType, UserDefined, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="hatch_pattern_angle" Code="52" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="hatch_pattern_scale" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
+    <Field Name="hatch_pattern_double" Code="77" Type="bool" DefaultValue="false" ReadConverter="{} != 0" WriteConverter="if {} { 1i16 } else { 0i16 }" DisableWritingDefault="true" />
+    <Field Name="pattern_definition_lines" Code="78" Type="Vec&lt;PatternDefinitionLine&gt;" DefaultValue="vec![]" GenerateReader="false" GenerateWriter="false" />
+    <Field Name="pixel_size" Code="47" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
+    <Field Name="seed_points" Code="98" Type="Vec&lt;Point&gt;" DefaultValue="vec![]" GenerateReader="false" GenerateWriter="false" />
+  </Entity>
+  
   <!--
 
   HELIX
@@ -1337,4 +1353,5 @@
     <Field Name="first_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="unit_direction_vector" Code="11" Type="Vector" DefaultValue="Vector::x_axis()" CodeOverrides="11,21,31" />
   </Entity>
+
 </Spec>
