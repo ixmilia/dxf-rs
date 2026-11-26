@@ -335,7 +335,7 @@
 
   -->
   <Object Name="LayerIndex" SubclassMarker="AcDbLayerIndex" TypeString="LAYER_INDEX" MinVersion="R14">
-    <Field Name="time_stamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
+    <Field Name="time_stamp" Code="40" Type="OffsetDateTime" DefaultValue="OffsetDateTime::now_local().expect(&quot;could not determine the local UTC offset&quot;)" ReadConverter="as_datetime_local({})" WriteConverter="as_double_local({})" />
     <Field Name="layer_names" Code="8" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Pointer Name="id_buffers" Code="360" AllowMultiples="true" />
     <Field Name="id_buffer_counts" Code="90" Type="i32" DefaultValue="vec![]" AllowMultiples="true" />
@@ -1046,7 +1046,7 @@
 
   -->
   <Object Name="SpatialIndex" SubclassMarker="AcDbIndex" TypeString="SPATIAL_INDEX" GenerateReaderFunction="false" MinVersion="R2000">
-    <Field Name="timestamp" Code="40" Type="DateTime&lt;Local&gt;" DefaultValue="Local::now()" WriteConverter="as_double_local({})" />
+    <Field Name="timestamp" Code="40" Type="OffsetDateTime" DefaultValue="OffsetDateTime::now_local().expect(&quot;could not determine the local UTC offset&quot;)" WriteConverter="as_double_local({})" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbIndex")' />
       <WriteField Field="timestamp" />
@@ -1067,7 +1067,7 @@
     <Field Name="use_subset" Code="290" Type="bool" DefaultValue="false" />
     <Field Name="sheet_subset_name" Code="4" Type="String" DefaultValue="String::new()" />
     <Field Name="select_dates_from_calendar" Code="291" Type="bool" DefaultValue="false" />
-    <Field Name="dates" Code="90" Type="DateTime&lt;Local&gt;" DefaultValue="vec![]" AllowMultiples="true" />
+    <Field Name="dates" Code="90" Type="OffsetDateTime" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="select_range_of_dates" Code="292" Type="bool" DefaultValue="false" />
     <Field Name="start_time_seconds_past_midnight" Code="93" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />
     <Field Name="end_time_seconds_past_midnight" Code="94" Type="i32" DefaultValue="0" WriteCondition="SelectRangeOfDates" />

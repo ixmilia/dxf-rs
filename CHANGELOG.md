@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## 0.7.0
+
+- Migrate from `chrono` dependency to `time`.
+
 ## 0.6.2
 
 - Fix panic when reading `SPATIAL_INDEX` objects from Civil 3D files.

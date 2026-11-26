@@ -35,7 +35,7 @@ use enum_primitive::FromPrimitive;
 
 use std::time::Duration;
 
-use chrono::{DateTime, Local, Utc};
+use time::{OffsetDateTime, UtcDateTime};
 
 use uuid::Uuid;
 ".trim_start());

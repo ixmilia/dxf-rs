@@ -1,22 +1,18 @@
-// Local dates in time zones that change their UTC offset at local 1900-01-01T00:00, the epoch
-// that local dates count from, so that local midnight happens twice or never.  Debian and Ubuntu's
-// `Europe/Stockholm` is one (https://github.com/ixmilia/dxf-rs/issues/93), but CI runs in UTC, so
-// each test writes a TZif file (RFC 8536) with one such change, points `TZ` at it (on Unix,
-// chrono's `Local` reads an absolute `TZ` as the path of a TZif file) and re-runs this test binary
-// as a child that runs only `local_time_child`.  Setting `TZ` in this process would race the other
-// tests.
+// Local dates in time zones that change their UTC offset at local 1900-01-01T00:00. CI runs in
+// UTC, so each test writes a TZif file (RFC 8536), points `TZ` at it, and re-runs this test binary
+// as a child. Setting `TZ` in this process would race the other tests.
 
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use chrono::prelude::*;
-use chrono::LocalResult;
+use time::{Month, UtcOffset};
 
 use crate::helper_functions::tests::*;
 use crate::helper_functions::{as_datetime_local, as_double_local};
 
 // tells the child which kind of zone it runs in
 const ZONE_KIND: &str = "DXF_TEST_LOCAL_TIME_ZONE_KIND";
+const EXPECTED_OFFSET: &str = "DXF_TEST_LOCAL_TIME_EXPECTED_OFFSET";
 
 // printed by the child once its assertions pass, so a child that ran no test can't pass
 const CHILD_PASSED: &str = "local time child passed";
@@ -89,18 +85,43 @@ fn local_time_child() {
         Ok(kind) => kind,
         Err(_) => return, // run directly, without a crafted zone
     };
-    // chrono falls back to UTC when it can't read the zone file, so check the zone is in effect
-    let midnight = Local.with_ymd_and_hms(1900, 1, 1, 0, 0, 0);
-    match (kind.as_str(), midnight) {
-        ("ambiguous", LocalResult::Ambiguous(..))
-        | ("nonexistent", LocalResult::None)
-        | ("single", LocalResult::Single(_)) => (),
-        (kind, midnight) => panic!("local midnight in the {kind} zone is {midnight:?}"),
-    }
+    let expected_offset = std::env::var(EXPECTED_OFFSET)
+        .unwrap()
+        .parse::<i32>()
+        .unwrap();
+    let expected_offset = UtcOffset::from_whole_seconds(expected_offset).unwrap();
+    let midnight = as_datetime_local(0.0);
+    assert_eq!(
+        expected_offset,
+        midnight.offset(),
+        "wrong offset in the {kind} zone"
+    );
+    assert_eq!(
+        (1900, Month::January, 1, 0, 0, 0),
+        (
+            midnight.year(),
+            midnight.month(),
+            midnight.day(),
+            midnight.hour(),
+            midnight.minute(),
+            midnight.second()
+        )
+    );
 
     // local dates read and write as the wall-clock times they name
     // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
-    let date = Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap();
+    let date = as_datetime_local(2_451_544.915_682_87);
+    assert_eq!(
+        (1999, Month::December, 31, 21, 58, 35),
+        (
+            date.year(),
+            date.month(),
+            date.day(),
+            date.hour(),
+            date.minute(),
+            date.second()
+        )
+    );
     assert_eq!(date, as_datetime_local(2_451_544.915_682_87));
     assert_eq!(2_451_544.915_682_870_4, as_double_local(date));
 
@@ -150,6 +171,7 @@ fn run_child(kind: &str, zone: Zone) {
         ])
         .env("TZ", &path)
         .env(ZONE_KIND, kind)
+        .env(EXPECTED_OFFSET, zone.after.1.to_string())
         .output()
         .unwrap();
     std::fs::remove_file(&path).unwrap();
@@ -171,7 +193,8 @@ struct Zone {
     at: i64,
     // abbreviation and UTC offset in seconds from the change on
     after: (&'static str, i32),
-    // POSIX TZ string for times after the change; chrono rejects the file unless it matches `after`
+    // POSIX TZ string for times after the change; the local offset reader requires this to match
+    // `after`
     footer: &'static str,
 }
 

@@ -1,15 +1,15 @@
-use std::cmp::Ordering;
 use std::io;
 use std::io::Read;
 use std::time::Duration as StdDuration;
 
 use byteorder::{ByteOrder, LittleEndian};
 
-use chrono::prelude::*;
-use chrono::Duration as ChronoDuration;
-use chrono::LocalResult;
-
 use encoding_rs::Encoding;
+
+use time::{OffsetDateTime, SignedDuration, UtcDateTime, UtcOffset};
+
+#[cfg(test)]
+use time::Month;
 
 use uuid::Uuid;
 
@@ -31,68 +31,69 @@ pub(crate) fn as_bool(v: i16) -> bool {
     v == 1
 }
 
-fn f64_to_adjusted_duration(f: f64) -> ChronoDuration {
+fn f64_to_adjusted_duration(f: f64) -> SignedDuration {
     let days_since_dublin = f - 2_415_020.0; // julian dublin offset, e.g., December 31, 1899 12:00AM
     let secs_per_day = 24i64 * 60 * 60;
     let seconds = days_since_dublin * secs_per_day as f64;
     // functions consuming this need to use 1900/01/01 instead of 1899/12/31 as a base
     // so we counter the extra day and leap second here
-    ChronoDuration::seconds(seconds as i64 - secs_per_day + 1)
+    SignedDuration::seconds(seconds as i64 - secs_per_day + 1)
 }
 
-fn epoch<T>(timezone: &T) -> DateTime<T>
-where
-    T: TimeZone,
-{
-    // this is a valid date and time; unwrap is ok
-    let midnight = NaiveDate::from_ymd_opt(1900, 1, 1)
-        .and_then(|date| date.and_hms_opt(0, 0, 0))
-        .unwrap();
-    match timezone.from_local_datetime(&midnight) {
-        LocalResult::Single(epoch) => epoch,
-        // the time zone changed its UTC offset at that midnight, so local midnight happened
-        // twice or never (e.g., `Europe/Stockholm` in the tz database's backzone data moves
-        // from +01:00:14 to +01:00 then); dates only count forward from the epoch, so measure
-        // them in the offset the zone changed to, read a day later, as if it had changed earlier
-        LocalResult::Ambiguous(..) | LocalResult::None => {
-            let offset = timezone.offset_from_utc_datetime(&(midnight + ChronoDuration::days(1)));
-            timezone.from_utc_datetime(&(midnight - offset.fix()))
-        }
+const DXF_EPOCH_UNIX_TIMESTAMP: i64 = -2_208_988_800;
+const SECONDS_PER_DAY: i64 = 24 * 60 * 60;
+
+fn date_duration_seconds(date: f64) -> i64 {
+    if date == 0.0 {
+        0
+    } else {
+        f64_to_adjusted_duration(date).whole_seconds().max(0)
     }
 }
 
-fn as_datetime<T>(timezone: &T, date: f64) -> DateTime<T>
-where
-    T: TimeZone,
-{
-    // dates are represented as the fractional number of days elapsed since December 31, 1899.
-    let epoch = epoch(timezone);
-    let duration = if date == 0.0 {
-        ChronoDuration::seconds(0)
-    } else {
-        let duration = f64_to_adjusted_duration(date);
-        match ChronoDuration::seconds(0).cmp(&duration) {
-            Ordering::Less => duration,
-            _ => ChronoDuration::seconds(0),
+pub(crate) fn as_datetime_local(date: f64) -> OffsetDateTime {
+    let wall_time = DXF_EPOCH_UNIX_TIMESTAMP + date_duration_seconds(date);
+    let offset_lookup_time = wall_time + if date == 0.0 { SECONDS_PER_DAY } else { 0 };
+    let lookup_time =
+        OffsetDateTime::from_unix_timestamp(offset_lookup_time).expect("DXF date is out of range");
+    let mut offset =
+        UtcOffset::local_offset_at(lookup_time).expect("could not determine the local UTC offset");
+    for _ in 0..2 {
+        let utc_timestamp = wall_time - i64::from(offset.whole_seconds());
+        let utc_time =
+            OffsetDateTime::from_unix_timestamp(utc_timestamp).expect("DXF date is out of range");
+        let next_offset =
+            UtcOffset::local_offset_at(utc_time).expect("could not determine the local UTC offset");
+        if next_offset == offset {
+            break;
         }
-    };
-    epoch + duration
+        offset = next_offset;
+    }
+
+    OffsetDateTime::from_unix_timestamp(wall_time - i64::from(offset.whole_seconds()))
+        .expect("DXF date is out of range")
+        .to_offset(offset)
 }
 
-pub(crate) fn as_datetime_local(date: f64) -> DateTime<Local> {
-    as_datetime(&Local, date)
-}
-
-pub(crate) fn as_datetime_utc(date: f64) -> DateTime<Utc> {
-    as_datetime(&Utc, date)
+pub(crate) fn as_datetime_utc(date: f64) -> UtcDateTime {
+    UtcDateTime::from_unix_timestamp(DXF_EPOCH_UNIX_TIMESTAMP + date_duration_seconds(date))
+        .expect("DXF date is out of range")
 }
 
 #[test]
 fn as_datetime_conversion_test() {
     // from AutoDesk spec: 2451544.91568287 = 31 December 1999, 9:58:35PM
+    let date = as_datetime_local(2_451_544.915_682_87);
     assert_eq!(
-        Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap(),
-        as_datetime_local(2_451_544.915_682_87)
+        (1999, Month::December, 31, 21, 58, 35),
+        (
+            date.year(),
+            date.month(),
+            date.day(),
+            date.hour(),
+            date.minute(),
+            date.second()
+        )
     );
 }
 
@@ -101,28 +102,19 @@ fn datetime_out_of_bounds_test() {
     // these values are out of bounds for acceptable dates
     let values = vec![2305814.964456019, 1799402.631122685];
     for value in values {
-        assert_eq!(
-            Local.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap(),
-            as_datetime_local(value)
-        )
+        assert_eq!(as_datetime_local(0.0), as_datetime_local(value));
     }
 }
 
-fn as_double<T>(timezone: &T, date: DateTime<T>) -> f64
-where
-    T: TimeZone,
-{
-    let epoch = epoch(timezone);
-    let duration = date.signed_duration_since(epoch);
-    (duration.num_seconds() as f64 / 24.0 / 60.0 / 60.0) + 2_415_021f64
+pub(crate) fn as_double_local(date: OffsetDateTime) -> f64 {
+    let wall_time = OffsetDateTime::new_utc(date.date(), date.time()).unix_timestamp();
+    let duration = wall_time - DXF_EPOCH_UNIX_TIMESTAMP;
+    (duration as f64 / SECONDS_PER_DAY as f64) + 2_415_021f64
 }
 
-pub(crate) fn as_double_local(date: DateTime<Local>) -> f64 {
-    as_double(&Local, date)
-}
-
-pub(crate) fn as_double_utc(date: DateTime<Utc>) -> f64 {
-    as_double(&Utc, date)
+pub(crate) fn as_double_utc(date: UtcDateTime) -> f64 {
+    let duration = date.unix_timestamp() - DXF_EPOCH_UNIX_TIMESTAMP;
+    (duration as f64 / SECONDS_PER_DAY as f64) + 2_415_021f64
 }
 
 #[test]
@@ -131,7 +123,7 @@ fn as_double_conversion_test() {
     // from AutoDesk spec: 2451544.91568287[04] = 31 December 1999, 9:58:35PM
     assert_eq!(
         2_451_544.915_682_870_4,
-        as_double_local(Local.with_ymd_and_hms(1999, 12, 31, 21, 58, 35).unwrap())
+        as_double_local(as_datetime_local(2_451_544.915_682_87))
     );
 }
 

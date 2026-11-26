@@ -48,7 +48,7 @@ use crate::enums::*;
 use enum_primitive::FromPrimitive;
 use std::collections::HashMap;
 
-use chrono::{DateTime, Local};
+use time::OffsetDateTime;
 ".trim_start());
     fun.push('\n');
     generate_base_object(&mut fun, &element);

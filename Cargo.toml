@@ -1,6 +1,6 @@
 [package]
 name = "dxf"
-version = "0.6.2"
+version = "0.7.0"
 authors = ["Brett V. Forsgren <brett.forsgren@outlook.com>"]
 build = "build/build.rs"
 description = "A rust crate for reading and writing DXF and DXB CAD files."
@@ -19,13 +19,12 @@ serialize = ["serde"]
 
 [dependencies]
 byteorder = "1.3.4"
-chrono = { version= "0.4.19", features = ["serde"] }
 encoding_rs = "0.8.26"
 enum_primitive = "0.1.1"
 image = { version = "0.25.1", default-features = false, features = ["bmp"] }
 itertools = "0.14.0"
-num = "0.4"
 serde = { version = "1.0", features = ["derive"], optional = true }
+time = { version = "0.3.55", features = ["local-offset", "serde"] }
 uuid = { version = "1.3.3", features = ["serde", "v4"] }
 
 [build-dependencies]
