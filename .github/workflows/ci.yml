@@ -12,14 +12,14 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         rust_version: [stable, beta, nightly]
     steps:
-    - uses: hecrj/setup-rust-action@v1
+    - uses: hecrj/setup-rust-action@v2
       with:
         rust-version: ${{ matrix.rust_version }}
     - name: Report versions
       run: |
         rustc -Vv
         cargo -V
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - run: cargo build --verbose
     - run: cargo test --verbose
     - run: cargo build --verbose --manifest-path ./dxf2json/Cargo.toml
@@ -29,10 +29,10 @@ jobs:
     name: Formatting
     runs-on: ubuntu-latest
     steps:
-    - uses: hecrj/setup-rust-action@v1
+    - uses: hecrj/setup-rust-action@v2
       with:
         components: rustfmt
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - run: cargo fmt --all -- --check
 
   publish:
@@ -41,5 +41,5 @@ jobs:
     needs: [build, formatting]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - run: cargo publish --token ${{ secrets.CRATES_IO_API_KEY }} --verbose
