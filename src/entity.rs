@@ -3019,13 +3019,6 @@ mod tests {
         }
     }
 
-    fn ixmilia_x_data() -> Vec<XData> {
-        vec![XData {
-            application_name: String::from("IXMILIA"),
-            items: vec![XDataItem::Real(1.1)],
-        }]
-    }
-
     #[test]
     fn write_insert_x_data_before_its_attributes() {
         let mut drawing = Drawing::new();
@@ -3033,7 +3026,10 @@ mod tests {
         let mut ins = Insert::default();
         ins.add_attribute(&mut drawing, Attribute::default());
         let mut ent = Entity::new(EntityType::Insert(ins));
-        ent.common.x_data = ixmilia_x_data();
+        ent.common.x_data = vec![XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        }];
         drawing.add_entity(ent);
         assert_contains_pairs(
             &drawing,
@@ -3052,7 +3048,10 @@ mod tests {
         let mut poly = Polyline::default();
         poly.add_vertex(&mut drawing, Vertex::default());
         let mut ent = Entity::new(EntityType::Polyline(poly));
-        ent.common.x_data = ixmilia_x_data();
+        ent.common.x_data = vec![XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        }];
         drawing.add_entity(ent);
         assert_contains_pairs(
             &drawing,
@@ -3069,7 +3068,10 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
         let mut ent = Entity::new(EntityType::Attribute(Default::default()));
-        ent.common.x_data = ixmilia_x_data();
+        ent.common.x_data = vec![XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        }];
         drawing.add_entity(ent);
         assert_contains_pairs(
             &drawing,
@@ -3093,7 +3095,10 @@ mod tests {
         let mut drawing = Drawing::new();
         drawing.header.version = AcadVersion::R2000;
         let mut ent = Entity::new(EntityType::Attribute(att));
-        ent.common.x_data = ixmilia_x_data();
+        ent.common.x_data = vec![XData {
+            application_name: String::from("IXMILIA"),
+            items: vec![XDataItem::Real(1.1)],
+        }];
         drawing.add_entity(ent);
 
         let drawing = drawing_from_pairs(drawing.code_pairs().unwrap());
