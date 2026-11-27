@@ -377,7 +377,7 @@ impl Object {
                     data.set_value(
                         current_row,
                         current_column,
-                        DataTableValue::Boolean(as_bool(pair.assert_i16()?)),
+                        DataTableValue::Boolean(as_bool(pair.assert_i32()?)),
                     );
                 }
                 93 => {
@@ -600,7 +600,7 @@ impl Object {
                         layout.layout_flags = i32::from(pair.assert_i16()?);
                     }
                     71 => {
-                        layout.tab_order = i32::from(pair.assert_i16()?);
+                        layout.tab_order = pair.assert_i32()?;
                     }
                     76 => {
                         layout.ucs_orthographic_type = enum_from_number!(
@@ -766,14 +766,14 @@ impl Object {
                     mat.override_ambient_color = as_bool(pair.assert_i16()?);
                 }
                 71 => {
-                    mat.override_diffuse_color = as_bool(pair.assert_i16()?);
+                    mat.override_diffuse_color = as_bool(pair.assert_i32()?);
                 }
                 72 => {
                     if !read_image_file_diffuse_map {
-                        mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i16()?);
+                        mat.use_image_file_for_diffuse_map = as_bool(pair.assert_i32()?);
                         read_image_file_diffuse_map = true;
                     } else {
-                        mat.use_image_file_for_normal_map = as_bool(pair.assert_i16()?);
+                        mat.use_image_file_for_normal_map = as_bool(pair.assert_i32()?);
                     }
                 }
                 73 => {
@@ -781,16 +781,16 @@ impl Object {
                         mat.diffuse_map_projection_method = enum_from_number!(
                             MapProjectionMethod,
                             Planar,
-                            from_i16,
-                            pair.assert_i16()?
+                            from_i32,
+                            pair.assert_i32()?
                         );
                         read_diffuse_map_projection_method = true;
                     } else {
                         mat.normal_map_projection_method = enum_from_number!(
                             MapProjectionMethod,
                             Planar,
-                            from_i16,
-                            pair.assert_i16()?
+                            from_i32,
+                            pair.assert_i32()?
                         );
                         is_reading_normal = true;
                     }
@@ -798,11 +798,11 @@ impl Object {
                 74 => {
                     if !read_diffuse_map_tiling_method {
                         mat.diffuse_map_tiling_method =
-                            enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                            enum_from_number!(MapTilingMethod, Tile, from_i32, pair.assert_i32()?);
                         read_diffuse_map_tiling_method = true;
                     } else {
                         mat.normal_map_tiling_method =
-                            enum_from_number!(MapTilingMethod, Tile, from_i16, pair.assert_i16()?);
+                            enum_from_number!(MapTilingMethod, Tile, from_i32, pair.assert_i32()?);
                         is_reading_normal = true;
                     }
                 }
@@ -1114,7 +1114,7 @@ impl Object {
                     mline.__flags = i32::from(pair.assert_i16()?);
                 }
                 71 => {
-                    mline.__element_count = i32::from(pair.assert_i16()?);
+                    mline.__element_count = pair.assert_i32()?;
                     read_element_count = true;
                 }
                 _ => {
@@ -1252,13 +1252,13 @@ impl Object {
                 }
                 70 => (), // boundary point count; we just read as many as we're given
                 71 => {
-                    sf.is_clip_boundary_enabled = as_bool(pair.assert_i16()?);
+                    sf.is_clip_boundary_enabled = as_bool(pair.assert_i32()?);
                 }
                 72 => {
-                    sf.is_front_clipping_plane = as_bool(pair.assert_i16()?);
+                    sf.is_front_clipping_plane = as_bool(pair.assert_i32()?);
                 }
                 73 => {
-                    sf.is_back_clipping_plane = as_bool(pair.assert_i16()?);
+                    sf.is_back_clipping_plane = as_bool(pair.assert_i32()?);
                 }
                 210 => {
                     sf.clip_boundary_normal.x = pair.assert_f64()?;
@@ -1335,7 +1335,7 @@ impl Object {
                     reading_hours = true;
                 }
                 74 => {
-                    ss.shade_plot_type = pair.assert_i16()?;
+                    ss.shade_plot_type = pair.assert_i32()? as i16;
                 }
                 75 => {
                     ss.viewports_per_page = i32::from(pair.assert_i16()?);
@@ -1442,7 +1442,7 @@ impl Object {
                         enum_from_number!(FlowDirection, Down, from_i16, pair.assert_i16()?);
                 }
                 71 => {
-                    ts.flags = i32::from(pair.assert_i16()?);
+                    ts.flags = i32::from(pair.assert_i32()?);
                 }
                 280 => {
                     if !read_version {

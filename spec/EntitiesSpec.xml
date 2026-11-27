@@ -148,9 +148,9 @@
     <Field Name="start_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="end_angle" Code="51" Type="f64" DefaultValue="0.0" />
     <Field Name="is_character_order_reversed" Code="70" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="direction_flag" Code="71" Type="i16" DefaultValue="0" />
-    <Field Name="alignment_flag" Code="72" Type="i16" DefaultValue="0" />
-    <Field Name="side_flag" Code="73" Type="i16" DefaultValue="0" />
+	<Field Name="direction_flag" Code="71" Type="i16" DefaultValue="0" ReadConverter="{} as i16" />
+	<Field Name="alignment_flag" Code="72" Type="i16" DefaultValue="0" ReadConverter="{} as i16" />
+	<Field Name="side_flag" Code="73" Type="i16" DefaultValue="0" ReadConverter="{} as i16" />
     <Field Name="is_bold" Code="74" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="is_italic" Code="75" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="is_underline" Code="76" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
@@ -179,7 +179,7 @@
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="version" Code="280" Type="Version" DefaultValue="Version::R2010" ReadConverter="enum_from_number!(Version, R2010, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2010" />
@@ -192,7 +192,7 @@
       <Flag Name="is_attribute_present" Mask="8" />
     </Field>
     <Field Name="field_length" Code="73" Type="i16" DefaultValue="0" DisableWritingDefault="true" />
-    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="keep_duplicate_records" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
     <Field Name="m_text_flag" Code="70" Type="MTextFlag" DefaultValue="MTextFlag::MultilineAttribute" ReadConverter="enum_from_number!(MTextFlag, MultilineAttribute, from_i16, {})" WriteConverter="{} as i16" MinVersion="R2007" />
@@ -264,8 +264,8 @@
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
-    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="74" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R12" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
     <Field Name="is_locked_in_block" Code="280" Type="bool" DefaultValue="false" ReadConverter="as_bool({})" WriteConverter="as_i16({})" MinVersion="R2007" />
@@ -343,8 +343,8 @@
     <Field Name="definition_point_1" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="text_mid_point" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
     <Field Name="dimension_type" Code="70" Type="DimensionType" DefaultValue="DimensionType::Aligned" WriteConverter="self.dimension_type()" />
-    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" WriteConverter="{} as i16" MinVersion="R2000" />
-    <Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" WriteConverter="{} as i16" DisableWritingDefault="true" MinVersion="R2000" />
+    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" WriteConverter="{} as i32" MinVersion="R2000" />
+	<Field Name="text_line_spacing_style" Code="72" Type="TextLineSpacingStyle" DefaultValue="TextLineSpacingStyle::AtLeast" WriteConverter="{} as i32" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="text_line_spacing_factor" Code="41" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" MinVersion="R2000" />
     <Field Name="actual_measurement" Code="42" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" ProtectedSet="true" MinVersion="R2000" />
     <Field Name="text" Code="1" Type="String" DefaultValue='String::from("&lt;&gt;")' />
@@ -446,7 +446,7 @@
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
-    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="enum_from_number!(ImageClippingBoundaryType, Rectangular, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="enum_from_number!(ImageClippingBoundaryType, Rectangular, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="__clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__clipping_vertices_y" Code="24" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
@@ -490,7 +490,7 @@
     <Field Name="z_scale_factor" Code="43" Type="f64" DefaultValue="1.0" DisableWritingDefault="true" />
     <Field Name="rotation" Code="50" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="column_count" Code="70" Type="i16" DefaultValue="1" DisableWritingDefault="true" />
-    <Field Name="row_count" Code="71" Type="i16" DefaultValue="1" DisableWritingDefault="true" />
+	<Field Name="row_count" Code="71" Type="i16" DefaultValue="1" DisableWritingDefault="true" ReadConverter="{} as i16" />
     <Field Name="column_spacing" Code="44" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="row_spacing" Code="45" Type="f64" DefaultValue="0.0" DisableWritingDefault="true" />
     <Field Name="extrusion_direction" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" CodeOverrides="210,220,230" MinVersion="R12" />
@@ -519,9 +519,9 @@
   <Entity Name="Leader" SubclassMarker="AcDbLeader" TypeString="LEADER" MinVersion="R13" HasXData="true">
     <Field Name="dimension_style_name" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="use_arrowheads" Code="71" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
-    <Field Name="path_type" Code="72" Type="LeaderPathType" DefaultValue="LeaderPathType::StraightLineSegments" ReadConverter="enum_from_number!(LeaderPathType, StraightLineSegments, from_i16, {})" WriteConverter="{} as i16" />
-    <Field Name="annotation_type" Code="73" Type="LeaderCreationAnnotationType" DefaultValue="LeaderCreationAnnotationType::NoAnnotation" ReadConverter="enum_from_number!(LeaderCreationAnnotationType, NoAnnotation, from_i16, {})" WriteConverter="{} as i16" />
-    <Field Name="hookline_direction" Code="74" Type="LeaderHooklineDirection" DefaultValue="LeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="enum_from_number!(LeaderHooklineDirection, OppositeFromHorizontalVector, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="path_type" Code="72" Type="LeaderPathType" DefaultValue="LeaderPathType::StraightLineSegments" ReadConverter="enum_from_number!(LeaderPathType, StraightLineSegments, from_i32, {})" WriteConverter="{} as i16" />
+    <Field Name="annotation_type" Code="73" Type="LeaderCreationAnnotationType" DefaultValue="LeaderCreationAnnotationType::NoAnnotation" ReadConverter="enum_from_number!(LeaderCreationAnnotationType, NoAnnotation, from_i32, {})" WriteConverter="{} as i16" />
+    <Field Name="hookline_direction" Code="74" Type="LeaderHooklineDirection" DefaultValue="LeaderHooklineDirection::OppositeFromHorizontalVector" ReadConverter="enum_from_number!(LeaderHooklineDirection, OppositeFromHorizontalVector, from_i32, {})" WriteConverter="{} as i16" />
     <Field Name="use_hookline" Code="75" Type="bool" DefaultValue="true" ReadConverter="as_bool({})" WriteConverter="as_i16({})" />
     <Field Name="text_annotation_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="text_annotation_width" Code="41" Type="f64" DefaultValue="1.0" />
@@ -574,14 +574,14 @@
     <Field Name="intensity" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="position" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="target_location" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="attentuation_type" Code="72" Type="LightAttenuationType" DefaultValue="LightAttenuationType::None" ReadConverter="enum_from_number!(LightAttenuationType, None, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="attentuation_type" Code="72" Type="LightAttenuationType" DefaultValue="LightAttenuationType::None" ReadConverter="enum_from_number!(LightAttenuationType, None, from_i32, {})" WriteConverter="{} as i16" />
     <Field Name="use_attenuation_limits" Code="292" Type="bool" DefaultValue="true" />
     <Field Name="attenuation_start_limit" Code="41" Type="f64" DefaultValue="0.0" />
     <Field Name="attenuation_end_limit" Code="42" Type="f64" DefaultValue="1.0" />
     <Field Name="hotspot_angle" Code="50" Type="f64" DefaultValue="0.0" />
     <Field Name="falloff_angle" Code="51" Type="f64" DefaultValue="0.0" />
     <Field Name="cast_shadows" Code="293" Type="bool" DefaultValue="true" />
-    <Field Name="shadow_type" Code="73" Type="ShadowType" DefaultValue="ShadowType::RayTraced" ReadConverter="enum_from_number!(ShadowType, RayTraced, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="shadow_type" Code="73" Type="ShadowType" DefaultValue="ShadowType::RayTraced" ReadConverter="enum_from_number!(ShadowType, RayTraced, from_i32, {})" WriteConverter="{} as i16" />
     <Field Name="shadow_map_size" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="shadow_map_softness" Code="280" Type="i16" DefaultValue="0" />
   </Entity>
@@ -717,7 +717,7 @@
     <Field Name="insertion_point" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="initial_text_height" Code="40" Type="f64" DefaultValue="1.0" />
     <Field Name="reference_rectangle_width" Code="41" Type="f64" DefaultValue="1.0" />
-    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="enum_from_number!(AttachmentPoint, TopLeft, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="attachment_point" Code="71" Type="AttachmentPoint" DefaultValue="AttachmentPoint::TopLeft" ReadConverter="enum_from_number!(AttachmentPoint, TopLeft, from_i32, {})" WriteConverter="{} as i16" />
     <Field Name="drawing_direction" Code="72" Type="DrawingDirection" DefaultValue="DrawingDirection::LeftToRight" ReadConverter="enum_from_number!(DrawingDirection, LeftToRight, from_i16, {})" WriteConverter="{} as i16" />
     <Field Name="extended_text" Code="3" Type="String" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="text" Code="1" Type="String" DefaultValue="String::new()" />
@@ -804,8 +804,8 @@
     <Field Name="description" Code="3" Type="String" DefaultValue="String::new()" />
     <Field Name="upper_left_corner" Code="10" Type="Point" DefaultValue="Point::origin()" CodeOverrides="10,20,30" />
     <Field Name="lower_right_corner" Code="11" Type="Point" DefaultValue="Point::origin()" CodeOverrides="11,21,31" />
-    <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="enum_from_number!(OleObjectType, Static, from_i16, {})" WriteConverter="{} as i16" />
-    <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="enum_from_number!(TileModeDescriptor, InTiledViewport, from_i16, {})" WriteConverter="{} as i16" />
+    <Field Name="object_type" Code="71" Type="OleObjectType" DefaultValue="OleObjectType::Static" ReadConverter="enum_from_number!(OleObjectType, Static, from_i32, {})" WriteConverter="{} as i16" />
+    <Field Name="tile_mode" Code="72" Type="TileModeDescriptor" DefaultValue="TileModeDescriptor::InTiledViewport" ReadConverter="enum_from_number!(TileModeDescriptor, InTiledViewport, from_i32, {})" WriteConverter="{} as i16" />
     <Field Name="binary_data_length" Code="90" Type="i32" DefaultValue="0" />
     <Field Name="binary_data_strings" Code="310" Type="Vec&lt;u8&gt;" DefaultValue="vec![]" AllowMultiples="true" />
     <WriteOrder>
@@ -1078,10 +1078,10 @@
       <Flag Name="is_text_backwards" Mask="2" />
       <Flag Name="is_text_upside_down" Mask="4" />
     </Field>
-    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="horizontal_text_justification" Code="72" Type="HorizontalTextJustification" DefaultValue="HorizontalTextJustification::Left" ReadConverter="enum_from_number!(HorizontalTextJustification, Left, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <Field Name="second_alignment_point" Code="11" Type="Point" DefaultValue="Point::origin()" DisableWritingDefault="true" CodeOverrides="11,21,31" />
     <Field Name="normal" Code="210" Type="Vector" DefaultValue="Vector::z_axis()" DisableWritingDefault="true" CodeOverrides="210,220,230" />
-    <Field Name="vertical_text_justification" Code="73" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i16, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
+    <Field Name="vertical_text_justification" Code="73" Type="VerticalTextJustification" DefaultValue="VerticalTextJustification::Baseline" ReadConverter="enum_from_number!(VerticalTextJustification, Baseline, from_i32, {})" WriteConverter="{} as i16" DisableWritingDefault="true" />
     <WriteOrder>
       <WriteSpecificValue Code="100" Value='&amp;String::from("AcDbText")' MinVersion="R13" />
       <WriteField Field="thickness" />
@@ -1299,7 +1299,7 @@
     <Field Name="contrast" Code="282" Type="i16" DefaultValue="50" />
     <Field Name="fade" Code="283" Type="i16" DefaultValue="0" />
     <Field Name="image_def_reactor_reference" Code="360" Type="String" DefaultValue="String::new()" />
-    <Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="enum_from_number!(ImageClippingBoundaryType, Rectangular, from_i16, {})" WriteConverter="{} as i16" />
+	<Field Name="clipping_type" Code="71" Type="ImageClippingBoundaryType" DefaultValue="ImageClippingBoundaryType::Rectangular" ReadConverter="enum_from_number!(ImageClippingBoundaryType, Rectangular, from_i32, {})" WriteConverter="{} as i32" />
     <Field Name="clipping_vertex_count" Code="91" Type="i32" DefaultValue="0" />
     <Field Name="__clipping_vertices_x" Code="14" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />
     <Field Name="__clipping_vertices_y" Code="12" Type="f64" DefaultValue="vec![]" AllowMultiples="true" />

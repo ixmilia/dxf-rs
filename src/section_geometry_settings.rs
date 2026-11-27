@@ -105,10 +105,10 @@ impl SectionGeometrySettings {
                     gs.face_transparency = pair.assert_i16()?;
                 }
                 71 => {
-                    gs.edge_transparency = pair.assert_i16()?;
+                    gs.edge_transparency = pair.assert_i32()? as i16;
                 }
                 72 => {
-                    gs.hatch_pattern_type = pair.assert_i16()?;
+                    gs.hatch_pattern_type = pair.assert_i32()? as i16;
                 }
                 90 => {
                     gs.section_type = pair.assert_i32()?;
